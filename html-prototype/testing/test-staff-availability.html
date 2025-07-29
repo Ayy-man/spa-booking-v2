@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Availability Test - Dermal Skin Clinic</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .test-section h3 {
+            color: #34495e;
+            margin-top: 0;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 3px;
+            border-left: 4px solid #3498db;
+        }
+        .error {
+            border-left-color: #e74c3c;
+            background-color: #fdf2f2;
+        }
+        .success {
+            border-left-color: #27ae60;
+            background-color: #f0f9f0;
+        }
+        .staff-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .staff-card {
+            background: #ecf0f1;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .loading {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .category-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background: white;
+        }
+        .category-card h4 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Staff Availability Test Page</h1>
+        <p>This page tests the PostgreSQL array query fixes for staff availability with enum types.</p>
+
+        <div class="test-section">
+            <h3>1. Database Connection Test</h3>
+            <button onclick="testConnection()">Test Connection</button>
+            <div id="connectionResult" class="results" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. All Service Categories Test</h3>
+            <button onclick="testAllCategories()">Test All Categories</button>
+            <div id="allCategoriesResult" class="results" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Individual Category Tests</h3>
+            <div class="category-grid">
+                <div class="category-card">
+                    <h4>Facials</h4>
+                    <button onclick="testCategory('facials')">Test Facials</button>
+                    <div id="facials-result" class="results" style="display: none;"></div>
+                </div>
+                <div class="category-card">
+                    <h4>Massages</h4>
+                    <button onclick="testCategory('massages')">Test Massages</button>
+                    <div id="massages-result" class="results" style="display: none;"></div>
+                </div>
+                <div class="category-card">
+                    <h4>Treatments</h4>
+                    <button onclick="testCategory('treatments')">Test Treatments</button>
+                    <div id="treatments-result" class="results" style="display: none;"></div>
+                </div>
+                <div class="category-card">
+                    <h4>Waxing</h4>
+                    <button onclick="testCategory('waxing')">Test Waxing</button>
+                    <div id="waxing-result" class="results" style="display: none;"></div>
+                </div>
+                <div class="category-card">
+                    <h4>Packages</h4>
+                    <button onclick="testCategory('packages')">Test Packages</button>
+                    <div id="packages-result" class="results" style="display: none;"></div>
+                </div>
+                <div class="category-card">
+                    <h4>Special</h4>
+                    <button onclick="testCategory('special')">Test Special</button>
+                    <div id="special-result" class="results" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Staff Capabilities Verification</h3>
+            <button onclick="testStaffCapabilities()">Test Staff Capabilities</button>
+            <div id="staffCapabilitiesResult" class="results" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Optimized vs Original Query Comparison</h3>
+            <button onclick="compareQueryMethods()">Compare Methods</button>
+            <div id="comparisonResult" class="results" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>6. Full Debug Log</h3>
+            <button onclick="runFullDiagnostic()">Run Full Diagnostic</button>
+            <div id="debugResult" class="results" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Include Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Include our Supabase configuration -->
+    <script src="js/supabase-config.js"></script>
+
+    <script>
+        // Test connection
+        async function testConnection() {
+            const button = event.target;
+            const resultDiv = document.getElementById('connectionResult');
+            
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Testing database connection...</div>';
+            
+            try {
+                const result = await SupabaseAPI.testConnection();
+                resultDiv.className = 'results ' + (result.success ? 'success' : 'error');
+                resultDiv.innerHTML = result.success 
+                    ? `✅ Connection successful! Found ${result.serviceCount} services in database.`
+                    : `❌ Connection failed: ${result.error}`;
+            } catch (error) {
+                resultDiv.className = 'results error';
+                resultDiv.innerHTML = `❌ Connection test failed: ${error.message}`;
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Test Connection';
+        }
+
+        // Test all categories
+        async function testAllCategories() {
+            const button = event.target;
+            const resultDiv = document.getElementById('allCategoriesResult');
+            
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Testing all service categories...</div>';
+            
+            try {
+                const results = await SupabaseAPI.testStaffAvailability();
+                let html = '<h4>Test Results Summary:</h4>';
+                
+                for (const [category, result] of Object.entries(results)) {
+                    if (result.success) {
+                        html += `
+                            <div style="margin: 10px 0; padding: 10px; background: #f0f9f0; border-left: 4px solid #27ae60;">
+                                <strong>${category}:</strong> Found ${result.originalCount} staff (original) vs ${result.optimizedCount} staff (optimized)
+                                <div class="staff-list">
+                                    ${result.optimizedStaff.map(s => `<span class="staff-card">${s.name} (${s.id})</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div style="margin: 10px 0; padding: 10px; background: #fdf2f2; border-left: 4px solid #e74c3c;">
+                                <strong>${category}:</strong> ❌ Error - ${result.error}
+                            </div>
+                        `;
+                    }
+                }
+                
+                resultDiv.className = 'results success';
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.className = 'results error';
+                resultDiv.innerHTML = `❌ Test failed: ${error.message}`;
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Test All Categories';
+        }
+
+        // Test individual category
+        async function testCategory(category) {
+            const button = event.target;
+            const resultDiv = document.getElementById(`${category}-result`);
+            
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Testing category...</div>';
+            
+            try {
+                const date = new Date().toISOString().split('T')[0];
+                const staff = await SupabaseAPI.getAvailableStaffOptimized(category, date);
+                
+                if (staff.length > 0) {
+                    let html = `<strong>✅ Found ${staff.length} available staff:</strong>`;
+                    html += '<div class="staff-list">';
+                    staff.forEach(s => {
+                        html += `<span class="staff-card">${s.name} (${s.id})</span>`;
+                    });
+                    html += '</div>';
+                    
+                    resultDiv.className = 'results success';
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.className = 'results error';
+                    resultDiv.innerHTML = `⚠️ No staff available for ${category}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'results error';
+                resultDiv.innerHTML = `❌ Error testing ${category}: ${error.message}`;
+            }
+            
+            button.disabled = false;
+            button.textContent = `Test ${category.charAt(0).toUpperCase() + category.slice(1)}`;
+        }
+
+        // Test staff capabilities
+        async function testStaffCapabilities() {
+            const button = event.target;
+            const resultDiv = document.getElementById('staffCapabilitiesResult');
+            
+            button.disabled = true;
+            button.textContent = 'Testing...';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Testing staff capabilities...</div>';
+            
+            try {
+                // Get all staff first
+                const allStaff = await SupabaseAPI.getStaff();
+                const categories = ['facials', 'massages', 'treatments', 'waxing', 'packages', 'special'];
+                
+                let html = '<h4>Staff Capability Matrix:</h4>';
+                html += '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<tr><th style="border: 1px solid #ddd; padding: 8px;">Staff</th>';
+                categories.forEach(cat => {
+                    html += `<th style="border: 1px solid #ddd; padding: 8px;">${cat}</th>`;
+                });
+                html += '</tr>';
+                
+                for (const staff of allStaff) {
+                    html += `<tr><td style="border: 1px solid #ddd; padding: 8px;"><strong>${staff.name}</strong></td>`;
+                    
+                    for (const category of categories) {
+                        try {
+                            const canPerform = await SupabaseAPI.verifyStaffCapabilities(staff.id, category);
+                            html += `<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+                                ${canPerform ? '✅' : '❌'}
+                            </td>`;
+                        } catch (error) {
+                            html += `<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">❓</td>`;
+                        }
+                    }
+                    html += '</tr>';
+                }
+                html += '</table>';
+                
+                resultDiv.className = 'results success';
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.className = 'results error';
+                resultDiv.innerHTML = `❌ Error testing capabilities: ${error.message}`;
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Test Staff Capabilities';
+        }
+
+        // Compare query methods
+        async function compareQueryMethods() {
+            const button = event.target;
+            const resultDiv = document.getElementById('comparisonResult');
+            
+            button.disabled = true;
+            button.textContent = 'Comparing...';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Comparing query methods...</div>';
+            
+            try {
+                const date = new Date().toISOString().split('T')[0];
+                const category = 'waxing'; // Test with waxing since it was problematic
+                
+                console.log('=== Comparison Test Starting ===');
+                
+                const startTime1 = performance.now();
+                const originalResult = await SupabaseAPI.getAvailableStaff(category, date);
+                const originalTime = performance.now() - startTime1;
+                
+                const startTime2 = performance.now();
+                const optimizedResult = await SupabaseAPI.getAvailableStaffOptimized(category, date);
+                const optimizedTime = performance.now() - startTime2;
+                
+                let html = `
+                    <h4>Query Method Comparison (${category}):</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div>
+                            <h5>Original Method:</h5>
+                            <p>⏱️ <strong>Time:</strong> ${originalTime.toFixed(2)}ms</p>
+                            <p>👥 <strong>Results:</strong> ${originalResult.length} staff</p>
+                            <div class="staff-list">
+                                ${originalResult.map(s => `<span class="staff-card">${s.name}</span>`).join('')}
+                            </div>
+                        </div>
+                        <div>
+                            <h5>Optimized Method:</h5>
+                            <p>⏱️ <strong>Time:</strong> ${optimizedTime.toFixed(2)}ms</p>
+                            <p>👥 <strong>Results:</strong> ${optimizedResult.length} staff</p>
+                            <div class="staff-list">
+                                ${optimizedResult.map(s => `<span class="staff-card">${s.name}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <strong>Performance:</strong> ${optimizedTime < originalTime ? 'Optimized method is faster' : 'Original method is faster'} 
+                        (${Math.abs(optimizedTime - originalTime).toFixed(2)}ms difference)
+                    </div>
+                `;
+                
+                resultDiv.className = 'results success';
+                resultDiv.innerHTML = html;
+            } catch (error) {
+                resultDiv.className = 'results error';
+                resultDiv.innerHTML = `❌ Comparison failed: ${error.message}`;
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Compare Methods';
+        }
+
+        // Run full diagnostic
+        async function runFullDiagnostic() {
+            const button = event.target;
+            const resultDiv = document.getElementById('debugResult');
+            
+            button.disabled = true;
+            button.textContent = 'Running...';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading">Running full diagnostic...</div>';
+            
+            try {
+                // Clear console for clean debug output
+                console.clear();
+                console.log('=== FULL DIAGNOSTIC STARTING ===');
+                
+                // Test connection
+                const connection = await SupabaseAPI.testConnection();
+                
+                // Test all categories
+                const categoryResults = await SupabaseAPI.testStaffAvailability();
+                
+                // Get all staff for reference
+                const allStaff = await SupabaseAPI.getStaff();
+                
+                const diagnosticData = {
+                    timestamp: new Date().toISOString(),
+                    connection: connection,
+                    totalStaff: allStaff.length,
+                    staffList: allStaff.map(s => ({
+                        id: s.id,
+                        name: s.name,
+                        capabilities: s.capabilities,
+                        work_days: s.work_days
+                    })),
+                    categoryResults: categoryResults
+                };
+                
+                console.log('=== DIAGNOSTIC COMPLETE ===');
+                console.log(diagnosticData);
+                
+                resultDiv.className = 'results success';
+                resultDiv.innerHTML = `
+                    <h4>✅ Full Diagnostic Complete</h4>
+                    <p>Check the browser console for detailed logs. Summary:</p>
+                    <ul>
+                        <li><strong>Connection:</strong> ${connection.success ? '✅ Success' : '❌ Failed'}</li>
+                        <li><strong>Total Staff:</strong> ${allStaff.length}</li>
+                        <li><strong>Categories Tested:</strong> ${Object.keys(categoryResults).length}</li>
+                        <li><strong>Successful Categories:</strong> ${Object.values(categoryResults).filter(r => r.success).length}</li>
+                    </ul>
+                    <h5>Debug Data:</h5>
+                    <pre>${JSON.stringify(diagnosticData, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('Diagnostic failed:', error);
+                resultDiv.className = 'results error';
+                resultDiv.innerHTML = `❌ Diagnostic failed: ${error.message}`;
+            }
+            
+            button.disabled = false;
+            button.textContent = 'Run Full Diagnostic';
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Staff Availability Test Page loaded');
+            console.log('SupabaseAPI available:', typeof SupabaseAPI !== 'undefined');
+        });
+    </script>
+</body>
+</html>

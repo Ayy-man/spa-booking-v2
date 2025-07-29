@@ -8,6 +8,7 @@ export default function ConfirmationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string>('')
+  const [paymentCompleted, setPaymentCompleted] = useState(false)
 
   useEffect(() => {
     // Get all booking data from localStorage
@@ -18,13 +19,23 @@ export default function ConfirmationPage() {
     const customerData = localStorage.getItem('customerInfo')
 
     if (serviceData && dateData && timeData && staffData && customerData) {
+      const customer = JSON.parse(customerData)
       setBookingData({
         service: JSON.parse(serviceData),
         date: dateData,
         time: timeData,
         staff: staffData,
-        customer: JSON.parse(customerData)
+        customer: customer
       })
+      
+      // Check if this customer was marked as new (indicating they went through payment)
+      // Also check URL parameters for payment success indicators
+      const urlParams = new URLSearchParams(window.location.search)
+      const paymentSuccess = urlParams.get('payment') === 'success'
+      
+      if (customer.isNewCustomer || paymentSuccess) {
+        setPaymentCompleted(true)
+      }
     }
   }, [])
 
@@ -128,9 +139,18 @@ export default function ConfirmationPage() {
               Demo Booking Confirmed!
             </h1>
             
-            <p className="text-gray-600 mb-8">
+            <p className="text-gray-600 mb-4">
               This demo booking has been recorded in your browser's local storage. In a production system, you would receive a confirmation email.
             </p>
+            
+            {paymentCompleted && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <p className="text-green-800 text-sm">
+                  <strong>Payment processed:</strong> Your $25 deposit has been applied to this booking. 
+                  The remaining balance of ${bookingData.service.price - 25} will be due at your appointment.
+                </p>
+              </div>
+            )}
             
             <div className="bg-accent rounded-lg p-6 mb-8 text-left">
               <h2 className="font-semibold text-primary-dark mb-4">Booking Details</h2>
@@ -174,6 +194,23 @@ export default function ConfirmationPage() {
           </p>
         </div>
 
+        {/* Payment Status Banner (if applicable) */}
+        {paymentCompleted && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-green-900">Payment Successful!</p>
+                <p className="text-sm text-green-700">Your $25 deposit has been processed.</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Booking Summary */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <h2 className="text-xl font-heading text-primary-dark mb-6">
@@ -211,6 +248,10 @@ export default function ConfirmationPage() {
                 <p><span className="font-medium">Email:</span> {bookingData.customer.email}</p>
                 {bookingData.customer.phone && (
                   <p><span className="font-medium">Phone:</span> {bookingData.customer.phone}</p>
+                )}
+                <p><span className="font-medium">Customer Type:</span> {bookingData.customer.isNewCustomer ? 'New Customer' : 'Returning Customer'}</p>
+                {paymentCompleted && (
+                  <p><span className="font-medium">Deposit Status:</span> <span className="text-green-600 font-medium">Paid ($25)</span></p>
                 )}
                 {bookingData.customer.specialRequests && (
                   <p><span className="font-medium">Special Requests:</span> {bookingData.customer.specialRequests}</p>

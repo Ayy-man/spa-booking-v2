@@ -218,6 +218,94 @@ export const SERVICE_REQUIREMENTS = {
 - **Service Quality**: Only qualified staff assigned to services
 - **Customer Experience**: Clear error messages and booking guidance
 - **Operational Efficiency**: Optimal room utilization and staff scheduling
+- **Simplified Payment Processing**: Customer status-based payment flow using existing GoHighLevel infrastructure
+- **Payment Accuracy**: $25 prefilled for new customers, on-arrival payment for existing customers
+- **Integration Reliability**: Leverages existing payment systems without complex API integrations
+
+## 💳 Customer Status Decision Point & Payment Flow
+
+### Customer Classification System
+
+**New Customer Checkbox Implementation:**
+- Simple "Are you a new customer?" Yes/No decision point
+- Integrated after customer information collection in booking flow
+- Eliminates complex API integrations for payment processing
+- Leverages existing GoHighLevel payment infrastructure
+
+**Customer Status Business Rules:**
+- **NEW Customers**: Redirected to GoHighLevel payment link with $25 prefilled amount
+- **EXISTING Customers**: Proceed directly to booking confirmation (payment on arrival)
+- **Payment Decision Point**: Occurs after customer info collection, before final confirmation
+
+### Updated Booking Flow Sequence
+
+**Complete Booking Process:**
+1. **Service Selection** - Choose from available spa services
+2. **Date & Time Selection** - Pick available appointment slots
+3. **Staff Selection** - Choose from qualified and available staff
+4. **Customer Information Collection** - Gather contact and booking details
+5. **Customer Status Decision Point** - NEW customer checkbox verification
+6. **Payment Processing OR Confirmation**:
+   - **NEW Customer Path**: GoHighLevel payment link ($25 prefilled)
+   - **EXISTING Customer Path**: Direct booking confirmation
+7. **Final Booking Confirmation** - Appointment scheduled and confirmed
+
+### Payment Processing Logic
+
+**Simplified Payment Approach:**
+- **No Complex API Integration**: Uses existing GoHighLevel payment system
+- **Conditional Payment Flow**: Based on customer status checkbox
+- **Prefilled Payment Amount**: $25 automatically populated for new customers
+- **Existing Customer Handling**: Payment collected on arrival (existing business process)
+
+**Payment Validation Rules:**
+- New customers must complete payment before booking confirmation
+- Existing customers can confirm booking without immediate payment
+- Payment link integration with GoHighLevel maintains existing infrastructure
+- Failed payments prevent booking completion for new customers
+
+### Customer Status Decision Implementation
+
+**UI/UX Requirements:**
+- Clear checkbox with label: "Are you a new customer?"
+- Positioned after customer information form
+- Required field validation (must select Yes or No)
+- Contextual help text explaining the difference
+
+**Technical Implementation:**
+```typescript
+interface CustomerStatus {
+  isNewCustomer: boolean;
+  requiresPayment: boolean;
+  paymentMethod: 'gohighlevel' | 'on_arrival';
+}
+
+const determinePaymentFlow = (isNewCustomer: boolean): CustomerStatus => {
+  return {
+    isNewCustomer,
+    requiresPayment: isNewCustomer,
+    paymentMethod: isNewCustomer ? 'gohighlevel' : 'on_arrival'
+  };
+};
+```
+
+### Integration with Existing Business Logic
+
+**Enhanced Booking Validation:**
+- Customer status validation added to booking request validation
+- Payment completion verification for new customers
+- Booking confirmation flow depends on customer status
+- Error handling for payment failures or incomplete customer status
+
+**Updated Business Constants:**
+```typescript
+export const PAYMENT_FLOW = {
+  NEW_CUSTOMER_DEPOSIT: 25,
+  GOHIGHLEVEL_PAYMENT_REQUIRED: true,
+  EXISTING_CUSTOMER_PAYMENT_ON_ARRIVAL: true,
+  PAYMENT_COMPLETION_TIMEOUT: 300, // 5 minutes
+};
+```
 
 ## 📋 Maintenance & Extensibility
 
@@ -227,5 +315,7 @@ export const SERVICE_REQUIREMENTS = {
 - Extensible validation framework
 - Comprehensive test coverage
 - Clear documentation and error handling
+- Simplified payment integration approach
+- Customer status-based conditional logic
 
-The implementation ensures that all critical spa business rules are enforced across the entire booking system, preventing operational conflicts while providing an excellent user experience.
+The implementation ensures that all critical spa business rules are enforced across the entire booking system, preventing operational conflicts while providing an excellent user experience. The new customer status decision point streamlines payment processing by leveraging existing GoHighLevel infrastructure and maintaining simple, reliable booking flows.

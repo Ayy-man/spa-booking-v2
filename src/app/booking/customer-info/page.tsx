@@ -8,7 +8,8 @@ export default function CustomerInfoPage() {
     name: '',
     email: '',
     phone: '',
-    specialRequests: ''
+    specialRequests: '',
+    isNewCustomer: false
   })
   const [selectedService, setSelectedService] = useState<any>(null)
   const [selectedDate, setSelectedDate] = useState<string>('')
@@ -29,10 +30,12 @@ export default function CustomerInfoPage() {
   }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
+    const { name, value, type } = e.target
+    const checked = (e.target as HTMLInputElement).checked
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }))
   }
 
@@ -42,8 +45,15 @@ export default function CustomerInfoPage() {
     // Store customer info
     localStorage.setItem('customerInfo', JSON.stringify(formData))
     
-    // Navigate to confirmation
-    window.location.href = '/booking/confirmation'
+    // Check customer status and redirect accordingly
+    if (formData.isNewCustomer) {
+      // New customer - redirect to GoHighLevel payment link
+      const ghlPaymentUrl = 'https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034'
+      window.location.href = ghlPaymentUrl
+    } else {
+      // Existing customer - go directly to confirmation
+      window.location.href = '/booking/confirmation'
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -162,6 +172,29 @@ export default function CustomerInfoPage() {
               />
             </div>
 
+            {/* Customer Status Checkbox */}
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-start space-x-3">
+                <input
+                  type="checkbox"
+                  id="isNewCustomer"
+                  name="isNewCustomer"
+                  checked={formData.isNewCustomer}
+                  onChange={handleInputChange}
+                  className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <div>
+                  <label htmlFor="isNewCustomer" className="text-sm font-medium text-gray-900 cursor-pointer">
+                    This is my first visit to Dermal Skin Clinic
+                  </label>
+                  <p className="text-xs text-gray-600 mt-1">
+                    New customers require a $25 deposit to secure their booking. 
+                    Existing customers can book without a deposit.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={!formData.name || !formData.email}
@@ -171,7 +204,10 @@ export default function CustomerInfoPage() {
                   : 'bg-black text-white hover:bg-gray-900'
               }`}
             >
-              Continue to Confirmation
+              {formData.isNewCustomer 
+                ? 'Continue to Payment ($25 Deposit)' 
+                : 'Continue to Confirmation'
+              }
             </button>
           </form>
         </div>

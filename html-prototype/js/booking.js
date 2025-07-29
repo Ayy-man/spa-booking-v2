@@ -40,19 +40,69 @@ function initializeServiceSelection() {
     }
 }
 
-function populateServices() {
-    // Populate each category
-    Object.keys(serviceCategories).forEach(categoryKey => {
-        const gridId = getGridId(categoryKey);
-        const grid = document.getElementById(gridId);
+async function populateServices() {
+    try {
+        // Show loading state
+        const categories = ['facials', 'massages', 'treatments', 'waxing', 'packages', 'special'];
+        categories.forEach(category => {
+            const gridId = getGridId(category);
+            const grid = document.getElementById(gridId);
+            if (grid) {
+                grid.innerHTML = '<div style="padding: 2rem; text-align: center; color: #6B7280;">Loading services...</div>';
+            }
+        });
+
+        // Fetch services from database
+        const services = await SupabaseAPI.getServices();
+        console.log('Loaded services from database:', services.length);
         
-        if (grid) {
-            serviceCategories[categoryKey].forEach(service => {
-                const serviceCard = createServiceCard(service);
-                grid.appendChild(serviceCard);
-            });
-        }
-    });
+        // Group services by category
+        const servicesByCategory = {
+            facials: [],
+            massages: [],
+            treatments: [],
+            waxing: [],
+            packages: [],
+            special: []
+        };
+        
+        services.forEach(service => {
+            if (servicesByCategory[service.category]) {
+                servicesByCategory[service.category].push(service);
+            }
+        });
+
+        // Populate each category grid
+        Object.keys(servicesByCategory).forEach(categoryKey => {
+            const gridId = getGridId(categoryKey);
+            const grid = document.getElementById(gridId);
+            
+            if (grid) {
+                grid.innerHTML = ''; // Clear loading message
+                servicesByCategory[categoryKey].forEach(service => {
+                    const serviceCard = createServiceCard(service);
+                    grid.appendChild(serviceCard);
+                });
+                
+                // Show message if no services in category
+                if (servicesByCategory[categoryKey].length === 0) {
+                    grid.innerHTML = '<div style="padding: 1rem; text-align: center; color: #9CA3AF;">No services available in this category</div>';
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error loading services:', error);
+        // Show error message in all grids
+        const categories = ['facials', 'massages', 'treatments', 'waxing', 'packages', 'special'];
+        categories.forEach(category => {
+            const gridId = getGridId(category);
+            const grid = document.getElementById(gridId);
+            if (grid) {
+                grid.innerHTML = '<div style="padding: 2rem; text-align: center; color: #DC2626;">Error loading services. Please refresh the page.</div>';
+            }
+        });
+    }
 }
 
 function getGridId(categoryKey) {
@@ -418,7 +468,7 @@ function displayBookingSummary() {
     }
 }
 
-function populateAvailableStaff() {
+async function populateAvailableStaff() {
     console.log('populateAvailableStaff called');
     const staffGrid = document.getElementById('staff-grid');
     console.log('staffGrid element:', staffGrid);
@@ -454,77 +504,169 @@ function populateAvailableStaff() {
         return;
     }
     
-    const availableStaff = getAvailableStaff();
-    console.log('Available staff:', availableStaff);
+    // Show loading state
+    staffGrid.innerHTML = `
+        <div style="text-align: center; padding: 2rem; color: #6B7280;">
+            <p>Loading available staff...</p>
+        </div>
+    `;
     
-    if (availableStaff.length === 0) {
+    try {
+        const availableStaff = await getAvailableStaff();
+        console.log('Available staff:', availableStaff);
+        
+        // Clear loading message
+        staffGrid.innerHTML = '';
+        
+        if (availableStaff.length === 0) {
+            staffGrid.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #6B7280;">
+                    <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">😔 No staff available</p>
+                    <p>No staff available for ${selectedService.name} on this date.</p>
+                    <a href="date-time.html" style="color: var(--primary); text-decoration: none;">← Choose a different date</a>
+                </div>
+            `;
+            return;
+        }
+        
+        availableStaff.forEach(staff => {
+            console.log('Creating staff card for:', staff.name);
+            const staffCard = createStaffCard(staff);
+            if (staffCard) {
+                staffGrid.appendChild(staffCard);
+            }
+        });
+        
+        console.log('Staff cards added. Total staff cards:', staffGrid.children.length);
+        
+        // Auto-select and advance if only one staff member available
+        if (availableStaff.length === 1) {
+            const onlyStaff = availableStaff[0];
+            selectedStaff = onlyStaff.id;
+            localStorage.setItem('selectedStaff', onlyStaff.id);
+            
+            // Add visual feedback that staff was auto-selected
+            const staffCard = staffGrid.children[0];
+            if (staffCard) {
+                staffCard.classList.add('selected');
+                const radio = staffCard.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
+            }
+            
+            // Show message and auto-advance
+            const autoMessage = document.createElement('div');
+            autoMessage.style.cssText = `
+                margin-top: 16px;
+                padding: 12px;
+                background-color: rgba(16, 185, 129, 0.1);
+                border: 1px solid rgba(16, 185, 129, 0.3);
+                border-radius: 8px;
+                color: #065F46;
+                font-size: 0.875rem;
+                text-align: center;
+            `;
+            autoMessage.innerHTML = `✓ ${onlyStaff.name} automatically selected (only available staff) • Continuing...`;
+            staffGrid.appendChild(autoMessage);
+            
+            setTimeout(() => {
+                window.location.href = 'customer-info.html';
+            }, 2000);
+        }
+    } catch (error) {
+        console.error('Error loading staff:', error);
         staffGrid.innerHTML = `
-            <div style="text-align: center; padding: 2rem; color: #6B7280;">
-                <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">😔 No staff available</p>
-                <p>No staff available for ${selectedService.name} on this date.</p>
-                <a href="date-time.html" style="color: var(--primary); text-decoration: none;">← Choose a different date</a>
+            <div style="text-align: center; padding: 2rem; color: #DC2626;">
+                <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">❌ Error loading staff</p>
+                <p>Please refresh the page and try again.</p>
             </div>
         `;
-        return;
-    }
-    
-    availableStaff.forEach(staff => {
-        console.log('Creating staff card for:', staff.name);
-        const staffCard = createStaffCard(staff);
-        if (staffCard) {
-            staffGrid.appendChild(staffCard);
-        }
-    });
-    
-    console.log('Staff cards added. Total staff cards:', staffGrid.children.length);
-    
-    // Auto-select and advance if only one staff member available
-    if (availableStaff.length === 1) {
-        const onlyStaff = availableStaff[0];
-        selectedStaff = onlyStaff.id;
-        localStorage.setItem('selectedStaff', onlyStaff.id);
-        
-        // Add visual feedback that staff was auto-selected
-        const staffCard = staffGrid.children[0];
-        if (staffCard) {
-            staffCard.classList.add('selected');
-            const radio = staffCard.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
-        }
-        
-        // Show message and auto-advance
-        const autoMessage = document.createElement('div');
-        autoMessage.style.cssText = `
-            margin-top: 16px;
-            padding: 12px;
-            background-color: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 8px;
-            color: #065F46;
-            font-size: 0.875rem;
-            text-align: center;
-        `;
-        autoMessage.innerHTML = `✓ ${onlyStaff.name} automatically selected (only available staff) • Continuing...`;
-        staffGrid.appendChild(autoMessage);
-        
-        setTimeout(() => {
-            window.location.href = 'customer-info.html';
-        }, 2000);
     }
 }
 
-function getAvailableStaff() {
-    const dayOfWeek = selectedDate.getDay();
-    
-    return staffMembers.filter(staff => {
-        // Check if staff can perform this service
-        const canPerformService = staff.capabilities.includes(selectedService.category);
+async function getAvailableStaff() {
+    try {
+        if (!selectedService || !selectedDate) {
+            console.log('Missing selectedService or selectedDate');
+            return [];
+        }
+
+        const dayOfWeek = selectedDate.getDay();
+        console.log('Getting available staff for:', selectedService.category, 'on day:', dayOfWeek);
         
-        // Check if staff works on this day
-        const worksOnDay = staff.workDays.includes(dayOfWeek);
+        // Use the optimized staff availability query with enhanced error handling
+        let availableStaff = [];
         
-        return canPerformService && worksOnDay;
-    });
+        try {
+            // First try the optimized method with conflict checking if time is selected
+            if (selectedTime) {
+                // Calculate end time based on service duration
+                const startTime = selectedTime;
+                const [hours, minutes] = startTime.split(':').map(Number);
+                const startMinutes = hours * 60 + minutes;
+                const endMinutes = startMinutes + selectedService.duration;
+                const endHours = Math.floor(endMinutes / 60);
+                const endMins = endMinutes % 60;
+                const endTime = `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+                
+                console.log('Checking availability with time constraints:', startTime, 'to', endTime);
+                availableStaff = await SupabaseAPI.getAvailableStaffOptimized(
+                    selectedService.category, 
+                    selectedDate.toISOString().split('T')[0], 
+                    startTime, 
+                    endTime
+                );
+            } else {
+                // Just check basic availability without time constraints
+                availableStaff = await SupabaseAPI.getAvailableStaffOptimized(
+                    selectedService.category, 
+                    selectedDate.toISOString().split('T')[0]
+                );
+            }
+            
+            console.log('Available staff from optimized query:', availableStaff);
+        } catch (optimizedError) {
+            console.warn('Optimized query failed, falling back to original method:', optimizedError);
+            
+            // Fallback to original method
+            availableStaff = await SupabaseAPI.getAvailableStaff(selectedService.category, selectedDate);
+            console.log('Available staff from fallback query:', availableStaff);
+        }
+        
+        // Additional client-side validation to ensure staff can perform the service
+        const validatedStaff = availableStaff.filter(staff => {
+            // Check if staff has the required capability
+            const hasCapability = staff.capabilities && 
+                (staff.capabilities.includes(selectedService.category) || staff.id === 'any');
+            
+            // Check if staff works on the selected day
+            const worksOnDay = staff.work_days && staff.work_days.includes(dayOfWeek);
+            
+            const isValid = hasCapability && worksOnDay;
+            
+            if (!isValid) {
+                console.log(`Staff ${staff.name} filtered out: hasCapability=${hasCapability}, worksOnDay=${worksOnDay}`);
+            }
+            
+            return isValid;
+        });
+        
+        console.log('Final validated staff:', validatedStaff);
+        return validatedStaff;
+        
+    } catch (error) {
+        console.error('Error getting available staff:', error);
+        
+        // Enhanced error logging for debugging
+        console.error('Error details:', {
+            selectedService: selectedService,
+            selectedDate: selectedDate,
+            selectedTime: selectedTime,
+            error: error.message,
+            stack: error.stack
+        });
+        
+        return [];
+    }
 }
 
 function createStaffCard(staff) {

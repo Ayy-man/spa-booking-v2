@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Populate Database - Dermal Skin Clinic</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="min-h-screen bg-background py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl font-heading text-primary-dark mb-4">
+                    Database Population Tool
+                </h1>
+                <p class="text-gray-600">
+                    Load services and staff data from services-data.js into Supabase
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <div class="flex gap-4 mb-6">
+                    <button id="test-connection" class="btn-primary">Test Connection</button>
+                    <button id="populate-rooms" class="btn-secondary">Populate Rooms</button>
+                    <button id="populate-staff" class="btn-secondary">Populate Staff</button>
+                    <button id="populate-services" class="btn-secondary">Populate Services</button>
+                    <button id="populate-all" class="btn-continue">Populate All Data</button>
+                </div>
+                
+                <div id="status" class="p-4 border rounded-lg">
+                    <p>Ready to populate database...</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-heading text-primary-dark mb-4">Progress Log</h2>
+                <div id="log" style="max-height: 400px; overflow-y: auto; background: #f8f9fa; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.875rem;">
+                    <!-- Log messages will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/services-data.js"></script>
+    <script>
+        const SUPABASE_URL = 'https://doradsvnphdwotkeiylv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcmFkc3ZucGhkd290a2VpeWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NDA3MTYsImV4cCI6MjA2OTMxNjcxNn0.4DbNHxjhOshrrQGYxjH8QI4V2sqx2VLr7nH0stSEXZk';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                success: '#22c55e',
+                error: '#ef4444', 
+                warning: '#f59e0b',
+                info: '#3b82f6'
+            };
+            
+            logDiv.innerHTML += `<div style="color: ${colors[type]}; margin: 2px 0;">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            const colors = {
+                success: { bg: '#ecfdf5', text: '#065f46', border: '#10b981' },
+                error: { bg: '#fef2f2', text: '#991b1b', border: '#f87171' },
+                warning: { bg: '#fefbeb', text: '#92400e', border: '#f59e0b' },
+                info: { bg: '#eff6ff', text: '#1e40af', border: '#3b82f6' }
+            };
+            
+            const color = colors[type];
+            statusDiv.innerHTML = `<p style="color: ${color.text}">${message}</p>`;
+            statusDiv.style.backgroundColor = color.bg;
+            statusDiv.style.borderColor = color.border;
+        }
+
+        async function testConnection() {
+            try {
+                log('Testing Supabase connection...', 'info');
+                updateStatus('Testing connection...', 'info');
+                
+                const { data, error } = await supabaseClient
+                    .from('services')
+                    .select('count(*)')
+                    .limit(1);
+
+                if (error) {
+                    throw error;
+                }
+
+                log('✅ Database connection successful!', 'success');
+                updateStatus('✅ Connected to database successfully!', 'success');
+                return true;
+            } catch (error) {
+                log(`❌ Connection failed: ${error.message}`, 'error');
+                updateStatus(`❌ Connection failed: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function populateRooms() {
+            const roomsData = [
+                { id: 1, name: 'Room 1', capacity: 1, capabilities: ['facials', 'waxing'] },
+                { id: 2, name: 'Room 2', capacity: 2, capabilities: ['facials', 'waxing', 'massages', 'packages'] },
+                { id: 3, name: 'Room 3', capacity: 2, capabilities: ['facials', 'waxing', 'massages', 'treatments', 'packages', 'special'] }
+            ];
+
+            try {
+                log('Populating rooms table...', 'info');
+                
+                const { data, error } = await supabaseClient
+                    .from('rooms')
+                    .upsert(roomsData, { onConflict: 'id' });
+
+                if (error) throw error;
+
+                log(`✅ Successfully added ${roomsData.length} rooms`, 'success');
+                return true;
+            } catch (error) {
+                log(`❌ Failed to populate rooms: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function populateStaff() {
+            const staffData = staffMembers.map(staff => ({
+                id: staff.id,
+                name: staff.name,
+                email: staff.email || null,
+                phone: staff.phone || null,
+                specialties: staff.specialties,
+                capabilities: staff.capabilities,
+                work_days: staff.workDays,
+                default_room_id: staff.defaultRoom,
+                initials: staff.initials,
+                role: 'therapist'
+            }));
+
+            try {
+                log('Populating staff table...', 'info');
+                
+                const { data, error } = await supabaseClient
+                    .from('staff')
+                    .upsert(staffData, { onConflict: 'id' });
+
+                if (error) throw error;
+
+                log(`✅ Successfully added ${staffData.length} staff members`, 'success');
+                return true;
+            } catch (error) {
+                log(`❌ Failed to populate staff: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function populateServices() {
+            // Flatten all service categories into one array
+            const allServices = [];
+            Object.keys(serviceCategories).forEach(categoryKey => {
+                serviceCategories[categoryKey].forEach(service => {
+                    allServices.push({
+                        id: service.id,
+                        name: service.name,
+                        category: service.category,
+                        duration: service.duration,
+                        price: service.price,
+                        requires_room_3: service.requiresRoom3 || false,
+                        is_couples_service: service.isCouples || false,
+                        description: `${service.duration} minute ${service.category.slice(0, -1)} service`
+                    });
+                });
+            });
+
+            try {
+                log(`Populating services table with ${allServices.length} services...`, 'info');
+                
+                // Insert in batches to avoid large query issues
+                const batchSize = 10;
+                for (let i = 0; i < allServices.length; i += batchSize) {
+                    const batch = allServices.slice(i, i + batchSize);
+                    
+                    const { data, error } = await supabaseClient
+                        .from('services')
+                        .upsert(batch, { onConflict: 'id' });
+
+                    if (error) throw error;
+                    
+                    log(`✅ Added batch ${Math.floor(i/batchSize) + 1} (${batch.length} services)`, 'info');
+                }
+
+                log(`✅ Successfully added all ${allServices.length} services`, 'success');
+                return true;
+            } catch (error) {
+                log(`❌ Failed to populate services: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function populateAll() {
+            updateStatus('Populating all data...', 'info');
+            log('Starting complete data population...', 'info');
+
+            const steps = [
+                { name: 'Connection Test', fn: testConnection },
+                { name: 'Rooms', fn: populateRooms },
+                { name: 'Staff', fn: populateStaff },
+                { name: 'Services', fn: populateServices }
+            ];
+
+            for (const step of steps) {
+                log(`--- Starting ${step.name} ---`, 'info');
+                const success = await step.fn();
+                
+                if (!success) {
+                    updateStatus(`❌ Failed at step: ${step.name}`, 'error');
+                    return;
+                }
+            }
+
+            log('🎉 Database population completed successfully!', 'success');
+            updateStatus('🎉 All data populated successfully!', 'success');
+        }
+
+        // Event listeners
+        document.getElementById('test-connection').addEventListener('click', testConnection);
+        document.getElementById('populate-rooms').addEventListener('click', populateRooms);
+        document.getElementById('populate-staff').addEventListener('click', populateStaff);
+        document.getElementById('populate-services').addEventListener('click', populateServices);
+        document.getElementById('populate-all').addEventListener('click', populateAll);
+
+        // Auto-test connection on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Database population tool loaded', 'info');
+            log('Click "Test Connection" to verify database access', 'info');
+        });
+    </script>
+</body>
+</html>

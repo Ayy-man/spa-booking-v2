@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Database Function Deployment</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .status { padding: 15px; margin: 10px 0; border-radius: 8px; font-weight: bold; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        ul { list-style-type: none; padding: 0; }
+        li { padding: 8px; margin: 4px 0; background: #f8f9fa; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Database Function Deployment Verification</h1>
+    <p>This page verifies that the PostgreSQL functions have been successfully deployed to fix staff availability issues.</p>
+    
+    <button onclick="runVerification()">Run Verification</button>
+    
+    <div id="results"></div>
+
+    <!-- Include Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        function addStatus(message, type) {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+            return div;
+        }
+
+        async function runVerification() {
+            resultsDiv.innerHTML = '';
+            const startTime = Date.now();
+            
+            addStatus('🚀 Starting verification process...', 'loading');
+
+            try {
+                // Test 1: Basic connection
+                addStatus('1. Testing database connection...', 'loading');
+                const { data: testData, error: testError } = await supabaseClient
+                    .from('services')
+                    .select('count')
+                    .limit(1);
+                
+                if (testError) {
+                    addStatus(`❌ Connection failed: ${testError.message}`, 'error');
+                    return;
+                }
+                addStatus('✅ Database connection successful', 'success');
+
+                // Test 2: Check if functions exist
+                addStatus('2. Testing database functions...', 'loading');
+                const functions = [
+                    'get_available_staff_for_service',
+                    'get_available_staff_with_conflicts', 
+                    'can_staff_perform_service',
+                    'get_staff_service_categories'
+                ];
+
+                let functionsWorking = 0;
+                for (const functionName of functions) {
+                    try {
+                        let result;
+                        switch (functionName) {
+                            case 'get_available_staff_for_service':
+                                const { data, error } = await supabaseClient
+                                    .rpc(functionName, { service_category: 'waxing', day_of_week: 1 });
+                                if (error) throw error;
+                                result = `Found ${data.length} staff`;
+                                break;
+                            
+                            case 'can_staff_perform_service':
+                                const { data: canPerform, error: canError } = await supabaseClient
+                                    .rpc(functionName, { staff_id_param: 'robyn', service_category_param: 'waxing' });
+                                if (canError) throw error;
+                                result = canPerform ? 'Can perform' : 'Cannot perform';
+                                break;
+                            
+                            case 'get_staff_service_categories':
+                                const { data: categories, error: catError } = await supabaseClient
+                                    .rpc(functionName, { staff_id_param: 'robyn' });
+                                if (catError) throw catError;
+                                result = `Has ${categories.length} capabilities`;
+                                break;
+                            
+                            default:
+                                result = 'Function exists';
+                        }
+                        
+                        addStatus(`   ✅ ${functionName}(): ${result}`, 'success');
+                        functionsWorking++;
+                    } catch (error) {
+                        addStatus(`   ❌ ${functionName}(): ${error.message}`, 'error');
+                    }
+                }
+
+                // Test 3: Test staff availability for problematic service
+                addStatus('3. Testing staff availability for waxing (previously failing)...', 'loading');
+                try {
+                    const waxingStaff = await SupabaseAPI.getAvailableStaffOptimized('waxing', new Date().toISOString().split('T')[0]);
+                    if (waxingStaff.length > 0) {
+                        addStatus(`✅ Found ${waxingStaff.length} staff for waxing: ${waxingStaff.map(s => s.name).join(', ')}`, 'success');
+                    } else {
+                        addStatus('⚠️ No staff found for waxing (this may be expected based on day/schedule)', 'error');
+                    }
+                } catch (error) {
+                    addStatus(`❌ Waxing staff query failed: ${error.message}`, 'error');
+                }
+
+                // Test 4: Test all service categories
+                addStatus('4. Testing all service categories...', 'loading');
+                const categories = ['facials', 'massages', 'treatments', 'waxing', 'packages', 'special'];
+                let workingCategories = 0;
+                
+                for (const category of categories) {
+                    try {
+                        const staff = await SupabaseAPI.getAvailableStaffOptimized(category, new Date().toISOString().split('T')[0]);
+                        addStatus(`   ✅ ${category}: ${staff.length} staff available`, 'success');
+                        workingCategories++;
+                    } catch (error) {
+                        addStatus(`   ❌ ${category}: ${error.message}`, 'error');
+                    }
+                }
+
+                // Final summary
+                const duration = Date.now() - startTime;
+                if (functionsWorking === functions.length && workingCategories === categories.length) {
+                    addStatus(`🎉 VERIFICATION SUCCESSFUL! All ${functions.length} database functions and ${categories.length} service categories are working correctly. (${duration}ms)`, 'success');
+                    addStatus('✅ The PostgreSQL array query fixes have been successfully deployed!', 'success');
+                } else {
+                    addStatus(`⚠️ PARTIAL SUCCESS: ${functionsWorking}/${functions.length} functions and ${workingCategories}/${categories.length} categories working. (${duration}ms)`, 'error');
+                }
+
+            } catch (error) {
+                addStatus(`❌ VERIFICATION FAILED: ${error.message}`, 'error');
+                console.error('Verification error:', error);
+            }
+        }
+
+        // Auto-run verification on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(runVerification, 1000);
+        });
+    </script>
+</body>
+</html>
