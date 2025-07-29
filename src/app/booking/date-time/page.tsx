@@ -10,6 +10,7 @@ export default function DateTimePage() {
   const [availableDates, setAvailableDates] = useState<Date[]>([])
   const [availableTimes, setAvailableTimes] = useState<string[]>([])
   const [selectedService, setSelectedService] = useState<any>(null)
+  const [loadingTimes, setLoadingTimes] = useState<boolean>(false)
 
   // Get selected service from localStorage
   useEffect(() => {
@@ -30,20 +31,45 @@ export default function DateTimePage() {
         dates.push(date)
       }
     }
+    console.log('Generated dates:', dates.length) // Debug log
     setAvailableDates(dates)
   }, [])
 
-  // Generate available times (9 AM - 7 PM)
+  // If no service is selected, redirect to service selection
   useEffect(() => {
-    if (selectedDate) {
+    if (!selectedService) {
+      console.log('No service selected, redirecting to service selection')
+      window.location.href = '/booking'
+    }
+  }, [selectedService])
+
+  // Generate available times based on selected date
+  useEffect(() => {
+    if (selectedDate && selectedService) {
+      setLoadingTimes(true)
+      
+      // Simple time slot generation for now
       const times = []
       for (let hour = 9; hour <= 19; hour++) {
         const time = `${hour.toString().padStart(2, '0')}:00`
-        times.push(time)
+        
+        // Check if this time allows enough duration before closing
+        const serviceDuration = selectedService.duration || 60
+        const endTime = new Date(selectedDate)
+        endTime.setHours(hour, 0, 0, 0)
+        endTime.setMinutes(endTime.getMinutes() + serviceDuration)
+        const closingTime = new Date(selectedDate)
+        closingTime.setHours(19, 0, 0, 0)
+        
+        if (endTime <= closingTime) {
+          times.push(time)
+        }
       }
+      
       setAvailableTimes(times)
+      setLoadingTimes(false)
     }
-  }, [selectedDate])
+  }, [selectedDate, selectedService])
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date)
@@ -67,6 +93,11 @@ export default function DateTimePage() {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4 max-w-4xl">
+        {/* Debug info */}
+        <div className="mb-4 p-2 bg-yellow-100 text-xs">
+          Debug: availableDates={availableDates.length}, selectedService={selectedService ? 'yes' : 'no'}
+        </div>
+        
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/booking" className="text-primary hover:text-primary-dark transition-colors">
@@ -127,21 +158,50 @@ export default function DateTimePage() {
             <h2 className="text-2xl font-heading text-primary-dark mb-6">
               Select Time for {format(selectedDate, 'EEEE, MMMM d')}
             </h2>
-            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              {availableTimes.map((time) => (
-                <button
-                  key={time}
-                  onClick={() => handleTimeSelect(time)}
-                  className={
-                    selectedTime === time
-                      ? 'time-slot-selected'
-                      : 'time-slot-available'
-                  }
-                >
-                  {time}
-                </button>
-              ))}
-            </div>
+            
+            {loadingTimes ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-gray-500">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4 mx-auto"></div>
+                  Checking availability...
+                </div>
+              </div>
+            ) : availableTimes.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="text-gray-500 mb-4">
+                  No available time slots for this date
+                </div>
+                <div className="text-sm text-gray-400">
+                  Please select a different date
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-700">
+                    Available time slots for {format(selectedDate, 'EEEE, MMMM d')}
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    {availableTimes.length} time slot{availableTimes.length !== 1 ? 's' : ''} available
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {availableTimes.map((time) => (
+                    <button
+                      key={time}
+                      onClick={() => handleTimeSelect(time)}
+                      className={
+                        selectedTime === time
+                          ? 'time-slot-selected'
+                          : 'time-slot-available'
+                      }
+                    >
+                      {time}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 
