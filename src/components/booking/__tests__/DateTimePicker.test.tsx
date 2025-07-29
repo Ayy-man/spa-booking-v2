@@ -303,7 +303,10 @@ describe('DateTimePicker Component', () => {
       const dateButton = screen.getByText(tomorrow.getDate().toString())
       
       if (dateButton.closest('button')) {
-        await user.click(dateButton.closest('button'))
+        const buttonElement = dateButton.closest('button')
+        if (buttonElement) {
+          await user.click(buttonElement)
+        }
         expect(mockProps.onDateSelect).toHaveBeenCalled()
       }
     })
