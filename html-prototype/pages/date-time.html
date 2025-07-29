@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Date & Time - Dermal Skin Clinic</title>
+    <meta name="description" content="Choose your preferred appointment date and time.">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="min-h-screen bg-background py-8">
+        <div class="container mx-auto px-4" style="max-width: 1024px;">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <a href="booking.html" style="color: var(--primary); text-decoration: none;">
+                    ← Back to Services
+                </a>
+                <h1 class="text-4xl font-heading text-primary-dark mt-4 mb-2">
+                    Select Date & Time
+                </h1>
+                <p class="text-gray-600">
+                    Choose your preferred appointment date and time
+                </p>
+                
+                <!-- Service Context Display -->
+                <div id="service-context" class="service-context">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Date Selection -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <h2 class="text-2xl font-heading text-primary-dark mb-6">
+                    Select Date
+                </h2>
+                <div style="margin-bottom: 16px; padding: 12px; background-color: rgba(254, 243, 199, 0.3); border-radius: 8px; font-size: 0.875rem; color: #92400E; display: flex; align-items: center; gap: 8px;">
+                    <span>✨</span> Weekend dates are highlighted in gold
+                </div>
+                <div id="date-grid" style="display: flex; gap: 12px; overflow-x: auto; padding: 16px 0; min-height: 80px;">
+                    <!-- Date buttons will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Time Selection (Initially Hidden) -->
+            <div id="time-selection" class="bg-white rounded-xl shadow-md p-6 mb-8" style="display: none;">
+                <h2 class="text-2xl font-heading text-primary-dark mb-6">
+                    Select Time
+                </h2>
+                <div id="time-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
+                    <!-- Time buttons will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Continue Button (Hidden until both date and time selected) -->
+            <div id="continue-section" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4" style="display: none;">
+                <div class="container mx-auto" style="max-width: 1024px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div id="selection-summary" style="font-size: 0.875rem; color: #6B7280;">
+                            <!-- Selected date and time will be shown here -->
+                        </div>
+                    </div>
+                    <button id="continue-btn" class="btn-continue" onclick="goToNextStep('staff.html')">
+                        Continue to Staff Selection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/services-data.js"></script>
+    <script src="../js/booking.js"></script>
+    <script>
+        // Initialize page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDateTimeSelection();
+        });
+        
+        // Update continue button when both date and time are selected
+        function updateContinueButton() {
+            const continueSection = document.getElementById('continue-section');
+            const summaryDiv = document.getElementById('selection-summary');
+            
+            if (selectedDate && selectedTime && continueSection && summaryDiv) {
+                summaryDiv.innerHTML = `<span style="font-weight: 500;">Selected:</span> ${selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at ${selectedTime}`;
+                continueSection.style.display = 'block';
+            }
+        }
+        
+        // Override selectTime to show continue button
+        const originalSelectTime = selectTime;
+        selectTime = function(time, buttonElement) {
+            originalSelectTime(time, buttonElement);
+            updateContinueButton();
+        };
+    </script>
+</body>
+</html>

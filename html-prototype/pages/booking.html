@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Appointment - Dermal Skin Clinic</title>
+    <meta name="description" content="Select your spa service and book your appointment online.">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="min-h-screen bg-background py-8">
+        <div class="container mx-auto px-4">
+            <!-- Demo Warning -->
+            <div class="demo-warning">
+                🚧 PROTOTYPE BOOKING SYSTEM - DEMO ONLY 🚧<br>
+                This is a demonstration. No real appointments will be booked.
+            </div>
+
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <a href="../index.html" class="text-gray-600" style="color: var(--primary); text-decoration: none;">
+                    ← Back to Home
+                </a>
+                <h1 class="text-4xl font-heading text-primary-dark mt-4 mb-2">
+                    Book Your Appointment
+                </h1>
+                <p class="text-gray-600">
+                    Select a service to get started
+                </p>
+            </div>
+
+            <!-- Service Categories -->
+            <div id="service-categories" class="space-y-8">
+                <!-- Facials -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-2xl font-heading text-primary-dark mb-6">Facials</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="facials-grid">
+                        <!-- Services will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Body Massages -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-2xl font-heading text-primary-dark mb-6">Body Massages</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="massages-grid">
+                        <!-- Services will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Body Treatments -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-2xl font-heading text-primary-dark mb-6">Body Treatments</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="treatments-grid">
+                        <!-- Services will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Waxing -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-2xl font-heading text-primary-dark mb-6">Waxing</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="waxing-grid">
+                        <!-- Services will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Packages -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-2xl font-heading text-primary-dark mb-6">Packages</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="packages-grid">
+                        <!-- Services will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Special Services -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h2 class="text-2xl font-heading text-primary-dark mb-6">Special Services</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="special-grid">
+                        <!-- Services will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Continue Button (Hidden until service selected) -->
+            <div id="continue-section" style="display: none; margin-top: 32px; padding: 16px; background-color: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: sticky; bottom: 16px;">
+                <button id="continue-btn" class="btn-continue">
+                    Continue to Date & Time Selection
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/services-data.js"></script>
+    <script src="../js/booking.js"></script>
+    <script>
+        // Initialize booking page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('service-categories')) {
+                initializeServiceSelection();
+            }
+        });
+    </script>
+</body>
+</html>

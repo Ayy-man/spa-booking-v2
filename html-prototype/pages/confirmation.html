@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your Booking - Dermal Skin Clinic</title>
+    <meta name="description" content="Review and confirm your spa appointment booking.">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="min-h-screen bg-background py-8">
+        <div class="container mx-auto px-4" style="max-width: 768px;">
+            <!-- Success State (Initially Hidden) -->
+            <div id="success-state" class="text-center" style="display: none;">
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <div style="width: 64px; height: 64px; background-color: #ECFDF5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                        <svg style="width: 32px; height: 32px; color: #10B981;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    
+                    <h1 class="text-4xl font-heading text-primary-dark mb-4">
+                        Booking Confirmed!
+                    </h1>
+                    
+                    <div class="demo-warning mb-6">
+                        🚨 DEMO BOOKING - NOT A REAL APPOINTMENT 🚨<br>
+                        This is a demonstration. No real appointment has been scheduled.
+                    </div>
+                    
+                    <p class="text-gray-600 mb-8">
+                        Your appointment has been successfully booked. You would receive a confirmation email shortly in a real system.
+                    </p>
+                    
+                    <div id="booking-details" class="bg-background rounded-lg p-6 mb-8 text-left">
+                        <!-- Booking details will be populated by JavaScript -->
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 16px; align-items: center;">
+                        <a href="../index.html" class="btn-primary" style="max-width: none; width: 100%; max-width: 300px;">
+                            Return to Home
+                        </a>
+                        <a href="booking.html" class="btn-secondary" style="width: 100%; max-width: 300px; text-align: center;">
+                            Book Another Appointment
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmation Form (Initially Visible) -->
+            <div id="confirmation-form">
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <a href="customer-info.html" style="color: var(--primary); text-decoration: none;">
+                        ← Back to Customer Info
+                    </a>
+                    <h1 class="text-4xl font-heading text-primary-dark mt-4 mb-2">
+                        Confirm Your Booking
+                    </h1>
+                    <p class="text-gray-600">
+                        Please review your booking details before confirming
+                    </p>
+                </div>
+
+                <!-- Booking Summary -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                    <h2 class="text-2xl font-heading text-primary-dark mb-6">
+                        Booking Summary
+                    </h2>
+                    
+                    <div id="booking-summary" style="display: flex; flex-direction: column; gap: 24px;">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Error Message (Hidden by default) -->
+                <div id="error-message" class="error-message mb-6" style="display: none;">
+                    <!-- Error will be shown here if booking fails -->
+                </div>
+
+                <!-- Confirm Button -->
+                <div style="display: flex; flex-direction: column; gap: 16px; align-items: center;">
+                    <button id="confirm-btn" class="btn-continue">
+                        <span id="confirm-text">Confirm Booking</span>
+                        <div id="confirm-spinner" class="spinner" style="display: none; margin-left: 12px;"></div>
+                    </button>
+                    
+                    <a href="customer-info.html" class="btn-secondary" style="width: 100%; max-width: 300px; text-align: center;">
+                        Make Changes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/services-data.js"></script>
+    <script src="../js/booking.js"></script>
+    <script>
+        let bookingData = null;
+
+        function initializeConfirmation() {
+            loadAllBookingData();
+            if (bookingData) {
+                displayBookingSummary();
+                setupConfirmButton();
+            } else {
+                // Redirect if no booking data
+                window.location.href = 'booking.html';
+            }
+        }
+
+        function loadAllBookingData() {
+            const serviceData = localStorage.getItem('selectedService');
+            const dateData = localStorage.getItem('selectedDate');
+            const timeData = localStorage.getItem('selectedTime');
+            const staffData = localStorage.getItem('selectedStaff');
+            const customerData = localStorage.getItem('customerInfo');
+
+            if (serviceData && dateData && timeData && staffData && customerData) {
+                bookingData = {
+                    service: JSON.parse(serviceData),
+                    date: new Date(dateData),
+                    time: timeData,
+                    staff: staffData,
+                    customer: JSON.parse(customerData)
+                };
+            }
+        }
+
+        function displayBookingSummary() {
+            const summaryDiv = document.getElementById('booking-summary');
+            if (!summaryDiv || !bookingData) return;
+
+            const staff = staffMembers.find(s => s.id === bookingData.staff);
+            const staffName = staff ? staff.name : 'Any Available Staff';
+
+            summaryDiv.innerHTML = `
+                <!-- Service Details -->
+                <div style="border-bottom: 1px solid #E5E7EB; padding-bottom: 16px;">
+                    <h3 style="font-weight: 600; color: var(--primary-dark); margin-bottom: 8px;">Service</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <p style="font-weight: 500;">${bookingData.service.name}</p>
+                            <p style="font-size: 0.875rem; color: #6B7280;">${bookingData.service.duration} minutes</p>
+                        </div>
+                        <p style="font-size: 1.5rem; font-weight: 600; color: var(--primary);">$${bookingData.service.price}</p>
+                    </div>
+                </div>
+
+                <!-- Appointment Details -->
+                <div style="border-bottom: 1px solid #E5E7EB; padding-bottom: 16px;">
+                    <h3 style="font-weight: 600; color: var(--primary-dark); margin-bottom: 8px;">Appointment</h3>
+                    <div style="line-height: 1.6;">
+                        <p><span style="font-weight: 500;">Date:</span> ${bookingData.date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        <p><span style="font-weight: 500;">Time:</span> ${bookingData.time}</p>
+                        <p><span style="font-weight: 500;">Staff:</span> ${staffName}</p>
+                    </div>
+                </div>
+
+                <!-- Customer Details -->
+                <div>
+                    <h3 style="font-weight: 600; color: var(--primary-dark); margin-bottom: 8px;">Customer Information</h3>
+                    <div style="line-height: 1.6;">
+                        <p><span style="font-weight: 500;">Name:</span> ${bookingData.customer.name}</p>
+                        <p><span style="font-weight: 500;">Email:</span> ${bookingData.customer.email}</p>
+                        ${bookingData.customer.phone ? `<p><span style="font-weight: 500;">Phone:</span> ${bookingData.customer.phone}</p>` : ''}
+                        ${bookingData.customer.specialRequests ? `<p><span style="font-weight: 500;">Special Requests:</span> ${bookingData.customer.specialRequests}</p>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function setupConfirmButton() {
+            const confirmBtn = document.getElementById('confirm-btn');
+            if (!confirmBtn) return;
+
+            confirmBtn.addEventListener('click', async function() {
+                await confirmBooking();
+            });
+        }
+
+        async function confirmBooking() {
+            const confirmBtn = document.getElementById('confirm-btn');
+            const confirmText = document.getElementById('confirm-text');
+            const confirmSpinner = document.getElementById('confirm-spinner');
+            const errorDiv = document.getElementById('error-message');
+
+            // Show loading state
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = '0.7';
+            confirmText.textContent = 'Confirming Booking...';
+            confirmSpinner.style.display = 'block';
+            errorDiv.style.display = 'none';
+
+            try {
+                // Simulate API call - in real app, this would save to Supabase
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Generate booking ID
+                const bookingId = 'BK' + Date.now().toString().slice(-6);
+                
+                // Store booking for demo
+                const booking = {
+                    id: bookingId,
+                    ...bookingData,
+                    status: 'confirmed',
+                    createdAt: new Date().toISOString()
+                };
+                
+                localStorage.setItem('lastBooking', JSON.stringify(booking));
+                
+                // Show success state
+                showSuccessState();
+                
+                // Clear booking flow data
+                clearBookingData();
+                
+            } catch (error) {
+                // Show error
+                errorDiv.textContent = 'Failed to confirm booking. Please try again.';
+                errorDiv.style.display = 'block';
+                
+                // Reset button
+                confirmBtn.disabled = false;
+                confirmBtn.style.opacity = '1';
+                confirmText.textContent = 'Confirm Booking';
+                confirmSpinner.style.display = 'none';
+            }
+        }
+
+        function showSuccessState() {
+            const confirmationForm = document.getElementById('confirmation-form');
+            const successState = document.getElementById('success-state');
+            const detailsDiv = document.getElementById('booking-details');
+
+            if (confirmationForm) confirmationForm.style.display = 'none';
+            if (successState) successState.style.display = 'block';
+
+            if (detailsDiv && bookingData) {
+                const staff = staffMembers.find(s => s.id === bookingData.staff);
+                const staffName = staff ? staff.name : 'Any Available Staff';
+
+                detailsDiv.innerHTML = `
+                    <h2 style="font-weight: 600; color: var(--primary-dark); margin-bottom: 16px;">Booking Details</h2>
+                    <div style="font-size: 0.875rem; line-height: 1.6; color: #374151;">
+                        <div><span style="font-weight: 500;">Service:</span> ${bookingData.service.name}</div>
+                        <div><span style="font-weight: 500;">Date:</span> ${bookingData.date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                        <div><span style="font-weight: 500;">Time:</span> ${bookingData.time}</div>
+                        <div><span style="font-weight: 500;">Staff:</span> ${staffName}</div>
+                        <div><span style="font-weight: 500;">Price:</span> $${bookingData.service.price}</div>
+                        <div><span style="font-weight: 500;">Customer:</span> ${bookingData.customer.name}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize when page loads
+        if (document.getElementById('booking-summary')) {
+            initializeConfirmation();
+        }
+    </script>
+</body>
+</html>

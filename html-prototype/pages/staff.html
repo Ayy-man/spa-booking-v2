@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Staff Member - Dermal Skin Clinic</title>
+    <meta name="description" content="Choose your preferred staff member or let us assign one.">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+<body>
+    <div class="min-h-screen bg-background py-8">
+        <div class="container mx-auto px-4" style="max-width: 1024px;">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <a href="date-time.html" style="color: var(--primary); text-decoration: none;">
+                    ← Back to Date & Time
+                </a>
+                <h1 class="text-4xl font-heading text-primary-dark mt-4 mb-2">
+                    Select Staff Member
+                </h1>
+                <p class="text-gray-600">
+                    Choose your preferred staff member or let us assign one
+                </p>
+            </div>
+
+            <!-- Booking Summary -->
+            <div id="booking-summary" class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <!-- Will be populated by JavaScript -->
+            </div>
+
+            <!-- Staff Selection -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <h2 class="text-2xl font-heading text-primary-dark mb-6">
+                    Available Staff
+                </h2>
+                <div style="margin-bottom: 1rem; padding: 12px; background-color: rgba(246, 199, 207, 0.1); border-radius: 8px; font-size: 0.875rem; color: #6B7280;">
+                    ℹ️ Only staff members qualified for your selected service and available on your chosen date are shown.
+                </div>
+                <div id="staff-grid" style="display: flex; flex-direction: column; gap: 16px;">
+                    <!-- Staff cards will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Continue Button (Hidden until staff selected) -->
+            <div id="continue-section" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4" style="display: none;">
+                <div class="container mx-auto" style="max-width: 1024px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <div id="selection-summary" style="font-size: 0.875rem; color: #6B7280;">
+                            <!-- Selected staff will be shown here -->
+                        </div>
+                    </div>
+                    <button id="continue-btn" class="btn-continue" onclick="goToNextStep('customer-info.html')">
+                        Continue to Customer Information
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/services-data.js"></script>
+    <script src="../js/booking.js"></script>
+    <script>
+        // Initialize staff selection when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Staff page DOM loaded, initializing...');
+            initializeStaffSelection();
+        });
+        
+        // Override selectStaff to update continue button
+        const originalSelectStaff = selectStaff;
+        selectStaff = function(staffId, cardElement) {
+            originalSelectStaff(staffId, cardElement);
+            
+            // Update summary
+            const summaryDiv = document.getElementById('selection-summary');
+            const staff = staffMembers.find(s => s.id === staffId);
+            if (summaryDiv && staff) {
+                summaryDiv.innerHTML = `<span style="font-weight: 500;">Selected:</span> ${staff.name}`;
+            }
+        };
+    </script>
+</body>
+</html>

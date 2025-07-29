@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "command": "npx",
+      "args": ["mcp-supabase"],
+      "env": {
+        "SUPABASE_URL": "https://doradsvnphdwotkeiylv.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcmFkc3ZucGhkd290a2VpeWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3NDA3MTYsImV4cCI6MjA2OTMxNjcxNn0.4DbNHxjhOshrrQGYxjH8QI4V2sqx2VLr7nH0stSEXZk",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcmFkc3ZucGhkd290a2VpeWx2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mzc0MDcxNiwiZXhwIjoyMDY5MzE2NzE2fQ.6u3eXNyXPDrZYE688Ha1Z7P1ABm4G-OQL8_YLUQVi-w"
+      }
+    }
+  }
+} 
