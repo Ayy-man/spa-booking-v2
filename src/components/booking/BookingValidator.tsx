@@ -9,7 +9,7 @@ import {
   getStaffDayAvailability,
   formatErrorMessage
 } from '@/lib/booking-logic'
-import { Service, Staff, Room, Booking } from '@/types/booking'
+import { Service, Staff, Room, Booking, BookingConflict } from '@/types/booking'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -38,7 +38,7 @@ export default function BookingValidator({
     isValid: boolean
     errors: string[]
     warnings: string[]
-    conflicts: any[]
+    conflicts: BookingConflict[]
   } | null>(null)
   
   const [roomAssignment, setRoomAssignment] = useState<{

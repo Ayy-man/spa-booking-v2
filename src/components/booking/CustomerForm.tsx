@@ -10,21 +10,22 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 const customerFormSchema = z.object({
-  customer_name: z.string()
+  name: z.string()
     .min(2, 'Name must be at least 2 characters')
     .max(50, 'Name must be less than 50 characters')
     .regex(/^[a-zA-Z\s'-]+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes'),
-  customer_email: z.string()
+  email: z.string()
     .email('Please enter a valid email address')
     .max(100, 'Email must be less than 100 characters'),
-  customer_phone: z.string()
+  phone: z.string()
     .optional()
     .refine((val) => !val || /^\+?[\d\s\-\(\)]{10,15}$/.test(val), {
       message: 'Please enter a valid phone number'
     }),
-  special_requests: z.string()
+  specialRequests: z.string()
     .max(500, 'Special requests must be less than 500 characters')
-    .optional()
+    .optional(),
+  isNewCustomer: z.boolean().default(false)
 })
 
 export type CustomerFormData = z.infer<typeof customerFormSchema>
@@ -46,10 +47,11 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
   } = useForm<CustomerFormData>({
     resolver: zodResolver(customerFormSchema),
     defaultValues: {
-      customer_name: initialData?.customer_name || '',
-      customer_email: initialData?.customer_email || '',
-      customer_phone: initialData?.customer_phone || '',
-      special_requests: initialData?.special_requests || ''
+      name: initialData?.name || '',
+      email: initialData?.email || '',
+      phone: initialData?.phone || '',
+      specialRequests: initialData?.specialRequests || '',
+      isNewCustomer: initialData?.isNewCustomer || false
     },
     mode: 'onChange'
   })
@@ -65,7 +67,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
     }
   }
 
-  const isFormValid = isValid && formData.customer_name && formData.customer_email
+  const isFormValid = isValid && formData.name && formData.email
 
   return (
     <Card className="p-6">
@@ -76,50 +78,50 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         {/* Customer Name */}
         <div className="space-y-2">
-          <Label htmlFor="customer_name" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="name" className="text-sm font-medium text-gray-700">
             Full Name *
           </Label>
           <Input
-            id="customer_name"
+            id="name"
             type="text"
             placeholder="Enter your full name"
             className={`
               transition-all duration-200
-              ${errors.customer_name 
+              ${errors.name 
                 ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
                 : 'border-gray-300 focus:border-primary focus:ring-primary/20'
               }
             `}
-            {...register('customer_name')}
+            {...register('name')}
           />
-          {errors.customer_name && (
+          {errors.name && (
             <p className="text-sm text-red-600 mt-1">
-              {errors.customer_name.message}
+              {errors.name.message}
             </p>
           )}
         </div>
 
         {/* Customer Email */}
         <div className="space-y-2">
-          <Label htmlFor="customer_email" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="email" className="text-sm font-medium text-gray-700">
             Email Address *
           </Label>
           <Input
-            id="customer_email"
+            id="email"
             type="email"
             placeholder="Enter your email address"
             className={`
               transition-all duration-200
-              ${errors.customer_email 
+              ${errors.email 
                 ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
                 : 'border-gray-300 focus:border-primary focus:ring-primary/20'
               }
             `}
-            {...register('customer_email')}
+            {...register('email')}
           />
-          {errors.customer_email && (
+          {errors.email && (
             <p className="text-sm text-red-600 mt-1">
-              {errors.customer_email.message}
+              {errors.email.message}
             </p>
           )}
           <p className="text-xs text-gray-500">
@@ -129,25 +131,25 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
 
         {/* Customer Phone */}
         <div className="space-y-2">
-          <Label htmlFor="customer_phone" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
             Phone Number <span className="text-gray-400">(Optional)</span>
           </Label>
           <Input
-            id="customer_phone"
+            id="phone"
             type="tel"
             placeholder="Enter your phone number"
             className={`
               transition-all duration-200
-              ${errors.customer_phone 
+              ${errors.phone 
                 ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
                 : 'border-gray-300 focus:border-primary focus:ring-primary/20'
               }
             `}
-            {...register('customer_phone')}
+            {...register('phone')}
           />
-          {errors.customer_phone && (
+          {errors.phone && (
             <p className="text-sm text-red-600 mt-1">
-              {errors.customer_phone.message}
+              {errors.phone.message}
             </p>
           )}
           <p className="text-xs text-gray-500">
@@ -157,31 +159,52 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
 
         {/* Special Requests */}
         <div className="space-y-2">
-          <Label htmlFor="special_requests" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="specialRequests" className="text-sm font-medium text-gray-700">
             Special Requests <span className="text-gray-400">(Optional)</span>
           </Label>
           <textarea
-            id="special_requests"
+            id="specialRequests"
             rows={4}
             placeholder="Any special requests, allergies, or preferences we should know about..."
             className={`
               w-full px-3 py-2 border rounded-lg resize-none transition-all duration-200
               focus:outline-none focus:ring-2
-              ${errors.special_requests 
+              ${errors.specialRequests 
                 ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
                 : 'border-gray-300 focus:border-primary focus:ring-primary/20'
               }
             `}
-            {...register('special_requests')}
+            {...register('specialRequests')}
           />
-          {errors.special_requests && (
+          {errors.specialRequests && (
             <p className="text-sm text-red-600 mt-1">
-              {errors.special_requests.message}
+              {errors.specialRequests.message}
             </p>
           )}
           <p className="text-xs text-gray-500">
             Maximum 500 characters
           </p>
+        </div>
+
+        {/* Customer Status Checkbox */}
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <div className="flex items-start space-x-3">
+            <input
+              type="checkbox"
+              id="isNewCustomer"
+              className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+              {...register('isNewCustomer')}
+            />
+            <div>
+              <Label htmlFor="isNewCustomer" className="text-sm font-medium text-gray-900 cursor-pointer">
+                This is my first visit to Dermal Skin Clinic
+              </Label>
+              <p className="text-xs text-gray-600 mt-1">
+                New customers require a $25 deposit to secure their booking. 
+                Existing customers can book without a deposit.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Privacy Notice */}
@@ -214,7 +237,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
               Processing...
             </div>
           ) : (
-            'Continue to Confirmation'
+            'Continue'
           )}
         </Button>
 

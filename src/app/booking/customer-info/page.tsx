@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import CustomerForm, { CustomerFormData } from '@/components/booking/CustomerForm'
+import { staffNameMap } from '@/lib/staff-data'
+
+interface Service {
+  name: string
+  price: number
+  duration: number
+}
 
 export default function CustomerInfoPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    specialRequests: '',
-    isNewCustomer: false
-  })
-  const [selectedService, setSelectedService] = useState<any>(null)
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [selectedStaff, setSelectedStaff] = useState<string>('')
@@ -29,24 +30,12 @@ export default function CustomerInfoPage() {
     if (staffData) setSelectedStaff(staffData)
   }, [])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target
-    const checked = (e.target as HTMLInputElement).checked
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }))
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
+  const handleSubmit = (data: CustomerFormData) => {
     // Store customer info
-    localStorage.setItem('customerInfo', JSON.stringify(formData))
+    localStorage.setItem('customerInfo', JSON.stringify(data))
     
     // Check customer status and redirect accordingly
-    if (formData.isNewCustomer) {
+    if (data.isNewCustomer) {
       // New customer - redirect to GoHighLevel payment link
       const ghlPaymentUrl = 'https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034'
       window.location.href = ghlPaymentUrl
@@ -67,13 +56,6 @@ export default function CustomerInfoPage() {
     })
   }
 
-  const staffMembers = {
-    'any': 'Any Available Staff',
-    'selma': 'Selma Villaver',
-    'robyn': 'Robyn Camacho',
-    'tanisha': 'Tanisha Harris',
-    'leonel': 'Leonel Sidon'
-  }
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -101,116 +83,14 @@ export default function CustomerInfoPage() {
               <div><span className="font-medium">Service:</span> {selectedService.name}</div>
               <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
               <div><span className="font-medium">Time:</span> {selectedTime}</div>
-              <div><span className="font-medium">Staff:</span> {staffMembers[selectedStaff as keyof typeof staffMembers]}</div>
+              <div><span className="font-medium">Staff:</span> {staffNameMap[selectedStaff as keyof typeof staffNameMap]}</div>
               <div><span className="font-medium">Price:</span> ${selectedService.price}</div>
             </div>
           </div>
         )}
 
         {/* Customer Form */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                className="input-field"
-                placeholder="Enter your full name"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email Address *
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                className="input-field"
-                placeholder="your@email.com"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                className="input-field"
-                placeholder="(671) 123-4567"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="specialRequests" className="block text-sm font-medium text-gray-700 mb-1">
-                Special Requests
-              </label>
-              <textarea
-                id="specialRequests"
-                name="specialRequests"
-                value={formData.specialRequests}
-                onChange={handleInputChange}
-                rows={3}
-                className="input-field resize-none"
-                placeholder="Any special requests or notes..."
-              />
-            </div>
-
-            {/* Customer Status Checkbox */}
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <div className="flex items-start space-x-3">
-                <input
-                  type="checkbox"
-                  id="isNewCustomer"
-                  name="isNewCustomer"
-                  checked={formData.isNewCustomer}
-                  onChange={handleInputChange}
-                  className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                />
-                <div>
-                  <label htmlFor="isNewCustomer" className="text-sm font-medium text-gray-900 cursor-pointer">
-                    This is my first visit to Dermal Skin Clinic
-                  </label>
-                  <p className="text-xs text-gray-600 mt-1">
-                    New customers require a $25 deposit to secure their booking. 
-                    Existing customers can book without a deposit.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={!formData.name || !formData.email}
-              className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
-                !formData.name || !formData.email
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-black text-white hover:bg-gray-900'
-              }`}
-            >
-              {formData.isNewCustomer 
-                ? 'Continue to Payment ($25 Deposit)' 
-                : 'Continue to Confirmation'
-              }
-            </button>
-          </form>
-        </div>
+        <CustomerForm onSubmit={handleSubmit} />
       </div>
     </div>
   )

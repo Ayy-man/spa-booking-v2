@@ -2,12 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { staffMembers, staffNameMap, getServiceCategory } from '@/lib/staff-data'
+import StaffSelector from '@/components/booking/StaffSelector'
+import BookingValidator from '@/components/booking/BookingValidator'
+
+interface Service {
+  name: string
+  price: number
+  duration: number
+}
 
 export default function StaffPage() {
   const [selectedStaff, setSelectedStaff] = useState<string>('')
-  const [selectedService, setSelectedService] = useState<any>(null)
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [selectedTime, setSelectedTime] = useState<string>('')
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [validationWarnings, setValidationWarnings] = useState<string[]>([])
+  const [isValidBooking, setIsValidBooking] = useState<boolean>(false)
 
   useEffect(() => {
     // Get data from localStorage
@@ -20,126 +32,77 @@ export default function StaffPage() {
     if (timeData) setSelectedTime(timeData)
   }, [])
 
-  // Enhanced staff data with capabilities and schedules
-  const allStaffMembers = [
-    {
-      id: 'any',
-      name: 'Any Available Staff',
-      email: '',
-      phone: '',
-      specialties: 'Any qualified staff member',
-      initials: 'AA',
-      capabilities: ['facials', 'waxing', 'body_treatments', 'massages'],
-      workDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-      defaultRoom: null
-    },
-    {
-      id: 'selma',
-      name: 'Selma Villaver',
-      email: 'happyskinhappyyou@gmail.com',
-      phone: '(671) 482-7765',
-      specialties: 'All Facials (except dermaplaning)',
-      initials: 'SV',
-      capabilities: ['facials'],
-      workDays: ['monday', 'wednesday', 'friday', 'saturday', 'sunday'],
-      defaultRoom: 1
-    },
-    {
-      id: 'robyn',
-      name: 'Robyn Camacho',
-      email: 'robyncmcho@gmail.com',
-      phone: '(671) 480-7862',
-      specialties: 'Facials, Waxing, Body Treatments, Massages',
-      initials: 'RC',
-      capabilities: ['facials', 'waxing', 'body_treatments', 'massages'],
-      workDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-      defaultRoom: 3
-    },
-    {
-      id: 'tanisha',
-      name: 'Tanisha Harris',
-      email: 'misstanishababyy@gmail.com',
-      phone: '(671) 747-5728',
-      specialties: 'Facials and Waxing',
-      initials: 'TH',
-      capabilities: ['facials', 'waxing'],
-      workDays: ['monday', 'wednesday', 'friday', 'saturday', 'sunday'],
-      defaultRoom: 2
-    },
-    {
-      id: 'leonel',
-      name: 'Leonel Sidon',
-      email: 'sidonleonel@gmail.com',
-      phone: '(671) 747-1882',
-      specialties: 'Body Massages and Treatments (Sundays only)',
-      initials: 'LS',
-      capabilities: ['massages', 'body_treatments'],
-      workDays: ['sunday'],
-      defaultRoom: null
-    }
-  ]
-
-  // Helper function to determine service category
-  const getServiceCategory = (serviceName: string): string => {
-    if (!serviceName) return 'unknown'
-    
-    const name = serviceName.toLowerCase()
-    
-    if (name.includes('facial') || name.includes('microderm') || name.includes('vitamin c') || name.includes('acne')) {
-      return 'facials'
-    }
-    if (name.includes('massage') || name.includes('balinese') || name.includes('deep tissue') || name.includes('hot stone') || name.includes('maternity')) {
-      return 'massages'
-    }
-    if (name.includes('wax') || name.includes('brazilian') || name.includes('bikini') || name.includes('eyebrow') || name.includes('lip')) {
-      return 'waxing'
-    }
-    if (name.includes('body') || name.includes('scrub') || name.includes('underarm') || name.includes('back treatment') || name.includes('chemical peel') || name.includes('microdermabrasion') || name.includes('moisturizing') || name.includes('mud mask')) {
-      return 'body_treatments'
-    }
-    if (name.includes('package')) {
-      return 'packages'
-    }
-    
-    return 'unknown'
-  }
-
-  // Helper function to check if staff can perform service
-  const canStaffPerformService = (staff: any, serviceCategory: string): boolean => {
-    if (staff.id === 'any') return true
-    return staff.capabilities.includes(serviceCategory) || staff.capabilities.includes('packages')
-  }
-
-  // Helper function to check if staff is available on selected date
-  const isStaffAvailableOnDate = (staff: any, dateString: string): boolean => {
-    if (!dateString || staff.id === 'any') return true
-    
-    const date = new Date(dateString)
-    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
-    
-    return staff.workDays.includes(dayOfWeek)
-  }
-
-  // Filter staff based on service and date availability
-  const getAvailableStaff = () => {
-    const serviceCategory = selectedService ? getServiceCategory(selectedService.name) : 'unknown'
-    
-    return allStaffMembers.filter(staff => {
-      const canPerformService = canStaffPerformService(staff, serviceCategory)
-      const availableOnDate = isStaffAvailableOnDate(staff, selectedDate)
-      return canPerformService && availableOnDate
-    }).map(staff => ({
-      ...staff,
-      available: isStaffAvailableOnDate(staff, selectedDate) && canStaffPerformService(staff, serviceCategory)
-    }))
-  }
-
-  const staffMembers = getAvailableStaff()
-
-  const handleStaffSelect = (staffId: string, isAvailable: boolean) => {
-    if (!isAvailable) return // Prevent selection of unavailable staff
+  const handleStaffSelect = (staffId: string) => {
     setSelectedStaff(staffId)
   }
+
+  const handleValidationChange = (isValid: boolean, errors: string[], warnings: string[]) => {
+    setIsValidBooking(isValid)
+    setValidationErrors(errors)
+    setValidationWarnings(warnings)
+  }
+
+  // Convert our simple data to match BookingValidator expectations
+  const getValidationData = () => {
+    if (!selectedService || !selectedStaff || !selectedDate || !selectedTime) {
+      return { service: null, staff: null, room: null, date: null, time: null }
+    }
+
+    // Create mock service data
+    const mockService = {
+      id: 'mock-service',
+      name: selectedService.name,
+      description: null,
+      duration: selectedService.duration,
+      price: selectedService.price,
+      category: getServiceCategory(selectedService.name),
+      requires_couples_room: selectedService.name.toLowerCase().includes('couples'),
+      requires_body_scrub_room: selectedService.name.toLowerCase().includes('scrub'),
+      is_package: selectedService.name.toLowerCase().includes('package'),
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    // Find selected staff member
+    const staffMember = staffMembers.find(s => s.id === selectedStaff)
+    const mockStaff = staffMember ? {
+      id: staffMember.id,
+      name: staffMember.name,
+      email: staffMember.email,
+      phone: staffMember.phone || null,
+      is_active: true,
+      can_perform_services: staffMember.capabilities,
+      default_room_id: staffMember.defaultRoom ? `room-${staffMember.defaultRoom}` : null,
+      schedule: { [new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: true }, 
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    } : null
+
+    // Create mock room data
+    const mockRoom = {
+      id: 'room-1',
+      name: 'Room 1',
+      room_number: 1,
+      capacity: 1,
+      capabilities: ['facials', 'waxing'],
+      has_body_scrub_equipment: false,
+      is_couples_room: false,
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    return {
+      service: mockService,
+      staff: mockStaff,
+      room: mockRoom,
+      date: new Date(selectedDate),
+      time: selectedTime
+    }
+  }
+
+  const validationData = getValidationData()
 
   const handleContinue = () => {
     if (selectedStaff) {
@@ -157,6 +120,18 @@ export default function StaffPage() {
       month: 'long', 
       day: 'numeric' 
     })
+  }
+
+  const getServiceCategory = (serviceName: string): string => {
+    // Simple mapping based on service name keywords
+    const name = serviceName.toLowerCase()
+    if (name.includes('facial')) return 'facial'
+    if (name.includes('massage')) return 'massage'
+    if (name.includes('waxing') || name.includes('wax')) return 'waxing'
+    if (name.includes('treatment') || name.includes('cleaning') || name.includes('scrub')) return 'body_treatment'
+    if (name.includes('package')) return 'package'
+    if (name.includes('vip') || name.includes('membership')) return 'membership'
+    return 'other'
   }
 
   return (
@@ -208,98 +183,29 @@ export default function StaffPage() {
             </div>
           )}
           
-          {staffMembers.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-gray-400 text-2xl">😔</span>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Staff Available
-              </h3>
-              <p className="text-gray-600 mb-4">
-                {selectedService && selectedDate 
-                  ? `No staff members are available to perform ${selectedService.name} on ${formatDate(selectedDate)}.`
-                  : 'No qualified staff members are available for the selected service and date.'}
-              </p>
-              <Link 
-                href="/booking/date-time" 
-                className="text-primary hover:text-primary-dark transition-colors"
-              >
-                ← Try a different date or time
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {staffMembers.map((staff) => {
-                const isDisabled = !staff.available
-                return (
-                  <div
-                    key={staff.id}
-                    className={`border rounded-lg p-4 transition-all duration-200 ${
-                      isDisabled 
-                        ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60' 
-                        : selectedStaff === staff.id 
-                          ? 'border-primary bg-accent cursor-pointer hover:border-primary-dark' 
-                          : 'border-gray-300 cursor-pointer hover:border-primary hover:shadow-sm'
-                    }`}
-                    onClick={() => handleStaffSelect(staff.id, staff.available)}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        isDisabled ? 'bg-gray-200' : 'bg-accent'
-                      }`}>
-                        <span className={`font-semibold ${
-                          isDisabled ? 'text-gray-400' : 'text-primary'
-                        }`}>{staff.initials}</span>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className={`font-medium ${
-                          isDisabled ? 'text-gray-400' : 'text-primary-dark'
-                        }`}>{staff.name}</h3>
-                        <p className={`text-sm ${
-                          isDisabled ? 'text-gray-400' : 'text-gray-600'
-                        }`}>{staff.specialties}</p>
-                        {staff.phone && (
-                          <p className={`text-xs ${
-                            isDisabled ? 'text-gray-300' : 'text-gray-500'
-                          }`}>{staff.phone}</p>
-                        )}
-                        <div className="flex items-center mt-1">
-                          <div className={`w-2 h-2 rounded-full mr-2 ${
-                            staff.available ? 'bg-green-500' : 'bg-red-500'
-                          }`}></div>
-                          <span className={`text-xs ${
-                            isDisabled ? 'text-gray-400' : 'text-gray-500'
-                          }`}>
-                            {staff.available ? 'Available' : 'Unavailable'}
-                          </span>
-                          {!staff.available && selectedDate && (
-                            <span className="text-xs text-red-500 ml-2">
-                              (Not working on {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' })})
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <input 
-                        type="radio" 
-                        name="staff" 
-                        value={staff.id}
-                        checked={selectedStaff === staff.id}
-                        onChange={() => handleStaffSelect(staff.id, staff.available)}
-                        disabled={isDisabled}
-                        className={`w-4 h-4 ${
-                          isDisabled 
-                            ? 'text-gray-300 cursor-not-allowed' 
-                            : 'text-primary cursor-pointer'
-                        }`}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+          <StaffSelector
+            staff={staffMembers}
+            selectedStaffId={selectedStaff}
+            onStaffSelect={handleStaffSelect}
+            service={selectedService}
+            selectedDate={selectedDate ? new Date(selectedDate) : null}
+            showAnyOption={true}
+          />
         </div>
+
+        {/* Booking Validation */}
+        {selectedService && selectedStaff && selectedDate && selectedTime && (
+          <div className="mb-8">
+            <BookingValidator
+              service={validationData.service}
+              staff={validationData.staff}
+              room={validationData.room}
+              date={validationData.date}
+              time={validationData.time}
+              onValidationChange={handleValidationChange}
+            />
+          </div>
+        )}
 
         {/* Continue Button */}
         {selectedStaff && (
@@ -314,7 +220,12 @@ export default function StaffPage() {
               </div>
               <button 
                 onClick={handleContinue}
-                className="btn-primary w-full"
+                disabled={!isValidBooking && validationErrors.length > 0}
+                className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
+                  (!isValidBooking && validationErrors.length > 0)
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-black text-white hover:bg-gray-900'
+                }`}
               >
                 Continue to Customer Information
               </button>

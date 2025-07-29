@@ -1,18 +1,23 @@
 'use client'
 
-import { Staff, Room, Service } from '@/types/booking'
+// Simple service interface for staff selection
+interface SimpleService {
+  name: string
+  price?: number
+  duration?: number
+}
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { canStaffPerformService, getStaffDayAvailability } from '@/lib/booking-logic'
+import { StaffMember, getServiceCategory, canStaffPerformService, isStaffAvailableOnDate } from '@/lib/staff-data'
 import { format } from 'date-fns'
 import { AlertTriangle, Calendar, Clock } from 'lucide-react'
 
 interface StaffSelectorProps {
-  staff: (Staff & { default_room?: Room })[]
+  staff: StaffMember[]
   selectedStaffId: string | null
   onStaffSelect: (staffId: string) => void
-  service: Service | null
+  service: SimpleService | null
   selectedDate?: Date | null
   loading?: boolean
   showAnyOption?: boolean
@@ -28,27 +33,30 @@ export default function StaffSelector({
   showAnyOption = true
 }: StaffSelectorProps) {
   // Filter staff who can perform the service
+  const serviceCategory = service ? getServiceCategory(service.name) : 'unknown'
   const availableStaff = staff.filter(member => {
     if (!service) return false
-    return canStaffPerformService(member, service)
+    return canStaffPerformService(member, serviceCategory)
   })
   
   // Further filter by date availability if date is selected
   const staffWithAvailability = availableStaff.map(member => {
-    const dayAvailability = selectedDate ? getStaffDayAvailability(member, selectedDate) : null
+    const dateString = selectedDate ? selectedDate.toISOString().split('T')[0] : ''
+    const isAvailable = selectedDate ? isStaffAvailableOnDate(member, dateString) : true
     return {
       ...member,
-      dayAvailability
+      isAvailable,
+      dayAvailability: {
+        isAvailable,
+        workStart: '09:00', // Default work hours
+        workEnd: '19:00',
+        reasons: isAvailable ? [] : [`Not working on ${format(selectedDate || new Date(), 'EEEE')}`]
+      }
     }
   })
   
-  const fullyAvailableStaff = staffWithAvailability.filter(member => 
-    !selectedDate || member.dayAvailability?.isAvailable
-  )
-  
-  const unavailableStaff = staffWithAvailability.filter(member => 
-    selectedDate && !member.dayAvailability?.isAvailable
-  )
+  const fullyAvailableStaff = staffWithAvailability.filter(member => member.isAvailable)
+  const unavailableStaff = staffWithAvailability.filter(member => !member.isAvailable)
 
   if (loading) {
     return (
@@ -80,8 +88,8 @@ export default function StaffSelector({
             <div className="text-sm">
               {service ? (
                 <div>
-                  This service requires staff qualified in <strong>{service.category}</strong> treatments.
-                  <br />Available categories: {staff.map(s => s.can_perform_services.join(', ')).join(' | ')}
+                  This service requires staff qualified in <strong>{serviceCategory}</strong> treatments.
+                  <br />Available categories: {staff.map(s => s.capabilities.join(', ')).join(' | ')}
                 </div>
               ) : (
                 'Please select a service first to see available staff.'
@@ -182,9 +190,9 @@ export default function StaffSelector({
               </h3>
               
               <div className="space-y-1 mb-3">
-                {member.default_room && (
+                {member.defaultRoom && (
                   <p className="text-sm text-gray-600">
-                    Default Room: {member.default_room.name}
+                    Default Room: Room {member.defaultRoom}
                   </p>
                 )}
                 
@@ -199,12 +207,12 @@ export default function StaffSelector({
                 )}
                 
                 <div className="flex flex-wrap gap-1">
-                  {member.can_perform_services.map((serviceType, index) => (
+                  {member.capabilities.map((serviceType, index) => (
                     <Badge 
                       key={index}
                       variant="outline" 
                       className={`text-xs ${
-                        service && serviceType === service.category 
+                        service && serviceType === serviceCategory 
                           ? 'border-primary text-primary bg-primary/5' 
                           : 'border-gray-300 text-gray-600'
                       }`}
@@ -217,9 +225,9 @@ export default function StaffSelector({
 
               {/* Staff specialization info */}
               <div className="text-xs text-gray-500">
-                {service && canStaffPerformService(member, service) 
-                  ? `Qualified for ${service.category.replace('_', ' ')} services`
-                  : 'Professional certified staff member'
+                {service && canStaffPerformService(member, serviceCategory) 
+                  ? `Qualified for ${serviceCategory.replace('_', ' ')} services`
+                  : member.specialties
                 }
               </div>
             </div>

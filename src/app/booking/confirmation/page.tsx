@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { staffNameMap } from '@/lib/staff-data'
 
 export default function ConfirmationPage() {
   const [bookingData, setBookingData] = useState<any>(null)
@@ -88,13 +89,6 @@ export default function ConfirmationPage() {
     })
   }
 
-  const staffMembers = {
-    'any': 'Any Available Staff',
-    'selma': 'Selma Villaver',
-    'robyn': 'Robyn Camacho',
-    'tanisha': 'Tanisha Harris',
-    'leonel': 'Leonel Sidon'
-  }
 
   if (!bookingData) {
     return (
@@ -158,7 +152,7 @@ export default function ConfirmationPage() {
                 <div><span className="font-medium">Service:</span> {bookingData.service.name}</div>
                 <div><span className="font-medium">Date:</span> {formatDate(bookingData.date)}</div>
                 <div><span className="font-medium">Time:</span> {bookingData.time}</div>
-                <div><span className="font-medium">Staff:</span> {staffMembers[bookingData.staff as keyof typeof staffMembers]}</div>
+                <div><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap]}</div>
                 <div><span className="font-medium">Price:</span> ${bookingData.service.price}</div>
                 <div><span className="font-medium">Customer:</span> {bookingData.customer.name}</div>
               </div>
@@ -236,7 +230,7 @@ export default function ConfirmationPage() {
               <div className="space-y-1">
                 <p><span className="font-medium">Date:</span> {formatDate(bookingData.date)}</p>
                 <p><span className="font-medium">Time:</span> {bookingData.time}</p>
-                <p><span className="font-medium">Staff:</span> {staffMembers[bookingData.staff as keyof typeof staffMembers]}</p>
+                <p><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap]}</p>
               </div>
             </div>
 
