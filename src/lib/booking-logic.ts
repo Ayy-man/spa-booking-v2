@@ -1,4 +1,4 @@
-import { addMinutes, format, isAfter, isBefore, parseISO, isEqual } from 'date-fns'
+import { addMinutes, addDays, format, isAfter, isBefore, parseISO, isEqual } from 'date-fns'
 import { Service, Staff, Room, Booking, BookingConflict, TimeSlot } from '@/types/booking'
 
 // Business constants with enhanced configuration
@@ -224,10 +224,6 @@ export function checkBookingConflicts(
   const newStart = parseISO(`${newBooking.booking_date}T${newBooking.start_time}:00`)
   const newEnd = parseISO(`${newBooking.booking_date}T${newBooking.end_time}:00`)
   
-  // Add buffer time if requested (15 minutes before and after)
-  const bufferStart = includeBufferTime ? addMinutes(newStart, -BUSINESS_HOURS.bufferTime) : newStart
-  const bufferEnd = includeBufferTime ? addMinutes(newEnd, BUSINESS_HOURS.bufferTime) : newEnd
-  
   for (const booking of existingBookings) {
     // Skip cancelled bookings
     if (booking.status === 'cancelled') continue
@@ -236,17 +232,24 @@ export function checkBookingConflicts(
     const existingEnd = parseISO(`${booking.booking_date}T${booking.end_time}:00`)
     
     // Check for time overlap with buffer consideration
-    // Add buffer to existing booking as well for proper conflict detection
-    const existingBufferStart = includeBufferTime ? addMinutes(existingStart, -BUSINESS_HOURS.bufferTime) : existingStart
-    const existingBufferEnd = includeBufferTime ? addMinutes(existingEnd, BUSINESS_HOURS.bufferTime) : existingEnd
+    // Apply buffer time correctly: check if appointments are too close together
+    let hasOverlap = false
     
-    const hasOverlap = (
-      // New booking overlaps with existing booking (including buffers)
-      (isBefore(bufferStart, existingBufferEnd) && isAfter(bufferEnd, existingBufferStart)) ||
-      // Edge case: exact time matches
-      (bufferStart.getTime() === existingBufferStart.getTime()) ||
-      (bufferEnd.getTime() === existingBufferEnd.getTime())
-    )
+    if (includeBufferTime) {
+      // Check if new booking starts too soon after existing booking ends (needs buffer)
+      const bufferViolationAfter = isBefore(newStart, addMinutes(existingEnd, BUSINESS_HOURS.bufferTime))
+      // Check if new booking ends too close to when existing booking starts (needs buffer)  
+      const bufferViolationBefore = isAfter(newEnd, addMinutes(existingStart, -BUSINESS_HOURS.bufferTime))
+      // Check for direct time overlap
+      const directOverlap = (isBefore(newStart, existingEnd) && isAfter(newEnd, existingStart))
+      
+      hasOverlap = directOverlap || (bufferViolationAfter && bufferViolationBefore)
+    } else {
+      // Without buffer, only check for direct time overlap
+      hasOverlap = (isBefore(newStart, existingEnd) && isAfter(newEnd, existingStart)) ||
+                   (newStart.getTime() === existingStart.getTime()) ||
+                   (newEnd.getTime() === existingEnd.getTime())
+    }
     
     if (hasOverlap) {
       // Staff conflict
@@ -445,10 +448,9 @@ export function validateBookingTime(
   }
   
   // Check if date is too far in advance (30 days)
-  const maxAdvanceDate = new Date(today)
-  maxAdvanceDate.setDate(today.getDate() + 30)
+  const maxAdvanceDate = addDays(today, BUSINESS_HOURS.maxAdvanceDays)
   if (isAfter(date, maxAdvanceDate)) {
-    errors.push('Cannot book more than 30 days in advance')
+    errors.push(`Cannot book more than ${BUSINESS_HOURS.maxAdvanceDays} days in advance`)
   }
   
   // Enhanced business hours validation
