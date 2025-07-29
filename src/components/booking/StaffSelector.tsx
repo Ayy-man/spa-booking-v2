@@ -36,6 +36,9 @@ export default function StaffSelector({
   const serviceCategory = service ? getServiceCategory(service.name) : 'unknown'
   const availableStaff = staff.filter(member => {
     if (!service) return false
+    // If showAnyOption is true, exclude the 'any' staff member from the list
+    // since we'll show it as a separate card
+    if (showAnyOption && member.id === 'any') return false
     return canStaffPerformService(member, serviceCategory)
   })
   
