@@ -21,6 +21,18 @@ export default function StaffPage() {
   const [validationWarnings, setValidationWarnings] = useState<string[]>([])
   const [isValidBooking, setIsValidBooking] = useState<boolean>(false)
 
+  const getServiceCategory = (serviceName: string): string => {
+    // Simple mapping based on service name keywords
+    const name = serviceName.toLowerCase()
+    if (name.includes('facial')) return 'facial'
+    if (name.includes('massage')) return 'massage'
+    if (name.includes('waxing') || name.includes('wax')) return 'waxing'
+    if (name.includes('treatment') || name.includes('cleaning') || name.includes('scrub')) return 'body_treatment'
+    if (name.includes('package')) return 'package'
+    if (name.includes('vip') || name.includes('membership')) return 'membership'
+    return 'other'
+  }
+
   useEffect(() => {
     // Get data from localStorage
     const serviceData = localStorage.getItem('selectedService')
@@ -120,18 +132,6 @@ export default function StaffPage() {
       month: 'long', 
       day: 'numeric' 
     })
-  }
-
-  const getServiceCategory = (serviceName: string): string => {
-    // Simple mapping based on service name keywords
-    const name = serviceName.toLowerCase()
-    if (name.includes('facial')) return 'facial'
-    if (name.includes('massage')) return 'massage'
-    if (name.includes('waxing') || name.includes('wax')) return 'waxing'
-    if (name.includes('treatment') || name.includes('cleaning') || name.includes('scrub')) return 'body_treatment'
-    if (name.includes('package')) return 'package'
-    if (name.includes('vip') || name.includes('membership')) return 'membership'
-    return 'other'
   }
 
   return (
