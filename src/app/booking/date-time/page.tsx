@@ -11,13 +11,22 @@ export default function DateTimePage() {
   const [availableTimes, setAvailableTimes] = useState<string[]>([])
   const [selectedService, setSelectedService] = useState<any>(null)
   const [loadingTimes, setLoadingTimes] = useState<boolean>(false)
+  const [loadingService, setLoadingService] = useState<boolean>(true)
 
   // Get selected service from localStorage
   useEffect(() => {
     const serviceData = localStorage.getItem('selectedService')
     if (serviceData) {
-      setSelectedService(JSON.parse(serviceData))
+      try {
+        const parsedService = JSON.parse(serviceData)
+        setSelectedService(parsedService)
+      } catch (error) {
+        console.error('Error parsing service data:', error)
+        // Clear corrupted data
+        localStorage.removeItem('selectedService')
+      }
     }
+    setLoadingService(false)
   }, [])
 
   // Generate next 30 days
@@ -31,17 +40,15 @@ export default function DateTimePage() {
         dates.push(date)
       }
     }
-    console.log('Generated dates:', dates.length) // Debug log
     setAvailableDates(dates)
   }, [])
 
-  // If no service is selected, redirect to service selection
+  // If no service is selected after loading, redirect to service selection
   useEffect(() => {
-    if (!selectedService) {
-      console.log('No service selected, redirecting to service selection')
+    if (!loadingService && !selectedService) {
       window.location.href = '/booking'
     }
-  }, [selectedService])
+  }, [selectedService, loadingService])
 
   // Generate available times based on selected date
   useEffect(() => {
@@ -90,13 +97,25 @@ export default function DateTimePage() {
     }
   }
 
+  // Show loading screen while service is being loaded
+  if (loadingService) {
+    return (
+      <div className="min-h-screen bg-background py-8">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4 mx-auto"></div>
+              <p className="text-gray-600">Loading your service selection...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4 max-w-4xl">
-        {/* Debug info */}
-        <div className="mb-4 p-2 bg-yellow-100 text-xs">
-          Debug: availableDates={availableDates.length}, selectedService={selectedService ? 'yes' : 'no'}
-        </div>
         
         {/* Header */}
         <div className="text-center mb-8">
