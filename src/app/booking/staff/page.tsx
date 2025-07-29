@@ -24,11 +24,11 @@ export default function StaffPage() {
   const getServiceCategory = (serviceName: string): string => {
     // Simple mapping based on service name keywords
     const name = serviceName.toLowerCase()
-    if (name.includes('facial')) return 'facial'
-    if (name.includes('massage')) return 'massage'
+    if (name.includes('facial')) return 'facials'
+    if (name.includes('massage')) return 'massages'
     if (name.includes('waxing') || name.includes('wax')) return 'waxing'
-    if (name.includes('treatment') || name.includes('cleaning') || name.includes('scrub')) return 'body_treatment'
-    if (name.includes('package')) return 'package'
+    if (name.includes('treatment') || name.includes('cleaning') || name.includes('scrub')) return 'body_treatments'
+    if (name.includes('package')) return 'packages'
     if (name.includes('vip') || name.includes('membership')) return 'membership'
     return 'other'
   }
@@ -86,20 +86,24 @@ export default function StaffPage() {
       is_active: true,
       can_perform_services: staffMember.capabilities,
       default_room_id: staffMember.defaultRoom ? `room-${staffMember.defaultRoom}` : null,
-      schedule: { [new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()]: true }, 
+      schedule: staffMember.workDays.reduce((acc, day) => {
+        acc[day] = true
+        return acc
+      }, {} as Record<string, boolean>),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     } : null
 
-    // Create mock room data
+    // Create mock room data based on staff default room
+    const roomNumber = staffMember?.defaultRoom || 1
     const mockRoom = {
-      id: 'room-1',
-      name: 'Room 1',
-      room_number: 1,
-      capacity: 1,
-      capabilities: ['facials', 'waxing'],
-      has_body_scrub_equipment: false,
-      is_couples_room: false,
+      id: `room-${roomNumber}`,
+      name: `Room ${roomNumber}`,
+      room_number: roomNumber,
+      capacity: roomNumber === 1 ? 1 : 2, // Room 1 is single, others are couples
+      capabilities: ['facials', 'waxing', 'massages', 'body_treatments'],
+      has_body_scrub_equipment: roomNumber === 3, // Only Room 3 has body scrub equipment
+      is_couples_room: roomNumber !== 1, // Room 1 is single, others are couples
       is_active: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
