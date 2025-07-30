@@ -317,3 +317,310 @@ The booking system is now fully functional! All critical database issues have be
 3. Enhance calendar with weekend highlighting
 4. Complete remaining UI polish items
 5. Prepare for production deployment 
+
+---
+
+## Stage 7: Admin Panel Implementation (NEW) 📅 PLANNED
+### Overview
+Implement a comprehensive admin panel for staff to manage daily operations, view schedules, track room utilization, and handle special requests. This will be built as an extension of the current booking system.
+
+### Phase 1: Foundation & Authentication (Days 1-2)
+#### Objectives
+- Set up admin routing and authentication
+- Create role-based access control
+- Build admin layout and navigation
+- Implement security middleware
+
+#### Technical Requirements
+- [ ] Create /admin route structure
+- [ ] Implement Supabase Auth with roles
+- [ ] Build AdminLayout component
+- [ ] Create role-based route guards
+- [ ] Set up admin-specific API endpoints
+- [ ] Implement session management
+- [ ] Add security headers and CORS
+
+#### Database Updates
+```sql
+-- Add admin roles to users
+ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'customer';
+-- Roles: super_admin, manager, staff, receptionist
+
+-- Create admin_permissions table
+CREATE TABLE admin_permissions (
+  id SERIAL PRIMARY KEY,
+  role TEXT NOT NULL,
+  resource TEXT NOT NULL,
+  actions TEXT[] NOT NULL
+);
+
+-- Add RLS policies for admin access
+```
+
+### Phase 2: Today's Schedule View (Days 3-4)
+#### Objectives
+- Build comprehensive daily schedule dashboard
+- Show all bookings with staff and room assignments
+- Enable quick status updates
+- Add real-time updates
+
+#### Feature List
+- [ ] Daily appointment grid view
+- [ ] Filter by staff, room, or service
+- [ ] Booking status indicators (confirmed, in-progress, completed)
+- [ ] Customer contact information display
+- [ ] Special request badges
+- [ ] Quick actions (check-in, complete, cancel)
+- [ ] Print daily schedule function
+- [ ] Real-time updates via WebSocket
+
+#### Components
+- TodaySchedule.tsx - Main schedule grid
+- BookingCard.tsx - Individual booking display
+- StatusBadge.tsx - Visual status indicators
+- QuickActionMenu.tsx - Contextual actions
+
+### Phase 3: Room Timeline View (Days 5-6)
+#### Objectives
+- Create visual room utilization timeline
+- Show occupancy patterns
+- Enable drag-and-drop rescheduling
+- Highlight conflicts or gaps
+
+#### Feature List
+- [ ] Horizontal timeline by room
+- [ ] 15-minute interval grid
+- [ ] Color-coded service blocks
+- [ ] Drag-and-drop rescheduling
+- [ ] Availability gaps highlighting
+- [ ] Room capacity indicators
+- [ ] Maintenance/blocking periods
+- [ ] Utilization percentage display
+
+#### Technical Implementation
+- Use React DnD for drag-and-drop
+- Canvas or SVG for timeline rendering
+- Optimistic updates with rollback
+- Conflict detection algorithms
+
+### Phase 4: Staff Schedule Management (Days 7-8)
+#### Objectives
+- Display individual staff schedules
+- Show availability and bookings
+- Track working hours and breaks
+- Monitor productivity metrics
+
+#### Feature List
+- [ ] Weekly staff schedule grid
+- [ ] Individual staff day view
+- [ ] Break time management
+- [ ] Overtime tracking
+- [ ] Service count metrics
+- [ ] Revenue per staff member
+- [ ] Availability editor
+- [ ] Vacation/sick day management
+
+#### Database Schema
+```sql
+-- Staff scheduling tables
+CREATE TABLE staff_schedules (
+  id SERIAL PRIMARY KEY,
+  staff_id INTEGER REFERENCES staff(id),
+  date DATE NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  break_start TIME,
+  break_end TIME,
+  status TEXT DEFAULT 'scheduled'
+);
+
+CREATE TABLE staff_metrics (
+  staff_id INTEGER,
+  date DATE,
+  services_completed INTEGER,
+  revenue DECIMAL,
+  utilization_rate DECIMAL
+);
+```
+
+### Phase 5: Quick Actions & Automation (Days 9-10)
+#### Objectives
+- Implement common administrative tasks
+- Add bulk operations
+- Create notification system
+- Build action shortcuts
+
+#### Quick Actions Functionality
+- [ ] Bulk check-in for arrivals
+- [ ] Send SMS reminders
+- [ ] Generate end-of-day reports
+- [ ] Export schedule to PDF/Excel
+- [ ] Reschedule multiple bookings
+- [ ] Block time slots
+- [ ] Override availability
+- [ ] Manage walk-ins
+
+#### Automation Features
+- Auto-assign rooms based on rules
+- Reminder notifications
+- No-show tracking
+- Waitlist management
+- Staff rotation logic
+
+### Phase 6: Analytics & Reporting (Days 11-12)
+#### Objectives
+- Build service tracking dashboard
+- Create performance metrics
+- Implement custom reports
+- Add data visualization
+
+#### Service Tracking Metrics
+- [ ] Service popularity rankings
+- [ ] Average service duration
+- [ ] Peak booking times
+- [ ] Revenue by service type
+- [ ] Utilization rates
+- [ ] Customer retention metrics
+- [ ] Staff performance KPIs
+- [ ] Room efficiency analysis
+
+#### Visualization Components
+- Chart.js or Recharts integration
+- Customizable date ranges
+- Exportable reports
+- Real-time dashboard updates
+- Comparative analysis tools
+
+### Phase 7: Special Requests & Notes (Days 13-14)
+#### Objectives
+- Implement special request management
+- Add customer preference tracking
+- Create note system
+- Build alert mechanisms
+
+#### Special Request Features
+- [ ] Request indicator badges
+- [ ] Categorized request types
+- [ ] Priority levels (high, medium, low)
+- [ ] Staff assignment for requests
+- [ ] Request history tracking
+- [ ] Completion status
+- [ ] Customer preference profiles
+- [ ] Alert notifications
+
+#### Request Categories
+- Accessibility needs
+- Product allergies
+- Preferred staff
+- Room preferences
+- Special occasions
+- Medical conditions
+- Custom requirements
+
+### Access Control Specifications
+
+#### Role Definitions
+1. **Super Admin**
+   - Full system access
+   - User management
+   - System configuration
+   - All reports and analytics
+   - Database management
+
+2. **Manager**
+   - All operational features
+   - Staff schedule management
+   - Reports and analytics
+   - Cannot modify system settings
+   - Cannot manage user roles
+
+3. **Staff**
+   - View own schedule
+   - Update booking status
+   - View assigned customers
+   - Add notes to bookings
+   - Limited reporting access
+
+4. **Receptionist**
+   - View all schedules
+   - Create/modify bookings
+   - Check-in customers
+   - Basic reporting
+   - Cannot modify staff schedules
+
+#### Permission Matrix
+```typescript
+const permissions = {
+  super_admin: ['*'],
+  manager: [
+    'bookings.*',
+    'staff.read',
+    'staff.update',
+    'reports.*',
+    'analytics.*'
+  ],
+  staff: [
+    'bookings.read',
+    'bookings.update:own',
+    'schedule.read:own',
+    'customers.read:assigned'
+  ],
+  receptionist: [
+    'bookings.*',
+    'schedule.read',
+    'customers.read',
+    'reports.basic'
+  ]
+}
+```
+
+### Technical Specifications
+
+#### API Endpoints Structure
+```typescript
+// Admin API routes
+POST   /api/admin/auth/login
+POST   /api/admin/auth/logout
+GET    /api/admin/auth/me
+
+GET    /api/admin/dashboard
+GET    /api/admin/schedule/:date
+PUT    /api/admin/bookings/:id/status
+POST   /api/admin/bookings/bulk-action
+
+GET    /api/admin/rooms/timeline
+GET    /api/admin/rooms/:id/availability
+PUT    /api/admin/rooms/:id/block
+
+GET    /api/admin/staff/:id/schedule
+PUT    /api/admin/staff/:id/availability
+GET    /api/admin/staff/metrics
+
+GET    /api/admin/analytics/services
+GET    /api/admin/analytics/revenue
+GET    /api/admin/analytics/utilization
+
+POST   /api/admin/actions/quick
+GET    /api/admin/reports/generate
+```
+
+#### Real-time Subscriptions
+```typescript
+// Supabase real-time channels
+const channels = {
+  bookings: 'admin:bookings:*',
+  staff: 'admin:staff:*',
+  rooms: 'admin:rooms:*',
+  alerts: 'admin:alerts:*'
+}
+```
+
+### Success Metrics
+- [ ] Authentication and authorization working
+- [ ] All CRUD operations functional
+- [ ] Real-time updates implemented
+- [ ] Mobile responsive design
+- [ ] Sub-2 second page loads
+- [ ] 99.9% uptime
+- [ ] Zero security vulnerabilities
+- [ ] Intuitive UX (< 5 min training needed)
