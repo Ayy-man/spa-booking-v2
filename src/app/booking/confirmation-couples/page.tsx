@@ -112,7 +112,7 @@ export default function CouplesConfirmationPage() {
         }
 
         setBookingResults(couplesResult)
-        console.log('Couples booking created:', couplesResult)
+  
       } else {
         // Handle single booking
         const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
@@ -155,7 +155,6 @@ export default function CouplesConfirmationPage() {
       localStorage.removeItem('customerInfo')
       
     } catch (err: any) {
-      console.error('Booking creation failed:', err)
       
       let errorMessage = 'Failed to confirm booking. '
       if (err.message?.includes('staff_not_available')) {

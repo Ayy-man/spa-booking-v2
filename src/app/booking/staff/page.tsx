@@ -92,7 +92,6 @@ export default function StaffPage() {
       )
       
       if (!matchingService) {
-        console.error('Service not found in database')
         setLoadingStaff(false)
         return
       }
@@ -101,7 +100,6 @@ export default function StaffPage() {
       const timeData = localStorage.getItem('selectedTime')
       
       if (!dateData || !timeData) {
-        console.error('Date or time not selected')
         setLoadingStaff(false)
         return
       }
@@ -132,8 +130,7 @@ export default function StaffPage() {
         setAvailableStaff([])
       }
     } catch (error: any) {
-      console.error('Error fetching available staff:', error)
-      console.log('Falling back to showing all active staff')
+      // Fallback: Show all active staff who work on this day
       
       // Fallback: Show all active staff who work on this day
       try {
@@ -156,12 +153,11 @@ export default function StaffPage() {
                  staff.id !== 'any'
         })
         
-        console.log('Fallback staff found:', availableStaffMembers.length)
+
         setAvailableStaff(availableStaffMembers)
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError)
-        setAvailableStaff([])
-      }
+              } catch (fallbackError) {
+          setAvailableStaff([])
+        }
     } finally {
       setLoadingStaff(false)
     }

@@ -48,13 +48,6 @@ export default function ConfirmationPage() {
     setError('')
 
     try {
-      console.log('Starting booking creation with data:', {
-        service: bookingData.service.id,
-        staff: bookingData.staff,
-        date: bookingData.date,
-        time: bookingData.time,
-        customer: bookingData.customer.name
-      })
 
       // First, get optimal room assignment
       let roomId = 1; // Default fallback
@@ -68,12 +61,8 @@ export default function ConfirmationPage() {
         
         if (roomAssignment && roomAssignment.room_id) {
           roomId = roomAssignment.room_id
-          console.log('Assigned room:', roomAssignment)
-        } else {
-          console.warn('No optimal room found, using default')
         }
       } catch (roomError) {
-        console.error('Room assignment failed:', roomError)
         // Continue with default room
       }
 
@@ -90,7 +79,7 @@ export default function ConfirmationPage() {
         special_requests: bookingData.customer.specialRequests || undefined
       })
       
-      console.log('Booking result:', bookingResult)
+
       
       if (!bookingResult || !bookingResult.booking_id) {
         throw new Error('Booking was not created properly - no booking ID returned')
@@ -115,12 +104,6 @@ export default function ConfirmationPage() {
       localStorage.removeItem('customerInfo')
       
     } catch (err: any) {
-      console.error('Booking creation failed:', {
-        error: err,
-        message: err.message,
-        stack: err.stack,
-        details: err.details || 'No additional details'
-      })
       
       // Show more helpful error messages
       let errorMessage = 'Failed to confirm booking. '

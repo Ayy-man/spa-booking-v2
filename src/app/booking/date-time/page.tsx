@@ -25,7 +25,6 @@ export default function DateTimePage() {
         setBookingData(parsedBookingData)
         setSelectedService(parsedBookingData.primaryService)
       } catch (error) {
-        console.error('Error parsing booking data:', error)
         localStorage.removeItem('bookingData')
       }
     } else if (serviceDataStr) {
@@ -40,7 +39,6 @@ export default function DateTimePage() {
           totalDuration: parsedService.duration
         })
       } catch (error) {
-        console.error('Error parsing service data:', error)
         localStorage.removeItem('selectedService')
       }
     }
@@ -89,7 +87,6 @@ export default function DateTimePage() {
       )
       
       if (!matchingService) {
-        console.error('Service not found in database:', selectedService.name)
         // Fallback to simple time generation
         generateFallbackTimes()
         return
@@ -110,12 +107,6 @@ export default function DateTimePage() {
         setAvailableTimes([])
       }
     } catch (error: any) {
-      console.error('Error fetching available time slots:', error)
-      console.error('Error details:', {
-        message: error?.message,
-        code: error?.code,
-        details: error?.details
-      })
       // Fallback to simple time generation
       generateFallbackTimes()
     } finally {

@@ -203,10 +203,9 @@ export default function CouplesStaffPage() {
           nameMap[staff.id] = staff.name
         })
         setStaffMap(nameMap)
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError)
-        setAvailableStaff([])
-      }
+              } catch (fallbackError) {
+          setAvailableStaff([])
+        }
     } finally {
       setLoadingStaff(false)
     }

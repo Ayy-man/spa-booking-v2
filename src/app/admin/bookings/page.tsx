@@ -31,7 +31,6 @@ export default function AdminBookingsPage() {
       if (error) throw error
       setBookings(data || [])
     } catch (err: any) {
-      console.error('Error fetching bookings:', err)
       setError(err.message)
     } finally {
       setLoading(false)
