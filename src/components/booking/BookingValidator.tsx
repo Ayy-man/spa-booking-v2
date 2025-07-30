@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { format } from 'date-fns'
 import { 
   validateBookingRequest,
@@ -58,18 +58,7 @@ export default function BookingValidator({
     dayName: string
   } | null>(null)
 
-  useEffect(() => {
-    if (service && staff && room && date && time) {
-      performValidation()
-    } else {
-      setValidation(null)
-      setRoomAssignment(null)
-      setStaffValidation(null)
-      setStaffAvailability(null)
-    }
-  }, [service, staff, room, date, time, existingBookings])
-
-  const performValidation = () => {
+  const performValidation = useCallback(() => {
     if (!service || !staff || !room || !date || !time) return
 
     // Validate complete booking request
@@ -103,7 +92,18 @@ export default function BookingValidator({
         bookingValidation.warnings
       )
     }
-  }
+  }, [service, staff, room, date, time, existingBookings, onValidationChange])
+
+  useEffect(() => {
+    if (service && staff && room && date && time) {
+      performValidation()
+    } else {
+      setValidation(null)
+      setRoomAssignment(null)
+      setStaffValidation(null)
+      setStaffAvailability(null)
+    }
+  }, [service, staff, room, date, time, existingBookings, performValidation])
 
   const getBusinessRuleExplanation = (service: Service): string[] => {
     const rules: string[] = []

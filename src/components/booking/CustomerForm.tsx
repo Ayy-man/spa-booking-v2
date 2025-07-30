@@ -125,7 +125,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
             </p>
           )}
           <p className="text-xs text-gray-500">
-            We'll send your booking confirmation to this email
+            We&apos;ll send your booking confirmation to this email
           </p>
         </div>
 

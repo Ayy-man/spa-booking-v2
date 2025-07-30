@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { format, addDays, startOfDay, isSameDay } from 'date-fns'
 
@@ -66,14 +66,7 @@ export default function DateTimePage() {
     }
   }, [selectedService, loadingService])
 
-  // Generate available times based on selected date using Supabase
-  useEffect(() => {
-    if (selectedDate && selectedService) {
-      fetchAvailableTimeSlotsFromSupabase()
-    }
-  }, [selectedDate, selectedService])
-
-  const fetchAvailableTimeSlotsFromSupabase = async () => {
+  const fetchAvailableTimeSlotsFromSupabase = useCallback(async () => {
     if (!selectedDate || !selectedService) return
     
     setLoadingTimes(true)
@@ -112,9 +105,9 @@ export default function DateTimePage() {
     } finally {
       setLoadingTimes(false)
     }
-  }
+  }, [selectedDate, selectedService])
 
-  const generateFallbackTimes = () => {
+  const generateFallbackTimes = useCallback(() => {
     const times = []
     for (let hour = 9; hour <= 19; hour++) {
       const time = `${hour.toString().padStart(2, '0')}:00`
@@ -134,7 +127,14 @@ export default function DateTimePage() {
     
     setAvailableTimes(times)
     setLoadingTimes(false)
-  }
+  }, [selectedDate, selectedService])
+
+  // Generate available times based on selected date using Supabase
+  useEffect(() => {
+    if (selectedDate && selectedService) {
+      fetchAvailableTimeSlotsFromSupabase()
+    }
+  }, [selectedDate, selectedService, fetchAvailableTimeSlotsFromSupabase])
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date)

@@ -144,7 +144,7 @@ export default function StaffSelector({
                 Any Available Staff
               </h3>
               <p className="text-gray-600 text-sm mb-2">
-                We'll assign the best available staff member for your service
+                We&apos;ll assign the best available staff member for your service
               </p>
               <div className="flex items-center space-x-2">
                 <Badge variant="secondary" className="bg-primary/10 text-primary">

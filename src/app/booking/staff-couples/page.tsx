@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { supabaseClient } from '@/lib/supabase'
 import { Database } from '@/types/database'
@@ -62,13 +62,7 @@ export default function CouplesStaffPage() {
   }, [])
 
   // Separate useEffect to fetch staff when all data is available
-  useEffect(() => {
-    if (bookingData && selectedDate && selectedTime) {
-      fetchAvailableStaff()
-    }
-  }, [bookingData, selectedDate, selectedTime])
-
-  const fetchAvailableStaff = async () => {
+  const fetchAvailableStaff = useCallback(async () => {
     if (!bookingData || !selectedDate || !selectedTime) return
     
     setLoadingStaff(true)
@@ -203,13 +197,20 @@ export default function CouplesStaffPage() {
           nameMap[staff.id] = staff.name
         })
         setStaffMap(nameMap)
-              } catch (fallbackError) {
+                      } catch (fallbackError) {
           setAvailableStaff([])
         }
-    } finally {
-      setLoadingStaff(false)
+      } finally {
+        setLoadingStaff(false)
+      }
+    }, [bookingData, selectedDate, selectedTime])
+
+  // Separate useEffect to fetch staff when all data is available
+  useEffect(() => {
+    if (bookingData && selectedDate && selectedTime) {
+      fetchAvailableStaff()
     }
-  }
+  }, [bookingData, selectedDate, selectedTime, fetchAvailableStaff])
 
   const handleContinue = () => {
     if (bookingData?.isCouplesBooking && (!primaryStaff || !secondaryStaff)) {
