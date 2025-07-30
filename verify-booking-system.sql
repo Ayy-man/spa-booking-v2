@@ -35,7 +35,7 @@ ORDER BY tablename, policyname;
 
 -- 3. Test getting available time slots for tomorrow
 SELECT * FROM get_available_time_slots(
-  CURRENT_DATE + INTERVAL '1 day',
+  (CURRENT_DATE + INTERVAL '1 day')::DATE,
   NULL,
   NULL
 ) 
@@ -47,7 +47,7 @@ LIMIT 10;
 SELECT * FROM assign_optimal_room(
   'basic_facial',  -- or any facial service ID from your data
   'robyn',         -- or any staff ID
-  CURRENT_DATE + INTERVAL '1 day',
+  (CURRENT_DATE + INTERVAL '1 day')::DATE,
   '10:00'
 );
 
@@ -102,7 +102,7 @@ SELECT * FROM process_booking(
   1,                                        -- room_id
   'Test Verification',                      -- customer_name
   'test_verify@example.com',               -- customer_email
-  CURRENT_DATE + INTERVAL '1 day',         -- booking_date
+  (CURRENT_DATE + INTERVAL '1 day')::DATE,  -- booking_date
   '14:00',                                 -- start_time
   '555-9999',                              -- phone
   'This is a test booking for verification' -- special_requests
