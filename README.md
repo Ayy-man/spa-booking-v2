@@ -12,12 +12,13 @@ A sophisticated Calendly-style booking system for medical spa services, built wi
 ## 🎯 Project Overview
 
 This booking system handles complex spa scheduling with:
-- **50+ Services**: Facials, massages, treatments, waxing, and packages
+- **44 Services**: Facials, massages, treatments, waxing, and packages
 - **3 Rooms**: Different capabilities for single/couples services
 - **4 Staff Members**: Each with specific capabilities and schedules
 - **Smart Room Assignment**: Automatic room allocation based on service type
 - **Mobile-First Design**: Optimized for mobile booking experience
 - **Couples Booking**: Book appointments for two people simultaneously
+- **Admin Panel**: Basic booking management interface (view all bookings)
 
 ## 🚀 Quick Start
 
@@ -74,6 +75,21 @@ dermal-booking-app/
 │   └── styles/                    # Additional styles
 └── public/                        # Static assets
 ```
+
+## 🔧 Admin Panel
+
+The system includes a basic admin panel at `/admin/bookings` that provides:
+- **View all bookings** in a table format
+- **Booking details** including customer, service, staff, room, and status
+- **Read-only access** to booking information
+- **Refresh functionality** to update booking data
+
+**Note**: This is a basic read-only admin interface. Future enhancements could include:
+- Booking status management (confirm/cancel/complete)
+- Staff schedule management
+- Customer management
+- Payment processing
+- Email notifications
 
 ## 🎨 Design System
 

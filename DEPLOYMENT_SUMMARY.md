@@ -37,6 +37,7 @@
 - ✅ **Customer Information**: Comprehensive form collection
 - ✅ **Booking Confirmation**: Database integration
 - ✅ **Couples Booking**: Modal-based dual booking
+- ✅ **Admin Panel**: Basic booking management (view all bookings)
 
 ### **Business Logic**
 - ✅ **Room Assignment**: Smart allocation based on service type
