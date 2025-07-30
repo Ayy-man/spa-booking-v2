@@ -210,8 +210,8 @@ export function getAccommodationDetails(
 export function checkBookingConflicts(
   newBooking: {
     staff_id: string
-    room_id: string
-    booking_date: string
+    room_id: number
+    appointment_date: string
     start_time: string
     end_time: string
     service_id?: string
@@ -221,8 +221,8 @@ export function checkBookingConflicts(
 ): BookingConflict[] {
   const conflicts: BookingConflict[] = []
   
-  const newStart = parseISO(`${newBooking.booking_date}T${newBooking.start_time}:00`)
-  const newEnd = parseISO(`${newBooking.booking_date}T${newBooking.end_time}:00`)
+  const newStart = parseISO(`${newBooking.appointment_date}T${newBooking.start_time}:00`)
+  const newEnd = parseISO(`${newBooking.appointment_date}T${newBooking.end_time}:00`)
   
   // Add buffer time if requested (15 minutes before and after)
   const bufferStart = includeBufferTime ? addMinutes(newStart, -BUSINESS_HOURS.bufferTime) : newStart
@@ -232,8 +232,8 @@ export function checkBookingConflicts(
     // Skip cancelled bookings
     if (booking.status === 'cancelled') continue
     
-    const existingStart = parseISO(`${booking.booking_date}T${booking.start_time}:00`)
-    const existingEnd = parseISO(`${booking.booking_date}T${booking.end_time}:00`)
+    const existingStart = parseISO(`${booking.appointment_date}T${booking.start_time}:00`)
+    const existingEnd = parseISO(`${booking.appointment_date}T${booking.end_time}:00`)
     
     // Check for time overlap with buffer consideration
     // Add buffer to existing booking as well for proper conflict detection
@@ -343,7 +343,7 @@ export function validateBookingRequest(
     {
       staff_id: staff.id,
       room_id: room.id,
-      booking_date: format(date, 'yyyy-MM-dd'),
+      appointment_date: format(date, 'yyyy-MM-dd'),
       start_time: startTime,
       end_time: endTime,
       service_id: service.id
@@ -501,9 +501,9 @@ export function getOptimalRoom(
   }
   
   // Rule 1: Body scrub services MUST use Room 3 (only room with body scrub equipment)
-  if (service.requires_body_scrub_room || service.category === 'body_scrub') {
+  if (service.requires_room_3 || service.category === 'body_scrub') {
     const bodyScrubRoom = availableRooms.find(room => 
-      room.has_body_scrub_equipment && room.is_active
+      room.id === 3 && room.is_active
     )
     
     if (bodyScrubRoom) {
@@ -530,7 +530,7 @@ export function getOptimalRoom(
   }
   
   // Rule 2: Couples services prefer Room 3, then Room 2 (never Room 1)
-  if (service.requires_couples_room || service.is_package) {
+  if (service.is_couples_service) {
     // Validate couples services cannot use Room 1
     const room1 = availableRooms.find(room => room.capacity === 1)
     if (availableRooms.length === 1 && room1) {
@@ -544,7 +544,7 @@ export function getOptimalRoom(
     
     // Try Room 3 first (premium room with body scrub equipment)
     const room3 = availableRooms.find(room => 
-      room.capacity >= 2 && room.has_body_scrub_equipment && room.is_active
+      room.capacity >= 2 && room.id === 3 && room.is_active
     )
     if (room3) {
       return { 
@@ -556,7 +556,7 @@ export function getOptimalRoom(
     
     // Try Room 2 (standard couples room)
     const room2 = availableRooms.find(room => 
-      room.capacity >= 2 && room.is_couples_room && room.is_active
+      room.capacity >= 2 && room.id === 2 && room.is_active
     )
     if (room2) {
       return { 
@@ -635,7 +635,7 @@ export function canStaffPerformService(staff: Staff, service: Service): boolean 
   }
   
   // Check if staff has the required capability for this service category
-  const staffCapabilities = staff.can_perform_services || []
+  const staffCapabilities = staff.capabilities || []
   return staffCapabilities.includes(service.category)
 }
 
@@ -663,7 +663,7 @@ export function validateStaffCapability(
     return { canPerform: false, reasons }
   }
   
-  const staffCapabilities = staff.can_perform_services || []
+  const staffCapabilities = staff.capabilities || []
   if (!staffCapabilities.includes(service.category)) {
     reasons.push(`${staff.name} is not qualified to perform ${service.category} services`)
     return { canPerform: false, reasons }
@@ -698,38 +698,34 @@ export function getStaffDayAvailability(
   }
   
   // Get day name in correct format
-  const dayName = format(date, 'EEE').toLowerCase() // mon, tue, wed, thu, fri, sat, sun
-  const schedule = staff.schedule as any
+  const dayName = format(date, 'EEEE').toLowerCase() // sunday, monday, tuesday, etc.
+  const dayOfWeek = date.getDay() // 0 = Sunday, 1 = Monday, etc.
   
-  if (!schedule) {
-    reasons.push(`${staff.name} has no schedule configured`)
-    return { isAvailable: false, reasons, dayName }
-  }
+  // Check if staff works on this day
+  const worksOnDay = staff.work_days.includes(dayOfWeek)
   
-  if (!schedule[dayName]) {
-    reasons.push(`${staff.name} has no schedule for ${dayName}`)
-    return { isAvailable: false, reasons, dayName }
-  }
-  
-  const daySchedule = schedule[dayName]
-  const isAvailable = daySchedule.available || false
-  
-  if (!isAvailable) {
+  if (!worksOnDay) {
     // Add specific reasons based on staff member
-    if (staff.name === 'Leonel Sidon' && dayName !== 'sun') {
+    if (staff.name === 'Leonel Sidon' && dayOfWeek !== 0) {
       reasons.push('Leonel only works on Sundays')
     } else if ((staff.name === 'Selma Villaver' || staff.name === 'Tanisha Harris') && 
-               (dayName === 'tue' || dayName === 'thu')) {
+               (dayOfWeek === 2 || dayOfWeek === 4)) {
       reasons.push(`${staff.name} is off on Tuesdays and Thursdays`)
     } else {
-      reasons.push(`${staff.name} is not available on ${dayName}`)
+      reasons.push(`${staff.name} does not work on ${dayName}s`)
     }
+    return { isAvailable: false, reasons, dayName }
   }
   
+  // For now, assume standard work hours if staff works that day
+  // In a real implementation, this would come from staff_schedules table
+  const workStart = '09:00'
+  const workEnd = '19:00'
+  
   return {
-    isAvailable,
-    workStart: daySchedule.start_time,
-    workEnd: daySchedule.end_time,
+    isAvailable: true,
+    workStart,
+    workEnd,
     reasons,
     dayName
   }
@@ -881,12 +877,12 @@ export function getRoomUtilizationInfo(room: Room): {
   const specialFeatures: string[] = []
   const suitableFor: string[] = []
   
-  if (room.has_body_scrub_equipment) {
+  if (room.id === 3) {
     specialFeatures.push('Body Scrub Equipment')
     suitableFor.push('Body scrub services (exclusive)')
   }
   
-  if (room.is_couples_room) {
+  if (room.capacity >= 2) {
     specialFeatures.push('Couples Setup')
     suitableFor.push('Couples treatments')
   }

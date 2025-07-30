@@ -108,11 +108,11 @@ export default function BookingValidator({
   const getBusinessRuleExplanation = (service: Service): string[] => {
     const rules: string[] = []
     
-    if (service.requires_body_scrub_room || service.category === 'body_scrub') {
+    if (service.requires_room_3 || service.category === 'body_scrub') {
       rules.push('Body scrub services can only be performed in Room 3 (specialized equipment required)')
     }
     
-    if (service.requires_couples_room || service.is_package) {
+    if (service.is_couples_service) {
       rules.push('Couples services require Room 2 or Room 3 (Room 1 is single occupancy only)')
       rules.push('Room 3 is preferred for couples services (premium room with body scrub equipment)')
     }
@@ -267,7 +267,7 @@ export default function BookingValidator({
               <div className="text-sm text-gray-600">
                 <div>{staff.name} - {service.category} service</div>
                 <div className="mt-1">
-                  Can perform: {staff.can_perform_services.join(', ')}
+                  Can perform: {staff.capabilities.join(', ')}
                 </div>
               </div>
               

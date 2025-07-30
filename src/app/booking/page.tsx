@@ -86,30 +86,16 @@ export default function BookingPage() {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4">
-        {/* Demo Warning */}
-        <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mb-6 mx-auto max-w-4xl">
-          <div className="flex">
-            <div className="ml-3">
-              <p className="text-sm font-medium">
-                🚧 PROTOTYPE BOOKING SYSTEM - DEMO ONLY
-              </p>
-              <p className="text-sm">
-                This is a demonstration of the booking system. No real appointments will be scheduled.
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="text-primary hover:text-primary-dark transition-colors">
             ← Back to Home
           </Link>
           <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
-            Book Your Demo Appointment
+            Book Your Appointment
           </h1>
           <p className="text-gray-600">
-            Select a service to test the booking flow
+            Select a service to begin
           </p>
         </div>
 

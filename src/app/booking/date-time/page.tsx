@@ -50,33 +50,82 @@ export default function DateTimePage() {
     }
   }, [selectedService, loadingService])
 
-  // Generate available times based on selected date
+  // Generate available times based on selected date using Supabase
   useEffect(() => {
     if (selectedDate && selectedService) {
-      setLoadingTimes(true)
-      
-      // Simple time slot generation for now
-      const times = []
-      for (let hour = 9; hour <= 19; hour++) {
-        const time = `${hour.toString().padStart(2, '0')}:00`
-        
-        // Check if this time allows enough duration before closing
-        const serviceDuration = selectedService.duration || 60
-        const endTime = new Date(selectedDate)
-        endTime.setHours(hour, 0, 0, 0)
-        endTime.setMinutes(endTime.getMinutes() + serviceDuration)
-        const closingTime = new Date(selectedDate)
-        closingTime.setHours(19, 0, 0, 0)
-        
-        if (endTime <= closingTime) {
-          times.push(time)
-        }
-      }
-      
-      setAvailableTimes(times)
-      setLoadingTimes(false)
+      fetchAvailableTimeSlotsFromSupabase()
     }
   }, [selectedDate, selectedService])
+
+  const fetchAvailableTimeSlotsFromSupabase = async () => {
+    if (!selectedDate || !selectedService) return
+    
+    setLoadingTimes(true)
+    try {
+      const { supabaseClient } = await import('@/lib/supabase')
+      
+      // Get the service from Supabase to get the correct ID
+      const services = await supabaseClient.getServices()
+      const matchingService = services.find(s => 
+        s.name.toLowerCase() === selectedService.name.toLowerCase()
+      )
+      
+      if (!matchingService) {
+        console.error('Service not found in database:', selectedService.name)
+        // Fallback to simple time generation
+        generateFallbackTimes()
+        return
+      }
+      
+      // Call Supabase function to get available time slots
+      const dateString = selectedDate.toISOString().split('T')[0]
+      const availableSlots = await supabaseClient.getAvailableTimeSlots(
+        dateString,
+        matchingService.id
+      )
+      
+      if (availableSlots && availableSlots.length > 0) {
+        // Extract unique times from the results
+        const uniqueTimes = Array.from(new Set(availableSlots.map((slot: any) => slot.available_time))) as string[]
+        setAvailableTimes(uniqueTimes.sort())
+      } else {
+        setAvailableTimes([])
+      }
+    } catch (error: any) {
+      console.error('Error fetching available time slots:', error)
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details
+      })
+      // Fallback to simple time generation
+      generateFallbackTimes()
+    } finally {
+      setLoadingTimes(false)
+    }
+  }
+
+  const generateFallbackTimes = () => {
+    const times = []
+    for (let hour = 9; hour <= 19; hour++) {
+      const time = `${hour.toString().padStart(2, '0')}:00`
+      
+      // Check if this time allows enough duration before closing
+      const serviceDuration = selectedService?.duration || 60
+      const endTime = new Date(selectedDate!)
+      endTime.setHours(hour, 0, 0, 0)
+      endTime.setMinutes(endTime.getMinutes() + serviceDuration)
+      const closingTime = new Date(selectedDate!)
+      closingTime.setHours(19, 0, 0, 0)
+      
+      if (endTime <= closingTime) {
+        times.push(time)
+      }
+    }
+    
+    setAvailableTimes(times)
+    setLoadingTimes(false)
+  }
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date)

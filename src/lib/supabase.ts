@@ -84,7 +84,7 @@ export const supabaseClient = {
   async createBooking(booking: {
     service_id: string
     staff_id: string
-    room_id: string
+    room_id: number
     customer_name: string
     customer_email: string
     customer_phone?: string
@@ -92,20 +92,119 @@ export const supabaseClient = {
     start_time: string
     special_requests?: string
   }) {
-    const { data, error } = await supabase.rpc('process_booking', {
-      p_service_id: booking.service_id,
-      p_staff_id: booking.staff_id,
-      p_room_id: booking.room_id,
-      p_customer_name: booking.customer_name,
-      p_customer_email: booking.customer_email,
-      p_customer_phone: booking.customer_phone,
-      p_booking_date: booking.booking_date,
-      p_start_time: booking.start_time,
-      p_special_requests: booking.special_requests
-    })
+    // First check if process_booking RPC exists
+    try {
+      const { data, error } = await supabase.rpc('process_booking', {
+        p_service_id: booking.service_id,
+        p_staff_id: booking.staff_id,
+        p_room_id: booking.room_id,
+        p_customer_name: booking.customer_name,
+        p_customer_email: booking.customer_email,
+        p_booking_date: booking.booking_date,
+        p_start_time: booking.start_time,
+        p_customer_phone: booking.customer_phone,
+        p_special_requests: booking.special_requests
+      })
 
-    if (error) throw error
-    return data[0] // The function returns an array with one result
+      if (error) {
+        console.error('RPC error:', error)
+        if (error.code === '42883') {
+          console.log('RPC function not found, falling back to direct insert')
+        } else if (error.code === '42501') {
+          throw new Error('Permission denied. Please ensure database functions are installed and RLS policies are configured.')
+        } else {
+          throw error
+        }
+      } else if (data && data[0]) {
+        // Convert UUID to string if needed
+        return {
+          booking_id: data[0].booking_id?.toString() || data[0].booking_id,
+          success: data[0].success,
+          message: data[0].message
+        }
+      }
+    } catch (rpcError: any) {
+      if (rpcError.message?.includes('Permission denied')) {
+        throw rpcError
+      }
+      console.log('RPC function error, using direct insert')
+    }
+
+    // Fallback: Create booking directly
+    // Get service details
+    const { data: service } = await supabase
+      .from('services')
+      .select('*')
+      .eq('id', booking.service_id)
+      .single()
+
+    if (!service) throw new Error('Service not found')
+
+    // Create or find customer
+    const [firstName, ...lastNameParts] = booking.customer_name.split(' ')
+    const lastName = lastNameParts.join(' ')
+    
+    let customerId: string
+    
+    // Check if customer exists
+    const { data: existingCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('email', booking.customer_email)
+      .single()
+    
+    if (existingCustomer) {
+      customerId = existingCustomer.id
+    } else {
+      // Create new customer
+      const { data: newCustomer, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          first_name: firstName,
+          last_name: lastName,
+          email: booking.customer_email,
+          phone: booking.customer_phone || ''
+        })
+        .select()
+        .single()
+      
+      if (customerError) throw customerError
+      customerId = newCustomer.id
+    }
+
+    // Calculate end time
+    const startTime = new Date(`2000-01-01T${booking.start_time}:00`)
+    const endTime = new Date(startTime.getTime() + service.duration * 60000)
+    const endTimeStr = endTime.toTimeString().slice(0, 5)
+
+    // Create booking
+    const { data: newBooking, error: bookingError } = await supabase
+      .from('bookings')
+      .insert({
+        customer_id: customerId,
+        service_id: booking.service_id,
+        staff_id: booking.staff_id,
+        room_id: booking.room_id,
+        appointment_date: booking.booking_date,
+        start_time: booking.start_time,
+        end_time: endTimeStr,
+        duration: service.duration,
+        total_price: service.price,
+        final_price: service.price,
+        status: 'confirmed',
+        payment_status: 'pending',
+        notes: booking.special_requests || null
+      })
+      .select()
+      .single()
+
+    if (bookingError) throw bookingError
+
+    return {
+      booking_id: newBooking.id.toString(),
+      success: true,
+      message: 'Booking created successfully'
+    }
   },
 
   async getBookings(date?: string) {

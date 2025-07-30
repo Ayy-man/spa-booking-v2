@@ -5,14 +5,14 @@ export type Service = Database['public']['Tables']['services']['Row']
 export type Staff = Database['public']['Tables']['staff']['Row']
 export type Room = Database['public']['Tables']['rooms']['Row']
 export type Booking = Database['public']['Tables']['bookings']['Row']
-export type StaffAvailability = Database['public']['Tables']['staff_availability']['Row']
+export type StaffSchedule = Database['public']['Tables']['staff_schedules']['Row']
 
 // Insert types for creating new records
 export type ServiceInsert = Database['public']['Tables']['services']['Insert']
 export type StaffInsert = Database['public']['Tables']['staff']['Insert']
 export type RoomInsert = Database['public']['Tables']['rooms']['Insert']
 export type BookingInsert = Database['public']['Tables']['bookings']['Insert']
-export type StaffAvailabilityInsert = Database['public']['Tables']['staff_availability']['Insert']
+export type StaffScheduleInsert = Database['public']['Tables']['staff_schedules']['Insert']
 
 // Update types for modifying records
 export type ServiceUpdate = Database['public']['Tables']['services']['Update']
@@ -32,7 +32,7 @@ export interface StaffWithRoom extends Staff {
 }
 
 // Business logic types
-export interface StaffSchedule {
+export interface StaffScheduleData {
   [day: string]: {
     available: boolean
     start_time?: string

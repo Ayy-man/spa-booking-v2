@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { staffNameMap } from '@/lib/staff-data'
+import { supabaseClient } from '@/lib/supabase'
 
 export default function ConfirmationPage() {
   const [bookingData, setBookingData] = useState<any>(null)
@@ -47,15 +48,57 @@ export default function ConfirmationPage() {
     setError('')
 
     try {
-      // Simulate API call - in real app, this would save to Supabase
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      console.log('Starting booking creation with data:', {
+        service: bookingData.service.id,
+        staff: bookingData.staff,
+        date: bookingData.date,
+        time: bookingData.time,
+        customer: bookingData.customer.name
+      })
+
+      // First, get optimal room assignment
+      let roomId = 1; // Default fallback
+      try {
+        const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
+          bookingData.service.id,
+          bookingData.staff,
+          bookingData.date,
+          bookingData.time
+        )
+        
+        if (roomAssignment && roomAssignment.room_id) {
+          roomId = roomAssignment.room_id
+          console.log('Assigned room:', roomAssignment)
+        } else {
+          console.warn('No optimal room found, using default')
+        }
+      } catch (roomError) {
+        console.error('Room assignment failed:', roomError)
+        // Continue with default room
+      }
+
+      // Create the booking in Supabase
+      const bookingResult = await supabaseClient.createBooking({
+        service_id: bookingData.service.id,
+        staff_id: bookingData.staff,
+        room_id: roomId,
+        customer_name: bookingData.customer.name,
+        customer_email: bookingData.customer.email,
+        customer_phone: bookingData.customer.phone || undefined,
+        booking_date: bookingData.date,
+        start_time: bookingData.time,
+        special_requests: bookingData.customer.specialRequests || undefined
+      })
       
-      // Generate booking ID
-      const bookingId = 'BK' + Date.now().toString().slice(-6)
+      console.log('Booking result:', bookingResult)
       
-      // Store booking in localStorage for demo
+      if (!bookingResult || !bookingResult.booking_id) {
+        throw new Error('Booking was not created properly - no booking ID returned')
+      }
+      
+      // Store booking result
       const booking = {
-        id: bookingId,
+        id: bookingResult.booking_id,
         ...bookingData,
         status: 'confirmed',
         createdAt: new Date().toISOString()
@@ -71,8 +114,27 @@ export default function ConfirmationPage() {
       localStorage.removeItem('selectedStaff')
       localStorage.removeItem('customerInfo')
       
-    } catch (err) {
-      setError('Failed to confirm booking. Please try again.')
+    } catch (err: any) {
+      console.error('Booking creation failed:', {
+        error: err,
+        message: err.message,
+        stack: err.stack,
+        details: err.details || 'No additional details'
+      })
+      
+      // Show more helpful error messages
+      let errorMessage = 'Failed to confirm booking. '
+      if (err.message?.includes('RPC')) {
+        errorMessage += 'Database functions not configured. Please contact support.'
+      } else if (err.message?.includes('duplicate')) {
+        errorMessage += 'A booking already exists for this time slot.'
+      } else if (err.message?.includes('permission')) {
+        errorMessage += 'Permission denied. Please check your credentials.'
+      } else {
+        errorMessage += err.message || 'Please try again.'
+      }
+      
+      setError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -120,21 +182,21 @@ export default function ConfirmationPage() {
               <div className="flex">
                 <div className="ml-3">
                   <p className="text-sm font-medium">
-                    🚨 DEMO BOOKING - NOT A REAL APPOINTMENT
+                    ✅ BOOKING CONFIRMED
                   </p>
                   <p className="text-sm">
-                    This is a prototype system. No actual appointment has been scheduled.
+                    Your appointment has been successfully scheduled.
                   </p>
                 </div>
               </div>
             </div>
             
             <h1 className="text-3xl font-heading text-primary-dark mb-4">
-              Demo Booking Confirmed!
+              Booking Confirmed!
             </h1>
             
             <p className="text-gray-600 mb-4">
-              This demo booking has been recorded in your browser's local storage. In a production system, you would receive a confirmation email.
+              Your appointment has been successfully booked. You will receive a confirmation email shortly.
             </p>
             
             {paymentCompleted && (

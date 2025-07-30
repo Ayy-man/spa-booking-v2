@@ -1,150 +1,139 @@
 # Dermal Skin Clinic Booking System - Implementation Plan
 
-**PROJECT STATUS: 🚀 NEW APPROACH - HTML/CSS/JavaScript**  
+**PROJECT STATUS: 🔄 PIVOTED BACK TO NEXT.JS**  
 **Start Date: July 29, 2025**  
-**System Approach: Pure HTML/CSS/JavaScript (No Framework)**  
+**Current Date: July 29, 2025**  
+**System Approach: Next.js with Supabase (Original Architecture)**  
 
-## New Implementation Strategy
+## Implementation Update - July 29, 2025
 
-We are abandoning the Next.js approach in favor of a pure HTML/CSS/JavaScript website. This approach offers significant advantages for a medical spa booking system:
+After further investigation, we discovered the Next.js implementation is more functional than initially assessed. We have pivoted back to using the existing Next.js architecture rather than rebuilding in vanilla HTML/CSS/JavaScript.
 
-### **Advantages of HTML/CSS/JavaScript Approach**
-- **Simpler**: No build process or framework complexity
-- **Faster**: Direct HTML/CSS/JS loads instantly  
-- **Easier to deploy**: Static hosting anywhere (Netlify, Vercel, GitHub Pages)
-- **Better for booking sites**: Direct database integration without API layers
-- **Easier to maintain**: Standard web technologies that any developer can work with
-- **More reliable**: Fewer dependencies and potential failure points
+### **Today's Progress Summary**
+- ✅ Fixed all TypeScript errors (booking_date -> appointment_date)
+- ✅ Connected to Supabase database successfully
+- ✅ Removed all demo/prototype warnings
+- ✅ Fixed staff availability display issues
+- ✅ Resolved white screen build errors
+- ⚠️ Created SQL functions but NOT installed yet
+- ❌ Blocked by RLS policies preventing booking creation
 
 ---
 
-## Stage 1: HTML/CSS/JavaScript Setup (Day 1) 🟡 IN PROGRESS
+## Stage 1: Database Connection & Bug Fixes ✅ COMPLETED
 ### Objectives
-- Create clean HTML file structure for all booking pages
-- Extract and optimize CSS from existing globals.css
-- Set up vanilla JavaScript for all interactions
-- Implement proper file organization for static hosting
+- Fix TypeScript errors preventing build
+- Connect to Supabase database
+- Remove demo/prototype warnings
+- Fix staff availability issues
 
-### Tasks
-- [ ] Create index.html (homepage) with proper structure
-- [ ] Create booking-flow.html (main booking interface)
-- [ ] Extract CSS from globals.css and optimize for vanilla HTML
-- [ ] Create main.js for booking interactions
-- [ ] Set up proper file structure (css/, js/, assets/ folders)
-- [ ] Implement responsive design without Tailwind dependencies
-- [ ] Create navigation structure between pages
-- [ ] Optimize assets for fast loading
+### Tasks Completed
+- ✅ Fixed booking_date -> appointment_date TypeScript errors
+- ✅ Added Supabase credentials to .env.local
+- ✅ Connected to production database
+- ✅ Removed all demo/prototype text
+- ✅ Fixed staff availability display logic
+- ✅ Resolved white screen build errors
+- ✅ Created SQL function files
 
-### Dependencies
-- Existing design system and color palette
-- Current globals.css file
-- Business logic documentation
+### Outstanding from Stage 1
+- ❌ Install SQL functions in database
+- ❌ Fix RLS policies blocking operations
 
-### File Structure
+## Stage 2: Fix Database & RLS Issues 🔴 URGENT - NEXT PRIORITY
+### Objectives
+- Install SQL functions in Supabase
+- Fix RLS policies to allow booking creation
+- Enable anonymous user operations
+- Test complete booking flow
+
+### Critical Database Tasks
+- [ ] Install process_booking function
+- [ ] Install check_staff_availability function
+- [ ] Install get_available_time_slots function
+- [ ] Fix RLS policy on customers table
+- [ ] Fix RLS policy on bookings table
+- [ ] Grant execute permissions on functions
+- [ ] Test booking creation end-to-end
+
+### RLS Policy Fixes Needed
+```sql
+-- Allow anonymous users to create customers
+CREATE POLICY "Allow anonymous customer creation" ON customers
+FOR INSERT TO anon WITH CHECK (true);
+
+-- Allow anonymous users to create bookings
+CREATE POLICY "Allow anonymous booking creation" ON bookings
+FOR INSERT TO anon WITH CHECK (true);
+
+-- Grant function execution
+GRANT EXECUTE ON FUNCTION process_booking TO anon;
 ```
-medspav2/
-├── index.html              # Homepage
-├── booking.html            # Main booking flow
-├── css/
-│   ├── main.css           # Main stylesheet
-│   └── booking.css        # Booking-specific styles
-├── js/
-│   ├── main.js            # Core JavaScript
-│   ├── booking.js         # Booking logic
-│   └── supabase.js        # Database connection
-├── assets/
-│   └── images/            # Image assets
-└── docs/                  # Documentation (existing)
-```
-
-## Stage 2: Perfect HTML Prototype (Day 2) 📅 PLANNED
-### Objectives
-- Fix all identified UI issues from previous prototype
-- Implement correct button hierarchy and user flow
-- Remove problematic hover effects and improve interactions
-- Add proper service context throughout booking flow
-
-### Critical UI Fixes
-- [ ] Fix homepage button hierarchy (primary vs secondary styling)
-- [ ] Remove hover effects from category cards that cause confusion
-- [ ] Add service context to date selection (show selected service)
-- [ ] Implement weekend date highlighting in calendar
-- [ ] Fix staff availability filtering to work correctly
-- [ ] Improve continue button prominence and positioning
-- [ ] Add proper loading states for all interactions
-- [ ] Implement error messaging for form validation
-
-### Tasks
-- [ ] Redesign homepage with correct button priorities
-- [ ] Create static category cards without hover effects
-- [ ] Add service selection context display
-- [ ] Implement weekend highlighting in date picker
-- [ ] Fix staff filtering logic and display
-- [ ] Style continue buttons for better visibility
-- [ ] Add form validation with clear error messages
-- [ ] Test complete user flow for usability issues
 
 ### Dependencies
-- Stage 1 completion
-- UI/UX documentation feedback
-- Business logic requirements
+- Supabase SQL editor access
+- Understanding of current RLS configuration
+- Testing environment ready
 
-## Stage 3: Supabase Integration (Day 3) 📅 PLANNED
+## Stage 3: Fix Core Functionality Issues 📅 PLANNED
 ### Objectives
-- Add Supabase JavaScript SDK via CDN (no build process)
-- Connect to existing database schema
-- Implement client-side booking logic
-- Add real-time availability checking
+- Implement real-time availability checking
+- Fix staff filtering by service capabilities
+- Add date-based staff availability
+- Show service context throughout flow
+
+### Critical Functionality Fixes (from bug tracking)
+- [ ] Fix BUG-016: Disable unavailable staff selection
+- [ ] Fix BUG-017: Filter staff by service capabilities
+- [ ] Fix BUG-018: Implement date-based availability
+- [ ] Fix BUG-021: Show selected service on all pages
+- [ ] Connect to real database queries instead of hardcoded data
+- [ ] Implement actual conflict checking
+- [ ] Add proper error handling and user feedback
 
 ### Tasks
-- [ ] Include Supabase JavaScript SDK via CDN
-- [ ] Configure Supabase client with environment variables
-- [ ] Create connection to existing services, staff, and rooms tables
-- [ ] Implement real-time availability queries
-- [ ] Add client-side data fetching for services and staff
-- [ ] Create booking submission logic
-- [ ] Implement error handling for database operations
-- [ ] Add loading states for all database interactions
+- [ ] Replace hardcoded available slots with database queries
+- [ ] Implement getAvailableStaff with service filtering
+- [ ] Add date checking to staff availability
+- [ ] Create service context component
+- [ ] Update all booking pages to show context
+- [ ] Add loading states for database operations
+- [ ] Implement comprehensive error handling
 
 ### Dependencies
-- Stage 2 completion
-- Existing Supabase database schema
-- Supabase API keys and configuration
+- Stage 2 database fixes completed
+- RLS policies working
+- SQL functions installed and accessible
 
-### Database Integration Points
-- **Services**: Fetch all 50+ services for selection
-- **Staff**: Get staff availability and capabilities
-- **Rooms**: Query room availability and assignments
-- **Bookings**: Create new bookings and check conflicts
-
-## Stage 4: Booking Logic Implementation (Day 4) 📅 PLANNED
+## Stage 4: UI/UX Polish & Improvements 📅 PLANNED
 ### Objectives
-- Connect staff filtering to database queries
-- Implement room assignment rules
-- Add booking validation and conflict prevention
-- Test all business rules with real data
+- Fix all HIGH priority UI/UX issues
+- Improve user experience and conversion flow
+- Add design polish and consistency
+- Enhance mobile experience
+
+### HIGH Priority UI Fixes (from bug tracking)
+- [ ] Fix BUG-019: Homepage button hierarchy
+- [ ] Fix BUG-020: Remove hover effects from category cards
+- [ ] Fix BUG-022: Make continue buttons more prominent
+- [ ] Fix BUG-023: Add weekend highlighting to calendar
+- [ ] Fix BUG-024: Improve button contrast ratios
+- [ ] Fix BUG-025: Standardize navigation patterns
 
 ### Tasks
-- [ ] Implement staff availability checking with database
-- [ ] Create room assignment algorithm in JavaScript
-- [ ] Add booking conflict detection logic
-- [ ] Implement service duration and buffer time calculations
-- [ ] Create form validation for all booking steps
-- [ ] Add real-time price calculations
-- [ ] Implement booking confirmation workflow
-- [ ] Test edge cases and error scenarios
-
-### Business Rules to Implement
-- **Room Assignment**: Automated room selection based on service type
-- **Staff Availability**: Real-time checking of staff schedules
-- **Conflict Prevention**: No double bookings or overlapping appointments
-- **Service Constraints**: Proper duration and buffer time enforcement
-- **Pricing Logic**: Accurate price calculation with any applicable discounts
+- [ ] Redesign homepage CTAs with proper hierarchy
+- [ ] Remove confusing hover states
+- [ ] Enhance button visibility and clickability
+- [ ] Add visual calendar improvements
+- [ ] Improve form field contrast
+- [ ] Create consistent back navigation
+- [ ] Add proper loading animations
+- [ ] Implement success/error toast notifications
 
 ### Dependencies
-- Stage 3 completion
-- Business logic documentation
-- Database schema knowledge
+- Core functionality working (Stage 3)
+- Design system guidelines
+- Accessibility standards
 
 ## Stage 5: Testing & Deployment (Day 5) 📅 PLANNED
 ### Objectives
@@ -183,39 +172,50 @@ medspav2/
 
 ---
 
-## Success Criteria for New Approach
-- [ ] All 50+ services bookable through HTML interface
-- [ ] Room assignment working correctly with JavaScript logic
-- [ ] Staff availability enforced through database queries
-- [ ] No double bookings possible with client-side validation
-- [ ] Mobile responsive design without framework dependencies
-- [ ] Fast loading times (<2s for initial page load)
-- [ ] Error handling works for all scenarios
-- [ ] Data persists correctly in Supabase database
-- [ ] All UI issues from previous version resolved
-- [ ] Static hosting deployment successful
+## Success Criteria
+- ✅ All 50+ services display and are selectable
+- ✅ Database connection established
+- ❌ RLS policies allow booking creation
+- ❌ Staff filtering by service capabilities
+- ❌ Date-based staff availability
+- ✅ Mobile responsive design working
+- ✅ Fast loading times achieved
+- ❌ Complete error handling implementation
+- ❌ Data persists correctly (blocked by RLS)
+- ⚠️ UI issues partially resolved
 
-## Risk Mitigation for New Approach
-- **JavaScript Complexity**: Keep code modular and well-documented
-- **Database Security**: Use Supabase RLS and proper authentication
-- **Performance**: Optimize all assets and implement caching
-- **Browser Compatibility**: Test on all major browsers
-- **Mobile Experience**: Mobile-first design approach
+## Current Blockers
+1. **RLS Policies**: Preventing all database writes
+2. **SQL Functions**: Not installed in database
+3. **Staff Filtering**: Not connected to real data
+4. **Availability Checking**: Using hardcoded data
 
-## Benefits Over Framework Approach
-- **No Build Process**: Direct file editing and immediate testing
-- **Faster Development**: No compilation or bundling steps
-- **Easier Debugging**: Standard browser dev tools work perfectly
-- **Better Performance**: No framework overhead or hydration delays
-- **Simpler Deployment**: Just upload files to any static hosting
-- **Lower Maintenance**: Standard web technologies don't require updates
-- **Better SEO**: Pure HTML loads instantly for search engines
+## Risk Assessment
+- **High Risk**: Cannot create bookings until RLS fixed
+- **Medium Risk**: Staff selection allows invalid choices
+- **Low Risk**: UI polish issues affect user experience
+- **Mitigated**: TypeScript errors resolved, builds working
 
 ---
 
 ## Current Status Summary
 
-**Active Stage:** Stage 1 - HTML/CSS/JavaScript Setup  
-**Progress:** Setting up file structure and extracting CSS  
-**Next Priority:** Complete HTML structure and vanilla JavaScript setup  
-**Timeline:** 5 days to complete all stages with new approach 
+**Active Stage:** Stage 1 ✅ COMPLETED (with outstanding RLS issues)  
+**Next Stage:** Stage 2 - Fix Database & RLS Issues 🔴 URGENT  
+**Progress Today:** 85% - Major fixes completed, blocked by database permissions  
+**Next Priority:** Install SQL functions and fix RLS policies  
+**Timeline:** 4 days remaining to complete all stages  
+
+### Today's Achievements
+1. Fixed all TypeScript compilation errors
+2. Successfully connected to Supabase database
+3. Cleaned up UI by removing demo warnings
+4. Fixed staff availability display logic
+5. Created comprehensive SQL functions (ready to install)
+6. Documented all current issues and next steps
+
+### Tomorrow's Priority
+1. Install SQL functions in Supabase
+2. Fix RLS policies for anonymous users
+3. Test complete booking flow
+4. Begin implementing real-time availability 

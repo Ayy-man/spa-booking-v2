@@ -44,6 +44,30 @@
 
 ## Known Issues - Post-Analysis Update (July 29, 2025)
 
+### NEW CRITICAL Issues - Database/RLS (July 29, 2025)
+
+- [ ] **BUG-029**: RLS Policy Blocking Customer Creation
+  - **Status**: Active blocker as of July 29, 2025
+  - **Error**: "new row violates row-level security policy for table 'customers'"
+  - **Impact**: Cannot create new customer records
+  - **Fix Required**: Add RLS policy for anonymous INSERT on customers table
+  - **Priority**: CRITICAL (blocks all bookings)
+
+- [ ] **BUG-030**: RLS Policy Blocking Booking Creation
+  - **Status**: Active blocker as of July 29, 2025
+  - **Error**: 401 Unauthorized on process_booking RPC
+  - **Impact**: Cannot create any bookings
+  - **Fix Required**: Grant EXECUTE permission on process_booking to anon role
+  - **Priority**: CRITICAL (blocks core functionality)
+
+- [ ] **BUG-031**: SQL Functions Not Installed
+  - **Status**: Files created but not installed as of July 29, 2025
+  - **Impact**: No booking processing, availability checking, or conflict detection
+  - **Fix Required**: Run supabase-functions-fixed.sql in Supabase SQL editor
+  - **Priority**: CRITICAL (required for all booking operations)
+
+### Previous Testing Results (July 28, 2025)
+
 **Testing Completion Status**: 76 test cases executed + Additional UX Analysis  
 **Overall System Health**: 65% production ready (13 new issues identified)  
 **Critical Business Rules**: 67% working correctly (3 critical staff/service filtering issues)
@@ -253,25 +277,30 @@
 ## Current Bug Status Summary - July 29, 2025
 
 ### Active Issues by Priority
-- **CRITICAL** (3 issues): Staff selection logic bugs affecting core business rules
+- **CRITICAL** (6 issues): 3 NEW RLS/Database blockers + 3 Staff selection bugs
 - **HIGH** (7 issues): 3 testing issues + 4 UI/UX issues affecting user experience
 - **MEDIUM** (5 issues): 2 testing issues + 3 design polish items
 - **LOW** (3 issues): Backend verification and labeling tasks
 
-### Issues Requiring Immediate Attention
-1. **BUG-016**: Staff Selection Logic Bug - Prevents successful bookings
-2. **BUG-017**: Service Capability Filtering Missing - Business rule violation
-3. **BUG-018**: Date-based Availability Not Working - Staff scheduling violation
+### Issues Requiring Immediate Attention (Updated Priority)
+1. **BUG-029**: RLS Policy Blocking Customer Creation - No bookings possible
+2. **BUG-030**: RLS Policy Blocking Booking Creation - Core functionality blocked
+3. **BUG-031**: SQL Functions Not Installed - Required for all operations
+4. **BUG-016**: Staff Selection Logic Bug - Prevents successful bookings
+5. **BUG-017**: Service Capability Filtering Missing - Business rule violation
+6. **BUG-018**: Date-based Availability Not Working - Staff scheduling violation
 
-### Recommended Fix Order
-1. Fix CRITICAL staff filtering issues (BUG-016, BUG-017, BUG-018)
-2. Address HIGH priority UI/UX issues (BUG-019 through BUG-022)
-3. Complete previous testing issues (BUG-013, BUG-014, BUG-015)
-4. Polish design elements (BUG-023, BUG-024, BUG-025)
-5. Verify backend functionality (BUG-026, BUG-027, BUG-028)
+### Recommended Fix Order (Updated July 29)
+1. Fix RLS/Database blockers FIRST (BUG-029, BUG-030, BUG-031)
+2. Then fix CRITICAL staff filtering issues (BUG-016, BUG-017, BUG-018)
+3. Address HIGH priority UI/UX issues (BUG-019 through BUG-022)
+4. Complete previous testing issues (BUG-013, BUG-014, BUG-015)
+5. Polish design elements (BUG-023, BUG-024, BUG-025)
+6. Verify backend functionality (BUG-026, BUG-027, BUG-028)
 
-### Production Readiness Assessment
-- **Before fixes**: 65% ready (critical booking flow issues)
+### Production Readiness Assessment (Updated July 29)
+- **Current state**: 40% ready (database operations completely blocked)
+- **After RLS/Database fixes**: 65% ready (booking flow functional)
 - **After CRITICAL fixes**: 85% ready (core functionality working)
 - **After HIGH priority fixes**: 95% ready (excellent user experience)
 - **After all fixes**: 100% ready (production quality)

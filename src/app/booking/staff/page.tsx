@@ -2,9 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { staffMembers, staffNameMap, getServiceCategory } from '@/lib/staff-data'
-import StaffSelector from '@/components/booking/StaffSelector'
-import BookingValidator from '@/components/booking/BookingValidator'
+import { getServiceCategory } from '@/lib/staff-data'
+import { supabaseClient } from '@/lib/supabase'
+import { Database } from '@/types/database'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertTriangle } from 'lucide-react'
+
+type Staff = Database['public']['Tables']['staff']['Row']
 
 interface Service {
   name: string
@@ -17,9 +23,8 @@ export default function StaffPage() {
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [selectedTime, setSelectedTime] = useState<string>('')
-  const [validationErrors, setValidationErrors] = useState<string[]>([])
-  const [validationWarnings, setValidationWarnings] = useState<string[]>([])
-  const [isValidBooking, setIsValidBooking] = useState<boolean>(false)
+  const [availableStaff, setAvailableStaff] = useState<Staff[]>([])
+  const [loadingStaff, setLoadingStaff] = useState<boolean>(true)
 
   const getServiceCategory = (serviceName: string): string => {
     // Simple mapping based on service name keywords
@@ -42,83 +47,101 @@ export default function StaffPage() {
     if (serviceData) setSelectedService(JSON.parse(serviceData))
     if (dateData) setSelectedDate(dateData)
     if (timeData) setSelectedTime(timeData)
+    
+    // Fetch available staff from Supabase
+    if (serviceData && dateData && timeData) {
+      fetchAvailableStaff()
+    }
   }, [])
+
+  const fetchAvailableStaff = async () => {
+    setLoadingStaff(true)
+    try {
+      // Get the service from Supabase to get the correct ID
+      const services = await supabaseClient.getServices()
+      const serviceData = localStorage.getItem('selectedService')
+      const selectedServiceData = serviceData ? JSON.parse(serviceData) : null
+      
+      const matchingService = services.find(s => 
+        s.name.toLowerCase() === selectedServiceData?.name.toLowerCase()
+      )
+      
+      if (!matchingService) {
+        console.error('Service not found in database')
+        setLoadingStaff(false)
+        return
+      }
+      
+      const dateData = localStorage.getItem('selectedDate')
+      const timeData = localStorage.getItem('selectedTime')
+      
+      if (!dateData || !timeData) {
+        console.error('Date or time not selected')
+        setLoadingStaff(false)
+        return
+      }
+      
+      const date = new Date(dateData)
+      const dateString = date.toISOString().split('T')[0]
+      
+      // Get available time slots which includes staff info
+      const availableSlots = await supabaseClient.getAvailableTimeSlots(
+        dateString,
+        matchingService.id
+      )
+      
+      // Filter for the selected time
+      const slotsForTime = availableSlots.filter((slot: any) => slot.available_time === timeData)
+      
+      // Get unique staff IDs from the available slots
+      const uniqueStaffIds = Array.from(new Set(slotsForTime.map((slot: any) => slot.available_staff_id)))
+      
+      // Fetch full staff details
+      if (uniqueStaffIds.length > 0) {
+        const staffDetails = await supabaseClient.getStaff()
+        const availableStaffDetails = staffDetails.filter(staff => 
+          uniqueStaffIds.includes(staff.id)
+        )
+        setAvailableStaff(availableStaffDetails)
+      } else {
+        setAvailableStaff([])
+      }
+    } catch (error: any) {
+      console.error('Error fetching available staff:', error)
+      console.log('Falling back to showing all active staff')
+      
+      // Fallback: Show all active staff who work on this day
+      try {
+        const allStaff = await supabaseClient.getStaff()
+        // Get date from localStorage again for fallback
+        const dateData = localStorage.getItem('selectedDate')
+        if (!dateData) {
+          setAvailableStaff([])
+          return
+        }
+        const fallbackDate = new Date(dateData)
+        const dayOfWeek = fallbackDate.getDay()
+        
+        const availableStaffMembers = allStaff.filter(staff => {
+          // Check if staff works on this day
+          return staff.is_active && staff.work_days.includes(dayOfWeek)
+        })
+        
+        console.log('Fallback staff found:', availableStaffMembers.length)
+        setAvailableStaff(availableStaffMembers)
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError)
+        setAvailableStaff([])
+      }
+    } finally {
+      setLoadingStaff(false)
+    }
+  }
 
   const handleStaffSelect = (staffId: string) => {
     setSelectedStaff(staffId)
   }
 
-  const handleValidationChange = (isValid: boolean, errors: string[], warnings: string[]) => {
-    setIsValidBooking(isValid)
-    setValidationErrors(errors)
-    setValidationWarnings(warnings)
-  }
-
-  // Convert our simple data to match BookingValidator expectations
-  const getValidationData = () => {
-    if (!selectedService || !selectedStaff || !selectedDate || !selectedTime) {
-      return { service: null, staff: null, room: null, date: null, time: null }
-    }
-
-    // Create mock service data
-    const mockService = {
-      id: 'mock-service',
-      name: selectedService.name,
-      description: null,
-      duration: selectedService.duration,
-      price: selectedService.price,
-      category: getServiceCategory(selectedService.name),
-      requires_couples_room: selectedService.name.toLowerCase().includes('couples'),
-      requires_body_scrub_room: selectedService.name.toLowerCase().includes('scrub'),
-      is_package: selectedService.name.toLowerCase().includes('package'),
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-
-    // Find selected staff member
-    const staffMember = staffMembers.find(s => s.id === selectedStaff)
-    const mockStaff = staffMember ? {
-      id: staffMember.id,
-      name: staffMember.name,
-      email: staffMember.email,
-      phone: staffMember.phone || null,
-      is_active: true,
-      can_perform_services: staffMember.capabilities,
-      default_room_id: staffMember.defaultRoom ? `room-${staffMember.defaultRoom}` : null,
-      schedule: staffMember.workDays.reduce((acc, day) => {
-        acc[day] = true
-        return acc
-      }, {} as Record<string, boolean>),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    } : null
-
-    // Create mock room data based on staff default room
-    const roomNumber = staffMember?.defaultRoom || 1
-    const mockRoom = {
-      id: `room-${roomNumber}`,
-      name: `Room ${roomNumber}`,
-      room_number: roomNumber,
-      capacity: roomNumber === 1 ? 1 : 2, // Room 1 is single, others are couples
-      capabilities: ['facials', 'waxing', 'massages', 'body_treatments'],
-      has_body_scrub_equipment: roomNumber === 3, // Only Room 3 has body scrub equipment
-      is_couples_room: roomNumber !== 1, // Room 1 is single, others are couples
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-
-    return {
-      service: mockService,
-      staff: mockStaff,
-      room: mockRoom,
-      date: new Date(selectedDate),
-      time: selectedTime
-    }
-  }
-
-  const validationData = getValidationData()
 
   const handleContinue = () => {
     if (selectedStaff) {
@@ -182,34 +205,94 @@ export default function StaffPage() {
                 <span className="font-medium">Service Category:</span> {getServiceCategory(selectedService.name).replace('_', ' ').toUpperCase()}
               </p>
               <p className="text-xs text-blue-600 mt-1">
-                Only staff qualified for this service category are shown
+                Showing staff available for your selected date and time
               </p>
             </div>
           )}
           
-          <StaffSelector
-            staff={staffMembers}
-            selectedStaffId={selectedStaff}
-            onStaffSelect={handleStaffSelect}
-            service={selectedService}
-            selectedDate={selectedDate ? new Date(selectedDate) : null}
-            showAnyOption={true}
-          />
+          {loadingStaff ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-gray-500">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4 mx-auto"></div>
+                Checking staff availability...
+              </div>
+            </div>
+          ) : availableStaff.length === 0 ? (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-2">
+                  <div className="font-medium">
+                    No staff available for this time slot
+                  </div>
+                  <div className="text-sm">
+                    Please go back and select a different time.
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-4">
+              {/* Available Staff Members */}
+              {availableStaff.map((member) => (
+                <Card 
+                  key={member.id}
+                  className={`p-6 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                    selectedStaff === member.id 
+                      ? 'ring-2 ring-primary border-primary bg-accent/20' 
+                      : 'hover:border-accent'
+                  }`}
+                  onClick={() => handleStaffSelect(member.id)}
+                >
+                  <div className="flex items-center space-x-4">
+                    {/* Staff Photo Placeholder */}
+                    <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
+                      <span className="text-xl font-semibold text-gray-600">
+                        {member.initials || member.name.split(' ').map(n => n[0]).join('')}
+                      </span>
+                    </div>
+
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-primary-dark mb-1">
+                        {member.name}
+                      </h3>
+                      
+                      <div className="space-y-1 mb-3">
+                        {member.specialties && (
+                          <p className="text-sm text-gray-600">
+                            {member.specialties}
+                          </p>
+                        )}
+                        
+                        <div className="flex flex-wrap gap-1">
+                          {member.capabilities.map((serviceType, index) => (
+                            <Badge 
+                              key={index}
+                              variant="outline" 
+                              className="text-xs border-primary text-primary bg-primary/5"
+                            >
+                              {serviceType.replace('_', ' ')}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedStaff === member.id && (
+                      <div className="flex items-center justify-center w-6 h-6 bg-primary rounded-full">
+                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Booking Validation */}
-        {selectedService && selectedStaff && selectedDate && selectedTime && (
-          <div className="mb-8">
-            <BookingValidator
-              service={validationData.service}
-              staff={validationData.staff}
-              room={validationData.room}
-              date={validationData.date}
-              time={validationData.time}
-              onValidationChange={handleValidationChange}
-            />
-          </div>
-        )}
+        {/* Internal validation happens in the background */}
 
         {/* Continue Button */}
         {selectedStaff && (
@@ -218,18 +301,13 @@ export default function StaffPage() {
               <div className="flex justify-between items-center mb-4">
                 <div className="text-sm text-gray-600">
                   <span className="font-medium">Selected:</span> {
-                    staffMembers.find(s => s.id === selectedStaff)?.name
+                    availableStaff.find(s => s.id === selectedStaff)?.name
                   }
                 </div>
               </div>
               <button 
                 onClick={handleContinue}
-                disabled={!isValidBooking && validationErrors.length > 0}
-                className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
-                  (!isValidBooking && validationErrors.length > 0)
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-black text-white hover:bg-gray-900'
-                }`}
+                className="w-full py-3 px-6 rounded-lg font-medium transition-colors bg-black text-white hover:bg-gray-900"
               >
                 Continue to Customer Information
               </button>
