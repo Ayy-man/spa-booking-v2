@@ -298,6 +298,58 @@ export const supabaseClient = {
 
     if (error) throw error
     return data[0] // The function returns an array with one result
+  },
+
+  // Couples booking
+  async processCouplesBooking(booking: {
+    primary_service_id: string
+    secondary_service_id: string
+    primary_staff_id: string
+    secondary_staff_id: string
+    customer_name: string
+    customer_email: string
+    customer_phone?: string
+    booking_date: string
+    start_time: string
+    special_requests?: string
+  }) {
+    const { data, error } = await supabase.rpc('process_couples_booking', {
+      p_primary_service_id: booking.primary_service_id,
+      p_secondary_service_id: booking.secondary_service_id,
+      p_primary_staff_id: booking.primary_staff_id,
+      p_secondary_staff_id: booking.secondary_staff_id,
+      p_customer_name: booking.customer_name,
+      p_customer_email: booking.customer_email,
+      p_customer_phone: booking.customer_phone,
+      p_booking_date: booking.booking_date,
+      p_start_time: booking.start_time,
+      p_special_requests: booking.special_requests
+    })
+
+    if (error) {
+      console.error('Couples booking error:', error)
+      throw error
+    }
+    
+    return data
+  },
+
+  async getCouplesBookingDetails(bookingGroupId: string) {
+    const { data, error } = await supabase.rpc('get_couples_booking_details', {
+      p_booking_group_id: bookingGroupId
+    })
+
+    if (error) throw error
+    return data
+  },
+
+  async cancelCouplesBooking(bookingGroupId: string) {
+    const { data, error } = await supabase.rpc('cancel_couples_booking', {
+      p_booking_group_id: bookingGroupId
+    })
+
+    if (error) throw error
+    return data
   }
 }
 

@@ -199,7 +199,78 @@
 </form>
 ```
 
-### 5. Booking Confirmation
+### 5. Couples Booking Interface
+**Purpose**: Allow customers to book appointments for two people
+
+**Layout**:
+- Toggle between single and couples booking
+- Separate service selection for each person
+- Staff preference options for both
+- Synchronized date/time selection
+
+**Couples Booking Card**:
+```jsx
+<div className="space-y-6">
+  <div className="flex items-center justify-between mb-6">
+    <h2 className="text-2xl font-heading text-primary-dark">Couples Booking</h2>
+    <button className="text-sm text-primary hover:text-primary-dark">
+      Switch to Single Booking
+    </button>
+  </div>
+  
+  {/* Person 1 */}
+  <div className="bg-white rounded-lg p-6 border border-gray-200">
+    <h3 className="font-medium text-lg mb-4">Person 1</h3>
+    <div className="space-y-4">
+      <div>
+        <label className="text-sm text-gray-600">Service</label>
+        <select className="w-full mt-1 p-2 border rounded-lg">
+          <option>Select a service...</option>
+          {services.map(service => (
+            <option key={service.id} value={service.id}>
+              {service.name} - ${service.price}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="text-sm text-gray-600">Staff Preference</label>
+        <select className="w-full mt-1 p-2 border rounded-lg">
+          <option>Any Available Staff</option>
+          {staff.map(member => (
+            <option key={member.id} value={member.id}>
+              {member.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  </div>
+  
+  {/* Person 2 */}
+  <div className="bg-white rounded-lg p-6 border border-gray-200">
+    <h3 className="font-medium text-lg mb-4">Person 2</h3>
+    <div className="space-y-4">
+      <div className="flex items-center mb-2">
+        <input type="checkbox" id="same-service" className="mr-2" />
+        <label htmlFor="same-service" className="text-sm">
+          Same service as Person 1
+        </label>
+      </div>
+      {/* Service and staff selection similar to Person 1 */}
+    </div>
+  </div>
+  
+  {/* Shared booking details */}
+  <div className="bg-accent rounded-lg p-4">
+    <p className="text-sm text-primary-dark">
+      <strong>Note:</strong> Both appointments will be at the same time in our couples room.
+    </p>
+  </div>
+</div>
+```
+
+### 6. Booking Confirmation
 **Purpose**: Show booking summary and confirmation
 
 **Layout**:

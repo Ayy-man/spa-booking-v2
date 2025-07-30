@@ -18,9 +18,18 @@ interface Service {
   duration: number
 }
 
+interface BookingData {
+  isCouplesBooking: boolean
+  primaryService: Service
+  secondaryService?: Service
+  totalPrice: number
+  totalDuration: number
+}
+
 export default function StaffPage() {
   const [selectedStaff, setSelectedStaff] = useState<string>('')
   const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [bookingData, setBookingData] = useState<BookingData | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [availableStaff, setAvailableStaff] = useState<Staff[]>([])
@@ -40,16 +49,32 @@ export default function StaffPage() {
 
   useEffect(() => {
     // Get data from localStorage
-    const serviceData = localStorage.getItem('selectedService')
+    const bookingDataStr = localStorage.getItem('bookingData')
+    const serviceDataStr = localStorage.getItem('selectedService')
     const dateData = localStorage.getItem('selectedDate')
     const timeData = localStorage.getItem('selectedTime')
 
-    if (serviceData) setSelectedService(JSON.parse(serviceData))
+    if (bookingDataStr) {
+      const parsedBookingData = JSON.parse(bookingDataStr)
+      setBookingData(parsedBookingData)
+      setSelectedService(parsedBookingData.primaryService)
+    } else if (serviceDataStr) {
+      // Fallback for backward compatibility
+      const parsedService = JSON.parse(serviceDataStr)
+      setSelectedService(parsedService)
+      setBookingData({
+        isCouplesBooking: false,
+        primaryService: parsedService,
+        totalPrice: parsedService.price,
+        totalDuration: parsedService.duration
+      })
+    }
+    
     if (dateData) setSelectedDate(dateData)
     if (timeData) setSelectedTime(timeData)
     
     // Fetch available staff from Supabase
-    if (serviceData && dateData && timeData) {
+    if ((bookingDataStr || serviceDataStr) && dateData && timeData) {
       fetchAvailableStaff()
     }
   }, [])
@@ -100,7 +125,7 @@ export default function StaffPage() {
       if (uniqueStaffIds.length > 0) {
         const staffDetails = await supabaseClient.getStaff()
         const availableStaffDetails = staffDetails.filter(staff => 
-          uniqueStaffIds.includes(staff.id)
+          uniqueStaffIds.includes(staff.id) && staff.id !== 'any'
         )
         setAvailableStaff(availableStaffDetails)
       } else {
@@ -123,8 +148,8 @@ export default function StaffPage() {
         const dayOfWeek = fallbackDate.getDay()
         
         const availableStaffMembers = allStaff.filter(staff => {
-          // Check if staff works on this day
-          return staff.is_active && staff.work_days.includes(dayOfWeek)
+          // Check if staff works on this day and exclude 'any'
+          return staff.is_active && staff.work_days.includes(dayOfWeek) && staff.id !== 'any'
         })
         
         console.log('Fallback staff found:', availableStaffMembers.length)
@@ -233,6 +258,64 @@ export default function StaffPage() {
             </Alert>
           ) : (
             <div className="space-y-4">
+              {/* Any Available Staff Option - Custom Card */}
+              <Card 
+                className={`p-6 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
+                  selectedStaff === 'any' 
+                    ? 'ring-2 ring-primary border-primary bg-primary/5' 
+                    : 'border-dashed border-gray-300 hover:border-primary bg-gray-50'
+                }`}
+                onClick={() => handleStaffSelect('any')}
+              >
+                <div className="flex items-center space-x-4">
+                  {/* Special Icon for Any Staff */}
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center border-2 border-dashed border-primary/30">
+                    <span className="text-xl font-bold text-primary">
+                      AA
+                    </span>
+                  </div>
+
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-primary mb-1">
+                      Any Available Staff
+                    </h3>
+                    
+                    <p className="text-sm text-gray-600 mb-2">
+                      Any qualified staff member
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-1">
+                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                        facials
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                        massages
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                        treatments
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                        waxing
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                        packages
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+                        special
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {selectedStaff === 'any' && (
+                    <div className="flex items-center justify-center w-6 h-6 bg-primary rounded-full">
+                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </Card>
+
               {/* Available Staff Members */}
               {availableStaff.map((member) => (
                 <Card 
@@ -301,7 +384,9 @@ export default function StaffPage() {
               <div className="flex justify-between items-center mb-4">
                 <div className="text-sm text-gray-600">
                   <span className="font-medium">Selected:</span> {
-                    availableStaff.find(s => s.id === selectedStaff)?.name
+                    selectedStaff === 'any' 
+                      ? 'Any Available Staff' 
+                      : availableStaff.find(s => s.id === selectedStaff)?.name
                   }
                 </div>
               </div>

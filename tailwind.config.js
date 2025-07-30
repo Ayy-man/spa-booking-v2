@@ -13,7 +13,7 @@ module.exports = {
           dark: '#AA3B50',
           light: '#F6C7CF',
         },
-        background: '#F8F8F8',
+        background: '#FFF8FA',
         surface: '#FFFFFF',
         accent: '#F6C7CF',
         'text-primary': '#000000',

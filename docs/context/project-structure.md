@@ -26,8 +26,10 @@ dermal-booking-app/
 │   │   │   ├── page.tsx           # Service selection
 │   │   │   ├── date-time/         # Date/time selection
 │   │   │   ├── staff/             # Staff selection
+│   │   │   ├── staff-couples/     # Couples staff selection
 │   │   │   ├── customer-info/     # Customer form
-│   │   │   └── confirmation/      # Booking confirmation
+│   │   │   ├── confirmation/      # Booking confirmation
+│   │   │   └── confirmation-couples/ # Couples booking confirmation
 │   │   └── api/                   # API routes
 │   │       ├── bookings/          # Booking API endpoints
 │   │       ├── services/          # Services API
@@ -46,7 +48,8 @@ dermal-booking-app/
 │   │   │   ├── StaffSelector.tsx
 │   │   │   ├── CustomerForm.tsx
 │   │   │   ├── BookingConfirmation.tsx
-│   │   │   └── RoomAssignment.tsx
+│   │   │   ├── RoomAssignment.tsx
+│   │   │   └── CouplesBooking.tsx
 │   │   ├── layout/                # Layout components
 │   │   │   ├── Header.tsx
 │   │   │   ├── Footer.tsx
@@ -170,6 +173,8 @@ bookings (
   end_time TIME NOT NULL,
   status VARCHAR DEFAULT 'confirmed',
   special_requests TEXT,
+  booking_type VARCHAR DEFAULT 'single', -- 'single' or 'couples'
+  booking_group_id UUID, -- Links couples bookings together
   created_at TIMESTAMP DEFAULT NOW()
 )
 ```

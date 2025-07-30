@@ -144,6 +144,7 @@ AS $$
 DECLARE
   v_service_record RECORD;
   v_requires_room_3 BOOLEAN;
+  v_requires_couples_room BOOLEAN;
   v_service_category TEXT;
 BEGIN
   -- Get service details
@@ -157,6 +158,7 @@ BEGIN
   END IF;
 
   v_requires_room_3 := v_service_record.requires_room_3;
+  v_requires_couples_room := v_service_record.requires_couples_room;
   v_service_category := v_service_record.category::TEXT;
 
   -- If service requires Room 3 (body scrubs)
@@ -166,6 +168,43 @@ BEGIN
     FROM rooms r
     WHERE r.id = 3 AND r.is_active = true;
     RETURN;
+  END IF;
+
+  -- If service requires couples room (capacity >= 2)
+  IF v_requires_couples_room THEN
+    -- Try Room 3 first (has capacity 2 and equipment)
+    RETURN QUERY
+    SELECT r.id, r.name, 'Couples service assigned to Room 3'::TEXT
+    FROM rooms r
+    WHERE r.id = 3 AND r.is_active = true
+      AND (p_booking_date IS NULL OR p_start_time IS NULL OR NOT EXISTS (
+        SELECT 1
+        FROM bookings b
+        WHERE b.room_id = r.id
+          AND b.appointment_date = p_booking_date
+          AND b.status::text IN ('confirmed', 'in_progress')
+          AND b.start_time::text = p_start_time
+      ))
+    LIMIT 1;
+    
+    IF FOUND THEN RETURN; END IF;
+    
+    -- Try Room 2 (couples room)
+    RETURN QUERY
+    SELECT r.id, r.name, 'Couples service assigned to Room 2'::TEXT
+    FROM rooms r
+    WHERE r.id = 2 AND r.is_active = true
+      AND (p_booking_date IS NULL OR p_start_time IS NULL OR NOT EXISTS (
+        SELECT 1
+        FROM bookings b
+        WHERE b.room_id = r.id
+          AND b.appointment_date = p_booking_date
+          AND b.status::text IN ('confirmed', 'in_progress')
+          AND b.start_time::text = p_start_time
+      ))
+    LIMIT 1;
+    
+    IF FOUND THEN RETURN; END IF;
   END IF;
 
   -- Check staff default room preference

@@ -10,19 +10,37 @@ export default function DateTimePage() {
   const [availableDates, setAvailableDates] = useState<Date[]>([])
   const [availableTimes, setAvailableTimes] = useState<string[]>([])
   const [selectedService, setSelectedService] = useState<any>(null)
+  const [bookingData, setBookingData] = useState<any>(null)
   const [loadingTimes, setLoadingTimes] = useState<boolean>(false)
   const [loadingService, setLoadingService] = useState<boolean>(true)
 
-  // Get selected service from localStorage
+  // Get booking data from localStorage
   useEffect(() => {
-    const serviceData = localStorage.getItem('selectedService')
-    if (serviceData) {
+    const bookingDataStr = localStorage.getItem('bookingData')
+    const serviceDataStr = localStorage.getItem('selectedService')
+    
+    if (bookingDataStr) {
       try {
-        const parsedService = JSON.parse(serviceData)
+        const parsedBookingData = JSON.parse(bookingDataStr)
+        setBookingData(parsedBookingData)
+        setSelectedService(parsedBookingData.primaryService)
+      } catch (error) {
+        console.error('Error parsing booking data:', error)
+        localStorage.removeItem('bookingData')
+      }
+    } else if (serviceDataStr) {
+      // Fallback to old format for backward compatibility
+      try {
+        const parsedService = JSON.parse(serviceDataStr)
         setSelectedService(parsedService)
+        setBookingData({
+          isCouplesBooking: false,
+          primaryService: parsedService,
+          totalPrice: parsedService.price,
+          totalDuration: parsedService.duration
+        })
       } catch (error) {
         console.error('Error parsing service data:', error)
-        // Clear corrupted data
         localStorage.removeItem('selectedService')
       }
     }
@@ -141,7 +159,18 @@ export default function DateTimePage() {
       // Store in localStorage or state management
       localStorage.setItem('selectedDate', selectedDate.toISOString())
       localStorage.setItem('selectedTime', selectedTime)
-      // Navigate to staff selection
+      
+      // Check if it's a couples booking
+      const bookingDataStr = localStorage.getItem('bookingData')
+      if (bookingDataStr) {
+        const bookingData = JSON.parse(bookingDataStr)
+        if (bookingData.isCouplesBooking) {
+          window.location.href = '/booking/staff-couples'
+          return
+        }
+      }
+      
+      // Navigate to regular staff selection
       window.location.href = '/booking/staff'
     }
   }

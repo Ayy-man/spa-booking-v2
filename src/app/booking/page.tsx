@@ -2,21 +2,23 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import CouplesBooking from '@/components/CouplesBooking'
 
 export default function BookingPage() {
   const [selectedService, setSelectedService] = useState('')
+  const [showCouplesOptions, setShowCouplesOptions] = useState(false)
 
   const serviceCategories = [
     {
       name: 'Facials',
       services: [
-        { id: 'basic_facial', name: 'Basic Facial', duration: 30, price: 65 },
-        { id: 'deep_cleansing_facial', name: 'Deep Cleansing Facial', duration: 60, price: 79 },
-        { id: 'placenta_collagen_facial', name: 'Placenta/Collagen Facial', duration: 60, price: 90 },
+        { id: 'basic_facial', name: 'Basic Facial (For Men & Women)', duration: 30, price: 65 },
+        { id: 'deep_cleansing_facial', name: 'Deep Cleansing Facial (for Men & Women)', duration: 60, price: 79 },
+        { id: 'placenta_collagen_facial', name: 'Placenta | Collagen Facial', duration: 60, price: 90 },
         { id: 'whitening_kojic_facial', name: 'Whitening Kojic Facial', duration: 60, price: 90 },
-        { id: 'anti_acne_facial', name: 'Anti-Acne Facial', duration: 60, price: 90 },
+        { id: 'anti_acne_facial', name: 'Anti-Acne Facial (for Men & Women)', duration: 60, price: 90 },
         { id: 'microderm_facial', name: 'Microderm Facial', duration: 60, price: 99 },
-        { id: 'vitamin_c_facial', name: 'Vitamin C Facial', duration: 60, price: 120 },
+        { id: 'vitamin_c_facial', name: 'Vitamin C Facial with Extreme Softness', duration: 60, price: 120 },
         { id: 'acne_vulgaris_facial', name: 'Acne Vulgaris Facial', duration: 60, price: 120 },
       ]
     },
@@ -36,12 +38,13 @@ export default function BookingPage() {
       services: [
         { id: 'underarm_cleaning', name: 'Underarm Cleaning', duration: 30, price: 99 },
         { id: 'back_treatment', name: 'Back Treatment', duration: 30, price: 99 },
-        { id: 'chemical_peel_body', name: 'Chemical Peel (Body)', duration: 30, price: 85 },
-        { id: 'underarm_whitening', name: 'Underarm/Inguinal Whitening', duration: 30, price: 150 },
-        { id: 'microdermabrasion_body', name: 'Microdermabrasion (Body)', duration: 30, price: 85 },
+        { id: 'chemical_peel_body', name: 'Chemical Peel (Body) Per Area', duration: 30, price: 85 },
+        { id: 'underarm_whitening', name: 'Underarm or Inguinal Whitening', duration: 30, price: 150 },
+        { id: 'microdermabrasion_body', name: 'Microdermabrasion (Body) Per Area', duration: 30, price: 85 },
         { id: 'deep_moisturizing', name: 'Deep Moisturizing Body Treatment', duration: 30, price: 65 },
         { id: 'dead_sea_scrub', name: 'Dead Sea Salt Body Scrub', duration: 30, price: 65 },
-        { id: 'mud_mask_wrap', name: 'Mud Mask Body Wrap', duration: 30, price: 65 },
+        { id: 'dead_sea_scrub_moisturizing', name: 'Dead Sea Salt Body Scrub + Deep Moisturizing', duration: 30, price: 65 },
+        { id: 'mud_mask_wrap', name: 'Mud Mask Body Wrap + Deep Moisturizing Body Treatment', duration: 30, price: 65 },
       ]
     },
     {
@@ -58,8 +61,8 @@ export default function BookingPage() {
         { id: 'full_face_waxing', name: 'Full Face Waxing', duration: 30, price: 60 },
         { id: 'bikini_waxing', name: 'Bikini Waxing', duration: 30, price: 35 },
         { id: 'underarm_waxing', name: 'Underarm Waxing', duration: 15, price: 20 },
-        { id: 'brazilian_wax_women', name: 'Brazilian Wax (Women)', duration: 45, price: 60 },
-        { id: 'brazilian_wax_men', name: 'Brazilian Waxing (Men)', duration: 45, price: 75 },
+        { id: 'brazilian_wax_women', name: 'Brazilian Wax ( Women )', duration: 45, price: 60 },
+        { id: 'brazilian_wax_men', name: 'Brazilian Waxing ( Men)', duration: 45, price: 75 },
         { id: 'chest_wax', name: 'Chest Wax', duration: 30, price: 40 },
         { id: 'stomach_wax', name: 'Stomach Wax', duration: 30, price: 40 },
         { id: 'shoulders_wax', name: 'Shoulders', duration: 30, price: 30 },
@@ -78,7 +81,7 @@ export default function BookingPage() {
       name: 'Special Services',
       services: [
         { id: 'vajacial_brazilian', name: 'Basic Vajacial Cleaning + Brazilian Wax', duration: 30, price: 90 },
-        { id: 'dermal_vip', name: 'Dermal VIP Card', duration: 30, price: 50 },
+        { id: 'dermal_vip', name: 'Dermal VIP Card $50 / Year', duration: 30, price: 50 },
       ]
     }
   ]
@@ -113,7 +116,10 @@ export default function BookingPage() {
                     className={`card cursor-pointer transition-all ${
                       selectedService === service.id ? 'ring-2 ring-primary' : ''
                     }`}
-                    onClick={() => setSelectedService(service.id)}
+                    onClick={() => {
+                      setSelectedService(service.id)
+                      setShowCouplesOptions(true)
+                    }}
                   >
                     <h3 className="text-lg font-medium text-primary-dark mb-2">
                       {service.name}
@@ -132,6 +138,11 @@ export default function BookingPage() {
                           ? 'bg-primary text-white'
                           : 'bg-black text-white hover:bg-gray-900'
                       }`}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedService(service.id)
+                        setShowCouplesOptions(true)
+                      }}
                     >
                       {selectedService === service.id ? 'Selected' : 'Select'}
                     </button>
@@ -142,29 +153,23 @@ export default function BookingPage() {
           ))}
         </div>
 
-        {/* Continue Button */}
-        {selectedService && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-            <div className="container mx-auto">
-              <button 
-                onClick={() => {
-                  // Find the selected service object
-                  const service = serviceCategories
-                    .flatMap(cat => cat.services)
-                    .find(s => s.id === selectedService)
-                  
-                  if (service) {
-                    // Store in localStorage
-                    localStorage.setItem('selectedService', JSON.stringify(service))
-                    // Navigate to date/time selection
-                    window.location.href = '/booking/date-time'
-                  }
-                }}
-                className="btn-continue"
-              >
-                Continue to Date & Time Selection
-              </button>
-            </div>
+        {/* Couples Booking Component */}
+        {selectedService && showCouplesOptions && (
+          <div className="mt-8">
+            <CouplesBooking
+              selectedService={
+                serviceCategories
+                  .flatMap(cat => cat.services)
+                  .find(s => s.id === selectedService) || null
+              }
+              serviceCategories={serviceCategories}
+              onContinue={(bookingData) => {
+                // Store booking data in localStorage
+                localStorage.setItem('bookingData', JSON.stringify(bookingData))
+                // Navigate to date/time selection
+                window.location.href = '/booking/date-time'
+              }}
+            />
           </div>
         )}
       </div>

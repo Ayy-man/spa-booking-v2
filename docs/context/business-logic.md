@@ -5,7 +5,7 @@
 ### Priority Rules
 1. Check service type first:
    - Body Scrub → Room 3 ONLY
-   - Couples service → Room 3 (preferred) or Room 2
+   - Couples booking → Room 3 (preferred) or Room 2
    - Single service → Any available room
 
 2. Staff default rooms:
@@ -17,6 +17,41 @@
 3. Overflow handling:
    - If preferred room unavailable, use any available room
    - Never double-book a room
+
+## Couples Booking Logic
+
+### Features
+1. **Service Selection**:
+   - Customers can choose same service for both people
+   - Option to select different services for each person
+   - All services available for couples booking
+
+2. **Staff Selection**:
+   - Can choose same staff member for both (if schedule allows)
+   - Can select different staff members
+   - "Any Available" option works for couples
+
+3. **Room Assignment**:
+   - Couples automatically assigned to Room 3 (first preference)
+   - Falls back to Room 2 if Room 3 unavailable
+   - Both people in same room for synchronized experience
+
+4. **Database Management**:
+   - Uses booking_group_id to link couple's bookings
+   - booking_type field set to 'couples'
+   - Atomic transaction ensures both bookings succeed or fail together
+
+5. **Availability Checking**:
+   - Checks both staff members' availability
+   - Ensures room can accommodate both appointments
+   - Validates no scheduling conflicts
+
+### Business Rules
+- Couples bookings must start at the same time
+- Both appointments in the same room
+- If one booking fails, entire couples booking is cancelled
+- Cancellation of one appointment cancels both
+- Special pricing or packages can be applied to couples bookings
 
 ## Service Duration Mapping
 ```json

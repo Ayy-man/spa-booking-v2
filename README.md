@@ -1,6 +1,6 @@
-# Dermal Skin Clinic Booking System
+# Medical Spa Booking System
 
-A sophisticated Calendly-style booking system for Dermal Skin Clinic and Spa Guam, built with Next.js 14, TypeScript, Tailwind CSS, and Supabase.
+A sophisticated Calendly-style booking system for medical spa services, built with Next.js 14, TypeScript, Tailwind CSS, and Supabase.
 
 ## 🎯 Project Overview
 
@@ -10,6 +10,7 @@ This booking system handles complex spa scheduling with:
 - **4 Staff Members**: Each with specific capabilities and schedules
 - **Smart Room Assignment**: Automatic room allocation based on service type
 - **Mobile-First Design**: Optimized for mobile booking experience
+- **Couples Booking**: Book appointments for two people simultaneously
 
 ## 🚀 Quick Start
 
@@ -85,9 +86,16 @@ dermal-booking-app/
 
 ### Room Assignment Rules
 1. **Body Scrub Services**: Only Room 3
-2. **Couples Services**: Room 3 preferred, then Room 2
+2. **Couples Bookings**: Room 3 preferred, then Room 2
 3. **Single Services**: Any available room
 4. **Staff Default Rooms**: Selma (Room 1), Tanisha (Room 2), Robyn (Room 3)
+
+### Couples Booking Feature
+- Toggle between single and couples booking modes
+- Select same or different services for each person
+- Choose same or different staff members
+- Automatic assignment to couples-capable rooms
+- Synchronized booking management with group tracking
 
 ### Staff Capabilities
 - **Selma**: All facials except dermaplaning
@@ -281,8 +289,8 @@ For technical support or questions about the booking system:
 
 ## 📄 License
 
-This project is proprietary software for Dermal Skin Clinic and Spa Guam.
+This project is proprietary software for medical spa services.
 
 ---
 
-**Built with ❤️ for Dermal Skin Clinic and Spa Guam** 
+**Built with ❤️ for medical spa services** 

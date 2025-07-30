@@ -1,0 +1,409 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { staffNameMap } from '@/lib/staff-data'
+import { supabaseClient } from '@/lib/supabase'
+
+interface Service {
+  id?: string
+  name: string
+  price: number
+  duration: number
+}
+
+interface BookingData {
+  isCouplesBooking: boolean
+  primaryService: Service
+  secondaryService?: Service
+  totalPrice: number
+  totalDuration: number
+}
+
+interface CustomerInfo {
+  name: string
+  email: string
+  phone?: string
+  isNewCustomer?: boolean
+  specialRequests?: string
+}
+
+export default function CouplesConfirmationPage() {
+  const [bookingData, setBookingData] = useState<BookingData | null>(null)
+  const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string>('')
+  const [selectedTime, setSelectedTime] = useState<string>('')
+  const [selectedStaff, setSelectedStaff] = useState<string>('')
+  const [secondaryStaff, setSecondaryStaff] = useState<string>('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [error, setError] = useState<string>('')
+  const [bookingResults, setBookingResults] = useState<any[]>([])
+
+  useEffect(() => {
+    // Get all booking data from localStorage
+    const bookingDataStr = localStorage.getItem('bookingData')
+    const dateData = localStorage.getItem('selectedDate')
+    const timeData = localStorage.getItem('selectedTime')
+    const staffData = localStorage.getItem('selectedStaff')
+    const secondaryStaffData = localStorage.getItem('secondaryStaff')
+    const customerData = localStorage.getItem('customerInfo')
+
+    if (bookingDataStr) {
+      const parsedBookingData = JSON.parse(bookingDataStr)
+      setBookingData(parsedBookingData)
+    }
+    
+    if (dateData) setSelectedDate(dateData)
+    if (timeData) setSelectedTime(timeData)
+    if (staffData) setSelectedStaff(staffData)
+    if (secondaryStaffData) setSecondaryStaff(secondaryStaffData)
+    
+    if (customerData) {
+      setCustomerInfo(JSON.parse(customerData))
+    }
+  }, [])
+
+  const handleConfirmBooking = async () => {
+    if (!bookingData || !customerInfo) return
+
+    setIsSubmitting(true)
+    setError('')
+
+    try {
+      // Get services from database
+      const services = await supabaseClient.getServices()
+      
+      // Map service names to IDs
+      const primaryServiceData = services.find(s => 
+        s.name.toLowerCase() === bookingData.primaryService.name.toLowerCase()
+      )
+      
+      if (!primaryServiceData) {
+        throw new Error('Primary service not found in database')
+      }
+
+      if (bookingData.isCouplesBooking) {
+        // Handle couples booking
+        const secondaryServiceData = bookingData.secondaryService 
+          ? services.find(s => s.name.toLowerCase() === bookingData.secondaryService!.name.toLowerCase())
+          : primaryServiceData // Same service for both
+
+        if (!secondaryServiceData) {
+          throw new Error('Secondary service not found in database')
+        }
+
+        // Use process_couples_booking function
+        const couplesResult = await supabaseClient.processCouplesBooking({
+          primary_service_id: primaryServiceData.id,
+          secondary_service_id: secondaryServiceData.id,
+          primary_staff_id: selectedStaff,
+          secondary_staff_id: secondaryStaff || selectedStaff,
+          customer_name: customerInfo.name,
+          customer_email: customerInfo.email,
+          customer_phone: customerInfo.phone,
+          booking_date: selectedDate,
+          start_time: selectedTime,
+          special_requests: customerInfo.specialRequests
+        })
+
+        if (!couplesResult || couplesResult.length === 0) {
+          throw new Error('Couples booking failed - no bookings created')
+        }
+
+        setBookingResults(couplesResult)
+        console.log('Couples booking created:', couplesResult)
+      } else {
+        // Handle single booking
+        const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
+          primaryServiceData.id,
+          selectedStaff,
+          selectedDate,
+          selectedTime
+        )
+        
+        const roomId = roomAssignment?.room_id || 1
+
+        const bookingResult = await supabaseClient.createBooking({
+          service_id: primaryServiceData.id,
+          staff_id: selectedStaff,
+          room_id: roomId,
+          customer_name: customerInfo.name,
+          customer_email: customerInfo.email,
+          customer_phone: customerInfo.phone,
+          booking_date: selectedDate,
+          start_time: selectedTime,
+          special_requests: customerInfo.specialRequests
+        })
+        
+        if (!bookingResult || !bookingResult.booking_id) {
+          throw new Error('Booking was not created properly')
+        }
+        
+        setBookingResults([bookingResult])
+      }
+      
+      setIsSuccess(true)
+      
+      // Clear booking flow data
+      localStorage.removeItem('bookingData')
+      localStorage.removeItem('selectedService')
+      localStorage.removeItem('selectedDate')
+      localStorage.removeItem('selectedTime')
+      localStorage.removeItem('selectedStaff')
+      localStorage.removeItem('secondaryStaff')
+      localStorage.removeItem('customerInfo')
+      
+    } catch (err: any) {
+      console.error('Booking creation failed:', err)
+      
+      let errorMessage = 'Failed to confirm booking. '
+      if (err.message?.includes('staff_not_available')) {
+        errorMessage = 'One or more staff members are not available at this time. Please go back and select different staff.'
+      } else if (err.message?.includes('no_couples_room')) {
+        errorMessage = 'No couples rooms are available at this time. Please select a different time.'
+      } else if (err.message?.includes('duplicate')) {
+        errorMessage = 'A booking already exists for this time slot.'
+      } else {
+        errorMessage += err.message || 'Please try again.'
+      }
+      
+      setError(errorMessage)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })
+  }
+
+  if (!bookingData || !customerInfo) {
+    return (
+      <div className="min-h-screen bg-background py-8">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-2xl font-heading text-primary-dark mb-4">
+            Booking Information Missing
+          </h1>
+          <Link href="/booking" className="text-primary hover:text-primary-dark">
+            ← Start New Booking
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-background py-8">
+        <div className="container mx-auto px-4 max-w-2xl text-center">
+          <div className="bg-white rounded-xl shadow-md p-8">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            
+            <h1 className="text-3xl font-heading text-primary-dark mb-4">
+              {bookingData.isCouplesBooking ? 'Couples Booking Confirmed!' : 'Booking Confirmed!'}
+            </h1>
+            
+            <p className="text-gray-600 mb-6">
+              Your appointment{bookingData.isCouplesBooking ? 's have' : ' has'} been successfully booked. 
+              You will receive a confirmation email shortly.
+            </p>
+            
+            <div className="bg-accent rounded-lg p-6 mb-8 text-left">
+              <h2 className="font-semibold text-primary-dark mb-4">Booking Details</h2>
+              
+              {bookingData.isCouplesBooking ? (
+                <div className="space-y-4">
+                  <div className="border-b border-gray-200 pb-4">
+                    <h3 className="font-medium text-primary mb-2">Person 1</h3>
+                    <div className="space-y-1 text-sm">
+                      <div><span className="font-medium">Service:</span> {bookingData.primaryService.name}</div>
+                      <div><span className="font-medium">Staff:</span> {staffNameMap[selectedStaff as keyof typeof staffNameMap]}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="pb-4">
+                    <h3 className="font-medium text-primary mb-2">Person 2</h3>
+                    <div className="space-y-1 text-sm">
+                      <div><span className="font-medium">Service:</span> {bookingData.secondaryService?.name || bookingData.primaryService.name}</div>
+                      <div><span className="font-medium">Staff:</span> {staffNameMap[(secondaryStaff || selectedStaff) as keyof typeof staffNameMap]}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-gray-200 pt-4 space-y-1 text-sm">
+                    <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
+                    <div><span className="font-medium">Time:</span> {selectedTime}</div>
+                    <div><span className="font-medium">Room:</span> Couples Room</div>
+                    <div><span className="font-medium">Total Price:</span> ${bookingData.totalPrice}</div>
+                    <div><span className="font-medium">Customer:</span> {customerInfo.name}</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 text-sm">
+                  <div><span className="font-medium">Service:</span> {bookingData.primaryService.name}</div>
+                  <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
+                  <div><span className="font-medium">Time:</span> {selectedTime}</div>
+                  <div><span className="font-medium">Staff:</span> {staffNameMap[selectedStaff as keyof typeof staffNameMap]}</div>
+                  <div><span className="font-medium">Price:</span> ${bookingData.primaryService.price}</div>
+                  <div><span className="font-medium">Customer:</span> {customerInfo.name}</div>
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-4">
+              <Link href="/" className="btn-primary block">
+                Return to Home
+              </Link>
+              <Link href="/booking" className="btn-secondary block">
+                Book Another Appointment
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-background py-8">
+      <div className="container mx-auto px-4 max-w-2xl">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <Link href="/booking/customer-info" className="text-primary hover:text-primary-dark transition-colors">
+            ← Back to Customer Info
+          </Link>
+          <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
+            Confirm Your {bookingData.isCouplesBooking ? 'Couples ' : ''}Booking
+          </h1>
+          <p className="text-gray-600">
+            Please review your booking details before confirming
+          </p>
+        </div>
+        
+        {/* Booking Summary */}
+        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+          <h2 className="text-xl font-heading text-primary-dark mb-6">
+            Booking Summary
+          </h2>
+          
+          <div className="space-y-6">
+            {/* Service Details */}
+            {bookingData.isCouplesBooking ? (
+              <div className="border-b border-gray-200 pb-4">
+                <h3 className="font-semibold text-primary-dark mb-3">Services</h3>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">Person 1: {bookingData.primaryService.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {bookingData.primaryService.duration} minutes • 
+                        {staffNameMap[selectedStaff as keyof typeof staffNameMap]}
+                      </p>
+                    </div>
+                    <p className="text-xl font-semibold">${bookingData.primaryService.price}</p>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">
+                        Person 2: {bookingData.secondaryService?.name || bookingData.primaryService.name}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {(bookingData.secondaryService?.duration || bookingData.primaryService.duration)} minutes • 
+                        {staffNameMap[(secondaryStaff || selectedStaff) as keyof typeof staffNameMap]}
+                      </p>
+                    </div>
+                    <p className="text-xl font-semibold">
+                      ${bookingData.secondaryService?.price || bookingData.primaryService.price}
+                    </p>
+                  </div>
+                  
+                  <div className="border-t pt-3 flex justify-between items-center">
+                    <p className="font-semibold">Total</p>
+                    <p className="text-2xl font-semibold text-primary">${bookingData.totalPrice}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="border-b border-gray-200 pb-4">
+                <h3 className="font-semibold text-primary-dark mb-2">Service</h3>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-medium">{bookingData.primaryService.name}</p>
+                    <p className="text-sm text-gray-600">{bookingData.primaryService.duration} minutes</p>
+                  </div>
+                  <p className="text-2xl font-semibold text-primary">${bookingData.primaryService.price}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Appointment Details */}
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="font-semibold text-primary-dark mb-2">Appointment</h3>
+              <div className="space-y-1">
+                <p><span className="font-medium">Date:</span> {formatDate(selectedDate)}</p>
+                <p><span className="font-medium">Time:</span> {selectedTime}</p>
+                {bookingData.isCouplesBooking && (
+                  <p><span className="font-medium">Room:</span> Couples Room (Room 2 or 3)</p>
+                )}
+              </div>
+            </div>
+
+            {/* Customer Details */}
+            <div>
+              <h3 className="font-semibold text-primary-dark mb-2">Customer Information</h3>
+              <div className="space-y-1">
+                <p><span className="font-medium">Name:</span> {customerInfo.name}</p>
+                <p><span className="font-medium">Email:</span> {customerInfo.email}</p>
+                {customerInfo.phone && (
+                  <p><span className="font-medium">Phone:</span> {customerInfo.phone}</p>
+                )}
+                {customerInfo.specialRequests && (
+                  <p><span className="font-medium">Special Requests:</span> {customerInfo.specialRequests}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-600">{error}</p>
+          </div>
+        )}
+
+        {/* Confirm Button */}
+        <div className="space-y-4">
+          <button
+            onClick={handleConfirmBooking}
+            disabled={isSubmitting}
+            className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
+              isSubmitting
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-black text-white hover:bg-gray-900'
+            }`}
+          >
+            {isSubmitting ? 'Confirming Booking...' : 'Confirm Booking'}
+          </button>
+          
+          <Link href="/booking/customer-info" className="btn-secondary block text-center">
+            Make Changes
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}

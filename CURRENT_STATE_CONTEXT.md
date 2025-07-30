@@ -1,13 +1,13 @@
 # Current State Context - Medical Spa Booking System
-**Date: July 29, 2025**  
+**Date: July 30, 2025**  
 **Last Updated: Today**  
 **Purpose: Comprehensive handoff document for continuing development**
 
 ## Executive Summary
 
-This document captures the complete current state of the Dermal Skin Clinic booking system after a full day of development work. The system has evolved from the original HTML/CSS/JavaScript plan to using the existing Next.js infrastructure, which proved more functional than initially assessed.
+This document captures the complete current state of the Dermal Skin Clinic booking system after implementing all critical fixes. The system has evolved from the original HTML/CSS/JavaScript plan to using the existing Next.js infrastructure, which proved more functional than initially assessed.
 
-**Current Status**: The application builds, runs, and connects to the database successfully. However, Row Level Security (RLS) policies are preventing booking creation.
+**Current Status**: The booking system is now FULLY FUNCTIONAL. All database functions have been installed, RLS policies have been fixed, and bookings are successfully saving to the database with real-time availability checking.
 
 ## What We've Accomplished Today
 
@@ -37,17 +37,14 @@ This document captures the complete current state of the Dermal Skin Clinic book
 - **Solution**: Added fallback to show all staff when filtering returns empty
 - **Result**: Users can now see and select from all staff members
 
-### 5. Created SQL Functions (NOT YET INSTALLED) ⚠️
-- **Created Files**:
-  - `supabase-functions.sql` - Complete function definitions
-  - `supabase-functions-step-by-step.sql` - Individual function creation
-  - `supabase-functions-fixed.sql` - Fixed version with proper syntax
-- **Functions Include**:
-  - `process_booking` - Main booking creation logic
+### 5. Installed SQL Functions ✅
+- **Installed Functions**:
+  - `process_booking` - Main booking creation logic with room assignment
   - `check_staff_availability` - Staff schedule validation
-  - `get_available_time_slots` - Available slot calculation
+  - `get_available_time_slots` - Real-time slot availability calculation
+  - `assign_optimal_room` - Intelligent room assignment based on service type
   - Helper functions for conflict checking
-- **Status**: Files exist but functions NOT installed in database
+- **Status**: All functions successfully installed and working in production
 
 ### 6. Fixed White Screen Build Error ✅
 - **Issue**: TypeScript error causing white screen on production build
@@ -55,136 +52,145 @@ This document captures the complete current state of the Dermal Skin Clinic book
 - **Solution**: Moved `getServiceCategory` function above its usage
 - **Result**: Application now builds and runs without errors
 
+### 7. Fixed RLS Policies ✅
+- **Issue**: Row Level Security was blocking all database operations
+- **Solution**: Added policies allowing anonymous users to create bookings and customers
+- **Result**: Bookings now save successfully to the database
+
+### 8. Implemented Real-Time Availability ✅
+- **Staff Filtering**: Now correctly filters staff by service capabilities
+- **Time Slot Checking**: Uses database functions for real-time availability
+- **Room Assignment**: Intelligent room assignment based on service type
+- **"Any Available Staff"**: Styled with distinctive dashed border
+
+### 9. Implemented Couples Booking Feature ✅ NEW
+- **Component Created**: CouplesBooking component at /src/components/CouplesBooking.tsx
+- **Database Schema**: Added booking_group_id and booking_type fields
+- **Database Functions**: Created process_couples_booking, get_couples_booking_details, cancel_couples_booking
+- **User Flow**: Complete couples booking workflow with separate staff selection
+- **Room Logic**: Automatic assignment to couples-capable rooms (Room 3 preferred, Room 2 fallback)
+- **Features**: Support for same/different services and staff for each person
+
 ## Current Working State
 
 ### What's Working ✅
 1. **Service Selection**: All 50+ services display and can be selected
 2. **Date Selection**: Calendar shows next 30 days correctly
-3. **Time Slot Display**: Time slots show for selected dates
-4. **Staff Selection**: Staff list displays with availability indicators
+3. **Time Slot Display**: Real-time availability from database
+4. **Staff Selection**: Filtered by service capabilities and availability
 5. **Customer Form**: Form validation and field display working
 6. **Database Connection**: Successfully connecting to Supabase
-7. **Build Process**: Application builds without TypeScript errors
+7. **Booking Creation**: Bookings save successfully to database
 8. **Navigation**: Moving between booking steps works smoothly
+9. **RPC Functions**: All database functions installed and working
+10. **Real Availability**: Using live database queries, not hardcoded data
+11. **Room Assignment**: Intelligent assignment based on service type
+12. **Conflict Prevention**: No double bookings possible
+13. **Couples Booking**: Complete feature allowing booking for two people
+14. **Group Management**: Linked bookings with shared room assignment
 
 ### What's NOT Working ❌
-1. **Booking Creation**: Cannot create bookings due to RLS policies
-2. **RPC Functions**: Database functions not installed yet
-3. **Customer Creation**: RLS blocking new customer records
-4. **Real Availability Check**: Using hardcoded data, not database queries
-5. **Email Notifications**: Not implemented
-6. **Admin Dashboard**: Exists but not connected to real data
+1. **Email Notifications**: Not implemented yet
+2. **Admin Dashboard**: Exists but not connected to real data
+3. **Cancellation Flow**: Not implemented
+4. **Payment Processing**: Not implemented
 
 ## Outstanding Issues
 
-### Critical Database Issues (Blocking Booking Creation)
+### RESOLVED Issues ✅
 
-#### 1. Row Level Security (RLS) Errors
-When attempting to create a booking, we encounter:
-```
-- 401 Unauthorized on process_booking RPC call
-- 406 Not Acceptable on customers table SELECT
-- 401 Unauthorized on customers table INSERT  
-- Error: "new row violates row-level security policy for table 'customers'"
-```
+#### 1. Row Level Security (RLS) - FIXED
+Previously blocking all database operations, now fixed with proper policies for anonymous users.
 
-#### 2. Missing Database Functions
-The following RPC functions need to be installed:
-- `process_booking` - Main booking creation
-- `check_staff_availability` - Validate staff schedules
-- `get_available_time_slots` - Calculate available slots
-- `check_booking_conflicts` - Prevent double bookings
-- `get_staff_schedule` - Retrieve staff availability
+#### 2. Database Functions - INSTALLED
+All RPC functions are now installed and working:
+- `process_booking` - Creating bookings with room assignment
+- `check_staff_availability` - Validating staff schedules
+- `get_available_time_slots` - Calculating real-time availability
+- `assign_optimal_room` - Intelligent room assignment
+- Helper functions for conflict prevention
 
-#### 3. RLS Policy Configuration
-Current RLS policies are blocking anonymous users from:
-- Creating customer records
-- Creating booking records
-- Calling RPC functions
+#### 3. Staff Filtering - WORKING
+- Staff are now filtered by service capabilities
+- Date-based availability is checked
+- Unavailable staff cannot be selected
 
-### UI/UX Issues (From bug-tracking.md)
-1. **Staff Filtering Not Working** (BUG-016, BUG-017, BUG-018)
-   - Unavailable staff can still be selected
-   - Staff not filtered by service capabilities
-   - Date-based availability not checked
+### Remaining UI/UX Issues (From bug-tracking.md)
 
-2. **Missing Context** (BUG-021)
+1. **Missing Context** (BUG-021)
    - Selected service not shown on date selection screen
    - Users lose context of what they're booking
 
-3. **Button Hierarchy** (BUG-019, BUG-022)
+2. **Button Hierarchy** (BUG-019, BUG-022)
    - Homepage buttons need primary/secondary styling
    - Continue buttons need better prominence
 
+3. **Calendar Enhancements** (BUG-023)
+   - Weekend dates need subtle highlighting
+   - Better visual distinction for availability
+
 ## Next Steps Required
 
-### Immediate Priority (Database Setup)
-1. **Install RPC Functions**
-   ```sql
-   -- Run the contents of supabase-functions-fixed.sql in Supabase SQL editor
-   ```
+### Completed Tasks ✅
+1. **Database Setup** - All functions installed and RLS policies fixed
+2. **Real-Time Availability** - Connected to live database queries
+3. **Staff Filtering** - Working correctly by service and availability
+4. **Booking Creation** - Fully functional with room assignment
 
-2. **Fix RLS Policies**
-   ```sql
-   -- Option 1: Temporarily disable RLS for testing
-   ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
-   ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
-   
-   -- Option 2: Add proper policies for anonymous users
-   CREATE POLICY "Allow anonymous booking creation" ON bookings
-   FOR INSERT TO anon
-   WITH CHECK (true);
-   
-   CREATE POLICY "Allow anonymous customer creation" ON customers
-   FOR INSERT TO anon  
-   WITH CHECK (true);
-   ```
+### Immediate Priority (UI/UX Polish)
+1. **Add Service Context** (BUG-021)
+   - Show selected service name on date/time selection page
+   - Add service details to staff selection page
+   - Display running summary of selections
 
-3. **Enable Anonymous Function Execution**
-   ```sql
-   GRANT EXECUTE ON FUNCTION process_booking TO anon;
-   GRANT EXECUTE ON FUNCTION check_staff_availability TO anon;
-   GRANT EXECUTE ON FUNCTION get_available_time_slots TO anon;
-   ```
+2. **Fix Button Hierarchy** (BUG-019, BUG-022)
+   - Make "Book Appointment" primary (black background)
+   - Make "Call" secondary (outline style)
+   - Enhance "Continue" button prominence
 
-### Secondary Priority (Fix Core Functionality)
-1. **Connect Real-Time Availability**
-   - Replace hardcoded time slots with database queries
-   - Implement actual staff availability checking
-   - Add service-based staff filtering
+3. **Calendar Improvements** (BUG-023)
+   - Add subtle pink shading for weekend dates
+   - Improve visual feedback for selected date
+   - Better distinction between available/unavailable
 
-2. **Fix Staff Selection Logic**
-   - Filter staff by service capabilities
-   - Check date-specific availability
-   - Disable selection of unavailable staff
+### Secondary Priority (Feature Implementation)
+1. **Email Notifications**
+   - Set up email service integration
+   - Create booking confirmation template
+   - Implement reminder system
 
-3. **Add Booking Context**
-   - Show selected service on all booking pages
-   - Display running total/summary
-   - Add breadcrumb navigation
+2. **Admin Dashboard**
+   - Connect to real booking data
+   - Add appointment management features
+   - Implement staff schedule management
+
+3. **Additional Features**
+   - Cancellation/rescheduling flow
+   - Payment processing integration
+   - Customer account creation
 
 ### Testing Checklist
 
-#### Database Testing
-- [ ] Test RLS policies are allowing operations
-- [ ] Verify process_booking function works
-- [ ] Confirm customer records can be created
-- [ ] Check booking records save correctly
-- [ ] Test conflict detection works
+#### Database Testing ✅ COMPLETED
+- [x] Test RLS policies are allowing operations
+- [x] Verify process_booking function works
+- [x] Confirm customer records can be created
+- [x] Check booking records save correctly
+- [x] Test conflict detection works
 
-#### Functional Testing  
-- [ ] Complete booking flow end-to-end
-- [ ] Verify staff filtering by service
-- [ ] Test date-based staff availability
-- [ ] Confirm no double bookings possible
+#### Functional Testing ✅ COMPLETED
+- [x] Complete booking flow end-to-end
+- [x] Verify staff filtering by service
+- [x] Test date-based staff availability
+- [x] Confirm no double bookings possible
 - [ ] Check email notifications (when implemented)
 
 #### UI/UX Testing
-- [ ] Test on mobile devices
-- [ ] Verify all buttons are clickable
-- [ ] Check loading states display
-- [ ] Confirm error messages show
-- [ ] Test browser back button behavior
+- [x] Test on mobile devices
+- [x] Verify all buttons are clickable
+- [x] Check loading states display
+- [x] Confirm error messages show
+- [x] Test browser back button behavior
 
 ## File Structure Reference
 
@@ -196,6 +202,9 @@ Current RLS policies are blocking anonymous users from:
 /src/app/booking/staff/page.tsx - Fixed staff availability logic
 /src/components/booking/BookingValidator.tsx - Updated validation
 /src/lib/booking-logic.ts - Fixed appointment_date references
+/src/components/CouplesBooking.tsx - NEW: Couples booking component
+/src/app/booking/staff-couples/page.tsx - NEW: Couples staff selection
+/src/app/booking/confirmation-couples/page.tsx - NEW: Couples confirmation
 ```
 
 ### Database Function Files (Need Installation)
@@ -224,7 +233,8 @@ Current RLS policies are blocking anonymous users from:
 - **staff**: 4 staff members with schedules
 - **rooms**: 3 treatment rooms with capabilities
 - **customers**: Customer records (RLS protected)
-- **bookings**: Appointment records (RLS protected)
+- **bookings**: Appointment records (RLS protected) with booking_type and booking_group_id for couples
+- **Database Functions**: process_couples_booking, get_couples_booking_details, cancel_couples_booking
 
 ### Missing Implementations
 1. Email notifications system
@@ -240,14 +250,19 @@ Current RLS policies are blocking anonymous users from:
 - Application builds successfully
 - UI/UX mostly complete
 - Database schema in place
-- Basic booking flow works
-
-### What's Needed ❌
+- Booking flow fully functional
 - RLS policies fixed
 - RPC functions installed
-- Real availability checking
-- Error handling improved
-- Production environment variables
+- Real availability checking working
+- Error handling implemented
+- Production environment variables configured
+
+### What's Needed for Full Production ❌
+- Email notification system
+- Payment processing
+- Admin authentication
+- Cancellation/rescheduling flow
+- Production monitoring setup
 
 ## Developer Notes
 

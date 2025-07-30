@@ -44,27 +44,27 @@
 
 ## Known Issues - Post-Analysis Update (July 29, 2025)
 
-### NEW CRITICAL Issues - Database/RLS (July 29, 2025)
+### RESOLVED CRITICAL Issues - Database/RLS (July 30, 2025)
 
-- [ ] **BUG-029**: RLS Policy Blocking Customer Creation
-  - **Status**: Active blocker as of July 29, 2025
+- [x] **BUG-029**: RLS Policy Blocking Customer Creation ✅ FIXED
+  - **Status**: RESOLVED as of July 30, 2025
   - **Error**: "new row violates row-level security policy for table 'customers'"
   - **Impact**: Cannot create new customer records
-  - **Fix Required**: Add RLS policy for anonymous INSERT on customers table
-  - **Priority**: CRITICAL (blocks all bookings)
+  - **Fix Applied**: Added RLS policy for anonymous INSERT on customers table
+  - **Priority**: CRITICAL (was blocking all bookings)
 
-- [ ] **BUG-030**: RLS Policy Blocking Booking Creation
-  - **Status**: Active blocker as of July 29, 2025
+- [x] **BUG-030**: RLS Policy Blocking Booking Creation ✅ FIXED
+  - **Status**: RESOLVED as of July 30, 2025
   - **Error**: 401 Unauthorized on process_booking RPC
   - **Impact**: Cannot create any bookings
-  - **Fix Required**: Grant EXECUTE permission on process_booking to anon role
-  - **Priority**: CRITICAL (blocks core functionality)
+  - **Fix Applied**: Granted EXECUTE permission on process_booking to anon role
+  - **Priority**: CRITICAL (was blocking core functionality)
 
-- [ ] **BUG-031**: SQL Functions Not Installed
-  - **Status**: Files created but not installed as of July 29, 2025
+- [x] **BUG-031**: SQL Functions Not Installed ✅ FIXED
+  - **Status**: RESOLVED as of July 30, 2025
   - **Impact**: No booking processing, availability checking, or conflict detection
-  - **Fix Required**: Run supabase-functions-fixed.sql in Supabase SQL editor
-  - **Priority**: CRITICAL (required for all booking operations)
+  - **Fix Applied**: Successfully installed all functions in Supabase
+  - **Priority**: CRITICAL (was required for all booking operations)
 
 ### Previous Testing Results (July 28, 2025)
 
@@ -75,27 +75,27 @@
 
 ### Issues Identified During Comprehensive Testing & UX Analysis
 
-### CRITICAL Priority Issues (3 Issues)
-- [ ] **BUG-016**: Staff Selection Logic Bug
-  - **Status**: Newly identified during UX analysis
+### RESOLVED CRITICAL Priority Issues (3 Issues) ✅
+- [x] **BUG-016**: Staff Selection Logic Bug ✅ FIXED
+  - **Status**: RESOLVED as of July 30, 2025
   - **Impact**: Unavailable staff (like Leonel when marked unavailable) can still be selected and clicked
-  - **Fix Required**: Disable/make unclickable unavailable staff members in UI
-  - **User Impact**: Users can attempt to book with unavailable staff, leading to booking failures
-  - **Priority**: Critical (prevents successful bookings)
+  - **Fix Applied**: Unavailable staff are now disabled/unclickable in UI
+  - **User Impact**: Users can no longer attempt invalid bookings
+  - **Priority**: Critical (was preventing successful bookings)
 
-- [ ] **BUG-017**: Service Capability Filtering Missing
-  - **Status**: Newly identified during UX analysis
+- [x] **BUG-017**: Service Capability Filtering Missing ✅ FIXED
+  - **Status**: RESOLVED as of July 30, 2025
   - **Impact**: Staff members aren't filtered based on whether they can perform the selected service
-  - **Fix Required**: Filter staff list to only show those qualified for selected service
-  - **User Impact**: Users can select inappropriate staff (e.g., Leonel for facial services)
-  - **Priority**: Critical (business rule violation)
+  - **Fix Applied**: Staff list now filtered to only show qualified staff for selected service
+  - **User Impact**: No more inappropriate staff selections possible
+  - **Priority**: Critical (was business rule violation)
 
-- [ ] **BUG-018**: Date-based Availability Not Working
-  - **Status**: Newly identified during UX analysis
+- [x] **BUG-018**: Date-based Availability Not Working ✅ FIXED
+  - **Status**: RESOLVED as of July 30, 2025
   - **Impact**: Staff availability isn't being checked against selected date
-  - **Fix Required**: Implement date-specific staff availability checking
-  - **User Impact**: Staff shown as available on wrong days (e.g., Leonel on non-Sundays)
-  - **Priority**: Critical (violates staff scheduling rules)
+  - **Fix Applied**: Implemented date-specific staff availability checking via database
+  - **User Impact**: Staff correctly shown based on their schedules
+  - **Priority**: Critical (was violating staff scheduling rules)
 
 ### High Priority (7 Issues - 3 Previous + 4 New UI/UX)
 
@@ -274,34 +274,38 @@
 
 ---
 
-## Current Bug Status Summary - July 29, 2025
+## Current Bug Status Summary - July 30, 2025
+
+### Resolved Issues
+- **CRITICAL** (6 issues RESOLVED): All RLS/Database blockers and Staff selection bugs FIXED
+- **Database Integration**: Fully functional with all operations working
+- **Staff Management**: Correctly filtering by service and availability
+- **Booking Flow**: Complete end-to-end functionality restored
 
 ### Active Issues by Priority
-- **CRITICAL** (6 issues): 3 NEW RLS/Database blockers + 3 Staff selection bugs
 - **HIGH** (7 issues): 3 testing issues + 4 UI/UX issues affecting user experience
 - **MEDIUM** (5 issues): 2 testing issues + 3 design polish items
 - **LOW** (3 issues): Backend verification and labeling tasks
 
 ### Issues Requiring Immediate Attention (Updated Priority)
-1. **BUG-029**: RLS Policy Blocking Customer Creation - No bookings possible
-2. **BUG-030**: RLS Policy Blocking Booking Creation - Core functionality blocked
-3. **BUG-031**: SQL Functions Not Installed - Required for all operations
-4. **BUG-016**: Staff Selection Logic Bug - Prevents successful bookings
-5. **BUG-017**: Service Capability Filtering Missing - Business rule violation
-6. **BUG-018**: Date-based Availability Not Working - Staff scheduling violation
+1. **BUG-021**: Missing Service Context - Users lose track of selections
+2. **BUG-019**: Homepage Button Hierarchy - Conversion impact
+3. **BUG-022**: Continue Button Prominence - User flow impact
+4. **BUG-020**: Category Cards Look Clickable - User confusion
+5. **BUG-023**: Weekend Date Highlighting - Calendar usability
+6. **BUG-024**: Button Contrast Issues - Accessibility concern
 
-### Recommended Fix Order (Updated July 29)
-1. Fix RLS/Database blockers FIRST (BUG-029, BUG-030, BUG-031)
-2. Then fix CRITICAL staff filtering issues (BUG-016, BUG-017, BUG-018)
+### Recommended Fix Order (Updated July 30)
+1. ✅ RLS/Database blockers FIXED (BUG-029, BUG-030, BUG-031)
+2. ✅ CRITICAL staff filtering issues FIXED (BUG-016, BUG-017, BUG-018)
 3. Address HIGH priority UI/UX issues (BUG-019 through BUG-022)
 4. Complete previous testing issues (BUG-013, BUG-014, BUG-015)
 5. Polish design elements (BUG-023, BUG-024, BUG-025)
 6. Verify backend functionality (BUG-026, BUG-027, BUG-028)
 
-### Production Readiness Assessment (Updated July 29)
-- **Current state**: 40% ready (database operations completely blocked)
-- **After RLS/Database fixes**: 65% ready (booking flow functional)
-- **After CRITICAL fixes**: 85% ready (core functionality working)
+### Production Readiness Assessment (Updated July 30)
+- **Previous state**: 40% ready (was blocked by database)
+- **Current state**: 85% ready (core functionality fully working)
 - **After HIGH priority fixes**: 95% ready (excellent user experience)
 - **After all fixes**: 100% ready (production quality)
 
@@ -343,6 +347,83 @@
 - Status is updated to "Verified"
 - Bug is closed after confirmation
 - Documentation is updated if needed
+
+---
+
+## Completed Features & Enhancements
+
+### Major Features Implemented
+
+#### 1. Core Booking System ✅
+- Complete service catalog with 50+ services
+- Real-time availability checking
+- Staff filtering by service capabilities
+- Intelligent room assignment
+- Date and time selection with 30-day advance booking
+- Customer information collection
+- Booking confirmation with details
+
+#### 2. Database Integration ✅
+- Full Supabase integration
+- RLS policies for secure access
+- Atomic transaction support
+- Conflict prevention
+- Real-time data synchronization
+
+#### 3. Staff Management ✅
+- Schedule-based availability
+- Service capability filtering
+- Default room assignments
+- "Any Available Staff" option
+
+#### 4. Couples Booking Feature ✅ NEW
+- Toggle between single and couples booking
+- Independent service selection for each person
+- Flexible staff assignment
+- Automatic couples room assignment
+- Synchronized booking management
+- Group booking tracking
+
+## Future Enhancements & Feature Requests
+
+### ENHANCEMENT-001: Dynamic Couples Booking Option ✅ IMPLEMENTED
+**Date Identified**: July 30, 2025
+**Date Implemented**: July 30, 2025
+**Priority**: Medium
+**Status**: COMPLETED
+
+#### Description
+Allow customers to book any service as a couples appointment, not just pre-designated "couples services". This feature enables couples to enjoy regular services together in the same room.
+
+#### Implementation Summary
+✅ **Fully Implemented** with the following features:
+- CouplesBooking component created at /src/components/CouplesBooking.tsx
+- Customers can toggle between single and couples booking modes
+- Option to select same or different services for each person
+- Flexible staff selection (same or different staff members)
+- Automatic room assignment to couples-capable rooms (Room 3 preferred, Room 2 fallback)
+- Database schema updated with booking_group_id and booking_type fields
+- Atomic transaction ensures both bookings succeed or fail together
+
+#### Database Functions Created
+- `process_couples_booking` - Handles creation of linked bookings
+- `get_couples_booking_details` - Retrieves grouped booking information
+- `cancel_couples_booking` - Cancels both bookings in a group
+
+#### UI Components Added
+- Couples booking selection interface
+- Couples staff selection page (/booking/staff-couples/)
+- Couples confirmation page (/booking/confirmation-couples/)
+
+#### Business Logic Implemented
+- Couples bookings must start at the same time
+- Both appointments scheduled in the same room
+- Room assignment prioritizes Room 3, falls back to Room 2
+- Cancellation of one appointment cancels both
+- Support for different service durations
+
+#### User Story Achievement
+✅ "As a customer, I can now book any service for myself and my partner together in the same room, with the option to choose the same or different services and staff members."
 
 ---
 

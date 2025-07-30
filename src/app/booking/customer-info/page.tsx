@@ -34,14 +34,21 @@ export default function CustomerInfoPage() {
     // Store customer info
     localStorage.setItem('customerInfo', JSON.stringify(data))
     
+    // Check if it's a couples booking
+    const bookingDataStr = localStorage.getItem('bookingData')
+    const isCouplesBooking = bookingDataStr ? JSON.parse(bookingDataStr).isCouplesBooking : false
+    
     // Check customer status and redirect accordingly
     if (data.isNewCustomer) {
-      // New customer - redirect to GoHighLevel payment link
-      const ghlPaymentUrl = 'https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034'
+      // New customer - redirect to GoHighLevel payment link with return URL
+      const baseUrl = window.location.origin
+      const confirmationPage = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
+      const returnUrl = `${baseUrl}${confirmationPage}?payment=success`
+      const ghlPaymentUrl = `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034?return_url=${encodeURIComponent(returnUrl)}`
       window.location.href = ghlPaymentUrl
     } else {
-      // Existing customer - go directly to confirmation
-      window.location.href = '/booking/confirmation'
+      // Existing customer - go to appropriate confirmation page
+      window.location.href = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
     }
   }
 
