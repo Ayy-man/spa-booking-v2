@@ -188,6 +188,78 @@ The booking system is now fully functional! All critical database issues have be
 
 ---
 
+## Stage 6: Production Readiness (NEW) 🔴 URGENT
+### Objectives
+- Remove all development artifacts and debug code
+- Configure production environment properly
+- Ensure security best practices
+- Fix all test failures
+
+### Critical Tasks Identified (July 30, 2025)
+- [ ] **Remove Console Statements** (30 instances)
+  - 13 console.error in error handling
+  - 12 console.log for debugging
+  - 1 console.warn statement
+  - Replace with proper logging service
+
+- [ ] **Update Environment Variables**
+  - Change NEXT_PUBLIC_APP_URL from localhost
+  - Move service role key to server-only
+  - Add production domain configuration
+  - Set up proper API keys
+
+- [ ] **Fix Test Suite** (18/29 failing)
+  - Update test data for staff.work_days
+  - Fix room assignment test expectations
+  - Repair booking validation tests
+  - Ensure 100% test pass rate
+
+- [ ] **Add Security Configuration**
+  - Create vercel.json with security headers
+  - Configure CORS properly
+  - Implement rate limiting
+  - Add CSP headers
+  - Enable HTTPS only
+
+- [ ] **Project Cleanup**
+  - Remove 8+ temporary SQL files
+  - Clean up test data files
+  - Remove development scripts
+  - Optimize build size
+
+### Production Configuration Files Needed
+```json
+// vercel.json
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options", 
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Dependencies
+- All UI/UX issues resolved (Stage 4)
+- Database fully functional
+- Testing complete
+
+---
+
 ## Success Criteria
 - ✅ All 50+ services display and are selectable
 - ✅ Database connection established

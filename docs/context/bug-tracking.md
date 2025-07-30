@@ -311,6 +311,83 @@
 
 ---
 
+## Production Readiness Issues - July 30, 2025
+
+### Critical Production Blockers
+
+#### PROD-001: Console Logging Issues
+- **Status**: Open
+- **Priority**: CRITICAL
+- **Impact**: Exposes sensitive debugging information in production
+- **Details**: 30 console statements found across codebase
+  - 13 console.error statements
+  - 12 console.log statements
+  - 1 console.warn statement
+- **Files Affected**: 
+  - `/src/lib/booking-logic.ts`
+  - `/src/lib/supabase.ts`
+  - `/src/app/booking/date-time/page.tsx`
+  - `/src/app/booking/confirmation/page.tsx`
+  - `/src/app/booking/staff/page.tsx`
+  - And others
+- **Fix Required**: Remove or replace with proper logging service
+
+#### PROD-002: Environment Variable Configuration
+- **Status**: Open
+- **Priority**: CRITICAL
+- **Impact**: Application pointing to localhost instead of production
+- **Details**:
+  - `NEXT_PUBLIC_APP_URL` still set to `http://localhost:3000`
+  - Service role key exposed in `.env.local`
+  - Missing production domain configuration
+- **Fix Required**: Update all environment variables for production deployment
+
+#### PROD-003: Test Suite Failures
+- **Status**: Open
+- **Priority**: HIGH
+- **Impact**: Cannot verify code quality and functionality
+- **Details**: 18 out of 29 tests failing
+  - Primary issue: `staff.work_days` property undefined
+  - Room assignment logic tests failing
+  - Booking validation tests broken
+- **Fix Required**: Update test data structure to match current schema
+
+#### PROD-004: Security Configuration Missing
+- **Status**: Open
+- **Priority**: HIGH
+- **Impact**: Application vulnerable to common web attacks
+- **Details**:
+  - No `vercel.json` with security headers
+  - No CORS configuration
+  - No rate limiting implemented
+  - Service role key accessible client-side
+- **Fix Required**: Add security headers and proper key management
+
+#### PROD-005: Project Cleanup Required
+- **Status**: Open
+- **Priority**: MEDIUM
+- **Impact**: Unnecessary files in production build
+- **Details**: 8+ temporary SQL files in root directory
+  - `couples-booking-final-verified.sql`
+  - `couples-booking-final-working.sql`
+  - `test-couples-booking.sql`
+  - And others
+- **Fix Required**: Remove all temporary development files
+
+### Production Readiness Checklist
+- [ ] Remove all 30 console statements
+- [ ] Update environment variables for production
+- [ ] Fix 18 failing tests
+- [ ] Add security headers configuration
+- [ ] Clean up temporary SQL files
+- [ ] Create production build and test
+- [ ] Add error monitoring (Sentry)
+- [ ] Configure production logging
+- [ ] Set up monitoring and alerts
+- [ ] Document deployment process
+
+---
+
 ## Bug Resolution Workflow
 
 ### 1. Bug Identification

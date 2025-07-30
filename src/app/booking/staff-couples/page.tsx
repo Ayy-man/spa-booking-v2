@@ -59,35 +59,132 @@ export default function CouplesStaffPage() {
     
     if (dateData) setSelectedDate(dateData)
     if (timeData) setSelectedTime(timeData)
-    
-    // Fetch available staff
-    if (bookingDataStr && dateData && timeData) {
-      fetchAvailableStaff()
-    }
   }, [])
 
+  // Separate useEffect to fetch staff when all data is available
+  useEffect(() => {
+    if (bookingData && selectedDate && selectedTime) {
+      fetchAvailableStaff()
+    }
+  }, [bookingData, selectedDate, selectedTime])
+
   const fetchAvailableStaff = async () => {
+    if (!bookingData || !selectedDate || !selectedTime) return
+    
     setLoadingStaff(true)
     try {
-      const allStaff = await supabaseClient.getStaff()
-      const date = new Date(selectedDate)
-      const dayOfWeek = date.getDay()
+      // Get services from database to get correct service IDs
+      const services = await supabaseClient.getServices()
       
-      const availableStaffMembers = allStaff.filter(staff => {
-        return staff.is_active && staff.work_days.includes(dayOfWeek) && staff.id !== 'any'
-      })
+      const primaryService = services.find(s => 
+        s.name.toLowerCase() === bookingData.primaryService.name.toLowerCase()
+      )
+      
+      const secondaryService = bookingData.secondaryService 
+        ? services.find(s => 
+            s.name.toLowerCase() === bookingData.secondaryService.name.toLowerCase()
+          )
+        : null
+      
+      if (!primaryService) {
+        console.error('Primary service not found in database')
+        setLoadingStaff(false)
+        return
+      }
+      
+      const date = new Date(selectedDate)
+      const dateString = date.toISOString().split('T')[0]
+      
+      // Get available time slots for primary service
+      const primarySlots = await supabaseClient.getAvailableTimeSlots(
+        dateString,
+        primaryService.id
+      )
+      
+      // Filter for the selected time and get staff IDs
+      const primaryStaffIds = primarySlots
+        .filter((slot: any) => slot.available_time === selectedTime)
+        .map((slot: any) => slot.available_staff_id)
+      
+      let allAvailableStaffIds = [...primaryStaffIds]
+      
+      // If there's a secondary service, get its available staff too
+      if (secondaryService) {
+        const secondarySlots = await supabaseClient.getAvailableTimeSlots(
+          dateString,
+          secondaryService.id
+        )
+        
+        const secondaryStaffIds = secondarySlots
+          .filter((slot: any) => slot.available_time === selectedTime)
+          .map((slot: any) => slot.available_staff_id)
+        
+        // Combine staff IDs (union for couples booking - staff can do either service)
+        allAvailableStaffIds = [...new Set([...primaryStaffIds, ...secondaryStaffIds])]
+      }
+      
+      // Get unique staff IDs
+      const uniqueStaffIds = [...new Set(allAvailableStaffIds)]
+      
+      if (uniqueStaffIds.length > 0) {
+        const staffDetails = await supabaseClient.getStaff()
+        const availableStaffDetails = staffDetails.filter(staff => 
+          uniqueStaffIds.includes(staff.id) && staff.id !== 'any'
+        )
+        setAvailableStaff(availableStaffDetails)
+      } else {
+        // Fallback: Show all active staff who work on this day
+        const allStaff = await supabaseClient.getStaff()
+        const date = new Date(selectedDate)
+        const dayOfWeek = date.getDay()
+        
+        const availableStaffMembers = allStaff.filter(staff => {
+          // Check if staff works on this day, has work_days property, and exclude 'any'
+          return staff.is_active && 
+                 staff.work_days && 
+                 Array.isArray(staff.work_days) && 
+                 staff.work_days.includes(dayOfWeek) && 
+                 staff.id !== 'any'
+        })
+        
+        setAvailableStaff(availableStaffMembers)
+      }
       
       // Create staff name map
+      const allStaff = await supabaseClient.getStaff()
       const nameMap: Record<string, string> = { 'any': 'Any Available Staff' }
-      availableStaffMembers.forEach(staff => {
+      allStaff.forEach(staff => {
         nameMap[staff.id] = staff.name
       })
       setStaffMap(nameMap)
       
-      setAvailableStaff(availableStaffMembers)
     } catch (error) {
       console.error('Error fetching available staff:', error)
-      setAvailableStaff([])
+      // Final fallback - show all active staff
+      try {
+        const allStaff = await supabaseClient.getStaff()
+        const date = new Date(selectedDate)
+        const dayOfWeek = date.getDay()
+        
+        const availableStaffMembers = allStaff.filter(staff => {
+          return staff.is_active && 
+                 staff.work_days && 
+                 Array.isArray(staff.work_days) && 
+                 staff.work_days.includes(dayOfWeek) && 
+                 staff.id !== 'any'
+        })
+        
+        setAvailableStaff(availableStaffMembers)
+        
+        const nameMap: Record<string, string> = { 'any': 'Any Available Staff' }
+        allStaff.forEach(staff => {
+          nameMap[staff.id] = staff.name
+        })
+        setStaffMap(nameMap)
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError)
+        setAvailableStaff([])
+      }
     } finally {
       setLoadingStaff(false)
     }

@@ -153,23 +153,41 @@ export default function BookingPage() {
           ))}
         </div>
 
-        {/* Couples Booking Component */}
+        {/* Couples Booking Component - Fixed Position Overlay */}
         {selectedService && showCouplesOptions && (
-          <div className="mt-8">
-            <CouplesBooking
-              selectedService={
-                serviceCategories
-                  .flatMap(cat => cat.services)
-                  .find(s => s.id === selectedService) || null
-              }
-              serviceCategories={serviceCategories}
-              onContinue={(bookingData) => {
-                // Store booking data in localStorage
-                localStorage.setItem('bookingData', JSON.stringify(bookingData))
-                // Navigate to date/time selection
-                window.location.href = '/booking/date-time'
-              }}
-            />
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+                <h2 className="text-xl font-heading text-primary-dark">
+                  Booking Options
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowCouplesOptions(false)
+                    setSelectedService('')
+                  }}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="p-6">
+                <CouplesBooking
+                  selectedService={
+                    serviceCategories
+                      .flatMap(cat => cat.services)
+                      .find(s => s.id === selectedService) || null
+                  }
+                  serviceCategories={serviceCategories}
+                  onContinue={(bookingData) => {
+                    // Store booking data in localStorage
+                    localStorage.setItem('bookingData', JSON.stringify(bookingData))
+                    // Navigate to date/time selection
+                    window.location.href = '/booking/date-time'
+                  }}
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>

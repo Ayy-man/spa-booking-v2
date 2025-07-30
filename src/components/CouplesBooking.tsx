@@ -71,10 +71,8 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 mb-20">
-      <h2 className="text-2xl font-heading text-primary-dark mb-6">
-        Booking Options
-      </h2>
+    <div>
+      {/* No header needed - it's in the modal */}
 
       {/* Selected Service Display */}
       <div className="mb-6 p-4 bg-accent/10 rounded-lg">

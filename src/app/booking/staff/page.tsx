@@ -148,8 +148,12 @@ export default function StaffPage() {
         const dayOfWeek = fallbackDate.getDay()
         
         const availableStaffMembers = allStaff.filter(staff => {
-          // Check if staff works on this day and exclude 'any'
-          return staff.is_active && staff.work_days.includes(dayOfWeek) && staff.id !== 'any'
+          // Check if staff works on this day, has work_days property, and exclude 'any'
+          return staff.is_active && 
+                 staff.work_days && 
+                 Array.isArray(staff.work_days) && 
+                 staff.work_days.includes(dayOfWeek) && 
+                 staff.id !== 'any'
         })
         
         console.log('Fallback staff found:', availableStaffMembers.length)
