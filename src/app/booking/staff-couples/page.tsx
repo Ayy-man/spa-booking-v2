@@ -82,12 +82,33 @@ export default function CouplesStaffPage() {
       
       const secondaryService = bookingData.secondaryService 
         ? services.find(s => 
-            s.name.toLowerCase() === bookingData.secondaryService.name.toLowerCase()
+            s.name.toLowerCase() === bookingData.secondaryService!.name.toLowerCase()
           )
         : null
       
       if (!primaryService) {
-        console.error('Primary service not found in database')
+        // Primary service not found in database - use fallback approach
+        // Fallback: Show all active staff who work on this day
+        const allStaff = await supabaseClient.getStaff()
+        const date = new Date(selectedDate)
+        const dayOfWeek = date.getDay()
+        
+        const availableStaffMembers = allStaff.filter(staff => {
+          return staff.is_active && 
+                 staff.work_days && 
+                 Array.isArray(staff.work_days) && 
+                 staff.work_days.includes(dayOfWeek) && 
+                 staff.id !== 'any'
+        })
+        
+        setAvailableStaff(availableStaffMembers)
+        
+        // Create staff name map
+        const nameMap: Record<string, string> = { 'any': 'Any Available Staff' }
+        allStaff.forEach(staff => {
+          nameMap[staff.id] = staff.name
+        })
+        setStaffMap(nameMap)
         setLoadingStaff(false)
         return
       }
@@ -120,11 +141,12 @@ export default function CouplesStaffPage() {
           .map((slot: any) => slot.available_staff_id)
         
         // Combine staff IDs (union for couples booking - staff can do either service)
-        allAvailableStaffIds = [...new Set([...primaryStaffIds, ...secondaryStaffIds])]
+        const combinedIds = [...primaryStaffIds, ...secondaryStaffIds]
+        allAvailableStaffIds = Array.from(new Set(combinedIds))
       }
       
       // Get unique staff IDs
-      const uniqueStaffIds = [...new Set(allAvailableStaffIds)]
+      const uniqueStaffIds = Array.from(new Set(allAvailableStaffIds))
       
       if (uniqueStaffIds.length > 0) {
         const staffDetails = await supabaseClient.getStaff()
@@ -159,7 +181,7 @@ export default function CouplesStaffPage() {
       setStaffMap(nameMap)
       
     } catch (error) {
-      console.error('Error fetching available staff:', error)
+      // Error fetching available staff - using fallback
       // Final fallback - show all active staff
       try {
         const allStaff = await supabaseClient.getStaff()
