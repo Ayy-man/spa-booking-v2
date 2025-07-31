@@ -572,30 +572,32 @@ export function RoomTimeline({
                   <React.Fragment key={`${slot.hour}-${slot.minute}`}>
                     {/* Hour Header - only show at the beginning of each hour */}
                     {isHourMark && (
-                      <div className="flex border-b-2 border-gray-400 bg-gray-100">
-                        <div className="w-16 flex items-center justify-center py-2 text-sm font-semibold text-gray-800 border-r bg-gray-100">
+                      <div className="flex border-b-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 shadow-sm">
+                        <div className="w-16 flex items-center justify-center py-3 text-sm font-bold text-primary border-r bg-gradient-to-r from-primary/10 to-primary/5">
                           {slot.hour > 12 ? slot.hour - 12 : slot.hour === 0 ? 12 : slot.hour}
                           {slot.hour >= 12 ? ' PM' : ' AM'}
                         </div>
                         {rooms.map(room => (
-                          <div key={`header-${room.id}-${slot.timeString}`} className="flex-1 min-w-[200px] border-r last:border-r-0 bg-gray-100" />
+                          <div key={`header-${room.id}-${slot.timeString}`} className="flex-1 min-w-[200px] border-r last:border-r-0 bg-gradient-to-r from-primary/5 to-primary/10" />
                         ))}
                       </div>
                     )}
                     
                     {/* Time Slot Row */}
                     <div className={cn(
-                      "flex border-b",
+                      "flex border-b transition-colors hover:bg-gray-25",
                       isHourMark ? "border-gray-200" : "border-gray-100",
-                      isNextHour ? "border-b-gray-300" : ""
+                      isNextHour ? "border-b-primary/30 shadow-sm" : "",
+                      // Enhanced visual separation for hour boundaries
+                      isNextHour ? "mb-1" : ""
                     )}>
                       {/* Time Label */}
                       <div className={cn(
-                        "w-16 flex items-center justify-center py-1 text-xs border-r bg-gray-50",
-                        isHourMark ? "font-medium text-gray-600" : "text-gray-400"
+                        "w-16 flex items-center justify-center py-2 text-xs border-r transition-colors",
+                        isHourMark ? "font-semibold text-primary bg-primary/5" : "text-gray-500 bg-gray-50 hover:bg-gray-100"
                       )}>
                         {!isHourMark && (
-                          <span>:{slot.minute.toString().padStart(2, '0')}</span>
+                          <span className="font-medium">:{slot.minute.toString().padStart(2, '0')}</span>
                         )}
                       </div>
 
@@ -608,36 +610,41 @@ export function RoomTimeline({
                           <div 
                             key={`${room.id}-${slot.timeString}`} 
                             className={cn(
-                              "flex-1 min-w-[200px] border-r last:border-r-0 relative transition-colors",
+                              "flex-1 min-w-[200px] border-r last:border-r-0 relative transition-all duration-200",
+                              // Base styling with subtle room differentiation
+                              room.id % 2 === 0 ? "bg-white" : "bg-gray-50/50",
+                              // Hour boundary styling
+                              isHourMark && "border-t border-primary/10",
+                              isNextHour && "border-b-2 border-primary/20 shadow-sm",
                               // Enhanced drag feedback
                               dragState.isDragging && dragState.targetRoomId === room.id && dragState.targetTimeSlot === slot.timeString && 
                                 (() => {
                                   // Check if this would be a valid drop
-                                  if (!dragState.draggedBooking) return "bg-blue-50"
+                                  if (!dragState.draggedBooking) return "bg-blue-50 ring-2 ring-blue-200"
                                   
                                   const serviceName = dragState.draggedBooking.service.name.toLowerCase()
                                   const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
                                   
                                   // Invalid drop zones
-                                  if (isBodyScrub && room.id !== 3) return "bg-red-50 border-red-200"
+                                  if (isBodyScrub && room.id !== 3) return "bg-red-50 border-red-300 ring-2 ring-red-200"
                                   
                                   // Check for existing booking conflicts
                                   const existingBooking = getBookingForSlot(room.id, slot.timeString)
                                   if (existingBooking && existingBooking.id !== dragState.draggedBooking.id) {
-                                    return "bg-red-50 border-red-200"
+                                    return "bg-red-50 border-red-300 ring-2 ring-red-200"
                                   }
                                   
                                   // Valid drop zone
-                                  return "bg-green-50 border-green-200"
+                                  return "bg-green-50 border-green-300 ring-2 ring-green-200 shadow-md"
                                 })(),
                               // General drag state feedback
-                              dragState.isDragging && !booking && "hover:bg-blue-25",
+                              dragState.isDragging && !booking && "hover:bg-blue-50/50 hover:ring-1 hover:ring-blue-200",
                               // Highlight compatible rooms during drag
                               dragState.isDragging && dragState.draggedBooking && (() => {
                                 const serviceName = dragState.draggedBooking.service.name.toLowerCase()
                                 const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
-                                if (isBodyScrub && room.id === 3) return "ring-1 ring-green-300"
-                                if (isBodyScrub && room.id !== 3) return "ring-1 ring-red-300"
+                                if (isBodyScrub && room.id === 3) return "ring-1 ring-green-300 bg-green-50/30"
+                                if (isBodyScrub && room.id !== 3) return "ring-1 ring-red-300 bg-red-50/30"
                                 return ""
                               })()
                             )}
