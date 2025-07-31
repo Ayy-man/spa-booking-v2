@@ -3,6 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { format, addDays, startOfDay, isSameDay } from 'date-fns'
+import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
+import BookingSummary from '@/components/booking/BookingSummary'
+import { InlineLoading } from '@/components/ui/loading-spinner'
+import { TimeSlotSkeleton } from '@/components/ui/skeleton-loader'
 
 export default function DateTimePage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -169,159 +173,167 @@ export default function DateTimePage() {
   // Show loading screen while service is being loaded
   if (loadingService) {
     return (
-      <div className="min-h-screen bg-background py-8">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4 mx-auto"></div>
-              <p className="text-gray-600">Loading your service selection...</p>
-            </div>
+      <>
+        <BookingProgressIndicator />
+        <div className="min-h-screen bg-background section-spacing">
+          <div className="container mx-auto px-6 max-w-6xl">
+            <InlineLoading text="Loading your service selection..." />
           </div>
         </div>
-      </div>
+      </>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Link href="/booking" className="text-primary hover:text-primary-dark transition-colors">
-            ← Back to Services
-          </Link>
-          <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
-            Select Date & Time
-          </h1>
-          <p className="text-gray-600">
-            Choose your preferred appointment date and time
-          </p>
-          {selectedService && bookingData && (
-            <div className="mt-4 p-4 bg-accent/20 rounded-lg">
-              <p className="text-sm text-gray-600">Booking for:</p>
-              {bookingData.isCouplesBooking ? (
-                <div>
-                  <p className="text-lg font-semibold text-primary-dark">{bookingData.primaryService.name} (Person 1)</p>
-                  <p className="text-lg font-semibold text-primary-dark">{bookingData.secondaryService.name} (Person 2)</p>
-                  <p className="text-sm text-gray-600">{bookingData.totalDuration} minutes • ${bookingData.totalPrice} (Total for 2 people)</p>
+    <>
+      {/* Progress Indicator */}
+      <BookingProgressIndicator />
+      
+      <div className="min-h-screen bg-background section-spacing">
+        <div className="container mx-auto px-6 max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Header */}
+              <div className="text-center lg:text-left">
+                <Link 
+                  href="/booking" 
+                  className="btn-tertiary !w-auto px-6 mb-6 inline-flex"
+                >
+                  ← Back to Services
+                </Link>
+                <h1 className="text-4xl md:text-5xl font-heading text-primary mb-4">
+                  Select Date & Time
+                </h1>
+                <p className="text-xl text-gray-600">
+                  Choose your preferred appointment date and time
+                </p>
+              </div>
+
+              {/* Date Selection */}
+              <div className="card">
+                <h2 className="text-3xl font-heading font-bold text-primary mb-8">
+                  Select Date
+                </h2>
+                <div className="flex space-x-3 overflow-x-auto pb-4 scrollbar-hide">
+                  {availableDates.map((date) => {
+                    const isSelected = selectedDate && isSameDay(date, selectedDate)
+                    const isWeekend = date.getDay() === 0 || date.getDay() === 6 // Sunday = 0, Saturday = 6
+                    
+                    return (
+                      <button
+                        key={date.toISOString()}
+                        onClick={() => handleDateSelect(date)}
+                        className={`${
+                          isSelected 
+                            ? 'date-button-selected' 
+                            : isWeekend 
+                              ? 'date-button-available date-button-weekend'
+                              : 'date-button-available'
+                        }`}
+                      >
+                        <div className="text-sm font-semibold">
+                          {format(date, 'EEE')}
+                        </div>
+                        <div className="text-lg font-bold">
+                          {format(date, 'd')}
+                        </div>
+                        <div className="text-xs">
+                          {format(date, 'MMM')}
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
-              ) : (
-                <div>
-                  <p className="text-lg font-semibold text-primary-dark">{selectedService.name}</p>
-                  <p className="text-sm text-gray-600">{selectedService.duration} minutes • ${selectedService.price}</p>
+              </div>
+
+              {/* Time Selection */}
+              {selectedDate && (
+                <div className="card">
+                  <h2 className="text-3xl font-heading font-bold text-primary mb-8">
+                    Select Time for {format(selectedDate, 'EEEE, MMMM d')}
+                  </h2>
+                  
+                  {loadingTimes ? (
+                    <div className="py-8">
+                      <InlineLoading text="Checking availability..." />
+                      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-8">
+                        {Array.from({ length: 8 }).map((_, i) => (
+                          <TimeSlotSkeleton key={i} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : availableTimes.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="text-6xl mb-4">⏰</div>
+                      <div className="text-xl text-gray-600 mb-2">
+                        No available time slots
+                      </div>
+                      <div className="text-gray-500">
+                        Please select a different date
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <p className="text-base text-blue-800 font-medium">
+                          📅 {format(selectedDate, 'EEEE, MMMM d')}
+                        </p>
+                        <p className="text-sm text-blue-600 mt-1">
+                          {availableTimes.length} time slot{availableTimes.length !== 1 ? 's' : ''} available
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {availableTimes.map((time) => (
+                          <button
+                            key={time}
+                            onClick={() => handleTimeSelect(time)}
+                            className={
+                              selectedTime === time
+                                ? 'time-slot-selected'
+                                : 'time-slot-available'
+                            }
+                          >
+                            {time}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
-          )}
-        </div>
 
-        {/* Date Selection */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-2xl font-heading text-primary-dark mb-6">
-            Select Date
-          </h2>
-          <div className="flex space-x-2 overflow-x-auto pb-4">
-            {availableDates.map((date) => {
-              const isSelected = selectedDate && isSameDay(date, selectedDate)
-              const isWeekend = date.getDay() === 0 || date.getDay() === 6 // Sunday = 0, Saturday = 6
-              
-              return (
-                <button
-                  key={date.toISOString()}
-                  onClick={() => handleDateSelect(date)}
-                  className={`${
-                    isSelected 
-                      ? 'date-button-selected' 
-                      : isWeekend 
-                        ? 'date-button-available date-button-weekend'
-                        : 'date-button-available'
-                  }`}
-                >
-                  <div className="text-sm font-medium">
-                    {format(date, 'EEE')}
-                  </div>
-                  <div className="text-xs">
-                    {format(date, 'MMM d')}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Time Selection */}
-        {selectedDate && (
-          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h2 className="text-2xl font-heading text-primary-dark mb-6">
-              Select Time for {format(selectedDate, 'EEEE, MMMM d')}
-            </h2>
-            
-            {loadingTimes ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-gray-500">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4 mx-auto"></div>
-                  Checking availability...
-                </div>
+            {/* Sidebar - Booking Summary */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-8">
+                <BookingSummary />
               </div>
-            ) : availableTimes.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="text-gray-500 mb-4">
-                  No available time slots for this date
-                </div>
-                <div className="text-sm text-gray-400">
-                  Please select a different date
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    Available time slots for {format(selectedDate, 'EEEE, MMMM d')}
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    {availableTimes.length} time slot{availableTimes.length !== 1 ? 's' : ''} available
-                  </p>
-                </div>
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                  {availableTimes.map((time) => (
-                    <button
-                      key={time}
-                      onClick={() => handleTimeSelect(time)}
-                      className={
-                        selectedTime === time
-                          ? 'time-slot-selected'
-                          : 'time-slot-available'
-                      }
-                    >
-                      {time}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Continue Button */}
-        {selectedDate && selectedTime && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-            <div className="container mx-auto max-w-4xl">
-              <div className="flex justify-between items-center mb-4">
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Selected:</span> {format(selectedDate, 'EEEE, MMMM d')} at {selectedTime}
-                </div>
-              </div>
-              <button 
-                onClick={handleContinue}
-                className="btn-primary w-full"
-              >
-                Continue to Staff Selection
-              </button>
             </div>
           </div>
-        )}
-      </div>
-    </div>
-  )
+
+          {/* Continue Button */}
+          {selectedDate && selectedTime && (
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-xl p-6 z-40">
+              <div className="container mx-auto max-w-6xl">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="text-gray-700">
+                    <div className="font-semibold text-lg">Ready to Continue</div>
+                    <div className="text-sm text-gray-500">
+                      {format(selectedDate, 'EEEE, MMMM d')} at {selectedTime}
+                    </div>
+                  </div>
+                  <button 
+                    onClick={handleContinue}
+                    className="btn-primary sm:!w-auto px-8"
+                  >
+                    Continue to Staff Selection
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </>
+    )
 }

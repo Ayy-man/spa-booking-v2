@@ -9,15 +9,24 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#C36678',
-          dark: '#AA3B50',
-          light: '#F6C7CF',
+          DEFAULT: '#A64D5F', // Darker for better contrast (was #C36678)
+          light: '#C75B7A', // Original color moved to light variant
+          lighter: '#F6C7CF',
+          dark: '#8B3F4F',
+          darker: '#702C3A',
+        },
+        secondary: {
+          DEFAULT: '#F6C7CF',
+          dark: '#E8B3C0',
         },
         background: '#FFF8FA',
         surface: '#FFFFFF',
         accent: '#F6C7CF',
-        'text-primary': '#000000',
-        'text-secondary': '#AA3B50',
+        'text-primary': '#1F2937', // Darker for better contrast
+        'text-secondary': '#A64D5F', // Updated to match new primary
+        success: '#10B981',
+        warning: '#F59E0B',
+        error: '#EF4444',
       },
       fontFamily: {
         heading: ['Playfair Display', 'serif'],

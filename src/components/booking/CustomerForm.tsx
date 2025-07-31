@@ -8,6 +8,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { CheckCircleIcon, AlertCircleIcon } from 'lucide-react'
+import { ButtonLoading } from '@/components/ui/loading-spinner'
 
 const customerFormSchema = z.object({
   name: z.string()
@@ -42,7 +44,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors, isValid, touchedFields },
     watch
   } = useForm<CustomerFormData>({
     resolver: zodResolver(customerFormSchema),
@@ -57,6 +59,33 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
   })
 
   const formData = watch()
+
+  // Helper function to get field validation status
+  const getFieldStatus = (fieldName: keyof CustomerFormData) => {
+    const isTouched = touchedFields[fieldName]
+    const hasError = errors[fieldName]
+    const hasValue = formData[fieldName]
+    
+    if (!isTouched) return 'default'
+    if (hasError) return 'error'
+    if (hasValue && fieldName !== 'specialRequests' && fieldName !== 'isNewCustomer') return 'success'
+    return 'default'
+  }
+
+  // Helper function to get input classes based on validation status
+  const getInputClasses = (fieldName: keyof CustomerFormData) => {
+    const status = getFieldStatus(fieldName)
+    const baseClasses = 'input-field'
+    
+    switch (status) {
+      case 'success':
+        return `${baseClasses} input-field-success`
+      case 'error':
+        return `${baseClasses} input-field-error`
+      default:
+        return baseClasses
+    }
+  }
 
   const handleFormSubmit = async (data: CustomerFormData) => {
     setIsSubmitting(true)
@@ -81,22 +110,31 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
           <Label htmlFor="name" className="text-sm font-medium text-gray-700">
             Full Name *
           </Label>
-          <Input
-            id="name"
-            type="text"
-            placeholder="Enter your full name"
-            className={`
-              transition-all duration-200
-              ${errors.name 
-                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                : 'border-gray-300 focus:border-primary focus:ring-primary/20'
-              }
-            `}
-            {...register('name')}
-          />
+          <div className="relative">
+            <Input
+              id="name"
+              type="text"
+              placeholder="Enter your full name"
+              className={getInputClasses('name')}
+              {...register('name')}
+            />
+            {getFieldStatus('name') === 'success' && (
+              <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-success" />
+            )}
+            {getFieldStatus('name') === 'error' && (
+              <AlertCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-error" />
+            )}
+          </div>
           {errors.name && (
-            <p className="text-sm text-red-600 mt-1">
+            <p className="text-sm text-error mt-1 flex items-center gap-1">
+              <AlertCircleIcon className="w-4 h-4" />
               {errors.name.message}
+            </p>
+          )}
+          {getFieldStatus('name') === 'success' && (
+            <p className="text-sm text-success mt-1 flex items-center gap-1">
+              <CheckCircleIcon className="w-4 h-4" />
+              Looks good!
             </p>
           )}
         </div>
@@ -106,22 +144,31 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
           <Label htmlFor="email" className="text-sm font-medium text-gray-700">
             Email Address *
           </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="Enter your email address"
-            className={`
-              transition-all duration-200
-              ${errors.email 
-                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                : 'border-gray-300 focus:border-primary focus:ring-primary/20'
-              }
-            `}
-            {...register('email')}
-          />
+          <div className="relative">
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email address"
+              className={getInputClasses('email')}
+              {...register('email')}
+            />
+            {getFieldStatus('email') === 'success' && (
+              <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-success" />
+            )}
+            {getFieldStatus('email') === 'error' && (
+              <AlertCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-error" />
+            )}
+          </div>
           {errors.email && (
-            <p className="text-sm text-red-600 mt-1">
+            <p className="text-sm text-error mt-1 flex items-center gap-1">
+              <AlertCircleIcon className="w-4 h-4" />
               {errors.email.message}
+            </p>
+          )}
+          {getFieldStatus('email') === 'success' && (
+            <p className="text-sm text-success mt-1 flex items-center gap-1">
+              <CheckCircleIcon className="w-4 h-4" />
+              Valid email address
             </p>
           )}
           <p className="text-xs text-gray-500">
@@ -134,22 +181,31 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
           <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
             Phone Number <span className="text-gray-400">(Optional)</span>
           </Label>
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="Enter your phone number"
-            className={`
-              transition-all duration-200
-              ${errors.phone 
-                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                : 'border-gray-300 focus:border-primary focus:ring-primary/20'
-              }
-            `}
-            {...register('phone')}
-          />
+          <div className="relative">
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="Enter your phone number"
+              className={getInputClasses('phone')}
+              {...register('phone')}
+            />
+            {getFieldStatus('phone') === 'success' && formData.phone && (
+              <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-success" />
+            )}
+            {getFieldStatus('phone') === 'error' && (
+              <AlertCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-error" />
+            )}
+          </div>
           {errors.phone && (
-            <p className="text-sm text-red-600 mt-1">
+            <p className="text-sm text-error mt-1 flex items-center gap-1">
+              <AlertCircleIcon className="w-4 h-4" />
               {errors.phone.message}
+            </p>
+          )}
+          {getFieldStatus('phone') === 'success' && formData.phone && (
+            <p className="text-sm text-success mt-1 flex items-center gap-1">
+              <CheckCircleIcon className="w-4 h-4" />
+              Valid phone number
             </p>
           )}
           <p className="text-xs text-gray-500">
@@ -223,21 +279,12 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
         <Button
           type="submit"
           disabled={!isFormValid || isSubmitting || loading}
-          className={`
-            w-full py-3 text-lg font-medium transition-all duration-200
-            ${!isFormValid 
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-              : 'bg-black text-white hover:bg-gray-900 active:bg-gray-800'
-            }
-          `}
+          className="btn-primary"
         >
           {isSubmitting || loading ? (
-            <div className="flex items-center justify-center">
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-              Processing...
-            </div>
+            <ButtonLoading text="Processing..." />
           ) : (
-            'Continue'
+            'Continue to Booking'
           )}
         </Button>
 

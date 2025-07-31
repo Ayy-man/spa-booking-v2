@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import CustomerForm, { CustomerFormData } from '@/components/booking/CustomerForm'
 import { staffNameMap } from '@/lib/staff-data'
+import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
+import BookingSummary from '@/components/booking/BookingSummary'
 
 interface Service {
   name: string
@@ -65,40 +67,43 @@ export default function CustomerInfoPage() {
 
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="container mx-auto px-4 max-w-2xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Link href="/booking/staff" className="text-primary hover:text-primary-dark transition-colors">
-            ← Back to Staff Selection
-          </Link>
-          <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
-            Customer Information
-          </h1>
-          <p className="text-gray-600">
-            Please provide your contact details
-          </p>
-        </div>
+    <>
+      {/* Progress Indicator */}
+      <BookingProgressIndicator />
+      
+      <div className="min-h-screen bg-background section-spacing">
+        <div className="container mx-auto px-6 max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2">
+              {/* Header */}
+              <div className="text-center lg:text-left mb-8">
+                <Link 
+                  href="/booking/staff" 
+                  className="btn-tertiary !w-auto px-6 mb-6 inline-flex"
+                >
+                  ← Back to Staff Selection
+                </Link>
+                <h1 className="text-4xl md:text-5xl font-heading text-primary mb-4">
+                  Customer Information
+                </h1>
+                <p className="text-xl text-gray-600">
+                  Please provide your contact details to complete your booking
+                </p>
+              </div>
 
-        {/* Booking Summary */}
-        {selectedService && (
-          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h2 className="text-xl font-heading text-primary-dark mb-4">
-              Booking Summary
-            </h2>
-            <div className="space-y-2 text-gray-600">
-              <div><span className="font-medium">Service:</span> {selectedService.name}</div>
-              <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
-              <div><span className="font-medium">Time:</span> {selectedTime}</div>
-              <div><span className="font-medium">Staff:</span> {staffNameMap[selectedStaff as keyof typeof staffNameMap]}</div>
-              <div><span className="font-medium">Price:</span> ${selectedService.price}</div>
+              {/* Customer Form */}
+              <CustomerForm onSubmit={handleSubmit} />
+            </div>
+
+            {/* Sidebar - Booking Summary */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-8">
+                <BookingSummary />
+              </div>
             </div>
           </div>
-        )}
-
-        {/* Customer Form */}
-        <CustomerForm onSubmit={handleSubmit} />
-      </div>
-    </div>
-  )
+        </div>
+      </>
+    )
 }

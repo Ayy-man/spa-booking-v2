@@ -8,7 +8,11 @@ import { Database } from '@/types/database'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, StarIcon, CheckCircleIcon } from 'lucide-react'
+import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
+import BookingSummary from '@/components/booking/BookingSummary'
+import { InlineLoading } from '@/components/ui/loading-spinner'
+import { StaffCardSkeleton } from '@/components/ui/skeleton-loader'
 
 type Staff = Database['public']['Tables']['staff']['Row']
 
@@ -214,223 +218,232 @@ export default function StaffPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Link href="/booking/date-time" className="text-primary hover:text-primary-dark transition-colors">
-            ← Back to Date & Time
-          </Link>
-          <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
-            Select Staff Member
-          </h1>
-          <p className="text-gray-600">
-            Choose your preferred staff member or let us assign one
-          </p>
-        </div>
-
-        {/* Booking Summary */}
-        {selectedService && (
-          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h2 className="text-xl font-heading text-primary-dark mb-4">
-              Booking Summary
-            </h2>
-            <div className="space-y-2 text-gray-600">
-              <div><span className="font-medium">Service:</span> {selectedService.name}</div>
-              <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
-              <div><span className="font-medium">Time:</span> {selectedTime}</div>
-              <div><span className="font-medium">Price:</span> ${selectedService.price}</div>
-            </div>
-          </div>
-        )}
-
-        {/* Staff Selection */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-2xl font-heading text-primary-dark mb-6">
-            Available Staff
-          </h2>
-          
-          {/* Service Category Info */}
-          {selectedService && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700">
-                <span className="font-medium">Service Category:</span> {getServiceCategory(selectedService.name).replace('_', ' ').toUpperCase()}
-              </p>
-              <p className="text-xs text-blue-600 mt-1">
-                Showing staff available for your selected date and time
-              </p>
-            </div>
-          )}
-          
-          {loadingStaff ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-gray-500">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4 mx-auto"></div>
-                Checking staff availability...
-              </div>
-            </div>
-          ) : availableStaff.length === 0 ? (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <div className="space-y-2">
-                  <div className="font-medium">
-                    No staff available for this time slot
-                  </div>
-                  <div className="text-sm">
-                    Please go back and select a different time.
-                  </div>
-                </div>
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <div className="space-y-4">
-              {/* Any Available Staff Option - Custom Card */}
-              <Card 
-                className={`p-6 cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${
-                  selectedStaff === 'any' 
-                    ? 'ring-2 ring-primary border-primary bg-primary/5' 
-                    : 'border-dashed border-gray-300 hover:border-primary bg-gray-50'
-                }`}
-                onClick={() => handleStaffSelect('any')}
-              >
-                <div className="flex items-center space-x-4">
-                  {/* Special Icon for Any Staff */}
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center border-2 border-dashed border-primary/30">
-                    <span className="text-xl font-bold text-primary">
-                      AA
-                    </span>
-                  </div>
-
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-primary mb-1">
-                      Any Available Staff
-                    </h3>
-                    
-                    <p className="text-sm text-gray-600 mb-2">
-                      Any qualified staff member
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-1">
-                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                        facials
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                        massages
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                        treatments
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                        waxing
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                        packages
-                      </Badge>
-                      <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
-                        special
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {selectedStaff === 'any' && (
-                    <div className="flex items-center justify-center w-6 h-6 bg-primary rounded-full">
-                      <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-              </Card>
-
-              {/* Available Staff Members */}
-              {availableStaff.map((member) => (
-                <Card 
-                  key={member.id}
-                  className={`p-6 cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                    selectedStaff === member.id 
-                      ? 'ring-2 ring-primary border-primary bg-accent/20' 
-                      : 'hover:border-accent'
-                  }`}
-                  onClick={() => handleStaffSelect(member.id)}
+    <>
+      {/* Progress Indicator */}
+      <BookingProgressIndicator />
+      
+      <div className="min-h-screen bg-background section-spacing">
+        <div className="container mx-auto px-6 max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Header */}
+              <div className="text-center lg:text-left">
+                <Link 
+                  href="/booking/date-time" 
+                  className="btn-tertiary !w-auto px-6 mb-6 inline-flex"
                 >
-                  <div className="flex items-center space-x-4">
-                    {/* Staff Photo Placeholder */}
-                    <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
-                      <span className="text-xl font-semibold text-gray-600">
-                        {member.initials || member.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
+                  ← Back to Date & Time
+                </Link>
+                <h1 className="text-4xl md:text-5xl font-heading text-primary mb-4">
+                  Select Staff Member
+                </h1>
+                <p className="text-xl text-gray-600">
+                  Choose your preferred therapist or let us assign the best available
+                </p>
+              </div>
 
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-primary-dark mb-1">
-                        {member.name}
-                      </h3>
-                      
-                      <div className="space-y-1 mb-3">
-                        {member.specialties && (
-                          <p className="text-sm text-gray-600">
-                            {member.specialties}
-                          </p>
-                        )}
-                        
-                        <div className="flex flex-wrap gap-1">
-                          {(member.capabilities || []).map((serviceType, index) => (
-                            <Badge 
-                              key={index}
-                              variant="outline" 
-                              className={`text-xs ${
-                                selectedService && serviceType === getServiceCategory(selectedService.name)
-                                  ? 'border-primary text-primary bg-primary/5'
-                                  : 'border-gray-300 text-gray-600'
-                              }`}
-                            >
-                              {serviceType.replace('_', ' ')}
-                            </Badge>
-                          ))}
+              {/* Staff Selection */}
+              <div className="card">
+                <h2 className="text-3xl font-heading font-bold text-primary mb-8">
+                  Available Staff
+                </h2>
+                
+                {/* Service Category Info */}
+                {selectedService && (
+                  <div className="mb-8 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <p className="text-base text-blue-800 font-medium">
+                      <span className="font-semibold">Service Category:</span> {getServiceCategory(selectedService.name).replace('_', ' ').toUpperCase()}
+                    </p>
+                    <p className="text-sm text-blue-600 mt-1">
+                      Showing qualified staff available for your selected date and time
+                    </p>
+                  </div>
+                )}
+                
+                {loadingStaff ? (
+                  <div className="py-8">
+                    <InlineLoading text="Checking staff availability..." />
+                    <div className="space-y-4 mt-8">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <StaffCardSkeleton key={i} />
+                      ))}
+                    </div>
+                  </div>
+                ) : availableStaff.length === 0 ? (
+                  <Alert variant="destructive" className="p-6">
+                    <AlertTriangle className="h-5 w-5" />
+                    <AlertDescription>
+                      <div className="space-y-3">
+                        <div className="font-semibold text-lg">
+                          No staff available for this time slot
+                        </div>
+                        <div className="text-base">
+                          Please go back and select a different time.
                         </div>
                       </div>
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Enhanced Any Available Staff Option */}
+                    <div 
+                      className={`relative p-6 rounded-2xl cursor-pointer transition-all duration-300 border-3 ${
+                        selectedStaff === 'any' 
+                          ? 'border-primary bg-gradient-to-br from-primary/10 to-primary/5 shadow-2xl scale-[1.02]' 
+                          : 'border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-transparent hover:border-primary hover:shadow-xl hover:scale-[1.01]'
+                      }`}
+                      onClick={() => handleStaffSelect('any')}
+                    >
+                      {/* Recommended Badge */}
+                      <div className="absolute -top-3 left-6">
+                        <div className="bg-primary text-white px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
+                          <StarIcon className="w-4 h-4" />
+                          Most Popular
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-6">
+                        {/* Enhanced Icon */}
+                        <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center shadow-lg">
+                          <div className="text-white text-center">
+                            <div className="text-xl font-bold">👥</div>
+                            <div className="text-xs font-medium">Team</div>
+                          </div>
+                        </div>
+
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-bold text-primary mb-2">
+                            Any Available Staff
+                          </h3>
+                          
+                          <p className="text-gray-700 mb-3 font-medium">
+                            Let us assign the perfect therapist for your treatment
+                          </p>
+                          
+                          <div className="flex items-center gap-4 mb-3">
+                            <div className="flex items-center gap-1 text-sm text-success">
+                              <CheckCircleIcon className="w-4 h-4" />
+                              <span className="font-medium">Best availability</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-success">
+                              <CheckCircleIcon className="w-4 h-4" />
+                              <span className="font-medium">Expert matching</span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2">
+                            <Badge className="bg-primary/15 text-primary border-primary/25 hover:bg-primary/20">
+                              All Services
+                            </Badge>
+                            <Badge className="bg-success/15 text-success border-success/25">
+                              Fastest Booking
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {selectedStaff === 'any' && (
+                          <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-full shadow-lg">
+                            <CheckCircleIcon className="w-5 h-5 text-white" />
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    {selectedStaff === member.id && (
-                      <div className="flex items-center justify-center w-6 h-6 bg-primary rounded-full">
-                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
+                    {/* Available Staff Members */}
+                    {availableStaff.map((member) => (
+                      <div
+                        key={member.id}
+                        className={`p-6 rounded-2xl cursor-pointer transition-all duration-300 border-2 ${
+                          selectedStaff === member.id 
+                            ? 'border-primary bg-primary/5 shadow-xl scale-[1.01]' 
+                            : 'border-gray-200 hover:border-primary/50 hover:shadow-lg hover:scale-[1.005]'
+                        }`}
+                        onClick={() => handleStaffSelect(member.id)}
+                      >
+                        <div className="flex items-center space-x-6">
+                          {/* Staff Photo Placeholder */}
+                          <div className="w-18 h-18 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center shadow-md">
+                            <span className="text-2xl font-bold text-gray-600">
+                              {member.initials || member.name.split(' ').map(n => n[0]).join('')}
+                            </span>
+                          </div>
+
+                          <div className="flex-1">
+                            <h3 className="text-xl font-bold text-text-primary mb-2">
+                              {member.name}
+                            </h3>
+                            
+                            <div className="space-y-2 mb-4">
+                              {member.specialties && (
+                                <p className="text-base text-gray-700 font-medium">
+                                  {member.specialties}
+                                </p>
+                              )}
+                              
+                              <div className="flex flex-wrap gap-2">
+                                {(member.capabilities || []).map((serviceType, index) => (
+                                  <Badge 
+                                    key={index}
+                                    className={`text-sm ${
+                                      selectedService && serviceType === getServiceCategory(selectedService.name)
+                                        ? 'bg-primary text-white border-primary'
+                                        : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {serviceType.replace('_', ' ')}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {selectedStaff === member.id && (
+                            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-full shadow-lg">
+                              <CheckCircleIcon className="w-5 h-5 text-white" />
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
-                </Card>
-              ))}
+                )}
+              </div>
+            </div>
+
+            {/* Sidebar - Booking Summary */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-8">
+                <BookingSummary />
+              </div>
+            </div>
+          </div>
+
+          {/* Continue Button */}
+          {selectedStaff && (
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-xl p-6 z-40">
+              <div className="container mx-auto max-w-6xl">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="text-gray-700">
+                    <div className="font-semibold text-lg">Staff Selected</div>
+                    <div className="text-sm text-gray-500">
+                      {selectedStaff === 'any' 
+                        ? 'Any Available Staff - We\'ll match you with the perfect therapist' 
+                        : availableStaff.find(s => s.id === selectedStaff)?.name
+                      }
+                    </div>
+                  </div>
+                  <button 
+                    onClick={handleContinue}
+                    className="btn-primary sm:!w-auto px-8"
+                  >
+                    Continue to Customer Information
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
-
-        {/* Internal validation happens in the background */}
-
-        {/* Continue Button */}
-        {selectedStaff && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-            <div className="container mx-auto max-w-4xl">
-              <div className="flex justify-between items-center mb-4">
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">Selected:</span> {
-                    selectedStaff === 'any' 
-                      ? 'Any Available Staff' 
-                      : availableStaff.find(s => s.id === selectedStaff)?.name
-                  }
-                </div>
-              </div>
-              <button 
-                onClick={handleContinue}
-                className="w-full py-3 px-6 rounded-lg font-medium transition-colors bg-black text-white hover:bg-gray-900"
-              >
-                Continue to Customer Information
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+      </>
+    )
 }

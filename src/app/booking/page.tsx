@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import CouplesBooking from '@/components/CouplesBooking'
+import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 
 export default function BookingPage() {
   const [selectedService, setSelectedService] = useState('')
@@ -87,121 +88,128 @@ export default function BookingPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center items-center space-x-4 mb-4">
-            <Link href="/" className="text-primary hover:text-primary-dark transition-colors">
-              ← Back to Home
-            </Link>
-            <span className="text-gray-300">|</span>
-            <a 
-              href="https://dermalskinclinicspa.com/services" 
-              className="text-primary hover:text-primary-dark transition-colors"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              🌐 Explore All Services
-            </a>
+    <>
+      {/* Progress Indicator */}
+      <BookingProgressIndicator />
+      
+      <div className="min-h-screen bg-background section-spacing">
+        <div className="container mx-auto px-6 max-w-7xl">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <div className="flex justify-center items-center space-x-6 mb-6">
+              <Link 
+                href="/" 
+                className="btn-tertiary !w-auto px-6"
+              >
+                ← Back to Home
+              </Link>
+              <span className="text-gray-300 hidden sm:block">|</span>
+              <a 
+                href="https://dermalskinclinicspa.com/services" 
+                className="btn-tertiary !w-auto px-6"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                🌐 Explore All Services
+              </a>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-heading text-primary mb-4">
+              Book Your Appointment
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Choose from our premium spa treatments and wellness services
+            </p>
           </div>
-          <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
-            Book Your Appointment
-          </h1>
-          <p className="text-gray-600">
-            Select a service to begin
-          </p>
-        </div>
 
-        {/* Service Categories */}
-        <div className="space-y-8">
-          {serviceCategories.map((category) => (
-            <div key={category.name} className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-2xl font-heading text-primary-dark mb-6">
-                {category.name}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {category.services.map((service) => (
-                  <div
-                    key={service.id}
-                    className={`card cursor-pointer transition-all ${
-                      selectedService === service.id ? 'ring-2 ring-primary' : ''
-                    }`}
-                    onClick={() => {
-                      setSelectedService(service.id)
-                      setShowCouplesOptions(true)
-                    }}
-                  >
-                    <h3 className="text-lg font-medium text-primary-dark mb-2">
-                      {service.name}
-                    </h3>
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-2xl font-semibold text-primary">
-                        ${service.price}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {service.duration} mins
-                      </span>
-                    </div>
-                    <button
-                      className={`w-full py-2 px-4 rounded-lg transition-colors ${
-                        selectedService === service.id
-                          ? 'bg-primary text-white'
-                          : 'bg-black text-white hover:bg-gray-900'
+          {/* Service Categories */}
+          <div className="content-spacing">
+            {serviceCategories.map((category) => (
+              <div key={category.name} className="card animate-in slide-in-from-bottom-2">
+                <h2 className="text-3xl font-heading font-bold text-primary mb-8">
+                  {category.name}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {category.services.map((service) => (
+                    <div
+                      key={service.id}
+                      className={`service-card ${
+                        selectedService === service.id ? 'service-card-selected' : ''
                       }`}
-                      onClick={(e) => {
-                        e.stopPropagation()
+                      onClick={() => {
                         setSelectedService(service.id)
                         setShowCouplesOptions(true)
                       }}
                     >
-                      {selectedService === service.id ? 'Selected' : 'Select'}
-                    </button>
-                  </div>
-                ))}
+                      <h3 className="text-xl font-semibold text-text-primary mb-4 leading-tight">
+                        {service.name}
+                      </h3>
+                      <div className="flex justify-between items-center mb-6">
+                        <span className="text-3xl font-bold text-primary">
+                          ${service.price}
+                        </span>
+                        <span className="text-base text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                          {service.duration} mins
+                        </span>
+                      </div>
+                      <button
+                        className={`w-full py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
+                          selectedService === service.id
+                            ? 'bg-primary text-white shadow-lg'
+                            : 'bg-gray-900 text-white hover:bg-gray-800 shadow-md hover:shadow-lg'
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedService(service.id)
+                          setShowCouplesOptions(true)
+                        }}
+                      >
+                        {selectedService === service.id ? 'Selected ✓' : 'Select Service'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        {/* Couples Booking Component - Fixed Position Overlay */}
-        {selectedService && showCouplesOptions && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-                <h2 className="text-xl font-heading text-primary-dark">
-                  Booking Options
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowCouplesOptions(false)
-                    setSelectedService('')
-                  }}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-              <div className="p-6">
-                <CouplesBooking
-                  selectedService={
-                    serviceCategories
-                      .flatMap(cat => cat.services)
-                      .find(s => s.id === selectedService) || null
-                  }
-                  serviceCategories={serviceCategories}
-                  onContinue={(bookingData) => {
-                    // Store booking data in localStorage
-                    localStorage.setItem('bookingData', JSON.stringify(bookingData))
-                    // Navigate to date/time selection
-                    window.location.href = '/booking/date-time'
-                  }}
-                />
-              </div>
+      {/* Couples Booking Component - Fixed Position Overlay */}
+      {selectedService && showCouplesOptions && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in-0 duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-2 duration-300">
+            <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center rounded-t-2xl">
+              <h2 className="text-2xl font-heading font-bold text-primary">
+                Booking Options
+              </h2>
+              <button
+                onClick={() => {
+                  setShowCouplesOptions(false)
+                  setSelectedService('')
+                }}
+                className="text-gray-400 hover:text-gray-600 text-3xl transition-colors"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-8">
+              <CouplesBooking
+                selectedService={
+                  serviceCategories
+                    .flatMap(cat => cat.services)
+                    .find(s => s.id === selectedService) || null
+                }
+                serviceCategories={serviceCategories}
+                onContinue={(bookingData) => {
+                  // Store booking data in localStorage
+                  localStorage.setItem('bookingData', JSON.stringify(bookingData))
+                  // Navigate to date/time selection
+                  window.location.href = '/booking/date-time'
+                }}
+              />
             </div>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   )
 } 
