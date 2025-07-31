@@ -115,13 +115,36 @@ export default function CouplesConfirmationPage() {
           throw new Error('Couples booking failed - no bookings created')
         }
 
-        // Validate booking results structure
-        if (!couplesResult[0] || !couplesResult[0].booking_id) {
+        // Handle different possible result structures
+        let bookingResults = []
+        if (couplesResult[0] && couplesResult[0].booking_id) {
+          // New structure from process_couples_booking_v2
+          bookingResults = couplesResult
+        } else if (couplesResult[0] && couplesResult[0].booking1_id) {
+          // Old structure from process_couples_booking
+          bookingResults = [
+            {
+              booking_id: couplesResult[0].booking1_id,
+              room_id: couplesResult[0].room_id,
+              booking_group_id: couplesResult[0].booking_group_id
+            }
+          ]
+          if (couplesResult[0].booking2_id) {
+            bookingResults.push({
+              booking_id: couplesResult[0].booking2_id,
+              room_id: couplesResult[0].room_id,
+              booking_group_id: couplesResult[0].booking_group_id
+            })
+          }
+        } else {
           console.error('Invalid couples booking result structure:', couplesResult)
-          throw new Error('Invalid booking result - missing booking_id')
+          throw new Error('Invalid booking result - unexpected format')
         }
 
-        setBookingResults(couplesResult)
+        // Use the processed booking results
+        const processedResults = bookingResults
+
+        setBookingResults(processedResults)
         
         // Send booking confirmation webhooks to GHL for both bookings
         try {
@@ -132,7 +155,7 @@ export default function CouplesConfirmationPage() {
           
           // Send webhook for primary booking
           const result1 = await ghlWebhookSender.sendBookingConfirmationWebhook(
-            couplesResult[0].booking_id,
+            processedResults[0].booking_id,
             {
               name: customerInfo.name,
               email: customerInfo.email,
@@ -149,15 +172,15 @@ export default function CouplesConfirmationPage() {
               price: bookingData.primaryService.price,
               staff: (staffNameMap as any)[selectedStaff] || selectedStaff,
               staffId: selectedStaff,
-              room: `Room ${couplesResult[0].room_id || 1}`,
-              roomId: couplesResult[0].room_id || 1
+              room: `Room ${processedResults[0].room_id || 1}`,
+              roomId: processedResults[0].room_id || 1
             }
           )
           
           // Send webhook for secondary booking if different service
-          if (bookingData.secondaryService && bookingData.secondaryService.name !== bookingData.primaryService.name) {
+          if (bookingData.secondaryService && bookingData.secondaryService.name !== bookingData.primaryService.name && processedResults.length > 1) {
             const result2 = await ghlWebhookSender.sendBookingConfirmationWebhook(
-              couplesResult[1].booking_id,
+              processedResults[1].booking_id,
               {
                 name: customerInfo.name + ' (Partner)',
                 email: customerInfo.email,
@@ -174,8 +197,8 @@ export default function CouplesConfirmationPage() {
                 price: bookingData.secondaryService.price,
                 staff: (staffNameMap as any)[secondaryStaff || selectedStaff] || secondaryStaff || selectedStaff,
                 staffId: secondaryStaff || selectedStaff,
-                room: `Room ${couplesResult[1].room_id || 2}`,
-                roomId: couplesResult[1].room_id || 2
+                room: `Room ${processedResults[1].room_id || 2}`,
+                roomId: processedResults[1].room_id || 2
               }
             )
           }

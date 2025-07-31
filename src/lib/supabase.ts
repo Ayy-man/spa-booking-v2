@@ -313,7 +313,7 @@ export const supabaseClient = {
     start_time: string
     special_requests?: string
   }) {
-    const { data, error } = await supabase.rpc('process_couples_booking', {
+    const { data, error } = await supabase.rpc('process_couples_booking_v2', {
       p_primary_service_id: booking.primary_service_id,
       p_secondary_service_id: booking.secondary_service_id,
       p_primary_staff_id: booking.primary_staff_id,
