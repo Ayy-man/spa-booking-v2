@@ -35,6 +35,7 @@ class GHLWebhookSender {
   }
 
   async sendNewCustomerWebhook(customer: CustomerData, booking: BookingData): Promise<WebhookResponse> {
+    console.log('Sending new customer webhook to GHL:', { customer: customer.name, service: booking.service })
     try {
       const payload = {
         event: 'new_customer',
@@ -77,8 +78,11 @@ class GHLWebhookSender {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'User-Agent': 'MedSpa-Booking-App/1.0',
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        mode: 'cors',
+        cache: 'no-cache'
       })
 
       if (response.ok) {
@@ -98,6 +102,7 @@ class GHLWebhookSender {
     booking: BookingData,
     ghlContactId?: string
   ): Promise<WebhookResponse> {
+    console.log('Sending booking confirmation webhook to GHL:', { bookingId, customer: customer.name })
     try {
       const payload = {
         event: 'booking_confirmed',
@@ -151,8 +156,11 @@ class GHLWebhookSender {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'User-Agent': 'MedSpa-Booking-App/1.0',
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        mode: 'cors',
+        cache: 'no-cache'
       })
 
       if (response.ok) {
@@ -229,8 +237,11 @@ class GHLWebhookSender {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'User-Agent': 'MedSpa-Booking-App/1.0',
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        mode: 'cors',
+        cache: 'no-cache'
       })
 
       if (response.ok) {
