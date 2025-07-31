@@ -80,6 +80,8 @@ export function RoomTimeline({
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false)
   const [rescheduleData, setRescheduleData] = useState<RescheduleData | null>(null)
   const [isRescheduling, setIsRescheduling] = useState(false)
+  const [clickRescheduleBooking, setClickRescheduleBooking] = useState<BookingWithRelations | null>(null)
+  const [showClickRescheduleDialog, setShowClickRescheduleDialog] = useState(false)
 
   // Generate time slots for the timeline
   const timeSlots = useMemo((): TimeSlot[] => {
@@ -208,6 +210,33 @@ export function RoomTimeline({
     })
     e.dataTransfer.setData('text/plain', booking.id)
     e.dataTransfer.effectAllowed = 'move'
+    
+    // Create custom drag image with booking details
+    const dragImage = document.createElement('div')
+    dragImage.innerHTML = `
+      <div style="
+        background: white;
+        border: 2px solid #3B82F6;
+        border-radius: 8px;
+        padding: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        font-size: 12px;
+        max-width: 200px;
+      ">
+        <div style="font-weight: 600; color: #1F2937;">${booking.service.name}</div>
+        <div style="color: #6B7280;">${booking.staff.name}</div>
+        <div style="color: #6B7280;">${booking.duration}min</div>
+      </div>
+    `
+    dragImage.style.position = 'absolute'
+    dragImage.style.top = '-1000px'
+    document.body.appendChild(dragImage)
+    e.dataTransfer.setDragImage(dragImage, 100, 40)
+    
+    // Clean up drag image after a short delay
+    setTimeout(() => {
+      document.body.removeChild(dragImage)
+    }, 0)
   }, [])
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -244,7 +273,16 @@ export function RoomTimeline({
     if (!dragState.draggedBooking) return
     
     const targetRoom = rooms.find(r => r.id === roomId)
-    if (!targetRoom) return
+    if (!targetRoom) {
+      setError('Invalid room selected')
+      setDragState({
+        isDragging: false,
+        draggedBooking: null,
+        targetRoomId: null,
+        targetTimeSlot: null
+      })
+      return
+    }
 
     // Don't reschedule if dropping in the same slot
     if (dragState.draggedBooking.room_id === roomId && 
@@ -258,10 +296,13 @@ export function RoomTimeline({
       return
     }
 
-    // Check if target slot is available
-    const targetBooking = getBookingForSlot(roomId, timeSlot)
-    if (targetBooking && targetBooking.id !== dragState.draggedBooking.id) {
-      setError('Target time slot is already occupied')
+    // Enhanced validation for room compatibility
+    const serviceName = dragState.draggedBooking.service.name.toLowerCase()
+    const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
+    
+    // Body scrubs can only be done in Room 3
+    if (isBodyScrub && roomId !== 3) {
+      setError('Body scrub services can only be performed in Room 3')
       setDragState({
         isDragging: false,
         draggedBooking: null,
@@ -270,6 +311,54 @@ export function RoomTimeline({
       })
       return
     }
+
+    // Check if target slot has enough time for the service
+    const bookingDuration = dragState.draggedBooking.duration
+    const endTimeSlot = new Date(`2000-01-01T${timeSlot}:00`)
+    endTimeSlot.setMinutes(endTimeSlot.getMinutes() + bookingDuration)
+    const endTimeString = endTimeSlot.toTimeString().slice(0, 5)
+    
+    // Check for conflicts across the entire duration
+    let hasConflict = false
+    const checkSlots = []
+    const startTime = new Date(`2000-01-01T${timeSlot}:00`)
+    for (let i = 0; i < bookingDuration; i += BUSINESS_HOURS.slotDuration) {
+      const checkTime = new Date(startTime.getTime() + i * 60000)
+      const checkTimeString = checkTime.toTimeString().slice(0, 5)
+      checkSlots.push(checkTimeString)
+      
+      const conflictBooking = getBookingForSlot(roomId, checkTimeString)
+      if (conflictBooking && conflictBooking.id !== dragState.draggedBooking.id) {
+        hasConflict = true
+        break
+      }
+    }
+
+    if (hasConflict) {
+      setError('Target time slot conflicts with existing booking')
+      setDragState({
+        isDragging: false,
+        draggedBooking: null,
+        targetRoomId: null,
+        targetTimeSlot: null
+      })
+      return
+    }
+
+    // Check business hours
+    if (endTimeSlot.getHours() >= BUSINESS_HOURS.end) {
+      setError('Booking would extend beyond business hours')
+      setDragState({
+        isDragging: false,
+        draggedBooking: null,
+        targetRoomId: null,
+        targetTimeSlot: null
+      })
+      return
+    }
+
+    // Clear any previous errors
+    setError('')
 
     // Prepare reschedule data
     setRescheduleData({
@@ -477,133 +566,180 @@ export function RoomTimeline({
               {/* Time Slots */}
               {timeSlots.map((slot, index) => {
                 const isHourMark = slot.minute === 0
+                const isNextHour = index < timeSlots.length - 1 && timeSlots[index + 1]?.minute === 0
                 
                 return (
-                  <div key={`${slot.hour}-${slot.minute}`} className={cn(
-                    "flex border-b",
-                    isHourMark ? "border-gray-300" : "border-gray-100"
-                  )}>
-                    {/* Time Label */}
+                  <React.Fragment key={`${slot.hour}-${slot.minute}`}>
+                    {/* Hour Header - only show at the beginning of each hour */}
+                    {isHourMark && (
+                      <div className="flex border-b-2 border-gray-400 bg-gray-100">
+                        <div className="w-16 flex items-center justify-center py-2 text-sm font-semibold text-gray-800 border-r bg-gray-100">
+                          {slot.hour > 12 ? slot.hour - 12 : slot.hour === 0 ? 12 : slot.hour}
+                          {slot.hour >= 12 ? ' PM' : ' AM'}
+                        </div>
+                        {rooms.map(room => (
+                          <div key={`header-${room.id}-${slot.timeString}`} className="flex-1 min-w-[200px] border-r last:border-r-0 bg-gray-100" />
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Time Slot Row */}
                     <div className={cn(
-                      "w-16 flex items-center justify-center py-1 text-xs border-r bg-gray-50",
-                      isHourMark ? "font-medium text-gray-700" : "text-gray-500"
+                      "flex border-b",
+                      isHourMark ? "border-gray-200" : "border-gray-100",
+                      isNextHour ? "border-b-gray-300" : ""
                     )}>
-                      {isHourMark ? (
-                        <span>
-                          {slot.hour > 12 ? slot.hour - 12 : slot.hour}
-                          {slot.hour >= 12 ? 'PM' : 'AM'}
-                        </span>
-                      ) : (
-                        <span>:{slot.minute.toString().padStart(2, '0')}</span>
-                      )}
-                    </div>
+                      {/* Time Label */}
+                      <div className={cn(
+                        "w-16 flex items-center justify-center py-1 text-xs border-r bg-gray-50",
+                        isHourMark ? "font-medium text-gray-600" : "text-gray-400"
+                      )}>
+                        {!isHourMark && (
+                          <span>:{slot.minute.toString().padStart(2, '0')}</span>
+                        )}
+                      </div>
 
-                    {/* Room Columns */}
-                    {rooms.map(room => {
-                      const booking = getBookingForSlot(room.id, slot.timeString)
-                      const isStart = booking && isBookingStart(booking, slot.timeString)
-                      
-                      return (
-                        <div 
-                          key={`${room.id}-${slot.timeString}`} 
-                          className={cn(
-                            "flex-1 min-w-[200px] border-r last:border-r-0 relative",
-                            dragState.isDragging && dragState.targetRoomId === room.id && dragState.targetTimeSlot === slot.timeString && "bg-blue-50"
-                          )}
-                          onDragOver={handleDragOver}
-                          onDragEnter={(e) => handleDragEnter(e, room.id, slot.timeString)}
-                          onDragLeave={handleDragLeave}
-                          onDrop={(e) => handleDrop(e, room.id, slot.timeString)}
-                        >
-                          {booking ? (
-                            isStart ? (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div 
-                                    className={cn(
-                                      "absolute inset-x-0 mx-1 rounded border p-2 cursor-move transition-all hover:shadow-md z-10 group relative",
-                                      getServiceColor(booking.service.category).bg,
-                                      getServiceColor(booking.service.category).border,
-                                      getServiceColor(booking.service.category).text,
-                                      // Special request styling
-                                      isSpecialStaffRequest(booking) && "ring-1 ring-amber-400 shadow-md",
-                                      dragState.isDragging && dragState.draggedBooking?.id === booking.id && "opacity-50 shadow-lg"
-                                    )}
-                                    style={{
-                                      height: `${(booking.duration / BUSINESS_HOURS.slotDuration) * 32}px`,
-                                    }}
-                                    draggable
-                                    onDragStart={(e) => handleDragStart(e, booking)}
-                                    onDragEnd={handleDragEnd}
-                                  >
-                                    {/* Special Request Indicator */}
-                                    {isSpecialStaffRequest(booking) && (
-                                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full flex items-center justify-center">
-                                        <Star className="h-1.5 w-1.5 text-white" fill="currentColor" />
-                                      </div>
-                                    )}
-                                    
-                                    <div className="flex items-start justify-between">
-                                      <div className="flex-1 min-w-0">
-                                        <div className="text-xs font-medium truncate flex items-center">
-                                          {booking.service.name}
-                                          {isSpecialStaffRequest(booking) && (
-                                            <Star className="h-2 w-2 text-amber-600 ml-1 flex-shrink-0" fill="currentColor" />
-                                          )}
-                                        </div>
-                                        <div className="text-xs opacity-75 truncate">
-                                          {booking.staff.name}
-                                          {isSpecialStaffRequest(booking) && (
-                                            <span className="text-amber-700 ml-1">(Requested)</span>
-                                          )}
-                                        </div>
-                                        <div className="text-xs opacity-60">
-                                          {booking.duration}min
-                                        </div>
-                                      </div>
-                                      <Move className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
-                                    </div>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="right" className="max-w-xs">
-                                  <div className="space-y-2">
-                                    <div className="font-medium flex items-center">
-                                      {booking.service.name}
-                                      {isSpecialStaffRequest(booking) && (
-                                        <Star className="h-3 w-3 text-amber-500 ml-2" fill="currentColor" />
+                      {/* Room Columns */}
+                      {rooms.map(room => {
+                        const booking = getBookingForSlot(room.id, slot.timeString)
+                        const isStart = booking && isBookingStart(booking, slot.timeString)
+                        
+                        return (
+                          <div 
+                            key={`${room.id}-${slot.timeString}`} 
+                            className={cn(
+                              "flex-1 min-w-[200px] border-r last:border-r-0 relative transition-colors",
+                              // Enhanced drag feedback
+                              dragState.isDragging && dragState.targetRoomId === room.id && dragState.targetTimeSlot === slot.timeString && 
+                                (() => {
+                                  // Check if this would be a valid drop
+                                  if (!dragState.draggedBooking) return "bg-blue-50"
+                                  
+                                  const serviceName = dragState.draggedBooking.service.name.toLowerCase()
+                                  const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
+                                  
+                                  // Invalid drop zones
+                                  if (isBodyScrub && room.id !== 3) return "bg-red-50 border-red-200"
+                                  
+                                  // Check for existing booking conflicts
+                                  const existingBooking = getBookingForSlot(room.id, slot.timeString)
+                                  if (existingBooking && existingBooking.id !== dragState.draggedBooking.id) {
+                                    return "bg-red-50 border-red-200"
+                                  }
+                                  
+                                  // Valid drop zone
+                                  return "bg-green-50 border-green-200"
+                                })(),
+                              // General drag state feedback
+                              dragState.isDragging && !booking && "hover:bg-blue-25",
+                              // Highlight compatible rooms during drag
+                              dragState.isDragging && dragState.draggedBooking && (() => {
+                                const serviceName = dragState.draggedBooking.service.name.toLowerCase()
+                                const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
+                                if (isBodyScrub && room.id === 3) return "ring-1 ring-green-300"
+                                if (isBodyScrub && room.id !== 3) return "ring-1 ring-red-300"
+                                return ""
+                              })()
+                            )}
+                            onDragOver={handleDragOver}
+                            onDragEnter={(e) => handleDragEnter(e, room.id, slot.timeString)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => handleDrop(e, room.id, slot.timeString)}
+                          >
+                            {booking ? (
+                              isStart ? (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div 
+                                      className={cn(
+                                        "absolute inset-x-0 mx-1 rounded border p-2 cursor-move transition-all hover:shadow-md z-10 group relative",
+                                        getServiceColor(booking.service.category).bg,
+                                        getServiceColor(booking.service.category).border,
+                                        getServiceColor(booking.service.category).text,
+                                        // Special request styling
+                                        isSpecialStaffRequest(booking) && "ring-1 ring-amber-400 shadow-md",
+                                        dragState.isDragging && dragState.draggedBooking?.id === booking.id && "opacity-50 shadow-lg"
                                       )}
+                                      style={{
+                                        height: `${(booking.duration / BUSINESS_HOURS.slotDuration) * 32}px`,
+                                      }}
+                                      draggable
+                                      onDragStart={(e) => handleDragStart(e, booking)}
+                                      onDragEnd={handleDragEnd}
+                                      onDoubleClick={() => {
+                                        setClickRescheduleBooking(booking)
+                                        setShowClickRescheduleDialog(true)
+                                      }}
+                                    >
+                                      {/* Special Request Indicator */}
+                                      {isSpecialStaffRequest(booking) && (
+                                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full flex items-center justify-center">
+                                          <Star className="h-1.5 w-1.5 text-white" fill="currentColor" />
+                                        </div>
+                                      )}
+                                      
+                                      <div className="flex items-start justify-between">
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-xs font-medium truncate flex items-center">
+                                            {booking.service.name}
+                                            {isSpecialStaffRequest(booking) && (
+                                              <Star className="h-2 w-2 text-amber-600 ml-1 flex-shrink-0" fill="currentColor" />
+                                            )}
+                                          </div>
+                                          <div className="text-xs opacity-75 truncate">
+                                            {booking.staff.name}
+                                            {isSpecialStaffRequest(booking) && (
+                                              <span className="text-amber-700 ml-1">(Requested)</span>
+                                            )}
+                                          </div>
+                                          <div className="text-xs opacity-60">
+                                            {booking.duration}min
+                                          </div>
+                                        </div>
+                                        <Move className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+                                      </div>
                                     </div>
-                                    <div className="text-sm space-y-1">
-                                      <div>Staff: {booking.staff.name}
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right" className="max-w-xs">
+                                    <div className="space-y-2">
+                                      <div className="font-medium flex items-center">
+                                        {booking.service.name}
                                         {isSpecialStaffRequest(booking) && (
-                                          <span className="text-amber-600 ml-1 font-medium">(Specifically Requested)</span>
+                                          <Star className="h-3 w-3 text-amber-500 ml-2" fill="currentColor" />
                                         )}
                                       </div>
-                                      <div>Time: {booking.start_time.slice(0, 5)} - {booking.end_time.slice(0, 5)}</div>
-                                      <div>Duration: {booking.duration} minutes</div>
-                                      <div>Status: {booking.status}</div>
-                                      <div>Price: ${booking.final_price}</div>
-                                      <div className="flex items-center text-xs text-gray-500 mt-2">
-                                        <Move className="h-3 w-3 mr-1" />
-                                        Drag to reschedule
+                                      <div className="text-sm space-y-1">
+                                        <div>Staff: {booking.staff.name}
+                                          {isSpecialStaffRequest(booking) && (
+                                            <span className="text-amber-600 ml-1 font-medium">(Specifically Requested)</span>
+                                          )}
+                                        </div>
+                                        <div>Time: {booking.start_time.slice(0, 5)} - {booking.end_time.slice(0, 5)}</div>
+                                        <div>Duration: {booking.duration} minutes</div>
+                                        <div>Status: {booking.status}</div>
+                                        <div>Price: ${booking.final_price}</div>
+                                        <div className="flex items-center text-xs text-gray-500 mt-2">
+                                          <Move className="h-3 w-3 mr-1" />
+                                          Drag to reschedule • Double-click for options
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : (
+                                <div className="h-8" /> // Spacer for continuation of booking
+                              )
                             ) : (
-                              <div className="h-8" /> // Spacer for continuation of booking
-                            )
-                          ) : (
-                            <div className={cn(
-                              "h-8 transition-colors",
-                              dragState.isDragging ? "hover:bg-blue-100" : "hover:bg-gray-50"
-                            )} /> // Available slot
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
+                              <div className={cn(
+                                "h-8 transition-colors",
+                                dragState.isDragging ? "hover:bg-blue-100" : "hover:bg-gray-50"
+                              )} /> // Available slot
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </React.Fragment>
                 )
               })}
             </div>
@@ -727,6 +863,195 @@ export function RoomTimeline({
                 ) : (
                   'Confirm Reschedule'
                 )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Click-to-Reschedule Dialog */}
+        <Dialog open={showClickRescheduleDialog} onOpenChange={setShowClickRescheduleDialog}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <Calendar className="h-5 w-5 mr-2" />
+                Reschedule Appointment
+              </DialogTitle>
+              <DialogDescription>
+                Choose a new time and room for this appointment.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {clickRescheduleBooking && (
+              <div className="space-y-6">
+                {/* Current Appointment Details */}
+                <div>
+                  <h4 className="font-medium text-sm text-gray-900 mb-3">Current Appointment</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Service:</span>
+                      <span>{clickRescheduleBooking.service.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Staff:</span>
+                      <span>{clickRescheduleBooking.staff.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Current Room:</span>
+                      <span>{clickRescheduleBooking.room.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Current Time:</span>
+                      <span>{clickRescheduleBooking.start_time.slice(0, 5)} - {clickRescheduleBooking.end_time.slice(0, 5)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Duration:</span>
+                      <span>{clickRescheduleBooking.duration} minutes</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Reschedule Options */}
+                <div>
+                  <h4 className="font-medium text-sm text-gray-900 mb-3">Quick Actions</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        // Find next available slot for this service
+                        const serviceName = clickRescheduleBooking.service.name.toLowerCase()
+                        const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
+                        
+                        // Find next available time slot
+                        for (const slot of timeSlots) {
+                          for (const room of rooms) {
+                            // Skip if body scrub and not Room 3
+                            if (isBodyScrub && room.id !== 3) continue
+                            
+                            const existingBooking = getBookingForSlot(room.id, slot.timeString)
+                            if (!existingBooking) {
+                              // Check if this slot is after current time and has enough space
+                              const currentTime = new Date()
+                              const slotTime = new Date(`2000-01-01T${slot.timeString}:00`)
+                              
+                              if (slot.timeString > clickRescheduleBooking.start_time.slice(0, 5)) {
+                                setRescheduleData({
+                                  booking: clickRescheduleBooking,
+                                  newRoomId: room.id,
+                                  newTimeSlot: slot.timeString,
+                                  newRoomName: room.name
+                                })
+                                setShowClickRescheduleDialog(false)
+                                setShowRescheduleDialog(true)
+                                return
+                              }
+                            }
+                          }
+                        }
+                        setError('No available slots found for automatic rescheduling')
+                      }}
+                      className="flex items-center justify-center gap-2"
+                    >
+                      <Clock className="h-4 w-4" />
+                      Next Available
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        // Move to same time, different room (if available)
+                        const serviceName = clickRescheduleBooking.service.name.toLowerCase()
+                        const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
+                        const currentTime = clickRescheduleBooking.start_time.slice(0, 5)
+                        
+                        for (const room of rooms) {
+                          if (room.id === clickRescheduleBooking.room_id) continue // Skip current room
+                          if (isBodyScrub && room.id !== 3) continue // Body scrub constraint
+                          
+                          const existingBooking = getBookingForSlot(room.id, currentTime)
+                          if (!existingBooking) {
+                            setRescheduleData({
+                              booking: clickRescheduleBooking,
+                              newRoomId: room.id,
+                              newTimeSlot: currentTime,
+                              newRoomName: room.name
+                            })
+                            setShowClickRescheduleDialog(false)
+                            setShowRescheduleDialog(true)
+                            return
+                          }
+                        }
+                        setError('No available rooms found at the same time')
+                      }}
+                      className="flex items-center justify-center gap-2"
+                    >
+                      <Move className="h-4 w-4" />
+                      Change Room
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Available Time Slots */}
+                <div>
+                  <h4 className="font-medium text-sm text-gray-900 mb-3">Available Time Slots</h4>
+                  <div className="max-h-48 overflow-y-auto space-y-2">
+                    {timeSlots
+                      .filter(slot => {
+                        // Only show future time slots
+                        return slot.timeString > clickRescheduleBooking.start_time.slice(0, 5) && 
+                               slot.hour < BUSINESS_HOURS.end
+                      })
+                      .slice(0, 20) // Limit to first 20 available slots
+                      .map(slot => (
+                        <div key={slot.timeString} className="flex items-center space-x-2">
+                          <span className="text-sm font-mono w-16">{slot.timeString}</span>
+                          <div className="flex space-x-1">
+                            {rooms.map(room => {
+                              const serviceName = clickRescheduleBooking.service.name.toLowerCase()
+                              const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
+                              const isCompatible = !isBodyScrub || room.id === 3
+                              const existingBooking = getBookingForSlot(room.id, slot.timeString)
+                              
+                              return (
+                                <Button
+                                  key={room.id}
+                                  size="sm"
+                                  variant={existingBooking ? "secondary" : isCompatible ? "default" : "destructive"}
+                                  disabled={!!existingBooking || !isCompatible}
+                                  onClick={() => {
+                                    if (!existingBooking && isCompatible) {
+                                      setRescheduleData({
+                                        booking: clickRescheduleBooking,
+                                        newRoomId: room.id,
+                                        newTimeSlot: slot.timeString,
+                                        newRoomName: room.name
+                                      })
+                                      setShowClickRescheduleDialog(false)
+                                      setShowRescheduleDialog(true)
+                                    }
+                                  }}
+                                  className="text-xs px-2 py-1 h-6"
+                                >
+                                  {room.name.replace('Room ', 'R')}
+                                </Button>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowClickRescheduleDialog(false)
+                  setClickRescheduleBooking(null)
+                }}
+              >
+                Cancel
               </Button>
             </DialogFooter>
           </DialogContent>
