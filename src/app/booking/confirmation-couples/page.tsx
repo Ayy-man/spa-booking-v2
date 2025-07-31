@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
+import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 
 interface Service {
   id?: string
@@ -113,6 +114,69 @@ export default function CouplesConfirmationPage() {
         }
 
         setBookingResults(couplesResult)
+        
+        // Send booking confirmation webhooks to GHL for both bookings
+        try {
+          const serviceCategory1 = getServiceCategory(bookingData.primaryService.name)
+          const serviceCategory2 = bookingData.secondaryService 
+            ? getServiceCategory(bookingData.secondaryService.name)
+            : serviceCategory1
+          
+          // Send webhook for primary booking
+          const result1 = await ghlWebhookSender.sendBookingConfirmationWebhook(
+            couplesResult[0].booking_id,
+            {
+              name: customerInfo.name,
+              email: customerInfo.email,
+              phone: customerInfo.phone || '',
+              isNewCustomer: customerInfo.isNewCustomer || false
+            },
+            {
+              service: bookingData.primaryService.name,
+              serviceId: primaryServiceData.id,
+              serviceCategory: serviceCategory1,
+              date: selectedDate,
+              time: selectedTime,
+              duration: bookingData.primaryService.duration,
+              price: bookingData.primaryService.price,
+              staff: (staffNameMap as any)[selectedStaff] || selectedStaff,
+              staffId: selectedStaff,
+              room: `Room ${couplesResult[0].room_id || 1}`,
+              roomId: couplesResult[0].room_id || 1
+            }
+          )
+          
+          // Send webhook for secondary booking if different service
+          if (bookingData.secondaryService && bookingData.secondaryService.name !== bookingData.primaryService.name) {
+            const result2 = await ghlWebhookSender.sendBookingConfirmationWebhook(
+              couplesResult[1].booking_id,
+              {
+                name: customerInfo.name + ' (Partner)',
+                email: customerInfo.email,
+                phone: customerInfo.phone || '',
+                isNewCustomer: customerInfo.isNewCustomer || false
+              },
+              {
+                service: bookingData.secondaryService.name,
+                serviceId: secondaryServiceData.id,
+                serviceCategory: serviceCategory2,
+                date: selectedDate,
+                time: selectedTime,
+                duration: bookingData.secondaryService.duration,
+                price: bookingData.secondaryService.price,
+                staff: (staffNameMap as any)[secondaryStaff || selectedStaff] || secondaryStaff || selectedStaff,
+                staffId: secondaryStaff || selectedStaff,
+                room: `Room ${couplesResult[1].room_id || 2}`,
+                roomId: couplesResult[1].room_id || 2
+              }
+            )
+          }
+          
+          console.log('Couples booking confirmations sent to GHL successfully')
+        } catch (error) {
+          console.error('Error sending couples booking confirmations to GHL:', error)
+          // Don't fail the booking if GHL webhook fails
+        }
   
       } else {
         // Handle single booking
@@ -142,6 +206,38 @@ export default function CouplesConfirmationPage() {
         }
         
         setBookingResults([bookingResult])
+        
+        // Send booking confirmation webhook to GHL for single booking
+        try {
+          const serviceCategory = getServiceCategory(bookingData.primaryService.name)
+          const result = await ghlWebhookSender.sendBookingConfirmationWebhook(
+            bookingResult.booking_id,
+            {
+              name: customerInfo.name,
+              email: customerInfo.email,
+              phone: customerInfo.phone || '',
+              isNewCustomer: customerInfo.isNewCustomer || false
+            },
+            {
+              service: bookingData.primaryService.name,
+              serviceId: primaryServiceData.id,
+              serviceCategory,
+              date: selectedDate,
+              time: selectedTime,
+              duration: bookingData.primaryService.duration,
+              price: bookingData.primaryService.price,
+              staff: (staffNameMap as any)[selectedStaff] || selectedStaff,
+              staffId: selectedStaff,
+              room: `Room ${roomId}`,
+              roomId: roomId
+            }
+          )
+          
+          console.log('Single booking confirmation sent to GHL successfully')
+        } catch (error) {
+          console.error('Error sending single booking confirmation to GHL:', error)
+          // Don't fail the booking if GHL webhook fails
+        }
         
         // Track successful couples booking confirmation
         analytics.bookingConfirmed(
@@ -187,6 +283,19 @@ export default function CouplesConfirmationPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Helper function to get service category from service name
+  const getServiceCategory = (serviceName: string): string => {
+    const name = serviceName.toLowerCase()
+    
+    if (name.includes('facial')) return 'facial'
+    if (name.includes('massage')) return 'massage'
+    if (name.includes('scrub') || name.includes('treatment') || name.includes('moisturizing')) return 'body_treatment'
+    if (name.includes('wax')) return 'waxing'
+    if (name.includes('package')) return 'package'
+    
+    return 'facial' // default
   }
 
   const formatDate = (dateString: string) => {

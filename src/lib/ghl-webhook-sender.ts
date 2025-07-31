@@ -1,6 +1,8 @@
 // GoHighLevel Webhook Sender Utility
 // Simple utility to send data to GHL webhooks
 
+import { BUSINESS_CONFIG, PAYMENT_CONFIG } from './business-config'
+
 interface CustomerData {
   name: string
   email: string
@@ -56,8 +58,8 @@ class GHLWebhookSender {
           time: booking.time,
           duration: booking.duration,
           price: booking.price,
-          currency: 'USD',
-          location: 'MedSpa Downtown',
+          currency: PAYMENT_CONFIG.currency,
+          location: `${BUSINESS_CONFIG.name}, ${BUSINESS_CONFIG.location}`,
           booking_notes: customer.isNewCustomer ? 'First-time customer' : 'Returning customer'
         },
         preferences: {
@@ -78,7 +80,7 @@ class GHLWebhookSender {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'MedSpa-Booking-App/1.0',
+          'User-Agent': `${BUSINESS_CONFIG.name.replace(/\s+/g, '-')}-Booking-App/1.0`,
         },
         body: JSON.stringify(payload),
         mode: 'cors',
@@ -128,19 +130,19 @@ class GHLWebhookSender {
           time: booking.time,
           duration: booking.duration,
           price: booking.price,
-          currency: 'USD',
+          currency: PAYMENT_CONFIG.currency,
           status: 'confirmed',
           confirmation_code: `CONF${Date.now()}`
         },
         location: {
-          name: 'MedSpa Downtown',
-          address: '123 Main Street, Downtown, CA 90210',
-          phone: '+1-555-0123'
+          name: BUSINESS_CONFIG.name,
+          address: BUSINESS_CONFIG.address,
+          phone: BUSINESS_CONFIG.phone
         },
         payment: {
           method: 'online_payment',
           amount: booking.price,
-          currency: 'USD',
+          currency: PAYMENT_CONFIG.currency,
           status: 'paid',
           transaction_id: `txn_${Date.now()}`
         },
@@ -156,7 +158,7 @@ class GHLWebhookSender {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'MedSpa-Booking-App/1.0',
+          'User-Agent': `${BUSINESS_CONFIG.name.replace(/\s+/g, '-')}-Booking-App/1.0`,
         },
         body: JSON.stringify(payload),
         mode: 'cors',
@@ -222,7 +224,7 @@ class GHLWebhookSender {
           time: changes.newTime || booking.time,
           duration: booking.duration,
           price: booking.price,
-          currency: 'USD',
+          currency: PAYMENT_CONFIG.currency,
           status: changes.newStatus
         },
         system_data: {
@@ -237,7 +239,7 @@ class GHLWebhookSender {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'MedSpa-Booking-App/1.0',
+          'User-Agent': `${BUSINESS_CONFIG.name.replace(/\s+/g, '-')}-Booking-App/1.0`,
         },
         body: JSON.stringify(payload),
         mode: 'cors',
