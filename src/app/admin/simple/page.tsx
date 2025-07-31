@@ -81,8 +81,31 @@ export default function SimpleAdminPage() {
 
       if (error) throw error
 
-      // Send webhook to GHL
-      await sendAttendanceWebhook(booking, 'show')
+      // Send webhook to GHL using the proper webhook sender
+      const webhookResult = await ghlWebhookSender.sendShowNoShowWebhook(
+        booking.booking_id,
+        {
+          name: booking.customer_name,
+          email: booking.customer_email,
+          phone: booking.customer_phone
+        },
+        {
+          service: booking.service_name || 'Unknown Service',
+          serviceCategory: 'spa_treatment', // You might want to get this from the booking
+          date: booking.booking_date,
+          time: booking.start_time,
+          duration: 60, // Default duration, should be from booking data
+          price: 0, // Should be from booking data
+          staff: booking.staff_name,
+          room: booking.room_name
+        },
+        'show',
+        'Marked as show by admin'
+      )
+      
+      if (!webhookResult.success) {
+        console.error('Webhook failed:', webhookResult.error)
+      }
       
       // Refresh bookings
       loadBookings()
@@ -101,60 +124,36 @@ export default function SimpleAdminPage() {
 
       if (error) throw error
 
-      // Send webhook to GHL
-      await sendAttendanceWebhook(booking, 'no_show')
+      // Send webhook to GHL using the proper webhook sender
+      const webhookResult = await ghlWebhookSender.sendShowNoShowWebhook(
+        booking.booking_id,
+        {
+          name: booking.customer_name,
+          email: booking.customer_email,
+          phone: booking.customer_phone
+        },
+        {
+          service: booking.service_name || 'Unknown Service',
+          serviceCategory: 'spa_treatment', // You might want to get this from the booking
+          date: booking.booking_date,
+          time: booking.start_time,
+          duration: 60, // Default duration, should be from booking data
+          price: 0, // Should be from booking data
+          staff: booking.staff_name,
+          room: booking.room_name
+        },
+        'no_show',
+        'Marked as no-show by admin'
+      )
+      
+      if (!webhookResult.success) {
+        console.error('Webhook failed:', webhookResult.error)
+      }
       
       // Refresh bookings
       loadBookings()
     } catch (err: any) {
       alert('Error marking as no-show: ' + err.message)
-    }
-  }
-
-  const sendAttendanceWebhook = async (booking: Booking, attendance: 'show' | 'no_show') => {
-    try {
-      const webhookUrl = 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/3d204c22-6f87-4b9d-84a5-3aa8dd2119c4'
-      
-      const payload = {
-        event: 'appointment_attendance',
-        booking_id: booking.booking_id,
-        attendance_status: attendance,
-        customer: {
-          name: booking.customer_name,
-          email: booking.customer_email,
-          phone: booking.customer_phone || ''
-        },
-        appointment: {
-          service: booking.service_name || 'Unknown Service',
-          staff: booking.staff_name || 'Unknown Staff',
-          room: booking.room_name || 'Unknown Room',
-          date: booking.booking_date,
-          time: booking.start_time,
-          status: attendance === 'show' ? 'completed' : 'no_show'
-        },
-        business: {
-          name: 'Dermal Skin Clinic & Spa',
-          location: 'Guam'
-        },
-        timestamp: new Date().toISOString()
-      }
-
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      })
-
-      if (!response.ok) {
-        throw new Error('Webhook failed')
-      }
-
-      console.log('Attendance webhook sent successfully:', attendance)
-    } catch (error) {
-      console.error('Error sending attendance webhook:', error)
-      // Don't fail the main operation if webhook fails
     }
   }
 
