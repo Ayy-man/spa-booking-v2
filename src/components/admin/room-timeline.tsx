@@ -12,7 +12,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
 import { Clock, RefreshCw, Calendar, Users, TrendingUp, Move, AlertCircle, Star } from "lucide-react"
-import { isSpecialStaffRequest } from "@/lib/analytics"
 
 interface TimeSlot {
   hour: number
@@ -522,14 +521,28 @@ export function RoomTimeline({
         </Card>
 
         {/* Timeline Grid */}
-        <Card className="overflow-hidden">
-          <div className="bg-gray-50 border-b p-4">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-gray-600" />
-              <h3 className="font-medium text-gray-900">Daily Timeline</h3>
-              <span className="text-sm text-gray-500">
-                ({BUSINESS_HOURS.start}:00 AM - {BUSINESS_HOURS.end > 12 ? BUSINESS_HOURS.end - 12 : BUSINESS_HOURS.end}:00 {BUSINESS_HOURS.end >= 12 ? 'PM' : 'AM'})
-              </span>
+        <Card className="overflow-hidden shadow-lg border-primary/10">
+          <div className="bg-gradient-to-r from-primary/5 to-primary/10 border-b-2 border-primary/20 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Clock className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Daily Timeline</h3>
+                  <span className="text-sm text-gray-600">
+                    {BUSINESS_HOURS.start}:00 AM - {BUSINESS_HOURS.end > 12 ? BUSINESS_HOURS.end - 12 : BUSINESS_HOURS.end}:00 {BUSINESS_HOURS.end >= 12 ? 'PM' : 'AM'}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-gray-600">
+                  {bookings.length} booking{bookings.length !== 1 ? 's' : ''} today
+                </div>
+                <div className="text-xs text-gray-500">
+                  Drag to reschedule • Double-click for options
+                </div>
+              </div>
             </div>
           </div>
           
@@ -551,14 +564,17 @@ export function RoomTimeline({
               )}
               
               {/* Header Row */}
-              <div className="flex border-b bg-gray-50 sticky top-0 z-5">
-                <div className="w-16 flex items-center justify-center py-2 text-sm font-medium text-gray-600 border-r">
+              <div className="flex border-b-2 border-primary/20 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10 shadow-sm">
+                <div className="w-16 flex items-center justify-center py-3 text-sm font-semibold text-primary border-r-2 border-primary/20 bg-primary/5">
                   Time
                 </div>
                 {rooms.map(room => (
-                  <div key={room.id} className="flex-1 min-w-[200px] p-3 text-center border-r last:border-r-0">
-                    <div className="font-medium text-gray-900">{room.name}</div>
-                    <div className="text-xs text-gray-500">Room {room.id}</div>
+                  <div key={room.id} className="flex-1 min-w-[200px] p-4 text-center border-r-2 border-primary/10 last:border-r-0 hover:bg-primary/5 transition-colors">
+                    <div className="font-semibold text-gray-900">{room.name}</div>
+                    <div className="text-sm text-gray-600 font-medium">Room {room.id}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {getRoomUtilization(room.id)}% utilized
+                    </div>
                   </div>
                 ))}
               </div>
