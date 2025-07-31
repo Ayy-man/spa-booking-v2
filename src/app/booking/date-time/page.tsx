@@ -197,11 +197,21 @@ export default function DateTimePage() {
           <p className="text-gray-600">
             Choose your preferred appointment date and time
           </p>
-          {selectedService && (
+          {selectedService && bookingData && (
             <div className="mt-4 p-4 bg-accent/20 rounded-lg">
               <p className="text-sm text-gray-600">Booking for:</p>
-              <p className="text-lg font-semibold text-primary-dark">{selectedService.name}</p>
-              <p className="text-sm text-gray-600">{selectedService.duration} minutes • ${selectedService.price}</p>
+              {bookingData.isCouplesBooking ? (
+                <div>
+                  <p className="text-lg font-semibold text-primary-dark">{bookingData.primaryService.name} (Person 1)</p>
+                  <p className="text-lg font-semibold text-primary-dark">{bookingData.secondaryService.name} (Person 2)</p>
+                  <p className="text-sm text-gray-600">{bookingData.totalDuration} minutes • ${bookingData.totalPrice} (Total for 2 people)</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-lg font-semibold text-primary-dark">{selectedService.name}</p>
+                  <p className="text-sm text-gray-600">{selectedService.duration} minutes • ${selectedService.price}</p>
+                </div>
+              )}
             </div>
           )}
         </div>
