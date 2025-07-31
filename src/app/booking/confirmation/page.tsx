@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
+import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 
 export default function ConfirmationPage() {
   const [bookingData, setBookingData] = useState<any>(null)
@@ -104,6 +105,42 @@ export default function ConfirmationPage() {
         false // isCouples
       )
       
+      // Send booking confirmation webhook to GHL
+      try {
+        const serviceCategory = getServiceCategory(bookingData.service.name)
+        const result = await ghlWebhookSender.sendBookingConfirmationWebhook(
+          bookingResult.booking_id,
+          {
+            name: bookingData.customer.name,
+            email: bookingData.customer.email,
+            phone: bookingData.customer.phone || '',
+            isNewCustomer: bookingData.customer.isNewCustomer || false
+          },
+          {
+            service: bookingData.service.name,
+            serviceId: bookingData.service.id,
+            serviceCategory,
+            date: bookingData.date,
+            time: bookingData.time,
+            duration: bookingData.service.duration,
+            price: bookingData.service.price,
+            staff: (staffNameMap as any)[bookingData.staff] || bookingData.staff,
+            staffId: bookingData.staff,
+            room: `Room ${roomId}`,
+            roomId: roomId
+          }
+        )
+        
+        if (result.success) {
+          console.log('Booking confirmation sent to GHL successfully')
+        } else {
+          console.warn('Failed to send booking confirmation to GHL:', result.error)
+        }
+      } catch (error) {
+        console.error('Error sending booking confirmation to GHL:', error)
+        // Don't fail the booking if GHL webhook fails
+      }
+      
       setIsSuccess(true)
       
       // Clear booking flow data
@@ -138,6 +175,19 @@ export default function ConfirmationPage() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Helper function to get service category from service name
+  const getServiceCategory = (serviceName: string): string => {
+    const name = serviceName.toLowerCase()
+    
+    if (name.includes('facial')) return 'facial'
+    if (name.includes('massage')) return 'massage'
+    if (name.includes('scrub') || name.includes('treatment') || name.includes('moisturizing')) return 'body_treatment'
+    if (name.includes('wax')) return 'waxing'
+    if (name.includes('package')) return 'package'
+    
+    return 'facial' // default
   }
 
   const formatDate = (dateString: string) => {

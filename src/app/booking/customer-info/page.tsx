@@ -7,6 +7,7 @@ import { staffNameMap } from '@/lib/staff-data'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import BookingSummary from '@/components/booking/BookingSummary'
 import { analytics } from '@/lib/analytics'
+import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 
 interface Service {
   name: string
@@ -38,7 +39,7 @@ export default function CustomerInfoPage() {
     analytics.pageViewed('customer_info', 4)
   }, [])
 
-  const handleSubmit = (data: CustomerFormData) => {
+  const handleSubmit = async (data: CustomerFormData) => {
     // Track customer info submission
     analytics.customerInfoSubmitted(data.isNewCustomer, !!data.phone)
     
@@ -49,6 +50,39 @@ export default function CustomerInfoPage() {
     
     // Store customer info
     localStorage.setItem('customerInfo', JSON.stringify(data))
+    
+    // Send new customer webhook to GHL if it's a new customer
+    if (data.isNewCustomer && selectedService) {
+      try {
+        const serviceCategory = getServiceCategory(selectedService.name)
+        const result = await ghlWebhookSender.sendNewCustomerWebhook(
+          {
+            name: data.name,
+            email: data.email,
+            phone: data.phone || '',
+            isNewCustomer: true
+          },
+          {
+            service: selectedService.name,
+            serviceCategory,
+            date: selectedDate,
+            time: selectedTime,
+            duration: selectedService.duration,
+            price: selectedService.price,
+            staff: selectedStaff ? (staffNameMap as any)[selectedStaff] || selectedStaff : 'Any Available'
+          }
+        )
+        
+        if (result.success) {
+          console.log('New customer data sent to GHL successfully')
+        } else {
+          console.warn('Failed to send new customer data to GHL:', result.error)
+        }
+      } catch (error) {
+        console.error('Error sending new customer data to GHL:', error)
+        // Don't block the booking flow if GHL webhook fails
+      }
+    }
     
     // Check if it's a couples booking
     const bookingDataStr = localStorage.getItem('bookingData')
@@ -66,6 +100,19 @@ export default function CustomerInfoPage() {
       // Existing customer - go to appropriate confirmation page
       window.location.href = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
     }
+  }
+
+  // Helper function to get service category from service name
+  const getServiceCategory = (serviceName: string): string => {
+    const name = serviceName.toLowerCase()
+    
+    if (name.includes('facial')) return 'facial'
+    if (name.includes('massage')) return 'massage'
+    if (name.includes('scrub') || name.includes('treatment') || name.includes('moisturizing')) return 'body_treatment'
+    if (name.includes('wax')) return 'waxing'
+    if (name.includes('package')) return 'package'
+    
+    return 'facial' // default
   }
 
   const formatDate = (dateString: string) => {
