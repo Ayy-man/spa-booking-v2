@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations } from "@/types/booking"
 import { QuickActions } from "./quick-actions"
-import { isSpecialStaffRequest } from "@/lib/analytics"
+import { isSpecialStaffRequest } from "@/lib/booking-utils"
 
 interface BookingCardProps {
   booking: BookingWithRelations

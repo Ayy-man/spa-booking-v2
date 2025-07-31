@@ -119,12 +119,6 @@ export const analytics = {
   }
 }
 
-// Utility function for checking if a booking is a special staff request
-export function isSpecialStaffRequest(booking: any): boolean {
-  // Check if customer specifically requested this staff member
-  // (as opposed to selecting "Any Available" which would be staff_id: 'any-available')
-  return booking.staff_id !== 'any-available' && booking.staff_id !== null && booking.staff_id !== 'any'
-}
 
 // Performance tracking
 export const performance = {

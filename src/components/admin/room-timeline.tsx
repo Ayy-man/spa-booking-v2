@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
-import { isSpecialStaffRequest } from "@/lib/analytics"
+import { isSpecialStaffRequest } from "@/lib/booking-utils"
 import { Clock, RefreshCw, Calendar, Users, TrendingUp, Move, AlertCircle, Star } from "lucide-react"
 
 interface TimeSlot {

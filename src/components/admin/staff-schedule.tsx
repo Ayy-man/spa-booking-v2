@@ -12,7 +12,7 @@ import {
   getAllActiveStaff, 
   getServiceCategoryColor 
 } from "@/lib/admin-booking-logic"
-import { isSpecialStaffRequest } from "@/lib/analytics"
+import { isSpecialStaffRequest } from "@/lib/booking-utils"
 
 type ViewMode = "day" | "week"
 
