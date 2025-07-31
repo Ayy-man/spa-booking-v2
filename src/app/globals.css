@@ -207,7 +207,7 @@ a {
   }
   
   .date-button-weekend {
-    @apply bg-primary-lighter/50 border-primary-lighter;
+    @apply bg-blue-50 border-blue-200 text-blue-700;
   }
   
   /* Loading spinner with spa theme */
