@@ -13,19 +13,19 @@
   --card-foreground: 31 41 55;
   --popover: 255 255 255;
   --popover-foreground: 31 41 55;
-  --primary: 166 77 95; /* Updated to new primary color */
+  --primary: 31 41 55; /* Dark gray/black instead of golden */
   --primary-foreground: 255 255 255;
-  --secondary: 246 199 207;
-  --secondary-foreground: 166 77 95;
+  --secondary: 107 114 128; /* Medium gray */
+  --secondary-foreground: 31 41 55;
   --muted: 245 245 245;
   --muted-foreground: 115 115 115;
-  --accent: 246 199 207;
-  --accent-foreground: 166 77 95;
+  --accent: 107 114 128;
+  --accent-foreground: 31 41 55;
   --destructive: 239 68 68;
   --destructive-foreground: 255 255 255;
   --border: 229 229 229;
   --input: 229 229 229;
-  --ring: 166 77 95; /* Updated to match new primary */
+  --ring: 31 41 55; /* Updated to match new primary */
   --success: 16 185 129;
   --warning: 245 158 11;
   --error: 239 68 68;

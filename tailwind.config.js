@@ -9,11 +9,11 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#A64D5F', // Darker for better contrast (was #C36678)
-          light: '#C75B7A', // Original color moved to light variant
-          lighter: '#F6C7CF',
-          dark: '#8B3F4F',
-          darker: '#702C3A',
+          DEFAULT: '#1F2937', // Dark gray/black instead of golden
+          light: '#374151', // Lighter dark gray
+          lighter: '#6B7280', // Medium gray
+          dark: '#111827', // Very dark gray
+          darker: '#000000', // Pure black
         },
         secondary: {
           DEFAULT: '#F6C7CF',
@@ -21,9 +21,9 @@ module.exports = {
         },
         background: '#FFF8FA',
         surface: '#FFFFFF',
-        accent: '#F6C7CF',
-        'text-primary': '#1F2937', // Darker for better contrast
-        'text-secondary': '#A64D5F', // Updated to match new primary
+        accent: '#6B7280',
+        'text-primary': '#1F2937', // Dark gray/black
+        'text-secondary': '#374151', // Lighter dark gray
         success: '#10B981',
         warning: '#F59E0B',
         error: '#EF4444',
