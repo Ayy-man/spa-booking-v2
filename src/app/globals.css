@@ -13,7 +13,7 @@
   --card-foreground: 31 41 55;
   --popover: 255 255 255;
   --popover-foreground: 31 41 55;
-  --primary: 31 41 55; /* Dark gray/black instead of golden */
+  --primary: 236 72 153; /* Original pink theme */
   --primary-foreground: 255 255 255;
   --secondary: 107 114 128; /* Medium gray */
   --secondary-foreground: 31 41 55;
@@ -25,7 +25,7 @@
   --destructive-foreground: 255 255 255;
   --border: 229 229 229;
   --input: 229 229 229;
-  --ring: 31 41 55; /* Updated to match new primary */
+  --ring: 236 72 153; /* Updated to match pink primary */
   --success: 16 185 129;
   --warning: 245 158 11;
   --error: 239 68 68;
@@ -260,6 +260,16 @@ a {
     @apply progress-line bg-success;
   }
   
+  /* Black continue button for service selection */
+  .btn-continue {
+    @apply w-full min-h-[48px] py-4 px-8 bg-black text-white rounded-xl 
+           hover:bg-gray-800 active:bg-gray-900 transition-all duration-300 
+           font-semibold text-center flex items-center justify-center gap-3 text-lg
+           focus:outline-none focus:ring-4 focus:ring-gray-400 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl
+           transform hover:scale-[1.02] active:scale-[0.98];
+  }
+
   /* Enhanced spacing utilities */
   .section-spacing {
     @apply py-12 sm:py-16;

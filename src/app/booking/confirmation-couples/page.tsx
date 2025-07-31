@@ -109,8 +109,16 @@ export default function CouplesConfirmationPage() {
           special_requests: customerInfo.specialRequests
         })
 
+        console.log('Couples booking result:', couplesResult)
+        
         if (!couplesResult || couplesResult.length === 0) {
           throw new Error('Couples booking failed - no bookings created')
+        }
+
+        // Validate booking results structure
+        if (!couplesResult[0] || !couplesResult[0].booking_id) {
+          console.error('Invalid couples booking result structure:', couplesResult)
+          throw new Error('Invalid booking result - missing booking_id')
         }
 
         setBookingResults(couplesResult)
