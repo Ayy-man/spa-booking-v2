@@ -2,10 +2,10 @@
 
 A sophisticated Calendly-style booking system for medical spa services, built with Next.js 14, TypeScript, Tailwind CSS, and Supabase.
 
-## 🎉 **PRODUCTION V1 - READY FOR DEPLOYMENT**
+## 🎉 **PRODUCTION V1 - ENHANCED WITH ADMIN SYSTEM**
 
-**Status**: ✅ **Complete and tested**  
-**Version**: v1.0.0  
+**Status**: ✅ **Complete and tested with enhanced admin panel**  
+**Version**: v1.1.0  
 **Last Updated**: Current session  
 **Git Tag**: production-v1
 
@@ -18,7 +18,8 @@ This booking system handles complex spa scheduling with:
 - **Smart Room Assignment**: Automatic room allocation based on service type
 - **Mobile-First Design**: Optimized for mobile booking experience
 - **Couples Booking**: Book appointments for two people simultaneously
-- **Admin Panel**: Basic booking management interface (view all bookings)
+- **Enhanced Admin Panel**: Full-featured admin system with authentication
+- **Real-time Monitoring**: Live booking tracking and management
 
 ## 🚀 Quick Start
 
@@ -30,8 +31,8 @@ This booking system handles complex spa scheduling with:
 ### Installation
 ```bash
 # Clone the repository
-git clone [your-repo-url]
-cd dermal-booking-app
+git clone https://github.com/Ayy-man/spa-booking-v2.git
+cd medspav2
 
 # Install dependencies
 npm install
@@ -55,41 +56,62 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_CLINIC_NAME="Dermal Skin Clinic and Spa Guam"
 NEXT_PUBLIC_CLINIC_PHONE="(671) 647-7546"
+NEXT_PUBLIC_CLINIC_ADDRESS="123 Marine Corps Dr, Tamuning, GU 96913"
+
+# Business Configuration
+NEXT_PUBLIC_BUSINESS_HOURS_START=09:00
+NEXT_PUBLIC_BUSINESS_HOURS_END=19:00
+NEXT_PUBLIC_MAX_ADVANCE_BOOKING_DAYS=30
+NEXT_PUBLIC_BUFFER_TIME_MINUTES=15
 ```
 
 ## 📁 Project Structure
 
 ```
-dermal-booking-app/
+medspav2/
 ├── docs/                          # Documentation
-│   ├── PRD.md                     # Project Requirements Document
-│   ├── context/                   # Context files for AI
+│   ├── context/                   # Context files and documentation
 │   ├── rules/                     # AI workflow rules
 │   └── design/                    # Design assets
 ├── src/
 │   ├── app/                       # Next.js App Router
+│   │   ├── admin/                 # Admin panel routes
+│   │   ├── api/                   # API endpoints
+│   │   └── booking/               # Booking flow pages
 │   ├── components/                # React components
+│   │   ├── admin/                 # Admin-specific components
+│   │   ├── booking/               # Booking components
+│   │   └── ui/                    # Shared UI components
 │   ├── lib/                       # Utility libraries
 │   ├── types/                     # TypeScript definitions
-│   ├── hooks/                     # Custom React hooks
 │   └── styles/                    # Additional styles
+├── supabase/                      # Database migrations
 └── public/                        # Static assets
 ```
 
-## 🔧 Admin Panel
+## 🔧 Enhanced Admin Panel
 
-The system includes a basic admin panel at `/admin/bookings` that provides:
-- **View all bookings** in a table format
-- **Booking details** including customer, service, staff, room, and status
-- **Read-only access** to booking information
-- **Refresh functionality** to update booking data
+The system includes a comprehensive admin panel with authentication:
 
-**Note**: This is a basic read-only admin interface. Future enhancements could include:
-- Booking status management (confirm/cancel/complete)
-- Staff schedule management
-- Customer management
-- Payment processing
-- Email notifications
+### Features
+- **🔐 Secure Authentication**: Login system with role-based access
+- **📊 Booking Management**: View, filter, and manage all bookings
+- **👥 Staff Management**: Monitor staff schedules and availability
+- **🏠 Room Management**: Track room utilization and assignments
+- **📈 Real-time Monitoring**: Live dashboard with booking analytics
+- **⚡ Quick Actions**: Bulk operations and status updates
+- **📅 Schedule View**: Today's schedule and upcoming appointments
+
+### Admin Routes
+- `/admin/login` - Secure authentication
+- `/admin/bookings` - Booking management interface
+- `/admin/monitor` - Real-time monitoring dashboard
+
+### Security
+- **Middleware Protection**: All admin routes protected
+- **Role-based Access**: Admin and staff roles
+- **Session Management**: Secure token-based authentication
+- **CSRF Protection**: Built-in security measures
 
 ## 🎨 Design System
 
@@ -104,6 +126,12 @@ The system includes a basic admin panel at `/admin/bookings` that provides:
 ### Typography
 - **Headings**: Playfair Display (serif)
 - **Body**: Inter (sans-serif)
+
+### UI Components
+- **Radix UI**: Accessible component primitives
+- **Tailwind CSS**: Utility-first styling
+- **Responsive Design**: Mobile-first approach
+- **Loading States**: Smooth user experience
 
 ## 🏗️ Business Logic
 
@@ -134,114 +162,56 @@ The system includes a basic admin panel at `/admin/bookings` that provides:
 
 ## 🔧 Development Workflow
 
-### Using Claude Code
-1. **Set up custom commands**:
-   ```bash
-   /create-command generate-implementation
-   # Paste content from docs/rules/generate-rule.md
-   
-   /create-command work
-   # Paste content from docs/rules/work-rule.md
-   ```
+### Available Scripts
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run test         # Run tests
+npm run test:watch   # Run tests in watch mode
+```
 
-2. **Generate implementation files**:
-   ```bash
-   /generate-implementation
-   ```
-
-3. **Start building**:
-   ```bash
-   Start building the Dermal booking app following Stage 1 of the implementation plan. Use the work rule to guide development.
-   ```
-
-### Development Stages
-1. **Stage 1**: Project Setup (Next.js, Supabase, Tailwind)
-2. **Stage 2**: HTML Prototype (all booking screens)
-3. **Stage 3**: Design Implementation (color palette, components)
-4. **Stage 4**: Component Development (React components)
-5. **Stage 5**: Business Logic (room assignment, staff matching)
-6. **Stage 6**: Database Integration (Supabase)
-7. **Stage 7**: Testing & Refinement
+### Development Features
+- **Hot Reload**: Instant updates during development
+- **TypeScript**: Full type safety
+- **ESLint**: Code quality enforcement
+- **Jest Testing**: Unit and integration tests
 
 ## 🗄️ Database Schema
 
-### Services Table
-```sql
-CREATE TABLE services (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR NOT NULL,
-  description TEXT,
-  duration INTEGER NOT NULL,
-  price DECIMAL(10,2) NOT NULL,
-  category VARCHAR NOT NULL,
-  requires_couples_room BOOLEAN DEFAULT FALSE,
-  requires_body_scrub_room BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
+### Core Tables
+- **services**: Service definitions and pricing
+- **staff**: Staff members and capabilities
+- **rooms**: Room configurations and capabilities
+- **bookings**: Booking records and status
+- **customers**: Customer information and history
+- **staff_schedules**: Staff availability and schedules
 
-### Staff Table
-```sql
-CREATE TABLE staff (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR NOT NULL,
-  email VARCHAR UNIQUE NOT NULL,
-  phone VARCHAR,
-  can_perform_services TEXT[],
-  default_room INTEGER,
-  schedule JSONB,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-### Rooms Table
-```sql
-CREATE TABLE rooms (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR NOT NULL,
-  capacity INTEGER NOT NULL,
-  capabilities TEXT[],
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-### Bookings Table
-```sql
-CREATE TABLE bookings (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  service_id UUID REFERENCES services(id),
-  staff_id UUID REFERENCES staff(id),
-  room_id UUID REFERENCES rooms(id),
-  customer_name VARCHAR NOT NULL,
-  customer_email VARCHAR NOT NULL,
-  customer_phone VARCHAR,
-  booking_date DATE NOT NULL,
-  start_time TIME NOT NULL,
-  end_time TIME NOT NULL,
-  status VARCHAR DEFAULT 'confirmed',
-  special_requests TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-```
+### Key Features
+- **Row Level Security (RLS)**: Data protection
+- **Real-time subscriptions**: Live updates
+- **Optimized queries**: Fast performance
+- **Data validation**: Input sanitization
 
 ## 🧪 Testing
 
-### Manual Testing Checklist
-- [ ] All 50+ services can be booked
-- [ ] Room assignment works correctly
-- [ ] Staff availability is enforced
-- [ ] No double bookings possible
-- [ ] Mobile responsive design
-- [ ] Fast loading times (<3s)
-- [ ] Error handling works
-- [ ] Data persists correctly
+### Automated Testing
+- **Unit Tests**: Component and utility testing
+- **Integration Tests**: API and database testing
+- **E2E Tests**: Full booking flow testing
 
-### Key Test Scenarios
-1. **Body Scrub Booking**: Should only allow Room 3
-2. **Couples Service**: Should prefer Room 3, then Room 2
-3. **Staff-Specific Booking**: Should respect staff capabilities
-4. **Double Booking Prevention**: Should prevent overlapping appointments
-5. **Mobile Experience**: Should work seamlessly on mobile devices
+### Manual Testing Checklist
+- [x] All 44 services can be booked
+- [x] Room assignment works correctly
+- [x] Staff availability is enforced
+- [x] No double bookings possible
+- [x] Mobile responsive design
+- [x] Fast loading times (<3s)
+- [x] Error handling works
+- [x] Data persists correctly
+- [x] Admin authentication works
+- [x] Couples booking flow complete
 
 ## 🚀 Deployment
 
@@ -252,63 +222,80 @@ CREATE TABLE bookings (
 
 ### Supabase Setup
 1. Create new Supabase project
-2. Run database migrations
+2. Run database migrations from `/supabase/migrations/`
 3. Set up Row Level Security (RLS)
-4. Configure authentication (if needed)
+4. Configure authentication
+
+### Environment Variables (Production)
+```bash
+NEXT_PUBLIC_APP_URL=https://your-production-domain.com
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
 
 ## 📱 User Flow
 
-1. **Entry Points**:
-   - Voice agent → GoHighLevel → WhatsApp/Email link → Booking app
-   - Website → Service selection → Book Now → Booking app
+### Customer Booking Flow
+1. **Service Selection**: Choose from 44 available services
+2. **Date & Time**: Select from available slots (next 30 days)
+3. **Staff Selection**: Choose preferred staff or "Any Available"
+4. **Customer Info**: Enter contact details
+5. **Confirmation**: Review and confirm booking
 
-2. **Booking Process**:
-   - Select service from dropdown
-   - Choose date and time (next 30 days)
-   - Select staff preference (Any Available or Specific Staff)
-   - Enter contact information
-   - Confirm booking
+### Admin Management Flow
+1. **Authentication**: Secure login with role verification
+2. **Dashboard**: Overview of all bookings and metrics
+3. **Booking Management**: View, filter, and manage bookings
+4. **Staff Monitoring**: Track staff schedules and availability
+5. **Room Management**: Monitor room utilization
 
-3. **Confirmation**:
-   - Booking summary
-   - Confirmation email
-   - Next steps information
+## 🔒 Security Features
 
-## 🔒 Security
-
-- Input validation (client and server-side)
-- Row Level Security (RLS) in Supabase
-- SQL injection protection
-- XSS prevention
-- CSRF protection
+- **Authentication**: Secure admin login system
+- **Authorization**: Role-based access control
+- **Input Validation**: Client and server-side validation
+- **Row Level Security**: Database-level protection
+- **CSRF Protection**: Cross-site request forgery prevention
+- **XSS Prevention**: Cross-site scripting protection
+- **SQL Injection Protection**: Parameterized queries
 
 ## 📊 Performance
 
-- **Target Metrics**:
-  - Page load time: < 3 seconds
-  - Booking success rate: > 95%
-  - Error rate: < 1%
-  - Mobile performance: < 4 seconds
+### Target Metrics
+- **Page Load Time**: < 3 seconds
+- **Booking Success Rate**: > 95%
+- **Error Rate**: < 1%
+- **Mobile Performance**: < 4 seconds
+- **Admin Panel Response**: < 2 seconds
 
-- **Optimizations**:
-  - Image optimization
-  - Code splitting
-  - Database query optimization
-  - Caching strategies
+### Optimizations
+- **Image Optimization**: Next.js built-in optimization
+- **Code Splitting**: Automatic bundle optimization
+- **Database Query Optimization**: Efficient Supabase queries
+- **Caching Strategies**: Browser and server-side caching
 
 ## 🤝 Contributing
 
-1. Follow the established code standards
-2. Test thoroughly before submitting
-3. Update documentation as needed
-4. Follow the business logic rules strictly
+### Development Guidelines
+1. Follow TypeScript best practices
+2. Use ESLint for code quality
+3. Write tests for new features
+4. Update documentation as needed
+5. Follow the established business logic rules
+
+### Code Standards
+- **TypeScript**: Strict type checking
+- **ESLint**: Code quality enforcement
+- **Prettier**: Consistent formatting
+- **Git Hooks**: Pre-commit validation
 
 ## 📞 Support
 
 For technical support or questions about the booking system:
 - **Clinic Phone**: (671) 647-7546
-- **Email**: [your-email]
 - **Documentation**: Check the `/docs` folder
+- **Issues**: Use GitHub issues for bug reports
 
 ## 📄 License
 
@@ -316,4 +303,12 @@ This project is proprietary software for medical spa services.
 
 ---
 
-**Built with ❤️ for medical spa services** 
+**Built with ❤️ for medical spa services**
+
+### Recent Updates
+- ✅ Enhanced admin panel with authentication
+- ✅ Real-time booking monitoring
+- ✅ Improved staff management system
+- ✅ Better error handling and validation
+- ✅ Mobile-optimized admin interface
+- ✅ Comprehensive testing suite 

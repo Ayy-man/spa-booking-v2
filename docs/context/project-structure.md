@@ -22,6 +22,12 @@ dermal-booking-app/
 │   │   ├── globals.css            # Global styles
 │   │   ├── layout.tsx             # Root layout
 │   │   ├── page.tsx               # Landing page
+│   │   ├── admin/                 # Admin panel pages
+│   │   │   ├── layout.tsx         # Admin layout with navigation
+│   │   │   ├── page.tsx           # Admin dashboard
+│   │   │   ├── login/             # Admin authentication
+│   │   │   ├── bookings/          # Booking management
+│   │   │   └── monitor/           # System monitoring
 │   │   ├── booking/               # Booking flow pages
 │   │   │   ├── page.tsx           # Service selection
 │   │   │   ├── date-time/         # Date/time selection
@@ -34,22 +40,35 @@ dermal-booking-app/
 │   │       ├── bookings/          # Booking API endpoints
 │   │       ├── services/          # Services API
 │   │       ├── staff/             # Staff API
-│   │       └── rooms/             # Rooms API
+│   │       ├── rooms/             # Rooms API
+│   │       ├── check-bookings/    # Booking verification
+│   │       ├── check-data/        # Data validation
+│   │       ├── test-booking/      # Testing endpoints
+│   │       └── test-supabase/     # Database testing
 │   ├── components/                # React components
 │   │   ├── ui/                    # Shadcn/ui components
 │   │   │   ├── button.tsx
 │   │   │   ├── input.tsx
 │   │   │   ├── select.tsx
 │   │   │   ├── card.tsx
+│   │   │   ├── dialog.tsx         # Modal dialogs
+│   │   │   ├── status-badge.tsx   # Status indicators
+│   │   │   ├── tabs.tsx           # Tab navigation
+│   │   │   ├── tooltip.tsx        # Hover tooltips
 │   │   │   └── ...
+│   │   ├── admin/                 # Admin panel components
+│   │   │   ├── booking-card.tsx   # Booking display cards
+│   │   │   ├── filter-bar.tsx     # Filtering controls
+│   │   │   ├── quick-actions.tsx  # Quick action buttons
+│   │   │   ├── room-timeline.tsx  # Room utilization timeline
+│   │   │   ├── service-tracking.tsx # Service analytics
+│   │   │   ├── staff-schedule.tsx # Staff schedule view
+│   │   │   └── todays-schedule.tsx # Daily schedule dashboard
 │   │   ├── booking/               # Booking-specific components
-│   │   │   ├── ServiceSelector.tsx
-│   │   │   ├── DateTimePicker.tsx
-│   │   │   ├── StaffSelector.tsx
-│   │   │   ├── CustomerForm.tsx
-│   │   │   ├── BookingConfirmation.tsx
-│   │   │   ├── RoomAssignment.tsx
-│   │   │   └── CouplesBooking.tsx
+│   │   │   ├── BookingValidator.tsx # Booking validation
+│   │   │   ├── CustomerForm.tsx   # Customer information form
+│   │   │   ├── StaffSelector.tsx  # Staff selection
+│   │   │   └── CouplesBooking.tsx # Couples booking flow
 │   │   ├── layout/                # Layout components
 │   │   │   ├── Header.tsx
 │   │   │   ├── Footer.tsx
@@ -61,10 +80,13 @@ dermal-booking-app/
 │   ├── lib/                       # Utility libraries
 │   │   ├── supabase.ts            # Supabase client configuration
 │   │   ├── booking-logic.ts       # Business logic functions
-│   │   ├── room-assignment.ts     # Room assignment algorithm
-│   │   ├── staff-availability.ts  # Staff availability checker
-│   │   ├── validation.ts          # Form validation schemas
-│   │   └── utils.ts               # General utility functions
+│   │   ├── admin-booking-logic.ts # Admin-specific booking logic
+│   │   ├── analytics.ts           # Analytics and reporting
+│   │   ├── auth.ts                # Authentication utilities
+│   │   ├── staff-data.ts          # Staff data management
+│   │   ├── utils.ts               # General utility functions
+│   │   └── __tests__/             # Test files
+│   │       └── booking-logic.test.ts # Booking logic tests
 │   ├── types/                     # TypeScript type definitions
 │   │   ├── booking.ts             # Booking-related types
 │   │   ├── service.ts             # Service types
@@ -83,13 +105,24 @@ dermal-booking-app/
 │   ├── images/                    # Images and icons
 │   ├── fonts/                     # Custom fonts
 │   └── favicon.ico
+├── middleware.ts                  # Next.js middleware for auth
 ├── .env.local                     # Environment variables
 ├── .env.example                   # Environment variables template
 ├── tailwind.config.js             # Tailwind CSS configuration
 ├── next.config.js                 # Next.js configuration
 ├── tsconfig.json                  # TypeScript configuration
+├── jest.config.js                 # Jest testing configuration
+├── jest.setup.js                  # Jest setup file
 ├── package.json                   # Dependencies and scripts
 ├── README.md                      # Project documentation
+├── supabase/                      # Supabase migrations
+│   └── migrations/                # Database migration files
+│       ├── 001_initial_schema.sql
+│       ├── 002_rls_policies.sql
+│       ├── 003_booking_functions.sql
+│       ├── 004_seed_data.sql
+│       ├── 005_add_missing_services.sql
+│       └── 006_couples_booking_support.sql
 └── .gitignore                     # Git ignore rules
 ```
 
@@ -99,14 +132,20 @@ dermal-booking-app/
 - **`src/app/page.tsx`**: Landing page with service showcase
 - **`src/app/booking/page.tsx`**: Main booking flow entry point
 - **`src/app/layout.tsx`**: Root layout with navigation and styling
+- **`src/app/admin/page.tsx`**: Admin dashboard with schedule overview
+- **`src/app/admin/layout.tsx`**: Admin layout with navigation and auth
+- **`middleware.ts`**: Authentication and route protection middleware
 
 ### Business Logic Files
 - **`src/lib/booking-logic.ts`**: Core booking validation and processing
-- **`src/lib/room-assignment.ts`**: Room assignment algorithm
-- **`src/lib/staff-availability.ts`**: Staff scheduling logic
+- **`src/lib/admin-booking-logic.ts`**: Admin-specific booking operations
+- **`src/lib/analytics.ts`**: Business analytics and reporting
+- **`src/lib/auth.ts`**: Authentication and session management
+- **`src/lib/staff-data.ts`**: Staff data management and scheduling
 
 ### Component Organization
 - **`src/components/ui/`**: Reusable UI components (Shadcn/ui)
+- **`src/components/admin/`**: Admin panel components (schedules, timelines, analytics)
 - **`src/components/booking/`**: Booking-specific components
 - **`src/components/layout/`**: Layout and navigation components
 
@@ -120,6 +159,10 @@ dermal-booking-app/
 - **`src/app/api/services/`**: Service catalog and pricing
 - **`src/app/api/staff/`**: Staff availability and capabilities
 - **`src/app/api/rooms/`**: Room availability and assignment
+- **`src/app/api/check-bookings/`**: Booking verification endpoints
+- **`src/app/api/check-data/`**: Data validation endpoints
+- **`src/app/api/test-booking/`**: Testing and development endpoints
+- **`src/app/api/test-supabase/`**: Database connectivity testing
 
 ## Database Schema (Supabase)
 

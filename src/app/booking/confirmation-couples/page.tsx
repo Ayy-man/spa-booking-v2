@@ -141,6 +141,28 @@ export default function CouplesConfirmationPage() {
         }
         
         setBookingResults([bookingResult])
+        
+        // Sync single booking to GoHighLevel CRM (non-blocking)
+        try {
+          const ghlBookingData = createBookingDataFromConfirmation(bookingResult, {
+            service: primaryServiceData,
+            date: selectedDate,
+            time: selectedTime,
+            staff: selectedStaff,
+            customer: customerInfo
+          })
+          
+          const ghlResult = await ghlIntegration.syncBookingToGHL(ghlBookingData)
+          
+          if (ghlResult.success) {
+            console.log('Successfully synced booking to GoHighLevel CRM')
+          } else {
+            console.warn('GoHighLevel sync failed (booking still confirmed):', ghlResult.error)
+          }
+        } catch (ghlError) {
+          // GHL sync errors should never break the booking flow
+          console.warn('GoHighLevel sync error (booking still confirmed):', ghlError)
+        }
       }
       
       setIsSuccess(true)
@@ -401,6 +423,28 @@ export default function CouplesConfirmationPage() {
           <Link href="/booking/customer-info" className="btn-secondary block text-center">
             Make Changes
           </Link>
+          
+          {/* Website Links */}
+          <div className="pt-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm">
+              <a 
+                href="https://dermalskinclinicspa.com/services" 
+                className="text-primary hover:text-primary-dark transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                🌐 Explore More Services
+              </a>
+              <a 
+                href="https://dermalskinclinicspa.com" 
+                className="text-gray-600 hover:text-primary transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Visit Our Website
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

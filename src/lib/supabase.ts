@@ -109,7 +109,7 @@ export const supabaseClient = {
       if (error) {
         console.error('RPC error:', error)
         if (error.code === '42883') {
-          console.log('RPC function not found, falling back to direct insert')
+          // RPC function not found, falling back to direct insert
         } else if (error.code === '42501') {
           throw new Error('Permission denied. Please ensure database functions are installed and RLS policies are configured.')
         } else {
@@ -127,7 +127,7 @@ export const supabaseClient = {
       if (rpcError.message?.includes('Permission denied')) {
         throw rpcError
       }
-      console.log('RPC function error, using direct insert')
+      // RPC function error, using direct insert
     }
 
     // Fallback: Create booking directly

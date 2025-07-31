@@ -324,6 +324,28 @@ export default function ConfirmationPage() {
           <Link href="/booking/customer-info" className="btn-secondary block text-center">
             Make Changes
           </Link>
+          
+          {/* Website Links */}
+          <div className="pt-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm">
+              <a 
+                href="https://dermalskinclinicspa.com/services" 
+                className="text-primary hover:text-primary-dark transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                🌐 Explore More Services
+              </a>
+              <a 
+                href="https://dermalskinclinicspa.com" 
+                className="text-gray-600 hover:text-primary transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Visit Our Website
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

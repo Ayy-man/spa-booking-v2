@@ -206,10 +206,18 @@ export async function blockTimeSlot(
   roomId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // First ensure system entries exist for blocking
+    const systemCustomerId = await getOrCreateSystemCustomer()
+    const systemServiceId = await getOrCreateSystemService()
+
+    if (!systemCustomerId || !systemServiceId) {
+      throw new Error('Failed to create system entries for time blocking')
+    }
+
     // Create a blocked booking entry
     const blockingData: BookingInsert = {
-      customer_id: 'system-block', // Special customer ID for blocking
-      service_id: 'break-cleaning', // Special service ID for breaks/cleaning
+      customer_id: systemCustomerId,
+      service_id: systemServiceId,
       staff_id: staffId,
       room_id: parseInt(roomId),
       appointment_date: date,
@@ -233,6 +241,78 @@ export async function blockTimeSlot(
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }
+  }
+}
+
+// Helper function to get or create system customer for blocking
+async function getOrCreateSystemCustomer(): Promise<string | null> {
+  try {
+    // First try to find existing system customer
+    const { data: existingCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('email', 'system@dermalspaclinic.com')
+      .maybeSingle()
+
+    if (existingCustomer) {
+      return existingCustomer.id
+    }
+
+    // Create system customer if it doesn't exist
+    const { data: newCustomer, error } = await supabase
+      .from('customers')
+      .insert({
+        first_name: 'System',
+        last_name: 'Block',
+        email: 'system@dermalspaclinic.com',
+        phone: '000-000-0000',
+        notes: 'System customer for time blocking'
+      })
+      .select('id')
+      .single()
+
+    if (error) throw error
+    return newCustomer.id
+  } catch (error) {
+    console.error('Failed to get/create system customer:', error)
+    return null
+  }
+}
+
+// Helper function to get or create system service for blocking
+async function getOrCreateSystemService(): Promise<string | null> {
+  try {
+    // First try to find existing system service
+    const { data: existingService } = await supabase
+      .from('services')
+      .select('id')
+      .eq('id', 'time-block')
+      .maybeSingle()
+
+    if (existingService) {
+      return existingService.id
+    }
+
+    // Create system service if it doesn't exist
+    const { data: newService, error } = await supabase
+      .from('services')
+      .insert({
+        id: 'time-block',
+        name: 'Time Block',
+        description: 'System service for blocking time slots',
+        category: 'special',
+        duration: 15, // Default 15 minutes, will be overridden by actual duration
+        price: 0,
+        is_active: true
+      })
+      .select('id')
+      .single()
+
+    if (error) throw error
+    return newService.id
+  } catch (error) {
+    console.error('Failed to get/create system service:', error)
+    return null
   }
 }
 

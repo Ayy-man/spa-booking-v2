@@ -450,12 +450,12 @@ export function RoomTimeline({
               {/* Current Time Indicator */}
               {currentTimePosition >= 0 && (
                 <div 
-                  className="absolute left-16 right-0 z-10 flex items-center"
+                  className="absolute left-16 right-0 z-50 flex items-center"
                   style={{ top: `${currentTimePosition}%` }}
                 >
                   <div className="w-full h-0.5 bg-red-500 opacity-80"></div>
                   <div className="absolute -left-2 w-4 h-4 bg-red-500 rounded-full opacity-80"></div>
-                  <div className="absolute -left-16 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                  <div className="absolute -left-16 bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg">
                     {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>

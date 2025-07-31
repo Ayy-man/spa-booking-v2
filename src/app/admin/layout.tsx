@@ -11,6 +11,22 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <h1 className="text-xl font-semibold text-gray-900">
               Admin Panel
             </h1>
+            <div className="flex items-center space-x-4">
+              <a 
+                href="https://dermalskinclinicspa.com" 
+                className="text-sm text-gray-600 hover:text-primary transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                🌐 Main Website
+              </a>
+              <a 
+                href="/" 
+                className="text-sm text-gray-600 hover:text-primary transition-colors"
+              >
+                📅 Booking System
+              </a>
+            </div>
           </div>
         </div>
       </header>

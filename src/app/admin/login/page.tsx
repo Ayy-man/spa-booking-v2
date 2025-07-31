@@ -80,12 +80,14 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <Link 
-            href="/" 
+          <a 
+            href="https://dermalskinclinicspa.com" 
             className="text-sm text-primary hover:text-primary-dark transition-colors"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            ← Back to Website
-          </Link>
+            ← Return to Main Website
+          </a>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             {isSignUp ? 'Create Admin Account' : 'Admin Login'}
           </h2>

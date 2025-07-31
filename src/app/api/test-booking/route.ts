@@ -16,11 +16,9 @@ export async function POST() {
       special_requests: 'This is a test booking'
     }
 
-    console.log('Attempting to create test booking:', testBooking)
 
     const result = await supabaseClient.createBooking(testBooking)
     
-    console.log('Test booking result:', result)
 
     return NextResponse.json({
       success: true,

@@ -91,9 +91,20 @@ export default function BookingPage() {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/" className="text-primary hover:text-primary-dark transition-colors">
-            ← Back to Home
-          </Link>
+          <div className="flex justify-center items-center space-x-4 mb-4">
+            <Link href="/" className="text-primary hover:text-primary-dark transition-colors">
+              ← Back to Home
+            </Link>
+            <span className="text-gray-300">|</span>
+            <a 
+              href="https://dermalskinclinicspa.com/services" 
+              className="text-primary hover:text-primary-dark transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              🌐 Explore All Services
+            </a>
+          </div>
           <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
             Book Your Appointment
           </h1>

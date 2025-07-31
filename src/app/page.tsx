@@ -3,6 +3,16 @@ export default function Home() {
     <main className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
+          <div className="mb-4">
+            <a 
+              href="https://dermalskinclinicspa.com" 
+              className="text-sm text-primary hover:text-primary-dark transition-colors"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              🌐 Visit Our Main Website
+            </a>
+          </div>
           <h1 className="text-4xl md:text-6xl font-heading text-primary-dark mb-4">
             Dermal Skin Clinic and Spa Guam
           </h1>

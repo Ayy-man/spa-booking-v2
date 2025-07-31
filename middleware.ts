@@ -8,6 +8,24 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 export async function middleware(request: NextRequest) {
   const res = NextResponse.next()
   const pathname = request.nextUrl.pathname
+  const hostname = request.headers.get('host') || ''
+
+  // Extract subdomain
+  const subdomain = hostname.split('.')[0]
+  
+  // Handle subdomain routing
+  if (subdomain === 'admin' && hostname.includes('dermalskinclinicspa.com')) {
+    // Admin subdomain - redirect to admin routes if not already there
+    if (!pathname.startsWith('/admin')) {
+      return NextResponse.redirect(new URL('/admin', request.url))
+    }
+  } else if (subdomain === 'booking' && hostname.includes('dermalskinclinicspa.com')) {
+    // Booking subdomain - redirect to booking routes if on admin pages
+    if (pathname.startsWith('/admin')) {
+      return NextResponse.redirect(new URL('/booking', request.url))
+    }
+    // Allow booking routes and home page
+  }
 
   // Skip middleware for static files, API routes (except admin API), and public routes
   if (
@@ -20,9 +38,51 @@ export async function middleware(request: NextRequest) {
     return res
   }
 
-  // Temporarily disable admin route protection for debugging
+  // Admin route protection
   if (pathname.startsWith('/admin')) {
-    return res
+    // Allow access to login page
+    if (pathname === '/admin/login') {
+      return res
+    }
+
+    try {
+      // Check for authentication token in cookies
+      const token = request.cookies.get('sb-access-token')?.value || 
+                    request.cookies.get('supabase-auth-token')?.value ||
+                    request.headers.get('authorization')?.replace('Bearer ', '')
+
+      if (!token) {
+        return NextResponse.redirect(new URL('/admin/login', request.url))
+      }
+
+      // Create Supabase client for token verification
+      const supabase = createClient(supabaseUrl, supabaseAnonKey)
+      
+      // Verify the token and get user
+      const { data: { user }, error: userError } = await supabase.auth.getUser(token)
+      
+      if (userError || !user) {
+        return NextResponse.redirect(new URL('/admin/login', request.url))
+      }
+
+      // Check if user has admin privileges
+      const { data: adminUser, error: adminError } = await supabase
+        .from('admin_users')
+        .select('id, role')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single()
+
+      if (adminError || !adminUser || (adminUser.role !== 'admin' && adminUser.role !== 'staff')) {
+        return NextResponse.redirect(new URL('/admin/login', request.url))
+      }
+
+      // User is authenticated and authorized
+      return res
+    } catch (error) {
+      console.error('Middleware auth error:', error)
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
   }
 
   return res
