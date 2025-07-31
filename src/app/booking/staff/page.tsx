@@ -383,7 +383,7 @@ export default function StaffPage() {
                           </div>
 
                           <div className="flex-1">
-                            <h3 className="text-xl font-bold text-text-primary mb-2">
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">
                               {member.name}
                             </h3>
                             

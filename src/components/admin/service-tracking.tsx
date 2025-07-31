@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,7 @@ export function ServiceTracking({ className }: ServiceTrackingProps) {
   weekAgo.setDate(weekAgo.getDate() - 7)
   const weekAgoStr = weekAgo.toISOString().split('T')[0]
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setError(null)
       const [realTime, daily, services, staff] = await Promise.all([
@@ -56,11 +56,11 @@ export function ServiceTracking({ className }: ServiceTrackingProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [today, weekAgoStr])
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [fetchData])
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
@@ -71,7 +71,7 @@ export function ServiceTracking({ className }: ServiceTrackingProps) {
     }, 30000)
 
     return () => clearInterval(interval)
-  }, [autoRefresh])
+  }, [autoRefresh, fetchData])
 
   if (loading) {
     return (
@@ -149,7 +149,7 @@ export function ServiceTracking({ className }: ServiceTrackingProps) {
           <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-700">Today's Bookings</p>
+                <p className="text-sm font-medium text-blue-700">Today&apos;s Bookings</p>
                 <p className="text-2xl font-bold text-blue-900">{realTimeMetrics.todayBookings}</p>
               </div>
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
@@ -207,7 +207,7 @@ export function ServiceTracking({ className }: ServiceTrackingProps) {
       {/* Service Categories Breakdown */}
       {dailyAnalytics && Object.keys(dailyAnalytics.servicesByType).length > 0 && (
         <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Today's Services by Category</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Today&apos;s Services by Category</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {Object.entries(dailyAnalytics.servicesByType).map(([category, count]) => (
               <div key={category} className="text-center p-4 bg-gray-50 rounded-lg">
@@ -248,7 +248,7 @@ export function ServiceTracking({ className }: ServiceTrackingProps) {
       {/* Staff Performance */}
       {staffMetrics.length > 0 && (
         <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Today's Staff Performance</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Today&apos;s Staff Performance</h3>
           <div className="space-y-4">
             {staffMetrics.slice(0, 5).map((staff) => (
               <div key={staff.staffId} className="p-4 border border-gray-200 rounded-lg">

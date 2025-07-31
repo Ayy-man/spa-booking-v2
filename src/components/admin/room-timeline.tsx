@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
+import { isSpecialStaffRequest } from "@/lib/analytics"
 import { Clock, RefreshCw, Calendar, Users, TrendingUp, Move, AlertCircle, Star } from "lucide-react"
 
 interface TimeSlot {
@@ -94,24 +95,6 @@ export function RoomTimeline({
     return slots
   }, [])
 
-  // Update current time every minute
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 60000)
-    return () => clearInterval(timer)
-  }, [])
-
-  // Fetch data on component mount and set up auto-refresh
-  useEffect(() => {
-    fetchData()
-    
-    if (autoRefresh) {
-      const interval = setInterval(fetchData, refreshInterval)
-      return () => clearInterval(interval)
-    }
-  }, [autoRefresh, refreshInterval])
-
   const fetchData = useCallback(async () => {
     try {
       setLoading(true)
@@ -151,6 +134,24 @@ export function RoomTimeline({
       setLoading(false)
     }
   }, [])
+
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  // Fetch data on component mount and set up auto-refresh
+  useEffect(() => {
+    fetchData()
+    
+    if (autoRefresh) {
+      const interval = setInterval(fetchData, refreshInterval)
+      return () => clearInterval(interval)
+    }
+  }, [autoRefresh, refreshInterval, fetchData])
 
   // Get booking for a specific room and time slot
   const getBookingForSlot = useCallback((roomId: number, timeString: string): BookingWithRelations | null => {

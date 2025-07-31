@@ -148,7 +148,7 @@ export default function BookingPage() {
                         analytics.serviceSelected(service.name, category.name, service.price)
                       }}
                     >
-                      <h3 className="text-xl font-semibold text-text-primary mb-4 leading-tight">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-4 leading-tight">
                         {service.name}
                       </h3>
                       <div className="flex justify-between items-center mb-6">

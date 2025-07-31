@@ -45,6 +45,11 @@ export async function middleware(request: NextRequest) {
       return res
     }
 
+    // Allow admin access in development mode
+    if (process.env.NODE_ENV === 'development') {
+      return res
+    }
+
     try {
       // Check for authentication token in cookies
       const token = request.cookies.get('sb-access-token')?.value || 

@@ -9,21 +9,21 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#1F2937', // Dark gray/black instead of golden
-          light: '#374151', // Lighter dark gray
-          lighter: '#6B7280', // Medium gray
-          dark: '#111827', // Very dark gray
-          darker: '#000000', // Pure black
+          DEFAULT: '#C36678', // Spa pink from design system
+          light: '#E8B3C0', // Lighter pink
+          lighter: '#F6C7CF', // Very light pink accent
+          dark: '#AA3B50', // Dark pink from design system
+          darker: '#8B2E3F', // Deeper pink
         },
         secondary: {
-          DEFAULT: '#F6C7CF',
-          dark: '#E8B3C0',
+          DEFAULT: '#F6C7CF', // Light pink accent
+          dark: '#E8B3C0', // Medium pink
         },
-        background: '#FFF8FA',
+        background: '#F8F8F8', // Light gray background from design system
         surface: '#FFFFFF',
-        accent: '#6B7280',
-        'text-primary': '#1F2937', // Dark gray/black
-        'text-secondary': '#374151', // Lighter dark gray
+        accent: '#F6C7CF', // Pink accent from design system
+        'text-primary': '#000000', // Black text from design system
+        'text-secondary': '#AA3B50', // Dark pink text from design system
         success: '#10B981',
         warning: '#F59E0B',
         error: '#EF4444',

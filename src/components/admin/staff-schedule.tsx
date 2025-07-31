@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -35,17 +35,7 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>("")
 
-  useEffect(() => {
-    fetchActiveStaff()
-  }, [])
-
-  useEffect(() => {
-    if (selectedStaff) {
-      fetchStaffSchedule()
-    }
-  }, [selectedStaff, currentDate, viewMode])
-
-  const fetchActiveStaff = async () => {
+  const fetchActiveStaff = useCallback(async () => {
     try {
       const result = await getAllActiveStaff()
       if (result.success && result.data) {
@@ -63,27 +53,9 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedStaff])
 
-  const fetchStaffSchedule = async () => {
-    if (!selectedStaff) return
-
-    setLoading(true)
-    setError("")
-
-    const { startDate, endDate } = getDateRange()
-    const result = await getStaffSchedule(selectedStaff, startDate, endDate)
-
-    if (result.success && result.data) {
-      setBookings(result.data)
-    } else if (result.error) {
-      setError(result.error)
-    }
-
-    setLoading(false)
-  }
-
-  const getDateRange = () => {
+  const getDateRange = useCallback(() => {
     if (viewMode === "day") {
       const dateStr = currentDate.toISOString().split("T")[0]
       return { startDate: dateStr, endDate: dateStr }
@@ -102,7 +74,35 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
         endDate: sunday.toISOString().split("T")[0]
       }
     }
-  }
+  }, [viewMode, currentDate])
+
+  const fetchStaffSchedule = useCallback(async () => {
+    if (!selectedStaff) return
+
+    setLoading(true)
+    setError("")
+
+    const { startDate, endDate } = getDateRange()
+    const result = await getStaffSchedule(selectedStaff, startDate, endDate)
+
+    if (result.success && result.data) {
+      setBookings(result.data)
+    } else if (result.error) {
+      setError(result.error)
+    }
+
+    setLoading(false)
+  }, [selectedStaff, getDateRange])
+
+  useEffect(() => {
+    fetchActiveStaff()
+  }, [fetchActiveStaff])
+
+  useEffect(() => {
+    if (selectedStaff) {
+      fetchStaffSchedule()
+    }
+  }, [selectedStaff, fetchStaffSchedule])
 
   const navigateDate = (direction: "prev" | "next") => {
     const newDate = new Date(currentDate)

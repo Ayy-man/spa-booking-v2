@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { auth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
@@ -12,11 +12,7 @@ export default function AdminBookingsPage() {
   const [authChecked, setAuthChecked] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    checkAuthAndFetchBookings()
-  }, [])
-
-  const checkAuthAndFetchBookings = async () => {
+  const checkAuthAndFetchBookings = useCallback(async () => {
     try {
       // Verify admin session
       const isValidAdmin = await auth.validateAdminSession()
@@ -31,7 +27,11 @@ export default function AdminBookingsPage() {
       console.error('Auth check failed:', error)
       router.push('/admin/login')
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    checkAuthAndFetchBookings()
+  }, [checkAuthAndFetchBookings])
 
   const fetchBookings = async () => {
     try {

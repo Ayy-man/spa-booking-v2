@@ -6,26 +6,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Shadcn/ui CSS Variables */
-  --background: 255 248 250; /* Light pink background */
-  --foreground: 31 41 55; /* Darker for better contrast */
+  /* Shadcn/ui CSS Variables - Spa Pink Theme */
+  --background: 248 248 248; /* Light gray background from design system */
+  --foreground: 0 0 0; /* Black text for better contrast */
   --card: 255 255 255;
-  --card-foreground: 31 41 55;
+  --card-foreground: 0 0 0;
   --popover: 255 255 255;
-  --popover-foreground: 31 41 55;
-  --primary: 236 72 153; /* Original pink theme */
+  --popover-foreground: 0 0 0;
+  --primary: 195 102 120; /* Spa pink #C36678 from design system */
   --primary-foreground: 255 255 255;
-  --secondary: 107 114 128; /* Medium gray */
-  --secondary-foreground: 31 41 55;
+  --secondary: 246 199 207; /* Light pink accent #F6C7CF */
+  --secondary-foreground: 0 0 0;
   --muted: 245 245 245;
   --muted-foreground: 115 115 115;
-  --accent: 107 114 128;
-  --accent-foreground: 31 41 55;
+  --accent: 246 199 207; /* Pink accent #F6C7CF from design system */
+  --accent-foreground: 0 0 0;
   --destructive: 239 68 68;
   --destructive-foreground: 255 255 255;
   --border: 229 229 229;
   --input: 229 229 229;
-  --ring: 236 72 153; /* Updated to match pink primary */
+  --ring: 195 102 120; /* Spa pink to match primary */
   --success: 16 185 129;
   --warning: 245 158 11;
   --error: 239 68 68;
@@ -267,7 +267,13 @@ a {
            font-semibold text-center flex items-center justify-center gap-3 text-lg
            focus:outline-none focus:ring-4 focus:ring-gray-400 focus:ring-offset-2
            disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl
-           transform hover:scale-[1.02] active:scale-[0.98];
+           transform hover:scale-[1.02] active:scale-[0.98] !important;
+  }
+  
+  /* Higher specificity version */
+  button.btn-continue {
+    background-color: #000000 !important;
+    color: #ffffff !important;
   }
 
   /* Enhanced spacing utilities */

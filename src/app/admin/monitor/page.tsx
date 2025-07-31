@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { TodaysSchedule } from "@/components/admin/todays-schedule"
 import { RoomTimeline } from "@/components/admin/room-timeline" 
 import { Button } from "@/components/ui/button"
@@ -43,15 +43,15 @@ export default function MonitorModePage() {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
 
-  const toggleFullscreen = async () => {
+  const toggleFullscreen = useCallback(async () => {
     if (!document.fullscreenElement) {
       await document.documentElement.requestFullscreen()
     } else {
       await document.exitFullscreen()
     }
-  }
+  }, [])
 
-  const handleKeyPress = (event: KeyboardEvent) => {
+  const handleKeyPress = useCallback((event: KeyboardEvent) => {
     if (event.key === 'Escape' && document.fullscreenElement) {
       document.exitFullscreen()
     } else if (event.key === 'f' || event.key === 'F') {
@@ -60,12 +60,12 @@ export default function MonitorModePage() {
       event.preventDefault()
       setCurrentView(prev => prev === "schedule" ? "timeline" : "schedule")
     }
-  }
+  }, [toggleFullscreen])
 
   useEffect(() => {
     document.addEventListener('keydown', handleKeyPress)
     return () => document.removeEventListener('keydown', handleKeyPress)
-  }, [])
+  }, [handleKeyPress])
 
   return (
     <div className={cn(

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
 import { BookingCard } from "./booking-card"
 import { FilterBar } from "./filter-bar"
@@ -34,25 +34,7 @@ export function TodaysSchedule({
   const [selectedStaff, setSelectedStaff] = useState<string | null>(null)
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchTodaysSchedule()
-    fetchFilterOptions()
-    
-    // Auto-refresh for monitor mode
-    if (displayMode === "monitor") {
-      const interval = setInterval(() => {
-        fetchTodaysSchedule()
-      }, 30000) // Refresh every 30 seconds
-      
-      return () => clearInterval(interval)
-    }
-  }, [displayMode, viewDate])
-
-  useEffect(() => {
-    applyFilters()
-  }, [bookings, selectedRoom, selectedStaff, selectedStatus])
-
-  const fetchTodaysSchedule = async () => {
+  const fetchTodaysSchedule = useCallback(async () => {
     try {
       const today = new Date()
       if (viewDate === 'tomorrow') {
@@ -81,7 +63,7 @@ export function TodaysSchedule({
     } finally {
       setLoading(false)
     }
-  }
+  }, [viewDate])
 
   const fetchFilterOptions = async () => {
     try {
@@ -100,7 +82,7 @@ export function TodaysSchedule({
     }
   }
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...bookings]
 
     if (selectedRoom) {
@@ -116,7 +98,25 @@ export function TodaysSchedule({
     }
 
     setFilteredBookings(filtered)
-  }
+  }, [bookings, selectedRoom, selectedStaff, selectedStatus])
+
+  useEffect(() => {
+    fetchTodaysSchedule()
+    fetchFilterOptions()
+    
+    // Auto-refresh for monitor mode
+    if (displayMode === "monitor") {
+      const interval = setInterval(() => {
+        fetchTodaysSchedule()
+      }, 30000) // Refresh every 30 seconds
+      
+      return () => clearInterval(interval)
+    }
+  }, [displayMode, viewDate, fetchTodaysSchedule])
+
+  useEffect(() => {
+    applyFilters()
+  }, [applyFilters])
 
   const clearFilters = () => {
     setSelectedRoom(null)

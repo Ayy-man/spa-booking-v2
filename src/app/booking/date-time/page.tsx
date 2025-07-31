@@ -117,7 +117,7 @@ export default function DateTimePage() {
     } finally {
       setLoadingTimes(false)
     }
-  }, [selectedDate, selectedService])
+  }, [selectedDate, selectedService, generateFallbackTimes])
 
   const generateFallbackTimes = useCallback(() => {
     const times = []
