@@ -104,6 +104,7 @@ export default function CustomerInfoPage() {
             </div>
           </div>
         </div>
-      </>
-    )
+      </div>
+    </>
+  )
 }

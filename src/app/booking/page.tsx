@@ -172,6 +172,7 @@ export default function BookingPage() {
             ))}
           </div>
         </div>
+      </div>
 
       {/* Couples Booking Component - Fixed Position Overlay */}
       {selectedService && showCouplesOptions && (
