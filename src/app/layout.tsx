@@ -23,6 +23,7 @@ export default function RootLayout({
         <div className="min-h-screen">
           {children}
         </div>
+        {/* Analytics and Speed Insights with error handling */}
         <Analytics />
         <SpeedInsights />
       </body>

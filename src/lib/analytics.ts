@@ -2,11 +2,21 @@
 
 import { track } from '@vercel/analytics'
 
+// Safe tracking function that won't break the app if analytics is blocked
+const safeTrack = (event: string, properties?: any) => {
+  try {
+    track(event, properties)
+  } catch (error) {
+    // Silently fail if analytics is blocked by ad blockers
+    console.debug('Analytics blocked:', error)
+  }
+}
+
 // Custom analytics events for the booking flow
 export const analytics = {
   // Service selection events
   serviceSelected: (serviceName: string, serviceCategory: string, price: number) => {
-    track('service_selected', {
+    safeTrack('service_selected', {
       service_name: serviceName,
       service_category: serviceCategory,
       price: price,
@@ -16,7 +26,7 @@ export const analytics = {
 
   // Date/time selection events
   dateTimeSelected: (date: string, time: string, serviceName: string) => {
-    track('datetime_selected', {
+    safeTrack('datetime_selected', {
       date: date,
       time: time,
       service_name: serviceName,
@@ -26,7 +36,7 @@ export const analytics = {
 
   // Staff selection events
   staffSelected: (staffName: string, serviceName: string) => {
-    track('staff_selected', {
+    safeTrack('staff_selected', {
       staff_name: staffName,
       service_name: serviceName,
       timestamp: new Date().toISOString()
@@ -35,7 +45,7 @@ export const analytics = {
 
   // Customer info events
   customerInfoSubmitted: (isNewCustomer: boolean, hasPhone: boolean) => {
-    track('customer_info_submitted', {
+    safeTrack('customer_info_submitted', {
       is_new_customer: isNewCustomer,
       has_phone: hasPhone,
       timestamp: new Date().toISOString()
@@ -44,7 +54,7 @@ export const analytics = {
 
   // Booking confirmation events
   bookingConfirmed: (bookingId: string, totalPrice: number, serviceName: string, isCouples: boolean) => {
-    track('booking_confirmed', {
+    safeTrack('booking_confirmed', {
       booking_id: bookingId,
       total_price: totalPrice,
       service_name: serviceName,
@@ -55,7 +65,7 @@ export const analytics = {
 
   // Payment events
   paymentInitiated: (isNewCustomer: boolean, amount: number) => {
-    track('payment_initiated', {
+    safeTrack('payment_initiated', {
       is_new_customer: isNewCustomer,
       amount: amount,
       timestamp: new Date().toISOString()
@@ -64,7 +74,7 @@ export const analytics = {
 
   // Error events
   bookingError: (errorType: string, errorMessage: string, step: string) => {
-    track('booking_error', {
+    safeTrack('booking_error', {
       error_type: errorType,
       error_message: errorMessage,
       step: step,
@@ -74,7 +84,7 @@ export const analytics = {
 
   // Navigation events
   pageViewed: (pageName: string, step: number) => {
-    track('page_viewed', {
+    safeTrack('page_viewed', {
       page_name: pageName,
       step: step,
       timestamp: new Date().toISOString()
@@ -83,7 +93,7 @@ export const analytics = {
 
   // Couples booking events
   couplesBookingStarted: (primaryService: string, secondaryService: string, totalPrice: number) => {
-    track('couples_booking_started', {
+    safeTrack('couples_booking_started', {
       primary_service: primaryService,
       secondary_service: secondaryService,
       total_price: totalPrice,
@@ -93,7 +103,7 @@ export const analytics = {
 
   // Form interaction events
   formFieldFocused: (fieldName: string, step: string) => {
-    track('form_field_focused', {
+    safeTrack('form_field_focused', {
       field_name: fieldName,
       step: step,
       timestamp: new Date().toISOString()
@@ -101,7 +111,7 @@ export const analytics = {
   },
 
   formFieldCompleted: (fieldName: string, step: string) => {
-    track('form_field_completed', {
+    safeTrack('form_field_completed', {
       field_name: fieldName,
       step: step,
       timestamp: new Date().toISOString()
@@ -109,11 +119,18 @@ export const analytics = {
   }
 }
 
+// Utility function for checking if a booking is a special staff request
+export function isSpecialStaffRequest(booking: any): boolean {
+  // Check if customer specifically requested this staff member
+  // (as opposed to selecting "Any Available" which would be staff_id: 'any-available')
+  return booking.staff_id !== 'any-available' && booking.staff_id !== null && booking.staff_id !== 'any'
+}
+
 // Performance tracking
 export const performance = {
   // Track page load times
   pageLoadTime: (pageName: string, loadTime: number) => {
-    track('page_load_time', {
+    safeTrack('page_load_time', {
       page_name: pageName,
       load_time_ms: loadTime,
       timestamp: new Date().toISOString()
@@ -122,7 +139,7 @@ export const performance = {
 
   // Track API response times
   apiResponseTime: (endpoint: string, responseTime: number, success: boolean) => {
-    track('api_response_time', {
+    safeTrack('api_response_time', {
       endpoint: endpoint,
       response_time_ms: responseTime,
       success: success,
@@ -132,7 +149,7 @@ export const performance = {
 
   // Track booking flow completion time
   bookingFlowTime: (totalTime: number, stepsCompleted: number) => {
-    track('booking_flow_time', {
+    safeTrack('booking_flow_time', {
       total_time_ms: totalTime,
       steps_completed: stepsCompleted,
       timestamp: new Date().toISOString()
@@ -144,7 +161,7 @@ export const performance = {
 export const userBehavior = {
   // Track time spent on each step
   stepTimeSpent: (stepName: string, timeSpent: number) => {
-    track('step_time_spent', {
+    safeTrack('step_time_spent', {
       step_name: stepName,
       time_spent_ms: timeSpent,
       timestamp: new Date().toISOString()
@@ -153,7 +170,7 @@ export const userBehavior = {
 
   // Track back button usage
   backButtonClicked: (fromStep: string, toStep: string) => {
-    track('back_button_clicked', {
+    safeTrack('back_button_clicked', {
       from_step: fromStep,
       to_step: toStep,
       timestamp: new Date().toISOString()
@@ -162,7 +179,7 @@ export const userBehavior = {
 
   // Track form validation errors
   formValidationError: (fieldName: string, errorType: string, step: string) => {
-    track('form_validation_error', {
+    safeTrack('form_validation_error', {
       field_name: fieldName,
       error_type: errorType,
       step: step,
