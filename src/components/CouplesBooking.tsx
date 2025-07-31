@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { analytics } from '@/lib/analytics'
 
 interface Service {
   id: string
@@ -67,6 +68,16 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
       totalPrice,
       totalDuration
     }
+    
+    // Track couples booking if enabled
+    if (isCouplesBooking && secondaryService) {
+      analytics.couplesBookingStarted(
+        selectedService.name,
+        secondaryService.name,
+        totalPrice
+      )
+    }
+    
     onContinue(bookingData)
   }
 

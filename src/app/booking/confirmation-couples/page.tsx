@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
+import { analytics } from '@/lib/analytics'
 
 interface Service {
   id?: string
@@ -142,27 +143,13 @@ export default function CouplesConfirmationPage() {
         
         setBookingResults([bookingResult])
         
-        // Sync single booking to GoHighLevel CRM (non-blocking)
-        try {
-          const ghlBookingData = createBookingDataFromConfirmation(bookingResult, {
-            service: primaryServiceData,
-            date: selectedDate,
-            time: selectedTime,
-            staff: selectedStaff,
-            customer: customerInfo
-          })
-          
-          const ghlResult = await ghlIntegration.syncBookingToGHL(ghlBookingData)
-          
-          if (ghlResult.success) {
-            console.log('Successfully synced booking to GoHighLevel CRM')
-          } else {
-            console.warn('GoHighLevel sync failed (booking still confirmed):', ghlResult.error)
-          }
-        } catch (ghlError) {
-          // GHL sync errors should never break the booking flow
-          console.warn('GoHighLevel sync error (booking still confirmed):', ghlError)
-        }
+        // Track successful couples booking confirmation
+        analytics.bookingConfirmed(
+          bookingResult.booking_id,
+          bookingData.totalPrice,
+          `${bookingData.primaryService.name} + ${bookingData.secondaryService?.name || bookingData.primaryService.name}`,
+          true // isCouples
+        )
       }
       
       setIsSuccess(true)
@@ -177,6 +164,13 @@ export default function CouplesConfirmationPage() {
       localStorage.removeItem('customerInfo')
       
     } catch (err: any) {
+      
+      // Track booking error
+      analytics.bookingError(
+        'couples_booking_confirmation_failed',
+        err.message || 'Unknown error',
+        'couples_confirmation'
+      )
       
       let errorMessage = 'Failed to confirm booking. '
       if (err.message?.includes('staff_not_available')) {

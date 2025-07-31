@@ -7,6 +7,7 @@ import BookingProgressIndicator from '@/components/booking/BookingProgressIndica
 import BookingSummary from '@/components/booking/BookingSummary'
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { TimeSlotSkeleton } from '@/components/ui/skeleton-loader'
+import { analytics } from '@/lib/analytics'
 
 export default function DateTimePage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -69,6 +70,13 @@ export default function DateTimePage() {
       window.location.href = '/booking'
     }
   }, [selectedService, loadingService])
+
+  // Track page view
+  useEffect(() => {
+    if (!loadingService) {
+      analytics.pageViewed('date_time_selection', 2)
+    }
+  }, [loadingService])
 
   const fetchAvailableTimeSlotsFromSupabase = useCallback(async () => {
     if (!selectedDate || !selectedService) return
@@ -143,10 +151,18 @@ export default function DateTimePage() {
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date)
     setSelectedTime('') // Reset time when date changes
+    // Track date selection
+    if (selectedService) {
+      analytics.dateTimeSelected(format(date, 'yyyy-MM-dd'), '', selectedService.name)
+    }
   }
 
   const handleTimeSelect = (time: string) => {
     setSelectedTime(time)
+    // Track time selection
+    if (selectedService && selectedDate) {
+      analytics.dateTimeSelected(format(selectedDate, 'yyyy-MM-dd'), time, selectedService.name)
+    }
   }
 
   const handleContinue = () => {

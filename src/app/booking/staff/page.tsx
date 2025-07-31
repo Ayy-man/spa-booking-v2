@@ -13,6 +13,7 @@ import BookingProgressIndicator from '@/components/booking/BookingProgressIndica
 import BookingSummary from '@/components/booking/BookingSummary'
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { StaffCardSkeleton } from '@/components/ui/skeleton-loader'
+import { analytics } from '@/lib/analytics'
 
 type Staff = Database['public']['Tables']['staff']['Row']
 
@@ -40,6 +41,13 @@ export default function StaffPage() {
   const [loadingStaff, setLoadingStaff] = useState<boolean>(true)
 
   // Remove duplicate function - using imported one from staff-data.ts
+
+  // Track page view
+  useEffect(() => {
+    if (selectedService) {
+      analytics.pageViewed('staff_selection', 3)
+    }
+  }, [selectedService])
 
   useEffect(() => {
     console.log('StaffPage useEffect running')
@@ -196,6 +204,11 @@ export default function StaffPage() {
 
   const handleStaffSelect = (staffId: string) => {
     setSelectedStaff(staffId)
+    // Track staff selection
+    if (selectedService) {
+      const staffName = staffId === 'any' ? 'Any Available Staff' : availableStaff.find(s => s.id === staffId)?.name || 'Unknown'
+      analytics.staffSelected(staffName, selectedService.name)
+    }
   }
 
 

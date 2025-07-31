@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
+import { analytics } from '@/lib/analytics'
 
 export default function ConfirmationPage() {
   const [bookingData, setBookingData] = useState<any>(null)
@@ -94,6 +95,15 @@ export default function ConfirmationPage() {
       }
       
       localStorage.setItem('lastBooking', JSON.stringify(booking))
+      
+      // Track successful booking confirmation
+      analytics.bookingConfirmed(
+        bookingResult.booking_id,
+        bookingData.service.price,
+        bookingData.service.name,
+        false // isCouples
+      )
+      
       setIsSuccess(true)
       
       // Clear booking flow data
@@ -104,6 +114,13 @@ export default function ConfirmationPage() {
       localStorage.removeItem('customerInfo')
       
     } catch (err: any) {
+      
+      // Track booking error
+      analytics.bookingError(
+        'booking_confirmation_failed',
+        err.message || 'Unknown error',
+        'confirmation'
+      )
       
       // Show more helpful error messages
       let errorMessage = 'Failed to confirm booking. '

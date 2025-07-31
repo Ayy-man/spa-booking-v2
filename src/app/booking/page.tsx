@@ -1,13 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import CouplesBooking from '@/components/CouplesBooking'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
+import { analytics } from '@/lib/analytics'
 
 export default function BookingPage() {
   const [selectedService, setSelectedService] = useState('')
   const [showCouplesOptions, setShowCouplesOptions] = useState(false)
+
+  // Track page view
+  useEffect(() => {
+    analytics.pageViewed('service_selection', 1)
+  }, [])
 
   const serviceCategories = [
     {
@@ -138,6 +144,8 @@ export default function BookingPage() {
                       onClick={() => {
                         setSelectedService(service.id)
                         setShowCouplesOptions(true)
+                        // Track service selection
+                        analytics.serviceSelected(service.name, category.name, service.price)
                       }}
                     >
                       <h3 className="text-xl font-semibold text-text-primary mb-4 leading-tight">
@@ -161,6 +169,8 @@ export default function BookingPage() {
                           e.stopPropagation()
                           setSelectedService(service.id)
                           setShowCouplesOptions(true)
+                          // Track service selection
+                          analytics.serviceSelected(service.name, category.name, service.price)
                         }}
                       >
                         {selectedService === service.id ? 'Selected ✓' : 'Select Service'}

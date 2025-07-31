@@ -6,6 +6,7 @@ import CustomerForm, { CustomerFormData } from '@/components/booking/CustomerFor
 import { staffNameMap } from '@/lib/staff-data'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import BookingSummary from '@/components/booking/BookingSummary'
+import { analytics } from '@/lib/analytics'
 
 interface Service {
   name: string
@@ -32,7 +33,20 @@ export default function CustomerInfoPage() {
     if (staffData) setSelectedStaff(staffData)
   }, [])
 
+  // Track page view
+  useEffect(() => {
+    analytics.pageViewed('customer_info', 4)
+  }, [])
+
   const handleSubmit = (data: CustomerFormData) => {
+    // Track customer info submission
+    analytics.customerInfoSubmitted(data.isNewCustomer, !!data.phone)
+    
+    // Track payment initiation for new customers
+    if (data.isNewCustomer && selectedService) {
+      analytics.paymentInitiated(true, selectedService.price)
+    }
+    
     // Store customer info
     localStorage.setItem('customerInfo', JSON.stringify(data))
     
