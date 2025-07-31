@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getServiceCategory } from '@/lib/staff-data'
+import { getServiceCategory, canDatabaseStaffPerformService, isDatabaseStaffAvailableOnDate } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
 import { Database } from '@/types/database'
 import { Card } from '@/components/ui/card'
@@ -35,29 +35,29 @@ export default function StaffPage() {
   const [availableStaff, setAvailableStaff] = useState<Staff[]>([])
   const [loadingStaff, setLoadingStaff] = useState<boolean>(true)
 
-  const getServiceCategory = (serviceName: string): string => {
-    // Simple mapping based on service name keywords
-    const name = serviceName.toLowerCase()
-    if (name.includes('facial')) return 'facials'
-    if (name.includes('massage')) return 'massages'
-    if (name.includes('waxing') || name.includes('wax')) return 'waxing'
-    if (name.includes('treatment') || name.includes('cleaning') || name.includes('scrub')) return 'body_treatments'
-    if (name.includes('package')) return 'packages'
-    if (name.includes('vip') || name.includes('membership')) return 'membership'
-    return 'other'
-  }
+  // Remove duplicate function - using imported one from staff-data.ts
 
   useEffect(() => {
+    console.log('StaffPage useEffect running')
+    
     // Get data from localStorage
     const bookingDataStr = localStorage.getItem('bookingData')
     const serviceDataStr = localStorage.getItem('selectedService')
     const dateData = localStorage.getItem('selectedDate')
     const timeData = localStorage.getItem('selectedTime')
 
+    console.log('LocalStorage data:', {
+      bookingDataStr,
+      serviceDataStr,
+      dateData,
+      timeData
+    })
+
     if (bookingDataStr) {
       const parsedBookingData = JSON.parse(bookingDataStr)
       setBookingData(parsedBookingData)
       setSelectedService(parsedBookingData.primaryService)
+      console.log('Set booking data from bookingDataStr:', parsedBookingData)
     } else if (serviceDataStr) {
       // Fallback for backward compatibility
       const parsedService = JSON.parse(serviceDataStr)
@@ -68,6 +68,7 @@ export default function StaffPage() {
         totalPrice: parsedService.price,
         totalDuration: parsedService.duration
       })
+      console.log('Set service data from serviceDataStr:', parsedService)
     }
     
     if (dateData) setSelectedDate(dateData)
@@ -75,89 +76,115 @@ export default function StaffPage() {
     
     // Fetch available staff from Supabase
     if ((bookingDataStr || serviceDataStr) && dateData && timeData) {
+      console.log('Conditions met, calling fetchAvailableStaff')
       fetchAvailableStaff()
+    } else {
+      console.log('Conditions not met for fetchAvailableStaff:', {
+        hasBookingOrService: !!(bookingDataStr || serviceDataStr),
+        hasDate: !!dateData,
+        hasTime: !!timeData
+      })
     }
   }, [])
 
   const fetchAvailableStaff = async () => {
+    console.log('fetchAvailableStaff called')
     setLoadingStaff(true)
     try {
       // Get the service from Supabase to get the correct ID
+      console.log('Fetching services from Supabase...')
       const services = await supabaseClient.getServices()
-      const serviceData = localStorage.getItem('selectedService')
-      const selectedServiceData = serviceData ? JSON.parse(serviceData) : null
+      console.log('Services fetched:', services)
+      
+      // Get service data directly from localStorage to avoid race conditions
+      const bookingDataStr = localStorage.getItem('bookingData')
+      const serviceDataStr = localStorage.getItem('selectedService')
+      
+      let selectedServiceData = null
+      
+      if (bookingDataStr) {
+        const parsedBookingData = JSON.parse(bookingDataStr)
+        selectedServiceData = parsedBookingData.primaryService
+      } else if (serviceDataStr) {
+        selectedServiceData = JSON.parse(serviceDataStr)
+      }
+      
+      console.log('Selected service data:', selectedServiceData)
+      console.log('From bookingData:', bookingDataStr ? JSON.parse(bookingDataStr).primaryService : null)
+      console.log('From serviceData:', serviceDataStr ? JSON.parse(serviceDataStr) : null)
       
       const matchingService = services.find(s => 
         s.name.toLowerCase() === selectedServiceData?.name.toLowerCase()
       )
       
       if (!matchingService) {
-        setLoadingStaff(false)
+        console.log('No matching service found, using fallback logic')
+        // Fallback: show all active staff for now
+        const allStaff = await supabaseClient.getStaff()
+        const activeStaff = allStaff.filter(staff => staff.is_active && staff.id !== 'any')
+        console.log('No matching service found, showing all active staff:', activeStaff)
+        setAvailableStaff(activeStaff)
         return
       }
+      
+      console.log('Matching service found:', matchingService)
+      
+      // Simplified logic: Get all staff and filter by capability and availability
+      const allStaff = await supabaseClient.getStaff()
+      console.log('All staff fetched:', allStaff)
       
       const dateData = localStorage.getItem('selectedDate')
       const timeData = localStorage.getItem('selectedTime')
       
       if (!dateData || !timeData) {
-        setLoadingStaff(false)
+        // If no date/time, show all capable staff using proper capability checking
+        const capableStaff = allStaff.filter(staff => {
+          return staff.is_active && 
+                 staff.id !== 'any' &&
+                 canDatabaseStaffPerformService(staff, matchingService.category)
+        })
+        console.log('No date/time, showing capable staff:', capableStaff)
+        setAvailableStaff(capableStaff)
         return
       }
       
       const date = new Date(dateData)
-      const dateString = date.toISOString().split('T')[0]
+      const dayOfWeek = date.getDay() // 0 = Sunday, 1 = Monday, etc.
       
-      // Get available time slots which includes staff info
-      const availableSlots = await supabaseClient.getAvailableTimeSlots(
-        dateString,
-        matchingService.id
-      )
-      
-      // Filter for the selected time
-      const slotsForTime = availableSlots.filter((slot: any) => slot.available_time === timeData)
-      
-      // Get unique staff IDs from the available slots
-      const uniqueStaffIds = Array.from(new Set(slotsForTime.map((slot: any) => slot.available_staff_id)))
-      
-      // Fetch full staff details
-      if (uniqueStaffIds.length > 0) {
-        const staffDetails = await supabaseClient.getStaff()
-        const availableStaffDetails = staffDetails.filter(staff => 
-          uniqueStaffIds.includes(staff.id) && staff.id !== 'any'
-        )
-        setAvailableStaff(availableStaffDetails)
-      } else {
-        setAvailableStaff([])
-      }
-    } catch (error: any) {
-      // Fallback: Show all active staff who work on this day
-      
-      // Fallback: Show all active staff who work on this day
-      try {
-        const allStaff = await supabaseClient.getStaff()
-        // Get date from localStorage again for fallback
-        const dateData = localStorage.getItem('selectedDate')
-        if (!dateData) {
-          setAvailableStaff([])
-          return
-        }
-        const fallbackDate = new Date(dateData)
-        const dayOfWeek = fallbackDate.getDay()
+      // Filter staff by capability and work day availability using proper functions
+      const availableStaffForDay = allStaff.filter(staff => {
+        if (!staff.is_active || staff.id === 'any') return false
         
-        const availableStaffMembers = allStaff.filter(staff => {
-          // Check if staff works on this day, has work_days property, and exclude 'any'
-          return staff.is_active && 
-                 staff.work_days && 
-                 Array.isArray(staff.work_days) && 
-                 staff.work_days.includes(dayOfWeek) && 
-                 staff.id !== 'any'
+        const hasCapability = canDatabaseStaffPerformService(staff, matchingService.category)
+        const worksOnDay = isDatabaseStaffAvailableOnDate(staff, dateData)
+        
+        console.log(`Staff ${staff.name}: capability=${hasCapability}, worksOnDay=${worksOnDay}, category=${matchingService.category}, staffCapabilities=${JSON.stringify(staff.capabilities)}`)
+        
+        return hasCapability && worksOnDay
+      })
+      
+      console.log('Staff available for this day and service:', availableStaffForDay)
+      setAvailableStaff(availableStaffForDay)
+    } catch (error: any) {
+      console.log('Advanced availability check failed, using simple fallback:', error)
+      
+      // Fallback: Show all active staff
+      try {
+        console.log('Fallback: Fetching all staff...')
+        const allStaff = await supabaseClient.getStaff()
+        console.log('Fallback: All staff from database:', allStaff)
+        
+        const activeStaff = allStaff.filter(staff => {
+          console.log('Checking staff:', staff.name, 'is_active:', staff.is_active, 'id:', staff.id)
+          return staff.is_active && staff.id !== 'any'
         })
         
-
-        setAvailableStaff(availableStaffMembers)
-              } catch (fallbackError) {
-          setAvailableStaff([])
-        }
+        console.log('Fallback: Active staff after filtering:', activeStaff)
+        setAvailableStaff(activeStaff)
+      } catch (fallbackError) {
+        console.error('Failed to fetch staff:', fallbackError)
+        setAvailableStaff([])
+      }
     } finally {
       setLoadingStaff(false)
     }
@@ -348,11 +375,15 @@ export default function StaffPage() {
                         )}
                         
                         <div className="flex flex-wrap gap-1">
-                          {member.capabilities.map((serviceType, index) => (
+                          {(member.capabilities || []).map((serviceType, index) => (
                             <Badge 
                               key={index}
                               variant="outline" 
-                              className="text-xs border-primary text-primary bg-primary/5"
+                              className={`text-xs ${
+                                selectedService && serviceType === getServiceCategory(selectedService.name)
+                                  ? 'border-primary text-primary bg-primary/5'
+                                  : 'border-gray-300 text-gray-600'
+                              }`}
                             >
                               {serviceType.replace('_', ' ')}
                             </Badge>

@@ -6,12 +6,12 @@ export interface StaffMember {
   specialties: string
   initials: string
   capabilities: string[]
-  workDays: string[]
-  defaultRoom: number | null
+  work_days: number[]  // 0=Sunday, 1=Monday, etc. to match database schema
+  default_room_id: number | null  // Match database field name
   available?: boolean
 }
 
-// Centralized staff data with capabilities and schedules
+// Centralized staff data with capabilities and schedules matching database schema
 export const staffMembers: StaffMember[] = [
   {
     id: 'any',
@@ -20,9 +20,9 @@ export const staffMembers: StaffMember[] = [
     phone: '',
     specialties: 'Any qualified staff member',
     initials: 'AA',
-    capabilities: ['facials', 'waxing', 'body_treatments', 'massages'],
-    workDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-    defaultRoom: null
+    capabilities: ['facials', 'waxing', 'treatments', 'massages'],
+    work_days: [0, 1, 2, 3, 4, 5, 6], // All days (0=Sunday, 6=Saturday)
+    default_room_id: null
   },
   {
     id: 'selma',
@@ -32,8 +32,8 @@ export const staffMembers: StaffMember[] = [
     specialties: 'All Facials (except dermaplaning)',
     initials: 'SV',
     capabilities: ['facials'],
-    workDays: ['monday', 'wednesday', 'friday', 'saturday', 'sunday'],
-    defaultRoom: 1
+    work_days: [1, 3, 5, 6, 0], // Mon, Wed, Fri, Sat, Sun
+    default_room_id: 1
   },
   {
     id: 'robyn',
@@ -42,9 +42,9 @@ export const staffMembers: StaffMember[] = [
     phone: '(671) 480-7862',
     specialties: 'Facials, Waxing, Body Treatments, Massages',
     initials: 'RC',
-    capabilities: ['facials', 'waxing', 'body_treatments', 'massages'],
-    workDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-    defaultRoom: 3
+    capabilities: ['facials', 'waxing', 'treatments', 'massages'],
+    work_days: [0, 1, 2, 3, 4, 5, 6], // Full schedule (all days)
+    default_room_id: 3
   },
   {
     id: 'tanisha',
@@ -54,8 +54,8 @@ export const staffMembers: StaffMember[] = [
     specialties: 'Facials and Waxing',
     initials: 'TH',
     capabilities: ['facials', 'waxing'],
-    workDays: ['monday', 'wednesday', 'friday', 'saturday', 'sunday'],
-    defaultRoom: 2
+    work_days: [1, 3, 5, 6, 0], // Mon, Wed, Fri, Sat, Sun (off Tue/Thu)
+    default_room_id: 2
   },
   {
     id: 'leonel',
@@ -64,9 +64,9 @@ export const staffMembers: StaffMember[] = [
     phone: '(671) 747-1882',
     specialties: 'Body Massages and Treatments (Sundays only)',
     initials: 'LS',
-    capabilities: ['massages', 'body_treatments'],
-    workDays: ['sunday'],
-    defaultRoom: null
+    capabilities: ['massages', 'treatments'],
+    work_days: [0], // Sunday only
+    default_room_id: null
   }
 ]
 
@@ -79,26 +79,40 @@ export const staffNameMap = {
   'leonel': 'Leonel Sidon'
 } as const
 
-// Helper function to determine service category
+// Helper function to determine service category - updated to match staff capabilities
 export const getServiceCategory = (serviceName: string): string => {
   if (!serviceName) return 'unknown'
   
   const name = serviceName.toLowerCase()
   
-  if (name.includes('facial') || name.includes('microderm') || name.includes('vitamin c') || name.includes('acne')) {
+  // Facial services
+  if (name.includes('facial') || name.includes('microderm') || name.includes('vitamin c') || name.includes('acne') || name.includes('placenta') || name.includes('collagen') || name.includes('whitening') || name.includes('kojic')) {
     return 'facials'
   }
-  if (name.includes('massage') || name.includes('balinese') || name.includes('deep tissue') || name.includes('hot stone') || name.includes('maternity')) {
+  
+  // Massage services
+  if (name.includes('massage') || name.includes('balinese') || name.includes('deep tissue') || name.includes('hot stone') || name.includes('maternity') || name.includes('stretching')) {
     return 'massages'
   }
-  if (name.includes('wax') || name.includes('brazilian') || name.includes('bikini') || name.includes('eyebrow') || name.includes('lip')) {
+  
+  // Waxing services
+  if (name.includes('wax') || name.includes('brazilian') || name.includes('bikini') || name.includes('eyebrow') || name.includes('lip') || name.includes('chin') || name.includes('neck') || name.includes('leg') || name.includes('underarm') || name.includes('chest') || name.includes('stomach') || name.includes('shoulders') || name.includes('feet')) {
     return 'waxing'
   }
-  if (name.includes('body') || name.includes('scrub') || name.includes('underarm') || name.includes('back treatment') || name.includes('chemical peel') || name.includes('microdermabrasion') || name.includes('moisturizing') || name.includes('mud mask')) {
-    return 'body_treatments'
+  
+  // Body treatments (includes scrubs, which require Room 3)
+  if (name.includes('body') || name.includes('scrub') || name.includes('back treatment') || name.includes('chemical peel') || name.includes('microdermabrasion') || name.includes('moisturizing') || name.includes('mud mask') || name.includes('underarm cleaning') || name.includes('salt body') || name.includes('body wrap')) {
+    return 'treatments'
   }
-  if (name.includes('package')) {
+  
+  // Package services
+  if (name.includes('package') || name.includes('+')) {
     return 'packages'
+  }
+  
+  // Special services
+  if (name.includes('vajacial') || name.includes('vip') || name.includes('dermal vip')) {
+    return 'special'
   }
   
   return 'unknown'
@@ -115,9 +129,9 @@ export const isStaffAvailableOnDate = (staff: StaffMember, dateString: string): 
   if (!dateString || staff.id === 'any') return true
   
   const date = new Date(dateString)
-  const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+  const dayOfWeek = date.getDay() // 0=Sunday, 1=Monday, etc.
   
-  return staff.workDays.includes(dayOfWeek)
+  return staff.work_days.includes(dayOfWeek)
 }
 
 // Get available staff for a service and date
@@ -132,4 +146,40 @@ export const getAvailableStaff = (serviceName: string, selectedDate: string): St
     ...staff,
     available: isStaffAvailableOnDate(staff, selectedDate) && canStaffPerformService(staff, serviceCategory)
   }))
+}
+
+// Convert database staff to StaffMember interface for compatibility
+export const convertDatabaseStaffToStaffMember = (dbStaff: any): StaffMember => {
+  return {
+    id: dbStaff.id,
+    name: dbStaff.name,
+    email: dbStaff.email || '',
+    phone: dbStaff.phone || '',
+    specialties: dbStaff.specialties || '',
+    initials: dbStaff.initials || dbStaff.name.split(' ').map((n: string) => n[0]).join(''),
+    capabilities: dbStaff.capabilities || [],
+    work_days: dbStaff.work_days || [],
+    default_room_id: dbStaff.default_room_id,
+    available: true
+  }
+}
+
+// Helper function to check if a staff member from database can perform a service
+export const canDatabaseStaffPerformService = (dbStaff: any, serviceCategory: string): boolean => {
+  if (!dbStaff || !dbStaff.capabilities) return false
+  if (dbStaff.id === 'any') return true
+  
+  // Check if staff has capability for this service category
+  return dbStaff.capabilities.includes(serviceCategory) || dbStaff.capabilities.includes('packages')
+}
+
+// Helper function to check if database staff is available on date
+export const isDatabaseStaffAvailableOnDate = (dbStaff: any, dateString: string): boolean => {
+  if (!dateString || dbStaff.id === 'any') return true
+  if (!dbStaff.work_days || !Array.isArray(dbStaff.work_days)) return false
+  
+  const date = new Date(dateString)
+  const dayOfWeek = date.getDay() // 0=Sunday, 1=Monday, etc.
+  
+  return dbStaff.work_days.includes(dayOfWeek)
 }

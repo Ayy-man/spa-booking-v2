@@ -9,7 +9,7 @@ interface SimpleService {
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { StaffMember, getServiceCategory, canStaffPerformService, isStaffAvailableOnDate } from '@/lib/staff-data'
+import { StaffMember, getServiceCategory, canStaffPerformService, isStaffAvailableOnDate, canDatabaseStaffPerformService, isDatabaseStaffAvailableOnDate } from '@/lib/staff-data'
 import { format } from 'date-fns'
 import { AlertTriangle, Calendar, Clock } from 'lucide-react'
 
@@ -32,20 +32,40 @@ export default function StaffSelector({
   loading = false,
   showAnyOption = true
 }: StaffSelectorProps) {
-  // Filter staff who can perform the service
+  // Filter staff who can perform the service - handle both StaffMember and database objects
   const serviceCategory = service ? getServiceCategory(service.name) : 'unknown'
   const availableStaff = staff.filter(member => {
     if (!service) return false
     // If showAnyOption is true, exclude the 'any' staff member from the list
     // since we'll show it as a separate card
     if (showAnyOption && member.id === 'any') return false
-    return canStaffPerformService(member, serviceCategory)
+    
+    // Check if this is a database staff object or StaffMember interface
+    if ('work_days' in member) {
+      // Database staff object
+      return canDatabaseStaffPerformService(member, serviceCategory)
+    } else {
+      // StaffMember interface object
+      return canStaffPerformService(member, serviceCategory)
+    }
   })
   
   // Further filter by date availability if date is selected
   const staffWithAvailability = availableStaff.map(member => {
     const dateString = selectedDate ? selectedDate.toISOString().split('T')[0] : ''
-    const isAvailable = selectedDate ? isStaffAvailableOnDate(member, dateString) : true
+    let isAvailable = true
+    
+    if (selectedDate) {
+      // Check if this is a database staff object or StaffMember interface
+      if ('work_days' in member) {
+        // Database staff object
+        isAvailable = isDatabaseStaffAvailableOnDate(member, dateString)
+      } else {
+        // StaffMember interface object
+        isAvailable = isStaffAvailableOnDate(member, dateString)
+      }
+    }
+    
     return {
       ...member,
       isAvailable,
@@ -210,7 +230,7 @@ export default function StaffSelector({
                 )}
                 
                 <div className="flex flex-wrap gap-1">
-                  {member.capabilities.map((serviceType, index) => (
+                  {(member.capabilities || []).map((serviceType, index) => (
                     <Badge 
                       key={index}
                       variant="outline" 
@@ -228,7 +248,11 @@ export default function StaffSelector({
 
               {/* Staff specialization info */}
               <div className="text-xs text-gray-500">
-                {service && canStaffPerformService(member, serviceCategory) 
+                {service && (
+                  ('work_days' in member) 
+                    ? canDatabaseStaffPerformService(member, serviceCategory)
+                    : canStaffPerformService(member, serviceCategory)
+                )
                   ? `Qualified for ${serviceCategory.replace('_', ' ')} services`
                   : member.specialties
                 }

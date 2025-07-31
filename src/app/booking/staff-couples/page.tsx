@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { supabaseClient } from '@/lib/supabase'
 import { Database } from '@/types/database'
+import { getServiceCategory, canDatabaseStaffPerformService, isDatabaseStaffAvailableOnDate } from '@/lib/staff-data'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -32,19 +33,12 @@ export default function CouplesStaffPage() {
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [availableStaff, setAvailableStaff] = useState<Staff[]>([])
+  const [primaryServiceStaff, setPrimaryServiceStaff] = useState<Staff[]>([])
+  const [secondaryServiceStaff, setSecondaryServiceStaff] = useState<Staff[]>([])
   const [loadingStaff, setLoadingStaff] = useState<boolean>(true)
   const [staffMap, setStaffMap] = useState<Record<string, string>>({})
 
-  const getServiceCategory = (serviceName: string): string => {
-    const name = serviceName.toLowerCase()
-    if (name.includes('facial')) return 'facials'
-    if (name.includes('massage')) return 'massages'
-    if (name.includes('waxing') || name.includes('wax')) return 'waxing'
-    if (name.includes('treatment') || name.includes('cleaning') || name.includes('scrub')) return 'body_treatments'
-    if (name.includes('package')) return 'packages'
-    if (name.includes('vip') || name.includes('membership')) return 'membership'
-    return 'other'
-  }
+  // Remove duplicate function - using imported one from staff-data.ts
 
   useEffect(() => {
     // Get data from localStorage
@@ -67,143 +61,107 @@ export default function CouplesStaffPage() {
     
     setLoadingStaff(true)
     try {
-      // Get services from database to get correct service IDs
-      const services = await supabaseClient.getServices()
+      console.log('=== COUPLES BOOKING STAFF FILTERING DEBUG ===')
+      console.log('Primary Service:', bookingData.primaryService.name)
+      console.log('Secondary Service:', bookingData.secondaryService?.name)
+      console.log('Selected Date:', selectedDate)
+      console.log('Selected Time:', selectedTime)
       
-      const primaryService = services.find(s => 
-        s.name.toLowerCase() === bookingData.primaryService.name.toLowerCase()
-      )
+      // Get all staff first
+      const allStaff = await supabaseClient.getStaff()
+      console.log('All staff fetched:', allStaff.map(s => ({ name: s.name, capabilities: s.capabilities })))
       
-      const secondaryService = bookingData.secondaryService 
-        ? services.find(s => 
-            s.name.toLowerCase() === bookingData.secondaryService!.name.toLowerCase()
-          )
+      // Get service categories
+      const primaryServiceCategory = getServiceCategory(bookingData.primaryService.name)
+      const secondaryServiceCategory = bookingData.secondaryService 
+        ? getServiceCategory(bookingData.secondaryService.name) 
         : null
       
-      if (!primaryService) {
-        // Primary service not found in database - use fallback approach
-        // Fallback: Show all active staff who work on this day
-        const allStaff = await supabaseClient.getStaff()
-        const date = new Date(selectedDate)
-        const dayOfWeek = date.getDay()
+      console.log('Primary service category:', primaryServiceCategory)
+      console.log('Secondary service category:', secondaryServiceCategory)
+      
+      // Filter staff for primary service (Person 1)
+      const primaryServiceCapableStaff = allStaff.filter(staff => {
+        if (!staff.is_active || staff.id === 'any') return false
         
-        const availableStaffMembers = allStaff.filter(staff => {
-          return staff.is_active && 
-                 staff.work_days && 
-                 Array.isArray(staff.work_days) && 
-                 staff.work_days.includes(dayOfWeek) && 
-                 staff.id !== 'any'
+        const hasCapability = canDatabaseStaffPerformService(staff, primaryServiceCategory)
+        const worksOnDay = isDatabaseStaffAvailableOnDate(staff, selectedDate)
+        
+        console.log(`Primary Service - Staff ${staff.name}: capability=${hasCapability}, worksOnDay=${worksOnDay}, category=${primaryServiceCategory}, staffCapabilities=${JSON.stringify(staff.capabilities)}`)
+        
+        return hasCapability && worksOnDay
+      })
+      
+      console.log('Staff available for primary service:', primaryServiceCapableStaff.map(s => s.name))
+      setPrimaryServiceStaff(primaryServiceCapableStaff)
+      
+      // Filter staff for secondary service (Person 2) if it exists
+      let secondaryServiceCapableStaff: Staff[] = []
+      if (bookingData.secondaryService && secondaryServiceCategory) {
+        secondaryServiceCapableStaff = allStaff.filter(staff => {
+          if (!staff.is_active || staff.id === 'any') return false
+          
+          const hasCapability = canDatabaseStaffPerformService(staff, secondaryServiceCategory)
+          const worksOnDay = isDatabaseStaffAvailableOnDate(staff, selectedDate)
+          
+          console.log(`Secondary Service - Staff ${staff.name}: capability=${hasCapability}, worksOnDay=${worksOnDay}, category=${secondaryServiceCategory}, staffCapabilities=${JSON.stringify(staff.capabilities)}`)
+          
+          return hasCapability && worksOnDay
         })
         
-        setAvailableStaff(availableStaffMembers)
-        
-        // Create staff name map
-        const nameMap: Record<string, string> = { 'any': 'Any Available Staff' }
-        allStaff.forEach(staff => {
-          nameMap[staff.id] = staff.name
-        })
-        setStaffMap(nameMap)
-        setLoadingStaff(false)
-        return
-      }
-      
-      const date = new Date(selectedDate)
-      const dateString = date.toISOString().split('T')[0]
-      
-      // Get available time slots for primary service
-      const primarySlots = await supabaseClient.getAvailableTimeSlots(
-        dateString,
-        primaryService.id
-      )
-      
-      // Filter for the selected time and get staff IDs
-      const primaryStaffIds = primarySlots
-        .filter((slot: any) => slot.available_time === selectedTime)
-        .map((slot: any) => slot.available_staff_id)
-      
-      let allAvailableStaffIds = [...primaryStaffIds]
-      
-      // If there's a secondary service, get its available staff too
-      if (secondaryService) {
-        const secondarySlots = await supabaseClient.getAvailableTimeSlots(
-          dateString,
-          secondaryService.id
-        )
-        
-        const secondaryStaffIds = secondarySlots
-          .filter((slot: any) => slot.available_time === selectedTime)
-          .map((slot: any) => slot.available_staff_id)
-        
-        // Combine staff IDs (union for couples booking - staff can do either service)
-        const combinedIds = [...primaryStaffIds, ...secondaryStaffIds]
-        allAvailableStaffIds = Array.from(new Set(combinedIds))
-      }
-      
-      // Get unique staff IDs
-      const uniqueStaffIds = Array.from(new Set(allAvailableStaffIds))
-      
-      if (uniqueStaffIds.length > 0) {
-        const staffDetails = await supabaseClient.getStaff()
-        const availableStaffDetails = staffDetails.filter(staff => 
-          uniqueStaffIds.includes(staff.id) && staff.id !== 'any'
-        )
-        setAvailableStaff(availableStaffDetails)
+        console.log('Staff available for secondary service:', secondaryServiceCapableStaff.map(s => s.name))
+        setSecondaryServiceStaff(secondaryServiceCapableStaff)
       } else {
-        // Fallback: Show all active staff who work on this day
-        const allStaff = await supabaseClient.getStaff()
-        const date = new Date(selectedDate)
-        const dayOfWeek = date.getDay()
-        
-        const availableStaffMembers = allStaff.filter(staff => {
-          // Check if staff works on this day, has work_days property, and exclude 'any'
-          return staff.is_active && 
-                 staff.work_days && 
-                 Array.isArray(staff.work_days) && 
-                 staff.work_days.includes(dayOfWeek) && 
-                 staff.id !== 'any'
-        })
-        
-        setAvailableStaff(availableStaffMembers)
+        // If no secondary service (same service for both), use primary service staff
+        secondaryServiceCapableStaff = primaryServiceCapableStaff
+        setSecondaryServiceStaff(primaryServiceCapableStaff)
       }
+      
+      // For backwards compatibility, set availableStaff to union of both (used for single booking fallback)
+      const combinedStaff = [...primaryServiceCapableStaff, ...secondaryServiceCapableStaff]
+      const uniqueStaff = Array.from(new Map(combinedStaff.map(staff => [staff.id, staff])).values())
+      setAvailableStaff(uniqueStaff)
       
       // Create staff name map
-      const allStaff = await supabaseClient.getStaff()
       const nameMap: Record<string, string> = { 'any': 'Any Available Staff' }
       allStaff.forEach(staff => {
         nameMap[staff.id] = staff.name
       })
       setStaffMap(nameMap)
       
+      console.log('=== END COUPLES BOOKING STAFF FILTERING DEBUG ===')
+      
     } catch (error) {
-      // Error fetching available staff - using fallback
-      // Final fallback - show all active staff
+      console.error('Error fetching available staff:', error)
+      // Final fallback - show all active staff who work on this day
       try {
         const allStaff = await supabaseClient.getStaff()
-        const date = new Date(selectedDate)
-        const dayOfWeek = date.getDay()
         
         const availableStaffMembers = allStaff.filter(staff => {
           return staff.is_active && 
-                 staff.work_days && 
-                 Array.isArray(staff.work_days) && 
-                 staff.work_days.includes(dayOfWeek) && 
+                 isDatabaseStaffAvailableOnDate(staff, selectedDate) && 
                  staff.id !== 'any'
         })
         
         setAvailableStaff(availableStaffMembers)
+        setPrimaryServiceStaff(availableStaffMembers)
+        setSecondaryServiceStaff(availableStaffMembers)
         
         const nameMap: Record<string, string> = { 'any': 'Any Available Staff' }
         allStaff.forEach(staff => {
           nameMap[staff.id] = staff.name
         })
         setStaffMap(nameMap)
-                      } catch (fallbackError) {
-          setAvailableStaff([])
-        }
-      } finally {
-        setLoadingStaff(false)
+      } catch (fallbackError) {
+        console.error('Fallback failed:', fallbackError)
+        setAvailableStaff([])
+        setPrimaryServiceStaff([])
+        setSecondaryServiceStaff([])
       }
-    }, [bookingData, selectedDate, selectedTime])
+    } finally {
+      setLoadingStaff(false)
+    }
+  }, [bookingData, selectedDate, selectedTime])
 
   // Separate useEffect to fetch staff when all data is available
   useEffect(() => {
@@ -361,7 +319,7 @@ export default function CouplesStaffPage() {
                 Checking staff availability...
               </div>
             </div>
-          ) : availableStaff.length === 0 ? (
+          ) : (primaryServiceStaff.length === 0 && secondaryServiceStaff.length === 0) ? (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
@@ -377,25 +335,34 @@ export default function CouplesStaffPage() {
                     <h3 className="text-lg font-medium text-primary-dark mb-3">
                       Staff for Person 1 ({bookingData.primaryService.name})
                     </h3>
-                    <div className="space-y-3">
-                      <StaffCard
-                        member={{
-                          id: 'any',
-                          name: 'Any Available Staff',
-                          capabilities: ['facials', 'massages', 'treatments', 'waxing', 'packages', 'special']
-                        }}
-                        isSelected={primaryStaff === 'any'}
-                        onSelect={setPrimaryStaff}
-                      />
-                      {availableStaff.map((member) => (
+                    {primaryServiceStaff.length === 0 ? (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          No staff available for {bookingData.primaryService.name} at this time.
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <div className="space-y-3">
                         <StaffCard
-                          key={member.id}
-                          member={member}
-                          isSelected={primaryStaff === member.id}
+                          member={{
+                            id: 'any',
+                            name: 'Any Available Staff',
+                            capabilities: ['facials', 'massages', 'treatments', 'waxing', 'packages', 'special']
+                          }}
+                          isSelected={primaryStaff === 'any'}
                           onSelect={setPrimaryStaff}
                         />
-                      ))}
-                    </div>
+                        {primaryServiceStaff.map((member) => (
+                          <StaffCard
+                            key={member.id}
+                            member={member}
+                            isSelected={primaryStaff === member.id}
+                            onSelect={setPrimaryStaff}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Person 2 Staff Selection */}
@@ -410,28 +377,37 @@ export default function CouplesStaffPage() {
                         </AlertDescription>
                       </Alert>
                     )}
-                    <div className="space-y-3">
-                      <StaffCard
-                        member={{
-                          id: 'any',
-                          name: 'Any Available Staff',
-                          capabilities: ['facials', 'massages', 'treatments', 'waxing', 'packages', 'special']
-                        }}
-                        isSelected={secondaryStaff === 'any'}
-                        onSelect={setSecondaryStaff}
-                        label={primaryStaff === 'any' ? undefined : 'Different from Person 1'}
-                      />
-                      {availableStaff
-                        .filter(member => member.id !== primaryStaff || primaryStaff === 'any')
-                        .map((member) => (
-                          <StaffCard
-                            key={member.id}
-                            member={member}
-                            isSelected={secondaryStaff === member.id}
-                            onSelect={setSecondaryStaff}
-                          />
-                        ))}
-                    </div>
+                    {secondaryServiceStaff.length === 0 ? (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          No staff available for {bookingData.secondaryService?.name || bookingData.primaryService.name} at this time.
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <div className="space-y-3">
+                        <StaffCard
+                          member={{
+                            id: 'any',
+                            name: 'Any Available Staff',
+                            capabilities: ['facials', 'massages', 'treatments', 'waxing', 'packages', 'special']
+                          }}
+                          isSelected={secondaryStaff === 'any'}
+                          onSelect={setSecondaryStaff}
+                          label={primaryStaff === 'any' ? undefined : 'Different from Person 1'}
+                        />
+                        {secondaryServiceStaff
+                          .filter(member => member.id !== primaryStaff || primaryStaff === 'any')
+                          .map((member) => (
+                            <StaffCard
+                              key={member.id}
+                              member={member}
+                              isSelected={secondaryStaff === member.id}
+                              onSelect={setSecondaryStaff}
+                            />
+                          ))}
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
