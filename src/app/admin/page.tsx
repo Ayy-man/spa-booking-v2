@@ -23,7 +23,7 @@ export default function AdminDashboardPage() {
   const tabs = [
     {
       value: "schedule" as const,
-      label: "Today&apos;s Schedule",
+      label: "Today's Schedule",
       description: "View all appointments for today"
     },
     {
