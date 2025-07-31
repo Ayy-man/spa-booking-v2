@@ -156,7 +156,7 @@ export function TodaysSchedule({
       <div className="flex justify-between items-center">
         <div>
           <h1 className={cn("font-bold text-gray-900", getHeaderSize())}>
-            {viewDate === 'today' ? "Today's Schedule" : "Tomorrow's Schedule"}
+            {viewDate === 'today' ? "Today&apos;s Schedule" : "Tomorrow&apos;s Schedule"}
           </h1>
           <p className={cn(
             "text-gray-600",
