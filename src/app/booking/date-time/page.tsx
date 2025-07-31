@@ -78,6 +78,28 @@ export default function DateTimePage() {
     }
   }, [loadingService])
 
+  const generateFallbackTimes = useCallback(() => {
+    const times = []
+    for (let hour = 9; hour <= 19; hour++) {
+      const time = `${hour.toString().padStart(2, '0')}:00`
+      
+      // Check if this time allows enough duration before closing
+      const serviceDuration = selectedService?.duration || 60
+      const endTime = new Date(selectedDate!)
+      endTime.setHours(hour, 0, 0, 0)
+      endTime.setMinutes(endTime.getMinutes() + serviceDuration)
+      const closingTime = new Date(selectedDate!)
+      closingTime.setHours(19, 0, 0, 0)
+      
+      if (endTime <= closingTime) {
+        times.push(time)
+      }
+    }
+    
+    setAvailableTimes(times)
+    setLoadingTimes(false)
+  }, [selectedDate, selectedService])
+
   const fetchAvailableTimeSlotsFromSupabase = useCallback(async () => {
     if (!selectedDate || !selectedService) return
     
@@ -118,28 +140,6 @@ export default function DateTimePage() {
       setLoadingTimes(false)
     }
   }, [selectedDate, selectedService, generateFallbackTimes])
-
-  const generateFallbackTimes = useCallback(() => {
-    const times = []
-    for (let hour = 9; hour <= 19; hour++) {
-      const time = `${hour.toString().padStart(2, '0')}:00`
-      
-      // Check if this time allows enough duration before closing
-      const serviceDuration = selectedService?.duration || 60
-      const endTime = new Date(selectedDate!)
-      endTime.setHours(hour, 0, 0, 0)
-      endTime.setMinutes(endTime.getMinutes() + serviceDuration)
-      const closingTime = new Date(selectedDate!)
-      closingTime.setHours(19, 0, 0, 0)
-      
-      if (endTime <= closingTime) {
-        times.push(time)
-      }
-    }
-    
-    setAvailableTimes(times)
-    setLoadingTimes(false)
-  }, [selectedDate, selectedService])
 
   // Generate available times based on selected date using Supabase
   useEffect(() => {
