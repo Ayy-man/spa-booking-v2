@@ -214,6 +214,22 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
     return `${String(roundedHours).padStart(2, "0")}:${String(finalMinutes).padStart(2, "0")}`
   }
 
+  const generateTimeOptions = () => {
+    const times = []
+    for (let hour = 9; hour <= 19; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
+        const displayTime = new Date(`2000-01-01T${timeStr}`).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        })
+        times.push({ value: timeStr, label: displayTime })
+      }
+    }
+    return times
+  }
+
   const validateWalkInData = () => {
     if (!walkInData.customerName.trim()) return "Customer name is required"
     if (!walkInData.customerPhone.trim()) return "Customer phone is required"
@@ -281,19 +297,19 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
 
   // Render general quick actions
   const renderGeneralActions = () => (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-3">
       <Button
-        size="sm"
+        size="lg"
         onClick={() => setActiveAction("walk_in")}
-        className="bg-blue-600 text-white hover:bg-blue-700"
+        className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 text-base font-medium"
       >
         Add Walk-in
       </Button>
       <Button
-        size="sm"
+        size="lg"
         variant="outline"
         onClick={() => setActiveAction("block_time")}
-        className="border-gray-300 text-gray-600 hover:bg-gray-50"
+        className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 text-base font-medium"
       >
         Block Time
       </Button>
@@ -569,22 +585,40 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
                   />
                 </div>
                 <div>
-                  <Label htmlFor="block-start">Start Time *</Label>
-                  <Input
-                    id="block-start"
-                    type="time"
+                  <Label>Start Time *</Label>
+                  <Select
                     value={blockData.startTime}
-                    onChange={(e) => setBlockData(prev => ({ ...prev, startTime: e.target.value }))}
-                  />
+                    onValueChange={(value) => setBlockData(prev => ({ ...prev, startTime: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select start time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {generateTimeOptions().map((time) => (
+                        <SelectItem key={time.value} value={time.value}>
+                          {time.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
-                  <Label htmlFor="block-end">End Time *</Label>
-                  <Input
-                    id="block-end"
-                    type="time"
+                  <Label>End Time *</Label>
+                  <Select
                     value={blockData.endTime}
-                    onChange={(e) => setBlockData(prev => ({ ...prev, endTime: e.target.value }))}
-                  />
+                    onValueChange={(value) => setBlockData(prev => ({ ...prev, endTime: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select end time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {generateTimeOptions().map((time) => (
+                        <SelectItem key={time.value} value={time.value}>
+                          {time.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

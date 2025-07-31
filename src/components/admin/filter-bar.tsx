@@ -109,24 +109,39 @@ export function FilterBar({
           </Select>
         </div>
 
-        {/* Staff Filter */}
+        {/* Staff Filter - Button Layout */}
         <div className="flex-1 min-w-0">
-          <Select
-            value={selectedStaff || ""}
-            onValueChange={(value) => onStaffFilter(value === "all" ? null : value)}
-          >
-            <SelectTrigger className={getSelectClasses()}>
-              <SelectValue placeholder="Filter by Staff" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Staff</SelectItem>
-              {staff.map((member) => (
-                <SelectItem key={member.id} value={member.id}>
-                  {member.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={selectedStaff === null ? "default" : "outline"}
+              size="sm"
+              onClick={() => onStaffFilter(null)}
+              className={cn(
+                "transition-colors",
+                selectedStaff === null 
+                  ? "bg-primary text-white" 
+                  : "hover:bg-gray-50"
+              )}
+            >
+              All Staff
+            </Button>
+            {staff.filter(member => member.id !== 'any').map((member) => (
+              <Button
+                key={member.id}
+                variant={selectedStaff === member.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => onStaffFilter(member.id)}
+                className={cn(
+                  "transition-colors",
+                  selectedStaff === member.id 
+                    ? "bg-primary text-white" 
+                    : "hover:bg-gray-50"
+                )}
+              >
+                {member.name.split(' ')[0]} {/* Show first name only for space */}
+              </Button>
+            ))}
+          </div>
         </div>
 
         {/* Status Filter */}

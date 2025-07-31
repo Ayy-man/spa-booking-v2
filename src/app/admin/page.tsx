@@ -5,7 +5,6 @@ import { useState } from "react"
 import { TodaysSchedule } from "@/components/admin/todays-schedule"
 import { RoomTimeline } from "@/components/admin/room-timeline"
 import { StaffSchedule } from "@/components/admin/staff-schedule"
-import { ServiceTracking } from "@/components/admin/service-tracking"
 import { 
   Tabs, 
   TabsList, 
@@ -16,7 +15,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-type TabValue = "schedule" | "timeline" | "staff" | "analytics" | "settings"
+type TabValue = "schedule" | "timeline" | "staff" | "settings"
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabValue>("schedule")
@@ -36,11 +35,6 @@ export default function AdminDashboardPage() {
       value: "staff" as const,
       label: "Staff Schedule",
       description: "Staff availability and assignments"
-    },
-    {
-      value: "analytics" as const,
-      label: "Analytics",
-      description: "Performance metrics and insights"
     },
     {
       value: "settings" as const,
@@ -68,15 +62,17 @@ export default function AdminDashboardPage() {
               All Bookings
             </Button>
           </Link>
-          <Button className="bg-black text-white hover:bg-gray-900">
-            Monitor Mode
-          </Button>
+          <Link href="/admin/monitor">
+            <Button className="bg-black text-white hover:bg-gray-900">
+              Monitor Mode
+            </Button>
+          </Link>
         </div>
       </div>
 
       {/* Tab Navigation */}
       <Tabs className="w-full">
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex h-auto p-1">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex h-auto p-1">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -108,9 +104,6 @@ export default function AdminDashboardPage() {
             <StaffSchedule />
           </TabsContent>
 
-          <TabsContent value="analytics" activeValue={activeTab}>
-            <ServiceTracking />
-          </TabsContent>
 
           <TabsContent value="settings" activeValue={activeTab}>
             <Card className="p-8 text-center">

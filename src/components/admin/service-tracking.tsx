@@ -15,9 +15,7 @@ import {
   getRealTimeMetrics,
   getDailyServiceAnalytics,
   getServiceMetrics,
-  getStaffMetrics,
-  formatCurrency,
-  formatPercentage
+  getStaffMetrics
 } from "@/lib/analytics"
 
 interface ServiceTrackingProps {
@@ -120,8 +118,8 @@ export function ServiceTracking({ className }: ServiceTrackingProps) {
       {/* Header with Controls */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Service Tracking</h2>
-          <p className="text-gray-600">Real-time metrics and performance insights</p>
+          <h2 className="text-2xl font-bold text-gray-900">Operational Metrics</h2>
+          <p className="text-gray-600">Real-time operational insights and booking statistics</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button
@@ -165,12 +163,12 @@ export function ServiceTracking({ className }: ServiceTrackingProps) {
           <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 border-green-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-700">Today's Revenue</p>
-                <p className="text-2xl font-bold text-green-900">{formatCurrency(realTimeMetrics.todayRevenue)}</p>
+                <p className="text-sm font-medium text-green-700">Completed Today</p>
+                <p className="text-2xl font-bold text-green-900">{realTimeMetrics.completedBookings}</p>
               </div>
               <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
             </div>
@@ -239,7 +237,7 @@ export function ServiceTracking({ className }: ServiceTrackingProps) {
                 </div>
                 <div className="text-right">
                   <p className="font-semibold text-gray-900">{service.count} bookings</p>
-                  <p className="text-sm text-gray-600">{formatCurrency(service.revenue)}</p>
+                  <p className="text-sm text-gray-600">Past 7 days</p>
                 </div>
               </div>
             ))}
@@ -273,14 +271,10 @@ export function ServiceTracking({ className }: ServiceTrackingProps) {
                   )}
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="text-gray-500">Revenue</p>
-                    <p className="font-medium">{formatCurrency(staff.totalRevenue)}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Avg. Booking</p>
-                    <p className="font-medium">{formatCurrency(staff.averageBookingValue)}</p>
+                    <p className="text-gray-500">Utilization</p>
+                    <p className="font-medium">{Math.round(staff.utilizationRate)}%</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Top Services</p>
@@ -297,18 +291,14 @@ export function ServiceTracking({ className }: ServiceTrackingProps) {
       {serviceMetrics && (
         <Card className="p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Overview</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="text-center">
               <p className="text-3xl font-bold text-primary">{serviceMetrics.totalBookings}</p>
               <p className="text-sm text-gray-600">Total Bookings</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-green-600">{formatCurrency(serviceMetrics.totalRevenue)}</p>
-              <p className="text-sm text-gray-600">Total Revenue</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-blue-600">{formatCurrency(serviceMetrics.averagePrice)}</p>
-              <p className="text-sm text-gray-600">Average Booking</p>
+              <p className="text-3xl font-bold text-blue-600">{Math.round(serviceMetrics.totalBookings / 7)}</p>
+              <p className="text-sm text-gray-600">Average Daily Bookings</p>
             </div>
           </div>
         </Card>

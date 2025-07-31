@@ -27,6 +27,7 @@ export function TodaysSchedule({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [viewDate, setViewDate] = useState<'today' | 'tomorrow'>('today')
   
   // Filter states
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
@@ -45,7 +46,7 @@ export function TodaysSchedule({
       
       return () => clearInterval(interval)
     }
-  }, [displayMode])
+  }, [displayMode, viewDate])
 
   useEffect(() => {
     applyFilters()
@@ -53,7 +54,11 @@ export function TodaysSchedule({
 
   const fetchTodaysSchedule = async () => {
     try {
-      const today = new Date().toISOString().split('T')[0]
+      const today = new Date()
+      if (viewDate === 'tomorrow') {
+        today.setDate(today.getDate() + 1)
+      }
+      const dateString = today.toISOString().split('T')[0]
       
       const { data, error } = await supabase
         .from('bookings')
@@ -63,7 +68,7 @@ export function TodaysSchedule({
           staff:staff(*),
           room:rooms(*)
         `)
-        .eq('appointment_date', today)
+        .eq('appointment_date', dateString)
         .neq('status', 'cancelled')
         .order('start_time', { ascending: true })
 
@@ -151,18 +156,24 @@ export function TodaysSchedule({
       <div className="flex justify-between items-center">
         <div>
           <h1 className={cn("font-bold text-gray-900", getHeaderSize())}>
-            Today&apos;s Schedule
+            {viewDate === 'today' ? "Today's Schedule" : "Tomorrow's Schedule"}
           </h1>
           <p className={cn(
             "text-gray-600",
             displayMode === "monitor" ? "text-lg" : "text-base"
           )}>
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
+            {(() => {
+              const date = new Date()
+              if (viewDate === 'tomorrow') {
+                date.setDate(date.getDate() + 1)
+              }
+              return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })
+            })()}
           </p>
           <p className={cn(
             "text-gray-500",
@@ -173,13 +184,41 @@ export function TodaysSchedule({
         </div>
         
         {displayMode === "dashboard" && (
-          <Button
-            onClick={fetchTodaysSchedule}
-            disabled={loading}
-            className="bg-black text-white hover:bg-gray-900"
-          >
-            {loading ? 'Refreshing...' : 'Refresh'}
-          </Button>
+          <div className="flex items-center space-x-3">
+            {/* Date Toggle */}
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewDate('today')}
+                className={cn(
+                  "px-3 py-1 text-sm font-medium rounded transition-colors",
+                  viewDate === 'today' 
+                    ? "bg-white text-gray-900 shadow-sm" 
+                    : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setViewDate('tomorrow')}
+                className={cn(
+                  "px-3 py-1 text-sm font-medium rounded transition-colors",
+                  viewDate === 'tomorrow' 
+                    ? "bg-white text-gray-900 shadow-sm" 
+                    : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                Tomorrow
+              </button>
+            </div>
+            
+            <Button
+              onClick={fetchTodaysSchedule}
+              disabled={loading}
+              className="bg-black text-white hover:bg-gray-900"
+            >
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </Button>
+          </div>
         )}
       </div>
 

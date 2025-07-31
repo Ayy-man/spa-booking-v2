@@ -46,14 +46,22 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
   }, [selectedStaff, currentDate, viewMode])
 
   const fetchActiveStaff = async () => {
-    const result = await getAllActiveStaff()
-    if (result.success && result.data) {
-      setStaff(result.data)
-      if (result.data.length > 0) {
-        setSelectedStaff(result.data[0].id)
+    try {
+      const result = await getAllActiveStaff()
+      if (result.success && result.data) {
+        // Filter out "any" staff member for individual staff schedules
+        const realStaff = result.data.filter(member => member.id !== 'any')
+        setStaff(realStaff)
+        if (realStaff.length > 0 && !selectedStaff) {
+          setSelectedStaff(realStaff[0].id)
+        }
+      } else if (result.error) {
+        setError(result.error)
       }
-    } else if (result.error) {
-      setError(result.error)
+    } catch (err: any) {
+      setError(`Failed to load staff: ${err.message}`)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -468,13 +476,16 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
         {!selectedStaff ? (
           <Card className="p-8 text-center">
             <div className="space-y-4">
-              <div className="text-4xl">👥</div>
+              <div className="text-4xl">{loading ? "⏳" : "👥"}</div>
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Select a Staff Member
+                  {loading ? "Loading Staff..." : "Select a Staff Member"}
                 </h3>
                 <p className="text-gray-600">
-                  Choose a staff member from the dropdown to view their schedule.
+                  {loading 
+                    ? "Loading available staff members..." 
+                    : "Choose a staff member from the dropdown to view their schedule."
+                  }
                 </p>
               </div>
             </div>

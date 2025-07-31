@@ -74,7 +74,7 @@ export const supabaseClient = {
       .from('rooms')
       .select('*')
       .eq('is_active', true)
-      .order('room_number', { ascending: true })
+      .order('id', { ascending: true })
     
     if (error) throw error
     return data
@@ -216,11 +216,11 @@ export const supabaseClient = {
         staff:staff(*),
         room:rooms(*)
       `)
-      .order('booking_date', { ascending: true })
+      .order('appointment_date', { ascending: true })
       .order('start_time', { ascending: true })
 
     if (date) {
-      query = query.eq('booking_date', date)
+      query = query.eq('appointment_date', date)
     }
 
     const { data, error } = await query
@@ -238,7 +238,7 @@ export const supabaseClient = {
         room:rooms(*)
       `)
       .eq('customer_email', email)
-      .order('booking_date', { ascending: false })
+      .order('appointment_date', { ascending: false })
       .order('start_time', { ascending: false })
 
     if (error) throw error
