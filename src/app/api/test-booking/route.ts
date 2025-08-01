@@ -7,7 +7,7 @@ export async function POST() {
     const testBooking = {
       service_id: 'basic_facial',
       staff_id: 'robyn',
-      room_id: 1,
+      room_id: '11111111-1111-1111-1111-111111111111',
       customer_name: 'Test Customer',
       customer_email: 'test@example.com',
       customer_phone: '555-1234',

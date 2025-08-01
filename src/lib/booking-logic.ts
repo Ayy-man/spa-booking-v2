@@ -503,7 +503,7 @@ export function getOptimalRoom(
   // Rule 1: Body scrub services MUST use Room 3 (only room with body scrub equipment)
   if (service.requires_room_3 || service.category === 'body_scrub') {
     const bodyScrubRoom = availableRooms.find(room => 
-      room.id === 3 && room.is_active
+      room.id === '33333333-3333-3333-3333-333333333333' && room.is_active
     )
     
     if (bodyScrubRoom) {
@@ -544,7 +544,7 @@ export function getOptimalRoom(
     
     // Try Room 3 first (premium room with body scrub equipment)
     const room3 = availableRooms.find(room => 
-      room.capacity >= 2 && room.id === 3 && room.is_active
+      room.capacity >= 2 && room.id === '33333333-3333-3333-3333-333333333333' && room.is_active
     )
     if (room3) {
       return { 
@@ -556,7 +556,7 @@ export function getOptimalRoom(
     
     // Try Room 2 (standard couples room)
     const room2 = availableRooms.find(room => 
-      room.capacity >= 2 && room.id === 2 && room.is_active
+      room.capacity >= 2 && room.id === '22222222-2222-2222-2222-222222222222' && room.is_active
     )
     if (room2) {
       return { 
@@ -877,7 +877,7 @@ export function getRoomUtilizationInfo(room: Room): {
   const specialFeatures: string[] = []
   const suitableFor: string[] = []
   
-  if (room.id === 3) {
+  if (room.id === '33333333-3333-3333-3333-333333333333') {
     specialFeatures.push('Body Scrub Equipment')
     suitableFor.push('Body scrub services (exclusive)')
   }

@@ -8,6 +8,7 @@ export interface StaffMember {
   capabilities: string[]
   work_days: number[]  // 0=Sunday, 1=Monday, etc. to match database schema
   default_room_id: string | null  // Match database field name
+  defaultRoom?: number  // Room number for display (computed from default_room_id)
   available?: boolean
 }
 
@@ -22,7 +23,8 @@ export const staffMembers: StaffMember[] = [
     initials: 'AA',
     capabilities: ['facials', 'waxing', 'treatments', 'massages'],
     work_days: [0, 1, 2, 3, 4, 5, 6], // All days (0=Sunday, 6=Saturday)
-    default_room_id: null
+    default_room_id: null,
+    defaultRoom: undefined
   },
   {
     id: 'selma',
@@ -33,7 +35,8 @@ export const staffMembers: StaffMember[] = [
     initials: 'SV',
     capabilities: ['facials'],
     work_days: [1, 3, 5, 6, 0], // Mon, Wed, Fri, Sat, Sun
-    default_room_id: '11111111-1111-1111-1111-111111111111'
+    default_room_id: '11111111-1111-1111-1111-111111111111',
+    defaultRoom: 1
   },
   {
     id: 'robyn',
@@ -44,7 +47,8 @@ export const staffMembers: StaffMember[] = [
     initials: 'RC',
     capabilities: ['facials', 'waxing', 'treatments', 'massages'],
     work_days: [0, 1, 2, 3, 4, 5, 6], // Full schedule (all days)
-    default_room_id: '33333333-3333-3333-3333-333333333333'
+    default_room_id: '33333333-3333-3333-3333-333333333333',
+    defaultRoom: 3
   },
   {
     id: 'tanisha',
@@ -55,7 +59,8 @@ export const staffMembers: StaffMember[] = [
     initials: 'TH',
     capabilities: ['facials', 'waxing'],
     work_days: [1, 3, 5, 6, 0], // Mon, Wed, Fri, Sat, Sun (off Tue/Thu)
-    default_room_id: '22222222-2222-2222-2222-222222222222'
+    default_room_id: '22222222-2222-2222-2222-222222222222',
+    defaultRoom: 2
   },
   {
     id: 'leonel',
@@ -66,7 +71,8 @@ export const staffMembers: StaffMember[] = [
     initials: 'LS',
     capabilities: ['massages', 'treatments'],
     work_days: [0], // Sunday only
-    default_room_id: null
+    default_room_id: null,
+    defaultRoom: undefined
   }
 ]
 

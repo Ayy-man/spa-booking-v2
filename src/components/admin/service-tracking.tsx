@@ -7,16 +7,68 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-import { 
-  RealTimeMetrics,
-  DailyServiceAnalytics,
-  ServiceMetrics,
-  StaffMetrics,
-  getRealTimeMetrics,
-  getDailyServiceAnalytics,
-  getServiceMetrics,
-  getStaffMetrics
-} from "@/lib/analytics"
+// TODO: Implement proper analytics types and functions
+interface RealTimeMetrics {
+  todayBookings: number
+  completedBookings: number
+  activeBookings: number
+  specialRequests: number
+  todayRevenue: number
+  avgBookingValue: number
+}
+
+interface DailyServiceAnalytics {
+  totalBookings: number
+  completedBookings: number
+  cancelledBookings: number
+  servicesByType: Record<string, number>
+}
+
+interface ServiceMetrics {
+  topServices: { name: string; count: number; category: string }[]
+  popularServices: { name: string; count: number; category: string }[]
+  totalBookings: number
+  revenue: number
+}
+
+interface StaffMetrics {
+  id: string
+  staffId: string
+  name: string
+  staffName: string
+  bookingsToday: number
+  totalBookings: number
+  specialRequests: number
+  utilizationRate: number
+  topServices: string[]
+  revenue: number
+}
+
+// TODO: Implement proper analytics functions
+const getRealTimeMetrics = async (): Promise<RealTimeMetrics> => ({
+  todayBookings: 0,
+  completedBookings: 0,
+  activeBookings: 0,
+  specialRequests: 0,
+  todayRevenue: 0,
+  avgBookingValue: 0
+})
+
+const getDailyServiceAnalytics = async (date: string): Promise<DailyServiceAnalytics> => ({
+  totalBookings: 0,
+  completedBookings: 0,
+  cancelledBookings: 0,
+  servicesByType: {}
+})
+
+const getServiceMetrics = async (startDate: string, endDate: string): Promise<ServiceMetrics> => ({
+  topServices: [],
+  popularServices: [],
+  totalBookings: 0,
+  revenue: 0
+})
+
+const getStaffMetrics = async (startDate: string, endDate: string): Promise<StaffMetrics[]> => []
 
 interface ServiceTrackingProps {
   className?: string

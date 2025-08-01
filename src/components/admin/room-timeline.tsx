@@ -629,7 +629,7 @@ export function RoomTimeline({
                             className={cn(
                               "flex-1 min-w-[200px] border-r last:border-r-0 relative transition-all duration-200",
                               // Base styling with subtle room differentiation
-                              room.id % 2 === 0 ? "bg-white" : "bg-gray-50/50",
+                              parseInt(room.name.replace('Room ', '')) % 2 === 0 ? "bg-white" : "bg-gray-50/50",
                               // Hour boundary styling
                               isHourMark && "border-t border-primary/10",
                               isNextHour && "border-b-2 border-primary/20 shadow-sm",

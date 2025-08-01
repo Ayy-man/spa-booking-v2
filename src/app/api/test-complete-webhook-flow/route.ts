@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         staff: 'Selma & Maria',
         staffId: 'staff_selma_001,staff_maria_001',
         room: 'Couples Room (Room 2)',
-        roomId: 2
+        roomId: '22222222-2222-2222-2222-222222222222'
       }
     )
     
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
         staff: 'Maria',
         staffId: 'staff_maria_001',
         room: 'Room 3',
-        roomId: 3
+        roomId: '33333333-3333-3333-3333-333333333333'
       }
     )
     
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
         staff: 'Maria',
         staffId: 'staff_maria_001',
         room: 'Room 3',
-        roomId: 3
+        roomId: '33333333-3333-3333-3333-333333333333'
       },
       {
         oldStatus: 'confirmed',
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
         staff: 'Selma & Maria',
         staffId: 'staff_selma_001,staff_maria_001',
         room: 'Couples Room (Room 2)',
-        roomId: 2
+        roomId: '22222222-2222-2222-2222-222222222222'
       },
       {
         oldStatus: 'confirmed',
@@ -188,7 +188,7 @@ export async function GET(request: NextRequest) {
         staff: 'Selma',
         staffId: 'staff_selma_001',
         room: 'Room 1',
-        roomId: 1
+        roomId: '11111111-1111-1111-1111-111111111111'
       }
     )
     

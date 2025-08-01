@@ -52,7 +52,7 @@ export default function ConfirmationPage() {
     try {
 
       // First, get optimal room assignment
-      let roomId = 1; // Default fallback
+      let roomId = '11111111-1111-1111-1111-111111111111'; // Default fallback to Room 1
       try {
         const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
           bookingData.service.id,

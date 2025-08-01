@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         staff: 'Selma',
         staffId: 'staff_selma_001',
         room: 'Room 1',
-        roomId: 1
+        roomId: '11111111-1111-1111-1111-111111111111'
       }
     )
     
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
         staff: 'Selma',
         staffId: 'staff_selma_001',
         room: 'Room 1',
-        roomId: 1
+        roomId: '11111111-1111-1111-1111-111111111111'
       },
       {
         oldStatus: 'confirmed',

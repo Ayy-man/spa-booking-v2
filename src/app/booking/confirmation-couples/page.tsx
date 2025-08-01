@@ -171,8 +171,8 @@ export default function CouplesConfirmationPage() {
               price: bookingData.primaryService.price,
               staff: (staffNameMap as any)[selectedStaff] || selectedStaff,
               staffId: selectedStaff,
-              room: `Room ${processedResults[0].room_id || 1}`,
-              roomId: processedResults[0].room_id || 1
+              room: `Room ${processedResults[0].room_id || '11111111-1111-1111-1111-111111111111'}`,
+              roomId: processedResults[0].room_id || '11111111-1111-1111-1111-111111111111'
             }
           )
           
@@ -196,8 +196,8 @@ export default function CouplesConfirmationPage() {
                 price: bookingData.secondaryService.price,
                 staff: (staffNameMap as any)[secondaryStaff || selectedStaff] || secondaryStaff || selectedStaff,
                 staffId: secondaryStaff || selectedStaff,
-                room: `Room ${processedResults[1].room_id || 2}`,
-                roomId: processedResults[1].room_id || 2
+                room: `Room ${processedResults[1].room_id || '22222222-2222-2222-2222-222222222222'}`,
+                roomId: processedResults[1].room_id || '22222222-2222-2222-2222-222222222222'
               }
             )
           }
@@ -216,7 +216,7 @@ export default function CouplesConfirmationPage() {
           selectedTime
         )
         
-        const roomId = roomAssignment?.room_id || 1
+        const roomId = roomAssignment?.room_id || '11111111-1111-1111-1111-111111111111'
 
         const bookingResult = await supabaseClient.createBooking({
           service_id: primaryServiceData.id,

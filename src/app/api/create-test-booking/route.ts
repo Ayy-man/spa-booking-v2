@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       customer_phone: '+1-671-555-0123',
       service_id: 'placenta_collagen_facial',
       staff_id: 'selma_villaver',
-      room_id: 1,
+      room_id: '11111111-1111-1111-1111-111111111111',
       appointment_date: today,
       start_time: startTime,
       end_time: endTime,

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       staff: 'Sarah Johnson',
       staffId: 'staff_001',
       room: 'Treatment Room 1',
-      roomId: 1
+      roomId: '11111111-1111-1111-1111-111111111111'
     }
 
     const bookingId = 'booking_test_001'
