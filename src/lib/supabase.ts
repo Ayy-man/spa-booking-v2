@@ -111,12 +111,28 @@ export const supabaseClient = {
     // Create or find customer
     let customerId: string
     
-    // First try to find existing customer by email or phone
-    const { data: existingCustomer } = await supabase
+    // First try to find existing customer by email
+    let existingCustomer = null
+    const { data: customerByEmail } = await supabase
       .from('customers')
       .select('id')
-      .or(`email.eq.${booking.customer_email},phone.eq.${booking.customer_phone}`)
-      .single()
+      .eq('email', booking.customer_email)
+      .maybeSingle()
+
+    if (customerByEmail) {
+      existingCustomer = customerByEmail
+    } else if (booking.customer_phone) {
+      // If not found by email and phone is provided, try by phone
+      const { data: customerByPhone } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('phone', booking.customer_phone)
+        .maybeSingle()
+      
+      if (customerByPhone) {
+        existingCustomer = customerByPhone
+      }
+    }
 
     if (existingCustomer) {
       customerId = existingCustomer.id
@@ -128,15 +144,19 @@ export const supabaseClient = {
           first_name: firstName,
           last_name: lastName,
           email: booking.customer_email,
-          phone: booking.customer_phone || '',
+          phone: booking.customer_phone || null,
           marketing_consent: false,
           is_active: true
         })
         .select('id')
         .single()
 
-      if (customerError || !newCustomer) {
-        throw new Error('Failed to create customer record')
+      if (customerError) {
+        console.error('Customer creation error:', customerError)
+        throw new Error(`Failed to create customer record: ${customerError.message}`)
+      }
+      if (!newCustomer) {
+        throw new Error('Failed to create customer record: No customer data returned')
       }
       customerId = newCustomer.id
     }

@@ -109,6 +109,15 @@ BEGIN
             ) VALUES (
                 v_first_name, v_last_name, p_customer_email, p_customer_phone, false, true
             ) RETURNING id INTO v_customer_id;
+        ELSE
+            -- Update existing customer's phone if provided and different
+            IF p_customer_phone IS NOT NULL AND p_customer_phone != '' THEN
+                UPDATE customers 
+                SET phone = p_customer_phone, 
+                    first_name = COALESCE(NULLIF(v_first_name, ''), first_name),
+                    last_name = COALESCE(NULLIF(v_last_name, ''), last_name)
+                WHERE id = v_customer_id;
+            END IF;
         END IF;
         
         -- Create first booking (primary service)
