@@ -1,56 +1,37 @@
 -- Migration: Add GHL Categories to Services
 -- This migration adds a ghl_category field to map services to GHL upsell sequences
 
--- First, let's check what the actual enum values are
-DO $$
-DECLARE
-    enum_values text[];
-BEGIN
-    -- Get the enum values for service_category
-    SELECT array_agg(enumlabel) INTO enum_values
-    FROM pg_enum e
-    JOIN pg_type t ON e.enumtypid = t.oid
-    WHERE t.typname = 'service_category';
-    
-    -- Log the enum values for debugging
-    RAISE NOTICE 'Available enum values: %', enum_values;
-END $$;
-
 -- Add GHL category column to services table
 ALTER TABLE services ADD COLUMN ghl_category VARCHAR(100);
 
--- Update existing services with GHL categories based on actual enum values
--- We'll use a more flexible approach that doesn't assume specific enum values
-
--- FACE TREATMENTS (services with 'facial' in name or category)
+-- Update existing services with GHL categories using proper enum casting
+-- FACE TREATMENTS
 UPDATE services SET ghl_category = 'FACE TREATMENTS' 
-WHERE (category LIKE '%facial%' OR name LIKE '%facial%')
+WHERE category::text = 'facial' 
 AND name NOT LIKE '%package%' 
 AND name NOT LIKE '%+%';
 
--- BODY MASSAGES (services with 'massage' in name or category)
+-- BODY MASSAGES
 UPDATE services SET ghl_category = 'BODY MASSAGES' 
-WHERE (category LIKE '%massage%' OR name LIKE '%massage%')
+WHERE category::text = 'massage' 
 AND name NOT LIKE '%package%' 
 AND name NOT LIKE '%+%';
 
--- BODY TREATMENTS & BOOSTERS (services with 'body' or 'treatment' or 'scrub' in name or category)
+-- BODY TREATMENTS & BOOSTERS
 UPDATE services SET ghl_category = 'BODY TREATMENTS & BOOSTERS' 
-WHERE (category LIKE '%body%' OR category LIKE '%treatment%' OR category LIKE '%scrub%' 
-       OR name LIKE '%body%' OR name LIKE '%treatment%' OR name LIKE '%scrub%')
+WHERE category::text IN ('body_treatment', 'body_scrub') 
 AND name NOT LIKE '%package%' 
 AND name NOT LIKE '%+%';
 
--- Waxing Services (services with 'wax' in name or category)
+-- Waxing Services
 UPDATE services SET ghl_category = 'Waxing Services' 
-WHERE (category LIKE '%wax%' OR name LIKE '%wax%')
+WHERE category::text = 'waxing' 
 AND name NOT LIKE '%package%' 
 AND name NOT LIKE '%+%';
 
--- FACE & BODY PACKAGES (services with 'package' or 'VIP' or '+' in name)
+-- FACE & BODY PACKAGES
 UPDATE services SET ghl_category = 'FACE & BODY PACKAGES' 
-WHERE category LIKE '%package%' 
-OR category LIKE '%membership%'
+WHERE category::text IN ('package', 'membership') 
 OR name LIKE '%package%' 
 OR name LIKE '%+%' 
 OR name LIKE '%VIP%';
