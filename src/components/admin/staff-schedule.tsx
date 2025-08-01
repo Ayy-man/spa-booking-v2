@@ -252,10 +252,10 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
                   </div>
                 )}
 
-                {booking.internal_notes && (
+                {booking.special_requests && (
                   <div className="text-sm">
                     <span className="text-gray-500">Notes:</span>
-                    <span className="ml-2 text-gray-700">{booking.internal_notes}</span>
+                    <span className="ml-2 text-gray-700">{booking.special_requests}</span>
                   </div>
                 )}
               </div>

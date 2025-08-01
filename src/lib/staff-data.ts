@@ -124,6 +124,90 @@ export const getServiceCategory = (serviceName: string): string => {
   return 'unknown'
 }
 
+// Helper function to get GHL category for webhook integration
+export const getGHLServiceCategory = (serviceName: string): string => {
+  if (!serviceName) return 'unknown'
+  
+  const name = serviceName.toLowerCase()
+  
+  // FACE & BODY PACKAGES (check first to avoid conflicts, but exclude body treatments and waxing with +)
+  if ((name.includes('+') && !name.includes('body') && !name.includes('scrub') && !name.includes('moisturizing') && !name.includes('vajacial') && !name.includes('brazilian')) || name.includes('package') || name.includes('vip') || name.includes('dermal vip')) {
+    return 'FACE & BODY PACKAGES'
+  }
+  
+  // Specific service mappings to avoid conflicts
+  const serviceMappings: Record<string, string> = {
+    // FACE TREATMENTS
+    'basic facial': 'FACE TREATMENTS',
+    'deep cleansing facial': 'FACE TREATMENTS',
+    'placenta | collagen facial': 'FACE TREATMENTS',
+    'whitening kojic facial': 'FACE TREATMENTS',
+    'anti-acne facial': 'FACE TREATMENTS',
+    'microderm facial': 'FACE TREATMENTS',
+    'vitamin c facial with extreme softness': 'FACE TREATMENTS',
+    'acne vulgaris facial': 'FACE TREATMENTS',
+    
+    // BODY MASSAGES
+    'balinese body massage': 'BODY MASSAGES',
+    'maternity massage': 'BODY MASSAGES',
+    'stretching body massage': 'BODY MASSAGES',
+    'deep tissue body massage': 'BODY MASSAGES',
+    'hot stone massage': 'BODY MASSAGES',
+    'hot stone massage 90 minutes': 'BODY MASSAGES',
+    
+    // BODY TREATMENTS & BOOSTERS
+    'underarm cleaning': 'BODY TREATMENTS & BOOSTERS',
+    'back treatment': 'BODY TREATMENTS & BOOSTERS',
+    'chemical peel (body) per area': 'BODY TREATMENTS & BOOSTERS',
+    'underarm or inguinal whitening': 'BODY TREATMENTS & BOOSTERS',
+    'microdermabrasion (body) per area': 'BODY TREATMENTS & BOOSTERS',
+    'deep moisturizing body treatment': 'BODY TREATMENTS & BOOSTERS',
+    'dead sea salt body scrub': 'BODY TREATMENTS & BOOSTERS',
+    'dead sea salt body scrub + deep moisturizing': 'BODY TREATMENTS & BOOSTERS',
+    'mud mask body wrap + deep moisturizing body treatment': 'BODY TREATMENTS & BOOSTERS',
+    
+    // Waxing Services
+    'eyebrow waxing': 'Waxing Services',
+    'lip waxing': 'Waxing Services',
+    'half arm waxing': 'Waxing Services',
+    'full arm waxing': 'Waxing Services',
+    'chin waxing': 'Waxing Services',
+    'neck waxing': 'Waxing Services',
+    'lower leg waxing': 'Waxing Services',
+    'full leg waxing': 'Waxing Services',
+    'full face waxing': 'Waxing Services',
+    'bikini waxing': 'Waxing Services',
+    'underarm waxing': 'Waxing Services',
+    'brazilian wax (women)': 'Waxing Services',
+    'brazilian waxing (men)': 'Waxing Services',
+    'chest wax': 'Waxing Services',
+    'stomach wax': 'Waxing Services',
+    'shoulders': 'Waxing Services',
+    'feet': 'Waxing Services',
+    'basic vajacial cleaning + brazilian wax': 'Waxing Services',
+    
+    // FACE & BODY PACKAGES
+    'balinese body massage + basic facial': 'FACE & BODY PACKAGES',
+    'deep tissue body massage + 3face': 'FACE & BODY PACKAGES',
+    'hot stone body massage + microderm facial': 'FACE & BODY PACKAGES',
+    'dermal vip card $50 / year': 'FACE & BODY PACKAGES'
+  }
+  
+  // Check exact matches first
+  if (serviceMappings[name]) {
+    return serviceMappings[name]
+  }
+  
+  // Fallback to pattern matching
+  if (name.includes('facial') && !name.includes('+')) return 'FACE TREATMENTS'
+  if (name.includes('massage') && !name.includes('+')) return 'BODY MASSAGES'
+  if (name.includes('wax') && !name.includes('+')) return 'Waxing Services'
+  if (name.includes('treatment') && !name.includes('+')) return 'BODY TREATMENTS & BOOSTERS'
+  if (name.includes('scrub') && !name.includes('+')) return 'BODY TREATMENTS & BOOSTERS'
+  
+  return 'unknown'
+}
+
 // Helper function to check if staff can perform service
 export const canStaffPerformService = (staff: StaffMember, serviceCategory: string): boolean => {
   if (staff.id === 'any') return true

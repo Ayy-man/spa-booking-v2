@@ -84,11 +84,11 @@ export const supabaseClient = {
   async createBooking(booking: {
     service_id: string
     staff_id: string
-    room_id: string
+    room_id: number
     customer_name: string
     customer_email: string
     customer_phone?: string
-    booking_date: string
+    appointment_date: string
     start_time: string
     special_requests?: string
   }) {
@@ -100,7 +100,7 @@ export const supabaseClient = {
         p_room_id: booking.room_id,
         p_customer_name: booking.customer_name,
         p_customer_email: booking.customer_email,
-        p_booking_date: booking.booking_date,
+        p_appointment_date: booking.appointment_date,
         p_start_time: booking.start_time,
         p_customer_phone: booking.customer_phone,
         p_special_requests: booking.special_requests
@@ -140,60 +140,27 @@ export const supabaseClient = {
 
     if (!service) throw new Error('Service not found')
 
-    // Create or find customer
-    const [firstName, ...lastNameParts] = booking.customer_name.split(' ')
-    const lastName = lastNameParts.join(' ')
-    
-    let customerId: string
-    
-    // Check if customer exists
-    const { data: existingCustomer } = await supabase
-      .from('customers')
-      .select('id')
-      .eq('email', booking.customer_email)
-      .single()
-    
-    if (existingCustomer) {
-      customerId = existingCustomer.id
-    } else {
-      // Create new customer
-      const { data: newCustomer, error: customerError } = await supabase
-        .from('customers')
-        .insert({
-          first_name: firstName,
-          last_name: lastName,
-          email: booking.customer_email,
-          phone: booking.customer_phone || ''
-        })
-        .select()
-        .single()
-      
-      if (customerError) throw customerError
-      customerId = newCustomer.id
-    }
-
     // Calculate end time
     const startTime = new Date(`2000-01-01T${booking.start_time}:00`)
     const endTime = new Date(startTime.getTime() + service.duration * 60000)
     const endTimeStr = endTime.toTimeString().slice(0, 5)
 
-    // Create booking
+    // Create booking directly with customer info
     const { data: newBooking, error: bookingError } = await supabase
       .from('bookings')
       .insert({
-        customer_id: customerId,
         service_id: booking.service_id,
         staff_id: booking.staff_id,
         room_id: booking.room_id,
-        appointment_date: booking.booking_date,
+        customer_name: booking.customer_name,
+        customer_email: booking.customer_email,
+        customer_phone: booking.customer_phone,
+        appointment_date: booking.appointment_date,
         start_time: booking.start_time,
         end_time: endTimeStr,
-        duration: service.duration,
-        total_price: service.price,
-        final_price: service.price,
         status: 'confirmed',
-        payment_status: 'pending',
-        notes: booking.special_requests || null
+        special_requests: booking.special_requests,
+        total_price: service.price
       })
       .select()
       .single()
@@ -270,7 +237,7 @@ export const supabaseClient = {
     const { data, error } = await supabase.rpc('assign_optimal_room', {
       p_service_id: serviceId,
       p_preferred_staff_id: staffId,
-      p_booking_date: bookingDate,
+      p_appointment_date: bookingDate,
       p_start_time: startTime
     })
 
@@ -309,7 +276,7 @@ export const supabaseClient = {
     customer_name: string
     customer_email: string
     customer_phone?: string
-    booking_date: string
+    appointment_date: string
     start_time: string
     special_requests?: string
   }) {
@@ -321,7 +288,7 @@ export const supabaseClient = {
       p_customer_name: booking.customer_name,
       p_customer_email: booking.customer_email,
       p_customer_phone: booking.customer_phone,
-      p_booking_date: booking.booking_date,
+      p_appointment_date: booking.appointment_date,
       p_start_time: booking.start_time,
       p_special_requests: booking.special_requests
     })

@@ -21,16 +21,9 @@ export async function updateBookingStatus(
       updated_at: new Date().toISOString()
     }
 
-    // Add timestamp fields based on status
-    if (status === 'completed') {
-      updateData.completed_at = new Date().toISOString()
-    } else if (status === 'cancelled') {
-      updateData.cancelled_at = new Date().toISOString()
-    }
-
-    // Add internal notes if provided
+    // Add special requests if provided
     if (internalNotes) {
-      updateData.internal_notes = internalNotes
+      updateData.special_requests = internalNotes
     }
 
     const { error } = await supabase
@@ -65,7 +58,7 @@ export async function markAsNoShow(
 export async function createWalkInBooking(
   serviceId: string,
   staffId: string,
-  roomId: string,
+  roomId: number,
   customerName: string,
   customerPhone: string,
   customerEmail?: string,
@@ -100,54 +93,8 @@ export async function createWalkInBooking(
       throw new Error('Customer phone is required')
     }
 
-    // Create or find customer for walk-in
-    let customerId: string
-    const [firstName, ...lastNameParts] = customerName.trim().split(' ')
-    const lastName = lastNameParts.join(' ') || ''
-    
-    if (customerEmail && customerEmail.trim()) {
-      // Check if customer exists by email
-      const { data: existingCustomer } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', customerEmail.trim())
-        .maybeSingle()
-      
-      if (existingCustomer) {
-        customerId = existingCustomer.id
-      } else {
-        // Create new customer with email
-        const { data: newCustomer, error: customerError } = await supabase
-          .from('customers')
-          .insert({
-            first_name: firstName,
-            last_name: lastName,
-            email: customerEmail.trim(),
-            phone: customerPhone.trim()
-          })
-          .select('id')
-          .single()
-        
-        if (customerError) throw customerError
-        customerId = newCustomer.id
-      }
-    } else {
-      // Create walk-in customer without email
-      const walkInEmail = `walkin_${Date.now()}@temp.com`
-      const { data: newCustomer, error: customerError } = await supabase
-        .from('customers')
-        .insert({
-          first_name: firstName,
-          last_name: lastName,
-          email: walkInEmail,
-          phone: customerPhone.trim()
-        })
-        .select('id')
-        .single()
-      
-      if (customerError) throw customerError
-      customerId = newCustomer.id
-    }
+    // No need to create customer record - store info directly in booking
+    const finalCustomerEmail = customerEmail && customerEmail.trim() ? customerEmail.trim() : `walkin_${Date.now()}@dermalskinclinic.com`
 
     // Check for conflicts
     const { data: conflicts, error: conflictError } = await supabase
@@ -164,22 +111,20 @@ export async function createWalkInBooking(
     }
     
     // Create booking data matching the actual database schema
-    const bookingData = {
-      customer_id: customerId,
+    const bookingData: BookingInsert = {
       service_id: serviceId,
       staff_id: staffId,
       room_id: roomId,
+      customer_name: customerName.trim(),
+      customer_email: finalCustomerEmail,
+      customer_phone: customerPhone.trim(),
       appointment_date: appointmentDate,
       start_time: bookingStartTime,
       end_time: endTime,
       duration: service.duration,
       total_price: service.price,
-      final_price: service.price,
       status: 'confirmed',
-      payment_status: 'pending',
-      notes: specialRequests,
-      // Store customer info in notes for walk-ins
-      internal_notes: `Walk-in: ${customerName} | ${customerPhone} | ${customerEmail || 'No email'}`
+      special_requests: specialRequests ? `Walk-in: ${specialRequests}` : `Walk-in booking for ${customerName}`
     }
 
     const { data: booking, error: bookingError } = await supabase
@@ -203,33 +148,30 @@ export async function blockTimeSlot(
   startTime: string,
   endTime: string,
   reason: string,
-  roomId: string
+  roomId: number
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // First ensure system entries exist for blocking
-    const systemCustomerId = await getOrCreateSystemCustomer()
+    // Get system service for blocking
     const systemServiceId = await getOrCreateSystemService()
 
-    if (!systemCustomerId || !systemServiceId) {
-      throw new Error('Failed to create system entries for time blocking')
+    if (!systemServiceId) {
+      throw new Error('Failed to create system service for time blocking')
     }
 
     // Create a blocked booking entry
     const blockingData: BookingInsert = {
-      customer_id: systemCustomerId,
       service_id: systemServiceId,
       staff_id: staffId,
       room_id: roomId,
+      customer_name: 'SYSTEM BLOCK',
+      customer_email: 'system@dermalskinclinic.com',
       appointment_date: date,
       start_time: startTime,
       end_time: endTime,
       duration: Math.ceil((new Date(`${date}T${endTime}`).getTime() - new Date(`${date}T${startTime}`).getTime()) / 60000),
       total_price: 0,
-      final_price: 0,
       status: 'confirmed',
-      payment_status: 'not_applicable',
-      internal_notes: `Time blocked for: ${reason}`,
-      created_by: 'admin'
+      special_requests: `Time blocked for: ${reason}`
     }
 
     const { error } = await supabase
@@ -246,37 +188,8 @@ export async function blockTimeSlot(
 
 // Helper function to get or create system customer for blocking
 async function getOrCreateSystemCustomer(): Promise<string | null> {
-  try {
-    // First try to find existing system customer
-    const { data: existingCustomer } = await supabase
-      .from('customers')
-      .select('id')
-      .eq('email', 'system@dermalspaclinic.com')
-      .maybeSingle()
-
-    if (existingCustomer) {
-      return existingCustomer.id
-    }
-
-    // Create system customer if it doesn't exist
-    const { data: newCustomer, error } = await supabase
-      .from('customers')
-      .insert({
-        first_name: 'System',
-        last_name: 'Block',
-        email: 'system@dermalspaclinic.com',
-        phone: '000-000-0000',
-        notes: 'System customer for time blocking'
-      })
-      .select('id')
-      .single()
-
-    if (error) throw error
-    return newCustomer.id
-  } catch (error) {
-    console.error('Failed to get/create system customer:', error)
-    return null
-  }
+  // No customers table - return a dummy ID
+  return 'system-block'
 }
 
 // Helper function to get or create system service for blocking

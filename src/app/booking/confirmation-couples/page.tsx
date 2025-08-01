@@ -104,7 +104,7 @@ export default function CouplesConfirmationPage() {
           customer_name: customerInfo.name,
           customer_email: customerInfo.email,
           customer_phone: customerInfo.phone,
-          booking_date: selectedDate,
+          appointment_date: selectedDate,
           start_time: selectedTime,
           special_requests: customerInfo.specialRequests
         })
@@ -172,7 +172,7 @@ export default function CouplesConfirmationPage() {
               staff: (staffNameMap as any)[selectedStaff] || selectedStaff,
               staffId: selectedStaff,
               room: `Room ${processedResults[0].room_id || '11111111-1111-1111-1111-111111111111'}`,
-              roomId: processedResults[0].room_id || '11111111-1111-1111-1111-111111111111'
+              roomId: (processedResults[0].room_id || 1).toString()
             }
           )
           
@@ -196,8 +196,8 @@ export default function CouplesConfirmationPage() {
                 price: bookingData.secondaryService.price,
                 staff: (staffNameMap as any)[secondaryStaff || selectedStaff] || secondaryStaff || selectedStaff,
                 staffId: secondaryStaff || selectedStaff,
-                room: `Room ${processedResults[1].room_id || '22222222-2222-2222-2222-222222222222'}`,
-                roomId: processedResults[1].room_id || '22222222-2222-2222-2222-222222222222'
+                room: `Room ${processedResults[1].room_id || 2}`,
+                roomId: (processedResults[1].room_id || 2).toString()
               }
             )
           }
@@ -216,7 +216,7 @@ export default function CouplesConfirmationPage() {
           selectedTime
         )
         
-        const roomId = roomAssignment?.room_id || '11111111-1111-1111-1111-111111111111'
+        const roomId = roomAssignment?.room_id || 1
 
         const bookingResult = await supabaseClient.createBooking({
           service_id: primaryServiceData.id,
@@ -225,7 +225,7 @@ export default function CouplesConfirmationPage() {
           customer_name: customerInfo.name,
           customer_email: customerInfo.email,
           customer_phone: customerInfo.phone,
-          booking_date: selectedDate,
+          appointment_date: selectedDate,
           start_time: selectedTime,
           special_requests: customerInfo.specialRequests
         })
@@ -258,7 +258,7 @@ export default function CouplesConfirmationPage() {
               staff: (staffNameMap as any)[selectedStaff] || selectedStaff,
               staffId: selectedStaff,
               room: `Room ${roomId}`,
-              roomId: roomId
+              roomId: roomId.toString()
             }
           )
           

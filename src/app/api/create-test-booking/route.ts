@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       service_id: 'placenta_collagen_facial',
       staff_id: 'selma_villaver',
       room_id: '11111111-1111-1111-1111-111111111111',
-      appointment_date: today,
+      booking_date: today,
       start_time: startTime,
       end_time: endTime,
       duration: 60,

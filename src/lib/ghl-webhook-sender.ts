@@ -14,6 +14,7 @@ interface BookingData {
   service: string
   serviceId?: string
   serviceCategory: string
+  ghlCategory?: string
   date: string
   time: string
   duration: number
@@ -120,6 +121,7 @@ class GHLWebhookSender {
           service: booking.service,
           service_id: booking.serviceId || '',
           service_category: booking.serviceCategory,
+          ghl_category: booking.ghlCategory || booking.serviceCategory,
           service_description: `${booking.service} treatment`,
           staff: booking.staff || 'Any Available',
           staff_id: booking.staffId || '',
@@ -215,6 +217,7 @@ class GHLWebhookSender {
           service: booking.service,
           service_id: booking.serviceId || '',
           service_category: booking.serviceCategory,
+          ghl_category: booking.ghlCategory || booking.serviceCategory,
           staff: booking.staff || 'Any Available',
           staff_id: booking.staffId || '',
           room: booking.room || 'TBD',
@@ -280,6 +283,7 @@ class GHLWebhookSender {
           service: booking.service,
           service_id: booking.serviceId || '',
           service_category: booking.serviceCategory,
+          ghl_category: booking.ghlCategory || booking.serviceCategory,
           service_description: `${booking.service} treatment`,
           staff: booking.staff || 'Any Available',
           staff_id: booking.staffId || '',

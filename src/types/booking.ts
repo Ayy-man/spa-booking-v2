@@ -75,6 +75,14 @@ export type ServiceCategory =
   | 'package'
   | 'membership'
 
+// GHL categories enum for webhook integration
+export type GHLServiceCategory = 
+  | 'BODY MASSAGES'
+  | 'BODY TREATMENTS & BOOSTERS'
+  | 'FACE TREATMENTS'
+  | 'FACE & BODY PACKAGES'
+  | 'Waxing Services'
+
 // Booking status enum
 export type BookingStatus = 
   | 'confirmed'

@@ -65,7 +65,7 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
     customerEmail: "",
     serviceId: "",
     staffId: "",
-    roomId: "",
+    roomId: 1,
     startTime: "",
     specialRequests: ""
   })
@@ -77,7 +77,7 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
     startTime: "",
     endTime: "",
     reason: "",
-    roomId: ""
+    roomId: 1
   })
 
   // Options data
@@ -164,7 +164,7 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
             customerEmail: "",
             serviceId: "",
             staffId: "",
-            roomId: "",
+            roomId: 1,
             startTime: "",
             specialRequests: ""
           })
@@ -188,7 +188,7 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
             startTime: "",
             endTime: "",
             reason: "",
-            roomId: ""
+            roomId: 1
           })
           break
       }
@@ -466,8 +466,8 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
                 <div>
                   <Label>Room *</Label>
                   <Select
-                    value={walkInData.roomId}
-                    onValueChange={(value) => setWalkInData(prev => ({ ...prev, roomId: value }))}
+                    value={walkInData.roomId.toString()}
+                    onValueChange={(value) => setWalkInData(prev => ({ ...prev, roomId: parseInt(value) }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select room" />
@@ -557,8 +557,8 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
                 <div>
                   <Label>Room *</Label>
                   <Select
-                    value={blockData.roomId}
-                    onValueChange={(value) => setBlockData(prev => ({ ...prev, roomId: value }))}
+                    value={blockData.roomId.toString()}
+                    onValueChange={(value) => setBlockData(prev => ({ ...prev, roomId: parseInt(value) }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select room" />

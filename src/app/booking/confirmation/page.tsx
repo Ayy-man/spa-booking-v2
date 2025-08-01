@@ -6,6 +6,7 @@ import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
+import { getGHLServiceCategory } from '@/lib/staff-data'
 
 export default function ConfirmationPage() {
   const [bookingData, setBookingData] = useState<any>(null)
@@ -52,7 +53,7 @@ export default function ConfirmationPage() {
     try {
 
       // First, get optimal room assignment
-      let roomId = '11111111-1111-1111-1111-111111111111'; // Default fallback to Room 1
+      let roomId = 1; // Default fallback to Room 1
       try {
         const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
           bookingData.service.id,
@@ -76,7 +77,7 @@ export default function ConfirmationPage() {
         customer_name: bookingData.customer.name,
         customer_email: bookingData.customer.email,
         customer_phone: bookingData.customer.phone || undefined,
-        booking_date: bookingData.date,
+        appointment_date: bookingData.date,
         start_time: bookingData.time,
         special_requests: bookingData.customer.specialRequests || undefined
       })
@@ -108,6 +109,7 @@ export default function ConfirmationPage() {
       // Send booking confirmation webhook to GHL
       try {
         const serviceCategory = getServiceCategory(bookingData.service.name)
+        const ghlCategory = getGHLServiceCategory(bookingData.service.name)
         const result = await ghlWebhookSender.sendBookingConfirmationWebhook(
           bookingResult.booking_id,
           {
@@ -120,6 +122,7 @@ export default function ConfirmationPage() {
             service: bookingData.service.name,
             serviceId: bookingData.service.id,
             serviceCategory,
+            ghlCategory,
             date: bookingData.date,
             time: bookingData.time,
             duration: bookingData.service.duration,
@@ -127,7 +130,7 @@ export default function ConfirmationPage() {
             staff: (staffNameMap as any)[bookingData.staff] || bookingData.staff,
             staffId: bookingData.staff,
             room: `Room ${roomId}`,
-            roomId: roomId
+            roomId: roomId.toString()
           }
         )
         

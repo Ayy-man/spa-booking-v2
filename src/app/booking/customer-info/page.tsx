@@ -8,6 +8,7 @@ import BookingProgressIndicator from '@/components/booking/BookingProgressIndica
 import BookingSummary from '@/components/booking/BookingSummary'
 import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
+import { getGHLServiceCategory } from '@/lib/staff-data'
 
 interface Service {
   name: string
@@ -55,6 +56,7 @@ export default function CustomerInfoPage() {
     if (data.isNewCustomer && selectedService) {
       try {
         const serviceCategory = getServiceCategory(selectedService.name)
+        const ghlCategory = getGHLServiceCategory(selectedService.name)
         const result = await ghlWebhookSender.sendNewCustomerWebhook(
           {
             name: data.name,
@@ -65,6 +67,7 @@ export default function CustomerInfoPage() {
           {
             service: selectedService.name,
             serviceCategory,
+            ghlCategory,
             date: selectedDate,
             time: selectedTime,
             duration: selectedService.duration,
