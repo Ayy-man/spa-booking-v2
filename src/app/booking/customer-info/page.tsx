@@ -101,6 +101,28 @@ export default function CustomerInfoPage() {
     const bookingDataStr = localStorage.getItem('bookingData')
     const isCouplesBooking = bookingDataStr ? JSON.parse(bookingDataStr).isCouplesBooking : false
     
+    // Ensure proper data structure before redirecting
+    if (isCouplesBooking) {
+      // For couples booking, ensure bookingData is properly structured with all necessary info
+      const existingBookingData = bookingDataStr ? JSON.parse(bookingDataStr) : null
+      if (existingBookingData && selectedService) {
+        // Update bookingData with current service info to ensure consistency
+        const updatedBookingData = {
+          ...existingBookingData,
+          primaryService: selectedService,
+          // Ensure secondary service exists (same as primary if not different)
+          secondaryService: existingBookingData.secondaryService || selectedService,
+          totalPrice: existingBookingData.totalPrice || (selectedService.price * (existingBookingData.secondaryService ? 2 : 1))
+        }
+        localStorage.setItem('bookingData', JSON.stringify(updatedBookingData))
+      }
+    } else {
+      // For regular booking, ensure selectedService is saved
+      if (selectedService) {
+        localStorage.setItem('selectedService', JSON.stringify(selectedService))
+      }
+    }
+
     // Check customer status and redirect accordingly
     if (data.isNewCustomer) {
       // New customer - redirect to GoHighLevel payment link with return URL
