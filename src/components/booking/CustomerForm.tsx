@@ -224,10 +224,10 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
             placeholder="Any special requests, allergies, or preferences we should know about..."
             className={`
               w-full px-3 py-2 border rounded-lg resize-none transition-all duration-200
-              focus:outline-none focus:ring-2
+              focus:outline-none focus:ring-2 bg-white text-black placeholder-gray-500
               ${errors.specialRequests 
                 ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                : 'border-gray-300 focus:border-primary focus:ring-primary/20'
+                : 'border-gray-300 focus:border-black focus:ring-black/20'
               }
             `}
             {...register('specialRequests')}
