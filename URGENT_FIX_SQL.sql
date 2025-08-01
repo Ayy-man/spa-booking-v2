@@ -39,6 +39,9 @@ DECLARE
     v_secondary_service RECORD;
     v_end_time TIME;
     v_max_duration INTEGER;
+    v_customer_id UUID;
+    v_first_name TEXT;
+    v_last_name TEXT;
 BEGIN
     -- Generate group ID for linking the bookings
     v_booking_group_id := uuid_generate_v4();
@@ -93,31 +96,50 @@ BEGIN
         RETURN;
     END IF;
     
-    -- Begin transaction for atomic booking creation
+    -- Create or find customer record
     BEGIN
+        -- Split customer name into first and last name
+        v_first_name := SPLIT_PART(p_customer_name, ' ', 1);
+        v_last_name := SUBSTRING(p_customer_name FROM LENGTH(v_first_name) + 2);
+        IF v_last_name IS NULL OR v_last_name = '' THEN
+            v_last_name := '';
+        END IF;
+        
+        -- Try to find existing customer by email
+        SELECT id INTO v_customer_id FROM customers WHERE email = p_customer_email;
+        
+        IF NOT FOUND THEN
+            -- Create new customer
+            INSERT INTO customers (
+                first_name, last_name, email, phone, marketing_consent, is_active
+            ) VALUES (
+                v_first_name, v_last_name, p_customer_email, p_customer_phone, false, true
+            ) RETURNING id INTO v_customer_id;
+        END IF;
+        
         -- Create first booking (primary service)
         INSERT INTO bookings (
-            service_id, staff_id, room_id, customer_name, customer_email,
-            customer_phone, booking_date, start_time, end_time,
-            booking_group_id, booking_type, special_requests, total_price
+            customer_id, service_id, staff_id, room_id, appointment_date, start_time, end_time,
+            duration, total_price, discount, final_price, status, payment_status,
+            booking_group_id, booking_type, notes
         ) VALUES (
-            p_primary_service_id, p_primary_staff_id, v_room_id, 
-            p_customer_name, p_customer_email, p_customer_phone, 
+            v_customer_id, p_primary_service_id, p_primary_staff_id, v_room_id, 
             p_booking_date, p_start_time, v_end_time,
-            v_booking_group_id, 'couple', p_special_requests, v_primary_service.price
+            v_primary_service.duration, v_primary_service.price, 0, v_primary_service.price,
+            'pending', 'pending', v_booking_group_id, 'couple', p_special_requests
         ) RETURNING id INTO v_booking1_id;
         
         -- Create second booking (secondary service) - only if different from primary
         IF p_primary_service_id != p_secondary_service_id THEN
             INSERT INTO bookings (
-                service_id, staff_id, room_id, customer_name, customer_email,
-                customer_phone, booking_date, start_time, end_time,
-                booking_group_id, booking_type, special_requests, total_price
+                customer_id, service_id, staff_id, room_id, appointment_date, start_time, end_time,
+                duration, total_price, discount, final_price, status, payment_status,
+                booking_group_id, booking_type, notes
             ) VALUES (
-                p_secondary_service_id, p_secondary_staff_id, v_room_id, 
-                p_customer_name || ' (Partner)', p_customer_email, p_customer_phone, 
+                v_customer_id, p_secondary_service_id, p_secondary_staff_id, v_room_id, 
                 p_booking_date, p_start_time, v_end_time,
-                v_booking_group_id, 'couple', p_special_requests, v_secondary_service.price
+                v_secondary_service.duration, v_secondary_service.price, 0, v_secondary_service.price,
+                'pending', 'pending', v_booking_group_id, 'couple', p_special_requests
             ) RETURNING id INTO v_booking2_id;
         END IF;
         
