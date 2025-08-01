@@ -216,14 +216,14 @@ export default function CouplesStaffPage() {
             {member.id === 'any' ? 'Any Available Staff' : member.name}
           </h3>
           
-          {(member as any).can_perform_services && (member as any).can_perform_services.length > 0 && (
+          {(member as any).capabilities && (member as any).capabilities.length > 0 && (
             <p className="text-sm text-gray-600 mb-2">
-              {(member as any).can_perform_services.join(', ')}
+              {(member as any).capabilities.join(', ')}
             </p>
           )}
           
           <div className="flex flex-wrap gap-1">
-            {((member as any).can_perform_services || []).map((serviceType: string, index: number) => (
+            {((member as any).capabilities || []).map((serviceType: string, index: number) => (
               <Badge 
                 key={index}
                 variant="outline" 

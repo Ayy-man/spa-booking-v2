@@ -84,83 +84,90 @@ export const supabaseClient = {
   async createBooking(booking: {
     service_id: string
     staff_id: string
-    room_id: string
+    room_id: number
     customer_name: string
     customer_email: string
     customer_phone?: string
-    booking_date: string
+    appointment_date: string
     start_time: string
-    special_requests?: string
+    notes?: string
   }) {
-    // First check if process_booking RPC exists
-    try {
-      const { data, error } = await supabase.rpc('process_booking', {
-        p_service_id: booking.service_id,
-        p_staff_id: booking.staff_id,
-        p_room_id: booking.room_id,
-        p_customer_name: booking.customer_name,
-        p_customer_email: booking.customer_email,
-        p_booking_date: booking.booking_date,
-        p_start_time: booking.start_time,
-        p_customer_phone: booking.customer_phone,
-        p_special_requests: booking.special_requests
-      })
-
-      if (error) {
-        console.error('RPC error:', error)
-        if (error.code === '42883') {
-          // RPC function not found, falling back to direct insert
-        } else if (error.code === '42501') {
-          throw new Error('Permission denied. Please ensure database functions are installed and RLS policies are configured.')
-        } else {
-          throw error
-        }
-      } else if (data && data[0]) {
-        // Convert UUID to string if needed
-        return {
-          booking_id: data[0].booking_id?.toString() || data[0].booking_id,
-          success: data[0].success,
-          message: data[0].message
-        }
-      }
-    } catch (rpcError: any) {
-      if (rpcError.message?.includes('Permission denied')) {
-        throw rpcError
-      }
-      // RPC function error, using direct insert
-    }
-
-    // Fallback: Create booking directly
-    // Get service details
-    const { data: service } = await supabase
+    // Get service details first
+    const { data: service, error: serviceError } = await supabase
       .from('services')
       .select('*')
       .eq('id', booking.service_id)
       .single()
 
-    if (!service) throw new Error('Service not found')
+    if (serviceError || !service) {
+      throw new Error('Service not found')
+    }
+
+    // Split customer name into first and last name
+    const nameParts = booking.customer_name.trim().split(' ')
+    const firstName = nameParts[0] || ''
+    const lastName = nameParts.slice(1).join(' ') || ''
+
+    // Create or find customer
+    let customerId: string
+    
+    // First try to find existing customer by email or phone
+    const { data: existingCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .or(`email.eq.${booking.customer_email},phone.eq.${booking.customer_phone}`)
+      .single()
+
+    if (existingCustomer) {
+      customerId = existingCustomer.id
+    } else {
+      // Create new customer
+      const { data: newCustomer, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          first_name: firstName,
+          last_name: lastName,
+          email: booking.customer_email,
+          phone: booking.customer_phone || '',
+          marketing_consent: false,
+          is_active: true
+        })
+        .select('id')
+        .single()
+
+      if (customerError || !newCustomer) {
+        throw new Error('Failed to create customer record')
+      }
+      customerId = newCustomer.id
+    }
 
     // Calculate end time
     const startTime = new Date(`2000-01-01T${booking.start_time}:00`)
     const endTime = new Date(startTime.getTime() + service.duration * 60000)
     const endTimeStr = endTime.toTimeString().slice(0, 5)
 
-    // Create booking directly with customer info
+    // Create booking with proper schema
+    const discount = 0
+    const finalPrice = service.price - discount
+    
     const { data: newBooking, error: bookingError } = await supabase
       .from('bookings')
       .insert({
+        customer_id: customerId,
         service_id: booking.service_id,
         staff_id: booking.staff_id,
         room_id: booking.room_id,
-        customer_name: booking.customer_name,
-        customer_email: booking.customer_email,
-        customer_phone: booking.customer_phone,
-        booking_date: booking.booking_date,
+        appointment_date: booking.appointment_date,
         start_time: booking.start_time,
         end_time: endTimeStr,
-        status: 'confirmed',
-        special_requests: booking.special_requests,
-        total_price: service.price
+        duration: service.duration,
+        total_price: service.price,
+        discount: discount,
+        final_price: finalPrice,
+        status: 'pending',
+        payment_status: 'pending',
+        notes: booking.notes,
+        booking_type: 'single'
       })
       .select()
       .single()
@@ -181,13 +188,14 @@ export const supabaseClient = {
         *,
         service:services(*),
         staff:staff(*),
-        room:rooms(*)
+        room:rooms(*),
+        customer:customers(*)
       `)
-      .order('booking_date', { ascending: true })
+      .order('appointment_date', { ascending: true })
       .order('start_time', { ascending: true })
 
     if (date) {
-      query = query.eq('booking_date', date)
+      query = query.eq('appointment_date', date)
     }
 
     const { data, error } = await query
@@ -202,10 +210,11 @@ export const supabaseClient = {
         *,
         service:services(*),
         staff:staff(*),
-        room:rooms(*)
+        room:rooms(*),
+        customer:customers(*)
       `)
-      .eq('customer_email', email)
-      .order('booking_date', { ascending: false })
+      .eq('customer.email', email)
+      .order('appointment_date', { ascending: false })
       .order('start_time', { ascending: false })
 
     if (error) throw error
@@ -276,9 +285,9 @@ export const supabaseClient = {
     customer_name: string
     customer_email: string
     customer_phone?: string
-    booking_date: string
+    appointment_date: string
     start_time: string
-    special_requests?: string
+    notes?: string
   }) {
     const { data, error } = await supabase.rpc('process_couples_booking_v2', {
       p_primary_service_id: booking.primary_service_id,
@@ -288,9 +297,9 @@ export const supabaseClient = {
       p_customer_name: booking.customer_name,
       p_customer_email: booking.customer_email,
       p_customer_phone: booking.customer_phone,
-      p_booking_date: booking.booking_date,
+      p_booking_date: booking.appointment_date,
       p_start_time: booking.start_time,
-      p_special_requests: booking.special_requests
+      p_special_requests: booking.notes
     })
 
     if (error) {

@@ -149,7 +149,7 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
 
   const renderDayView = () => {
     const todayBookings = bookings.filter(
-      booking => booking.booking_date === currentDate.toISOString().split("T")[0]
+      booking => booking.appointment_date === currentDate.toISOString().split("T")[0]
     )
 
     if (todayBookings.length === 0) {
@@ -252,10 +252,10 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
                   </div>
                 )}
 
-                {booking.special_requests && (
+                {booking.notes && (
                   <div className="text-sm">
                     <span className="text-gray-500">Notes:</span>
-                    <span className="ml-2 text-gray-700">{booking.special_requests}</span>
+                    <span className="ml-2 text-gray-700">{booking.notes}</span>
                   </div>
                 )}
               </div>
@@ -282,7 +282,7 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
         {weekDays.map((day) => {
           const dayStr = day.toISOString().split("T")[0]
           const dayBookings = bookings.filter(
-            booking => booking.booking_date === dayStr
+            booking => booking.appointment_date === dayStr
           )
 
           return (

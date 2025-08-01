@@ -104,9 +104,9 @@ export default function CouplesConfirmationPage() {
           customer_name: customerInfo.name,
           customer_email: customerInfo.email,
           customer_phone: customerInfo.phone,
-          booking_date: selectedDate,
+          appointment_date: selectedDate,
           start_time: selectedTime,
-          special_requests: customerInfo.specialRequests
+          notes: customerInfo.specialRequests
         })
 
         
@@ -216,7 +216,7 @@ export default function CouplesConfirmationPage() {
           selectedTime
         )
         
-        const roomId = roomAssignment?.assigned_room_id || 'room_1'
+        const roomId = roomAssignment?.assigned_room_id || 1
 
         const bookingResult = await supabaseClient.createBooking({
           service_id: primaryServiceData.id,
@@ -225,9 +225,9 @@ export default function CouplesConfirmationPage() {
           customer_name: customerInfo.name,
           customer_email: customerInfo.email,
           customer_phone: customerInfo.phone,
-          booking_date: selectedDate,
+          appointment_date: selectedDate,
           start_time: selectedTime,
-          special_requests: customerInfo.specialRequests
+          notes: customerInfo.specialRequests
         })
         
         if (!bookingResult || !bookingResult.booking_id) {

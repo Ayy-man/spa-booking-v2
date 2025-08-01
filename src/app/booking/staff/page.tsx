@@ -355,14 +355,14 @@ export default function StaffPage() {
                             </h3>
                             
                             <div className="space-y-2 mb-4">
-                              {member.can_perform_services && member.can_perform_services.length > 0 && (
+                              {member.capabilities && member.capabilities.length > 0 && (
                                 <p className="text-base text-gray-700 font-medium">
-                                  {member.can_perform_services.join(', ')}
+                                  {member.capabilities.join(', ')}
                                 </p>
                               )}
                               
                               <div className="flex flex-wrap gap-2">
-                                {(member.can_perform_services || []).map((serviceType, index) => (
+                                {(member.capabilities || []).map((serviceType, index) => (
                                   <Badge 
                                     key={index}
                                     className={`text-sm ${

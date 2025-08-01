@@ -29,13 +29,13 @@ interface RoomTimelineProps {
 interface DragState {
   isDragging: boolean
   draggedBooking: BookingWithRelations | null
-  targetRoomId: string | null
+  targetRoomId: number | null
   targetTimeSlot: string | null
 }
 
 interface RescheduleData {
   booking: BookingWithRelations
-  newRoomId: string
+  newRoomId: number
   newTimeSlot: string
   newRoomName: string
 }
@@ -64,7 +64,7 @@ export function RoomTimeline({
   refreshInterval = 30000 
 }: RoomTimelineProps) {
   const [bookings, setBookings] = useState<BookingWithRelations[]>([])
-  const [rooms, setRooms] = useState<Array<{ id: string; name: string; capabilities: string[]; has_body_scrub_equipment?: boolean; is_couples_room?: boolean }>>([])
+  const [rooms, setRooms] = useState<Array<{ id: number; name: string; capabilities: string[]; has_body_scrub_equipment?: boolean; is_couples_room?: boolean }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
@@ -154,7 +154,7 @@ export function RoomTimeline({
   }, [autoRefresh, refreshInterval, fetchData])
 
   // Get booking for a specific room and time slot
-  const getBookingForSlot = useCallback((roomId: string, timeString: string): BookingWithRelations | null => {
+  const getBookingForSlot = useCallback((roomId: number, timeString: string): BookingWithRelations | null => {
     return bookings.find(booking => {
       if (booking.room_id !== roomId) return false
       
@@ -166,7 +166,7 @@ export function RoomTimeline({
   }, [bookings])
 
   // Calculate room utilization percentage
-  const getRoomUtilization = useCallback((roomId: string): number => {
+  const getRoomUtilization = useCallback((roomId: number): number => {
     const roomBookings = bookings.filter(b => b.room_id === roomId)
     const totalBookedMinutes = roomBookings.reduce((total, booking) => total + (booking.service.duration || 60), 0)
     const totalBusinessMinutes = (BUSINESS_HOURS.end - BUSINESS_HOURS.start) * 60
@@ -244,7 +244,7 @@ export function RoomTimeline({
     e.dataTransfer.dropEffect = 'move'
   }, [])
 
-  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: string, timeSlot: string) => {
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: number, timeSlot: string) => {
     e.preventDefault()
     if (dragState.isDragging) {
       setDragState(prev => ({
@@ -267,7 +267,7 @@ export function RoomTimeline({
     }
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: string, timeSlot: string) => {
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: number, timeSlot: string) => {
     e.preventDefault()
     
     if (!dragState.draggedBooking) return

@@ -44,7 +44,7 @@ export default function AdminBookingsPage() {
           room:rooms(*),
           customer:customers(*)
         `)
-        .order('booking_date', { ascending: false })
+        .order('appointment_date', { ascending: false })
         .order('start_time', { ascending: false })
         .limit(50)
       
@@ -163,7 +163,7 @@ export default function AdminBookingsPage() {
                       <div className="text-sm text-gray-500">{booking.duration} mins</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{formatDate(booking.booking_date)}</div>
+                      <div className="text-sm text-gray-900">{formatDate(booking.appointment_date)}</div>
                       <div className="text-sm text-gray-500">{booking.start_time} - {booking.end_time}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

@@ -53,7 +53,7 @@ export default function ConfirmationPage() {
     try {
 
       // First, get optimal room assignment
-      let roomId = 'room_1'; // Default fallback to Room 1
+      let roomId = 1; // Default fallback to Room 1 (integer)
       try {
         const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
           bookingData.service.id,
@@ -63,7 +63,10 @@ export default function ConfirmationPage() {
         )
         
         if (roomAssignment && roomAssignment.assigned_room_id) {
-          roomId = roomAssignment.assigned_room_id
+          // Convert to integer if needed
+          roomId = typeof roomAssignment.assigned_room_id === 'string' 
+            ? parseInt(roomAssignment.assigned_room_id) 
+            : roomAssignment.assigned_room_id
         }
       } catch (roomError) {
         // Continue with default room
@@ -77,9 +80,9 @@ export default function ConfirmationPage() {
         customer_name: bookingData.customer.name,
         customer_email: bookingData.customer.email,
         customer_phone: bookingData.customer.phone || undefined,
-        booking_date: bookingData.date,
+        appointment_date: bookingData.date,
         start_time: bookingData.time,
-        special_requests: bookingData.customer.specialRequests || undefined
+        notes: bookingData.customer.specialRequests || undefined
       })
       
 
@@ -129,8 +132,8 @@ export default function ConfirmationPage() {
             price: bookingData.service.price,
             staff: (staffNameMap as any)[bookingData.staff] || bookingData.staff,
             staffId: bookingData.staff,
-            room: roomId,
-            roomId: roomId
+            room: roomId.toString(),
+            roomId: roomId.toString()
           }
         )
         

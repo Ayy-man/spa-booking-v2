@@ -23,7 +23,7 @@ export async function updateBookingStatus(
 
     // Add special requests if provided
     if (internalNotes) {
-      updateData.special_requests = internalNotes
+      updateData.notes = internalNotes
     }
 
     const { error } = await supabase
@@ -93,15 +93,51 @@ export async function createWalkInBooking(
       throw new Error('Customer phone is required')
     }
 
-    // No need to create customer record - store info directly in booking
+    // Create or find customer record
     const finalCustomerEmail = customerEmail && customerEmail.trim() ? customerEmail.trim() : `walkin_${Date.now()}@dermalskinclinic.com`
+    
+    let customerId: string
+    
+    // First try to find existing customer by email or phone
+    const { data: existingCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .or(`email.eq.${finalCustomerEmail},phone.eq.${customerPhone.trim()}`)
+      .single()
+
+    if (existingCustomer) {
+      customerId = existingCustomer.id
+    } else {
+      // Create new customer
+      const nameParts = customerName.trim().split(' ')
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || ''
+      
+      const { data: newCustomer, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          first_name: firstName,
+          last_name: lastName,
+          email: finalCustomerEmail,
+          phone: customerPhone.trim(),
+          marketing_consent: false,
+          is_active: true
+        })
+        .select('id')
+        .single()
+
+      if (customerError || !newCustomer) {
+        throw new Error('Failed to create customer record')
+      }
+      customerId = newCustomer.id
+    }
 
     // Check for conflicts
     const { data: conflicts, error: conflictError } = await supabase
       .from('bookings')
       .select('id')
-      .eq('booking_date', appointmentDate)
-      .eq('room_id', roomId)
+      .eq('appointment_date', appointmentDate)
+      .eq('room_id', parseInt(roomId))
       .neq('status', 'cancelled')
       .or(`and(start_time.lte.${bookingStartTime},end_time.gt.${bookingStartTime}),and(start_time.lt.${endTime},end_time.gte.${endTime})`)
 
@@ -111,19 +147,25 @@ export async function createWalkInBooking(
     }
     
     // Create booking data matching the actual database schema
+    const discount = 0
+    const finalPrice = service.price - discount
+    
     const bookingData: BookingInsert = {
+      customer_id: customerId,
       service_id: serviceId,
       staff_id: staffId,
-      room_id: roomId,
-      customer_name: customerName.trim(),
-      customer_email: finalCustomerEmail,
-      customer_phone: customerPhone.trim(),
-      booking_date: appointmentDate,
+      room_id: parseInt(roomId),
+      appointment_date: appointmentDate,
       start_time: bookingStartTime,
       end_time: endTime,
+      duration: service.duration,
       total_price: service.price,
+      discount: discount,
+      final_price: finalPrice,
       status: 'confirmed',
-      special_requests: specialRequests ? `Walk-in: ${specialRequests}` : `Walk-in booking for ${customerName}`
+      payment_status: 'pending',
+      notes: specialRequests ? `Walk-in: ${specialRequests}` : `Walk-in booking for ${customerName}`,
+      booking_type: 'single'
     }
 
     const { data: booking, error: bookingError } = await supabase
@@ -157,19 +199,55 @@ export async function blockTimeSlot(
       throw new Error('Failed to create system service for time blocking')
     }
 
+    // Create or find system customer
+    let systemCustomerId: string
+    
+    const { data: existingSystemCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('email', 'system@dermalskinclinic.com')
+      .single()
+
+    if (existingSystemCustomer) {
+      systemCustomerId = existingSystemCustomer.id
+    } else {
+      // Create system customer
+      const { data: newSystemCustomer, error: systemCustomerError } = await supabase
+        .from('customers')
+        .insert({
+          first_name: 'SYSTEM',
+          last_name: 'BLOCK',
+          email: 'system@dermalskinclinic.com',
+          phone: '',
+          marketing_consent: false,
+          is_active: true
+        })
+        .select('id')
+        .single()
+
+      if (systemCustomerError || !newSystemCustomer) {
+        throw new Error('Failed to create system customer record')
+      }
+      systemCustomerId = newSystemCustomer.id
+    }
+
     // Create a blocked booking entry
     const blockingData: BookingInsert = {
+      customer_id: systemCustomerId,
       service_id: systemServiceId,
       staff_id: staffId,
-      room_id: roomId,
-      customer_name: 'SYSTEM BLOCK',
-      customer_email: 'system@dermalskinclinic.com',
-      booking_date: date,
+      room_id: parseInt(roomId),
+      appointment_date: date,
       start_time: startTime,
       end_time: endTime,
+      duration: 60, // Default duration for blocking
       total_price: 0,
+      discount: 0,
+      final_price: 0,
       status: 'confirmed',
-      special_requests: `Time blocked for: ${reason}`
+      payment_status: 'completed',
+      notes: `Time blocked for: ${reason}`,
+      booking_type: 'block'
     }
 
     const { error } = await supabase
@@ -243,10 +321,10 @@ export async function getStaffSchedule(
         room:rooms(*)
       `)
       .eq('staff_id', staffId)
-      .gte('booking_date', startDate)
-      .lte('booking_date', endDate)
+      .gte('appointment_date', startDate)
+      .lte('appointment_date', endDate)
       .neq('status', 'cancelled')
-      .order('booking_date', { ascending: true })
+      .order('appointment_date', { ascending: true })
       .order('start_time', { ascending: true })
 
     if (error) throw error

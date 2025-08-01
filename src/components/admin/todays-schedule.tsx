@@ -50,7 +50,7 @@ export function TodaysSchedule({
           staff:staff(*),
           room:rooms(*)
         `)
-        .eq('booking_date', dateString)
+        .eq('appointment_date', dateString)
         .neq('status', 'cancelled')
         .order('start_time', { ascending: true })
 

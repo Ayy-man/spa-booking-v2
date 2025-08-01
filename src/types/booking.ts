@@ -5,6 +5,7 @@ export type Service = Database['public']['Tables']['services']['Row']
 export type Staff = Database['public']['Tables']['staff']['Row']
 export type Room = Database['public']['Tables']['rooms']['Row']
 export type Booking = Database['public']['Tables']['bookings']['Row']
+export type Customer = Database['public']['Tables']['customers']['Row']
 export type StaffSchedule = Database['public']['Tables']['staff_schedules']['Row']
 
 // Insert types for creating new records
@@ -12,6 +13,7 @@ export type ServiceInsert = Database['public']['Tables']['services']['Insert']
 export type StaffInsert = Database['public']['Tables']['staff']['Insert']
 export type RoomInsert = Database['public']['Tables']['rooms']['Insert']
 export type BookingInsert = Database['public']['Tables']['bookings']['Insert']
+export type CustomerInsert = Database['public']['Tables']['customers']['Insert']
 export type StaffScheduleInsert = Database['public']['Tables']['staff_schedules']['Insert']
 
 // Update types for modifying records
@@ -25,6 +27,7 @@ export interface BookingWithRelations extends Booking {
   service: Service
   staff: Staff & { default_room: Room | null }
   room: Room
+  customer: Customer
 }
 
 export interface StaffWithRoom extends Staff {
@@ -100,13 +103,13 @@ export type AvailabilityType =
 export interface BookingFormData {
   service_id: string
   staff_id: string
-  room_id: string
+  room_id: number
   customer_name: string
   customer_email: string
   customer_phone?: string
-  booking_date: string
+  appointment_date: string
   start_time: string
-  special_requests?: string
+  notes?: string
 }
 
 // Validation types
@@ -184,7 +187,7 @@ export interface ServiceFilter {
   max_price?: number
   max_duration?: number
   requires_couples_room?: boolean
-  requires_body_scrub_room?: boolean
+  requires_room_3?: boolean
 }
 
 export interface BookingFilter {
