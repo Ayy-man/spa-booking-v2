@@ -108,7 +108,7 @@ export default function BookingValidator({
   const getBusinessRuleExplanation = (service: Service): string[] => {
     const rules: string[] = []
     
-    if (service.requires_room_3 || service.category === 'body_scrub') {
+    if (service.requires_body_scrub_room || service.category === 'body_scrub') {
       rules.push('Body scrub services can only be performed in Room 3 (specialized equipment required)')
     }
     
@@ -267,7 +267,7 @@ export default function BookingValidator({
               <div className="text-sm text-gray-600">
                 <div>{staff.name} - {service.category} service</div>
                 <div className="mt-1">
-                  Can perform: {staff.capabilities.join(', ')}
+                  Can perform: {staff.can_perform_services.join(', ')}
                 </div>
               </div>
               

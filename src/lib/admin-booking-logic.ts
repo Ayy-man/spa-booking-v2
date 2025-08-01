@@ -58,7 +58,7 @@ export async function markAsNoShow(
 export async function createWalkInBooking(
   serviceId: string,
   staffId: string,
-  roomId: number,
+  roomId: string,
   customerName: string,
   customerPhone: string,
   customerEmail?: string,
@@ -100,7 +100,7 @@ export async function createWalkInBooking(
     const { data: conflicts, error: conflictError } = await supabase
       .from('bookings')
       .select('id')
-      .eq('appointment_date', appointmentDate)
+      .eq('booking_date', appointmentDate)
       .eq('room_id', roomId)
       .neq('status', 'cancelled')
       .or(`and(start_time.lte.${bookingStartTime},end_time.gt.${bookingStartTime}),and(start_time.lt.${endTime},end_time.gte.${endTime})`)
@@ -118,10 +118,9 @@ export async function createWalkInBooking(
       customer_name: customerName.trim(),
       customer_email: finalCustomerEmail,
       customer_phone: customerPhone.trim(),
-      appointment_date: appointmentDate,
+      booking_date: appointmentDate,
       start_time: bookingStartTime,
       end_time: endTime,
-      duration: service.duration,
       total_price: service.price,
       status: 'confirmed',
       special_requests: specialRequests ? `Walk-in: ${specialRequests}` : `Walk-in booking for ${customerName}`
@@ -148,7 +147,7 @@ export async function blockTimeSlot(
   startTime: string,
   endTime: string,
   reason: string,
-  roomId: number
+  roomId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Get system service for blocking
@@ -165,10 +164,9 @@ export async function blockTimeSlot(
       room_id: roomId,
       customer_name: 'SYSTEM BLOCK',
       customer_email: 'system@dermalskinclinic.com',
-      appointment_date: date,
+      booking_date: date,
       start_time: startTime,
       end_time: endTime,
-      duration: Math.ceil((new Date(`${date}T${endTime}`).getTime() - new Date(`${date}T${startTime}`).getTime()) / 60000),
       total_price: 0,
       status: 'confirmed',
       special_requests: `Time blocked for: ${reason}`
@@ -245,10 +243,10 @@ export async function getStaffSchedule(
         room:rooms(*)
       `)
       .eq('staff_id', staffId)
-      .gte('appointment_date', startDate)
-      .lte('appointment_date', endDate)
+      .gte('booking_date', startDate)
+      .lte('booking_date', endDate)
       .neq('status', 'cancelled')
-      .order('appointment_date', { ascending: true })
+      .order('booking_date', { ascending: true })
       .order('start_time', { ascending: true })
 
     if (error) throw error

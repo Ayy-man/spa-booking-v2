@@ -207,7 +207,7 @@ export default function CouplesStaffPage() {
       <div className="flex items-center space-x-4">
         <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
           <span className="text-xl font-semibold text-gray-600">
-            {member.id === 'any' ? 'AA' : (member.initials || member.name.split(' ').map(n => n[0]).join(''))}
+            {member.id === 'any' ? 'AA' : member.name.split(' ').map(n => n[0]).join('')}
           </span>
         </div>
 
@@ -216,14 +216,14 @@ export default function CouplesStaffPage() {
             {member.id === 'any' ? 'Any Available Staff' : member.name}
           </h3>
           
-          {member.specialties && (
+          {(member as any).can_perform_services && (member as any).can_perform_services.length > 0 && (
             <p className="text-sm text-gray-600 mb-2">
-              {member.specialties}
+              {(member as any).can_perform_services.join(', ')}
             </p>
           )}
           
           <div className="flex flex-wrap gap-1">
-            {member.capabilities.map((serviceType, index) => (
+            {((member as any).can_perform_services || []).map((serviceType: string, index: number) => (
               <Badge 
                 key={index}
                 variant="outline" 

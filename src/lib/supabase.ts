@@ -84,11 +84,11 @@ export const supabaseClient = {
   async createBooking(booking: {
     service_id: string
     staff_id: string
-    room_id: number
+    room_id: string
     customer_name: string
     customer_email: string
     customer_phone?: string
-    appointment_date: string
+    booking_date: string
     start_time: string
     special_requests?: string
   }) {
@@ -100,7 +100,7 @@ export const supabaseClient = {
         p_room_id: booking.room_id,
         p_customer_name: booking.customer_name,
         p_customer_email: booking.customer_email,
-        p_appointment_date: booking.appointment_date,
+        p_booking_date: booking.booking_date,
         p_start_time: booking.start_time,
         p_customer_phone: booking.customer_phone,
         p_special_requests: booking.special_requests
@@ -155,7 +155,7 @@ export const supabaseClient = {
         customer_name: booking.customer_name,
         customer_email: booking.customer_email,
         customer_phone: booking.customer_phone,
-        appointment_date: booking.appointment_date,
+        booking_date: booking.booking_date,
         start_time: booking.start_time,
         end_time: endTimeStr,
         status: 'confirmed',
@@ -183,11 +183,11 @@ export const supabaseClient = {
         staff:staff(*),
         room:rooms(*)
       `)
-      .order('appointment_date', { ascending: true })
+      .order('booking_date', { ascending: true })
       .order('start_time', { ascending: true })
 
     if (date) {
-      query = query.eq('appointment_date', date)
+      query = query.eq('booking_date', date)
     }
 
     const { data, error } = await query
@@ -205,7 +205,7 @@ export const supabaseClient = {
         room:rooms(*)
       `)
       .eq('customer_email', email)
-      .order('appointment_date', { ascending: false })
+      .order('booking_date', { ascending: false })
       .order('start_time', { ascending: false })
 
     if (error) throw error
@@ -237,7 +237,7 @@ export const supabaseClient = {
     const { data, error } = await supabase.rpc('assign_optimal_room', {
       p_service_id: serviceId,
       p_preferred_staff_id: staffId,
-      p_appointment_date: bookingDate,
+      p_booking_date: bookingDate,
       p_start_time: startTime
     })
 
@@ -276,7 +276,7 @@ export const supabaseClient = {
     customer_name: string
     customer_email: string
     customer_phone?: string
-    appointment_date: string
+    booking_date: string
     start_time: string
     special_requests?: string
   }) {
@@ -288,7 +288,7 @@ export const supabaseClient = {
       p_customer_name: booking.customer_name,
       p_customer_email: booking.customer_email,
       p_customer_phone: booking.customer_phone,
-      p_appointment_date: booking.appointment_date,
+      p_booking_date: booking.booking_date,
       p_start_time: booking.start_time,
       p_special_requests: booking.special_requests
     })

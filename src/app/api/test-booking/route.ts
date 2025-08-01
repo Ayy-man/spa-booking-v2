@@ -7,11 +7,11 @@ export async function POST() {
     const testBooking = {
       service_id: 'basic_facial',
       staff_id: 'robyn_camacho',
-      room_id: 1,
+      room_id: 'room_1',
       customer_name: 'Test Customer',
       customer_email: 'test@example.com',
       customer_phone: '555-1234',
-      appointment_date: new Date().toISOString().split('T')[0],
+      booking_date: new Date().toISOString().split('T')[0],
       start_time: '14:00',
       special_requests: 'This is a test booking'
     }
@@ -45,7 +45,7 @@ export async function GET() {
       staff_id: 'robyn_camacho',
       customer_name: 'Test Customer',
       customer_email: 'test@example.com',
-      appointment_date: new Date().toISOString().split('T')[0],
+      booking_date: new Date().toISOString().split('T')[0],
       start_time: '14:00'
     }
   })

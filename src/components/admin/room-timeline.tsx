@@ -29,13 +29,13 @@ interface RoomTimelineProps {
 interface DragState {
   isDragging: boolean
   draggedBooking: BookingWithRelations | null
-  targetRoomId: number | null
+  targetRoomId: string | null
   targetTimeSlot: string | null
 }
 
 interface RescheduleData {
   booking: BookingWithRelations
-  newRoomId: number
+  newRoomId: string
   newTimeSlot: string
   newRoomName: string
 }
@@ -64,7 +64,7 @@ export function RoomTimeline({
   refreshInterval = 30000 
 }: RoomTimelineProps) {
   const [bookings, setBookings] = useState<BookingWithRelations[]>([])
-  const [rooms, setRooms] = useState<Array<{ id: number; name: string; capabilities: string[] }>>([])
+  const [rooms, setRooms] = useState<Array<{ id: string; name: string; capabilities: string[]; has_body_scrub_equipment?: boolean; is_couples_room?: boolean }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
@@ -118,9 +118,9 @@ export function RoomTimeline({
       // Fetch active rooms
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
-        .select('id, name, capabilities')
+        .select('id, name, capabilities, has_body_scrub_equipment, is_couples_room')
         .eq('is_active', true)
-        .order('id', { ascending: true })
+        .order('name', { ascending: true })
 
       if (roomsError) throw roomsError
 
@@ -154,7 +154,7 @@ export function RoomTimeline({
   }, [autoRefresh, refreshInterval, fetchData])
 
   // Get booking for a specific room and time slot
-  const getBookingForSlot = useCallback((roomId: number, timeString: string): BookingWithRelations | null => {
+  const getBookingForSlot = useCallback((roomId: string, timeString: string): BookingWithRelations | null => {
     return bookings.find(booking => {
       if (booking.room_id !== roomId) return false
       
@@ -166,9 +166,9 @@ export function RoomTimeline({
   }, [bookings])
 
   // Calculate room utilization percentage
-  const getRoomUtilization = useCallback((roomId: number): number => {
+  const getRoomUtilization = useCallback((roomId: string): number => {
     const roomBookings = bookings.filter(b => b.room_id === roomId)
-    const totalBookedMinutes = roomBookings.reduce((total, booking) => total + (booking.duration || 60), 0)
+    const totalBookedMinutes = roomBookings.reduce((total, booking) => total + (booking.service.duration || 60), 0)
     const totalBusinessMinutes = (BUSINESS_HOURS.end - BUSINESS_HOURS.start) * 60
     return Math.round((totalBookedMinutes / totalBusinessMinutes) * 100)
   }, [bookings])
@@ -225,7 +225,7 @@ export function RoomTimeline({
       ">
         <div style="font-weight: 600; color: #1F2937;">${booking.service.name}</div>
         <div style="color: #6B7280;">${booking.staff.name}</div>
-        <div style="color: #6B7280;">${booking.duration}min</div>
+        <div style="color: #6B7280;">${booking.service.duration}min</div>
       </div>
     `
     dragImage.style.position = 'absolute'
@@ -244,7 +244,7 @@ export function RoomTimeline({
     e.dataTransfer.dropEffect = 'move'
   }, [])
 
-  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: number, timeSlot: string) => {
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: string, timeSlot: string) => {
     e.preventDefault()
     if (dragState.isDragging) {
       setDragState(prev => ({
@@ -267,7 +267,7 @@ export function RoomTimeline({
     }
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: number, timeSlot: string) => {
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: string, timeSlot: string) => {
     e.preventDefault()
     
     if (!dragState.draggedBooking) return
@@ -313,7 +313,7 @@ export function RoomTimeline({
     }
 
     // Check if target slot has enough time for the service
-    const bookingDuration = dragState.draggedBooking.duration || 60
+    const bookingDuration = dragState.draggedBooking.service.duration || 60
     const endTimeSlot = new Date(`2000-01-01T${timeSlot}:00`)
     endTimeSlot.setMinutes(endTimeSlot.getMinutes() + bookingDuration)
     const endTimeString = endTimeSlot.toTimeString().slice(0, 5)
@@ -395,7 +395,7 @@ export function RoomTimeline({
     try {
       // Calculate new end time
       const startTime = new Date(`2000-01-01T${rescheduleData.newTimeSlot}:00`)
-      const endTime = new Date(startTime.getTime() + (rescheduleData.booking.duration || 60) * 60000)
+      const endTime = new Date(startTime.getTime() + (rescheduleData.booking.service.duration || 60) * 60000)
       const newEndTime = endTime.toTimeString().slice(0, 5)
 
       const { error } = await supabase
@@ -685,7 +685,7 @@ export function RoomTimeline({
                                         dragState.isDragging && dragState.draggedBooking?.id === booking.id && "opacity-50 shadow-lg"
                                       )}
                                       style={{
-                                        height: `${((booking.duration || 60) / BUSINESS_HOURS.slotDuration) * 32}px`,
+                                        height: `${((booking.service.duration || 60) / BUSINESS_HOURS.slotDuration) * 32}px`,
                                       }}
                                       draggable
                                       onDragStart={(e) => handleDragStart(e, booking)}
@@ -717,7 +717,7 @@ export function RoomTimeline({
                                             )}
                                           </div>
                                           <div className="text-xs opacity-60">
-                                            {booking.duration}min
+                                            {booking.service.duration}min
                                           </div>
                                         </div>
                                         <Move className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
@@ -739,7 +739,7 @@ export function RoomTimeline({
                                           )}
                                         </div>
                                         <div>Time: {booking.start_time.slice(0, 5)} - {booking.end_time.slice(0, 5)}</div>
-                                        <div>Duration: {booking.duration} minutes</div>
+                                        <div>Duration: {booking.service.duration} minutes</div>
                                         <div>Status: {booking.status}</div>
                                         <div>Price: ${booking.total_price}</div>
                                         <div className="flex items-center text-xs text-gray-500 mt-2">
@@ -794,7 +794,7 @@ export function RoomTimeline({
           
           <Card className="p-4 text-center">
             <div className="text-2xl font-bold text-blue-600 mb-1">
-              {Math.round(bookings.reduce((sum, b) => sum + (b.duration || 60), 0) / 60)}h
+              {Math.round(bookings.reduce((sum, b) => sum + (b.service.duration || 60), 0) / 60)}h
             </div>
             <div className="text-sm text-gray-600 flex items-center justify-center">
               <Clock className="h-4 w-4 mr-1" />
@@ -841,7 +841,7 @@ export function RoomTimeline({
                     <div className="bg-gray-50 p-3 rounded space-y-1 text-sm">
                       <div><strong>Service:</strong> {rescheduleData.booking.service.name}</div>
                       <div><strong>Staff:</strong> {rescheduleData.booking.staff.name}</div>
-                      <div><strong>Duration:</strong> {rescheduleData.booking.duration} minutes</div>
+                      <div><strong>Duration:</strong> {rescheduleData.booking.service.duration} minutes</div>
                     </div>
                   </div>
 
@@ -929,7 +929,7 @@ export function RoomTimeline({
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Duration:</span>
-                      <span>{clickRescheduleBooking.duration} minutes</span>
+                      <span>{clickRescheduleBooking.service.duration} minutes</span>
                     </div>
                   </div>
                 </div>

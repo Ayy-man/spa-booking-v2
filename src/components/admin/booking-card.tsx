@@ -105,7 +105,7 @@ export function BookingCard({
             </span>
             {showDuration && (
               <span className={cn(textSizes.details, "text-gray-500")}>
-                ({booking.duration}min)
+                ({booking.service.duration}min)
               </span>
             )}
           </div>

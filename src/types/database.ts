@@ -16,17 +16,18 @@ export interface Database {
           id: string
           service_id: string
           staff_id: string
-          room_id: number
+          room_id: string
           customer_name: string
           customer_email: string
           customer_phone: string | null
-          appointment_date: string
+          booking_date: string
           start_time: string
           end_time: string
           status: string
           special_requests: string | null
           total_price: number | null
-          duration?: number
+          booking_group_id: string | null
+          booking_type: string
           created_at: string
           updated_at: string
         }
@@ -34,17 +35,18 @@ export interface Database {
           id?: string
           service_id: string
           staff_id: string
-          room_id: number
+          room_id: string
           customer_name: string
           customer_email: string
           customer_phone?: string | null
-          appointment_date: string
+          booking_date: string
           start_time: string
           end_time: string
           status?: string
           special_requests?: string | null
           total_price?: number | null
-          duration?: number
+          booking_group_id?: string | null
+          booking_type?: string
           created_at?: string
           updated_at?: string
         }
@@ -62,41 +64,45 @@ export interface Database {
           status?: string
           special_requests?: string | null
           total_price?: number | null
-          duration?: number
+          booking_group_id?: string | null
+          booking_type?: string
           created_at?: string
           updated_at?: string
         }
       }
       rooms: {
         Row: {
-          id: number
+          id: string
           name: string
+          room_number: number
           capacity: number
           capabilities: string[]
-          equipment: string[]
-          features: string[]
+          has_body_scrub_equipment: boolean
+          is_couples_room: boolean
           is_active: boolean
           created_at: string
           updated_at: string
         }
         Insert: {
-          id?: number
+          id?: string
           name: string
+          room_number: number
           capacity?: number
           capabilities?: string[]
-          equipment?: string[]
-          features?: string[]
+          has_body_scrub_equipment?: boolean
+          is_couples_room?: boolean
           is_active?: boolean
           created_at?: string
           updated_at?: string
         }
         Update: {
-          id?: number
+          id?: string
           name?: string
+          room_number?: number
           capacity?: number
           capabilities?: string[]
-          equipment?: string[]
-          features?: string[]
+          has_body_scrub_equipment?: boolean
+          is_couples_room?: boolean
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -110,10 +116,10 @@ export interface Database {
           duration: number
           price: number
           category: string
-          ghl_category: string
-          requires_room_3: boolean
+          requires_couples_room: boolean
+          requires_body_scrub_room: boolean
           is_couples_service: boolean
-          service_capabilities: string[]
+          is_package: boolean
           is_active: boolean
           created_at: string
           updated_at: string
@@ -125,10 +131,10 @@ export interface Database {
           duration: number
           price: number
           category: string
-          ghl_category: string
-          requires_room_3?: boolean
+          requires_couples_room?: boolean
+          requires_body_scrub_room?: boolean
           is_couples_service?: boolean
-          service_capabilities?: string[]
+          is_package?: boolean
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -140,10 +146,10 @@ export interface Database {
           duration?: number
           price?: number
           category?: string
-          ghl_category?: string
-          requires_room_3?: boolean
+          requires_couples_room?: boolean
+          requires_body_scrub_room?: boolean
           is_couples_service?: boolean
-          service_capabilities?: string[]
+          is_package?: boolean
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -153,51 +159,36 @@ export interface Database {
         Row: {
           id: string
           name: string
-          email: string | null
+          email: string
           phone: string | null
-          specialties: string | null
-          capabilities: string[]
-          work_days: number[]
-          default_room_id: number | null
-          role: string
-          initials: string | null
-          hourly_rate: number | null
+          can_perform_services: string[]
+          default_room_id: string | null
+          schedule: Json | null
           is_active: boolean
-          auth_user_id: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
-          id: string
+          id?: string
           name: string
-          email?: string | null
+          email: string
           phone?: string | null
-          specialties?: string | null
-          capabilities?: string[]
-          work_days?: number[]
+          can_perform_services?: string[]
           default_room_id?: string | null
-          role?: string
-          initials?: string | null
-          hourly_rate?: number | null
+          schedule?: Json | null
           is_active?: boolean
-          auth_user_id?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           name?: string
-          email?: string | null
+          email?: string
           phone?: string | null
-          specialties?: string | null
-          capabilities?: string[]
-          work_days?: number[]
+          can_perform_services?: string[]
           default_room_id?: string | null
-          role?: string
-          initials?: string | null
-          hourly_rate?: number | null
+          schedule?: Json | null
           is_active?: boolean
-          auth_user_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -256,7 +247,7 @@ export interface Database {
           p_start_time?: string
         }
         Returns: {
-          assigned_room_id: number
+          assigned_room_id: string
           assigned_room_name: string
           assignment_reason: string
         }[]
@@ -278,7 +269,7 @@ export interface Database {
           available_time: string
           available_staff_id: string
           available_staff_name: string
-          available_room_id: number
+          available_room_id: string
           available_room_name: string
         }[]
       }
@@ -298,11 +289,11 @@ export interface Database {
         Args: {
           p_service_id: string
           p_staff_id: string
-          p_room_id: number
+          p_room_id: string
           p_customer_name: string
           p_customer_email: string
           p_customer_phone?: string
-          p_appointment_date: string
+          p_booking_date: string
           p_start_time: string
           p_special_requests?: string
         }

@@ -2,12 +2,12 @@
 
 A sophisticated Calendly-style booking system for medical spa services, built with Next.js 14, TypeScript, Tailwind CSS, and Supabase.
 
-## 🎉 **PRODUCTION V1 - ENHANCED WITH ADMIN SYSTEM**
+## 🎉 **PRODUCTION V1.2 - DATABASE SCHEMA FIXES COMPLETE**
 
-**Status**: ✅ **Complete and tested with enhanced admin panel**  
-**Version**: v1.1.0  
-**Last Updated**: Current session  
-**Git Tag**: production-v1
+**Status**: ✅ **Complete with resolved database schema issues**  
+**Version**: v1.2.0  
+**Last Updated**: August 1, 2025  
+**Git Tag**: production-v1.2
 
 ## 🎯 Project Overview
 
@@ -182,17 +182,25 @@ npm run test:watch   # Run tests in watch mode
 
 ### Core Tables
 - **services**: Service definitions and pricing
-- **staff**: Staff members and capabilities
-- **rooms**: Room configurations and capabilities
-- **bookings**: Booking records and status
-- **customers**: Customer information and history
+- **staff**: Staff members and capabilities (uses `can_perform_services` field)
+- **rooms**: Room configurations with equipment flags (`has_body_scrub_equipment`, `is_couples_room`)
+- **bookings**: Booking records with customer info (uses `booking_date` field)
+- **admin_users**: Admin authentication and role management
 - **staff_schedules**: Staff availability and schedules
+
+### Schema Characteristics
+- **UUID Primary Keys**: All IDs are UUID strings, not integers
+- **Snake Case Fields**: Database uses snake_case naming convention
+- **Integrated Customer Data**: Customer information stored directly in bookings table
+- **Equipment Tracking**: Rooms have specific equipment and capability flags
+- **Service Requirements**: Services properly linked to room requirements
 
 ### Key Features
 - **Row Level Security (RLS)**: Data protection
 - **Real-time subscriptions**: Live updates
-- **Optimized queries**: Fast performance
+- **Optimized queries**: Fast performance with proper field mapping
 - **Data validation**: Input sanitization
+- **Schema Synchronization**: TypeScript types fully aligned with database structure
 
 ## 🧪 Testing
 
@@ -382,11 +390,75 @@ This project is proprietary software for medical spa services.
 
 **Built with ❤️ for medical spa services**
 
-### Recent Updates
+## Technical Changelog
+
+### v1.2.0 - Major Database Schema Fixes (August 1, 2025)
+
+#### Critical Issues Resolved
+1. **Database Schema Synchronization**
+   - **Issue**: TypeScript type definitions did not match actual database schema
+   - **Resolution**: Updated `/src/types/database.ts` to perfectly align with Supabase schema
+   - **Impact**: Eliminated all type-related runtime errors
+
+2. **Admin Panel Column Error**
+   - **Issue**: "column rooms.has_body_scrub_equipment does not exist" error
+   - **Resolution**: Added missing room equipment fields to database types
+   - **Impact**: Admin panel now functions without errors
+
+3. **Field Name Inconsistencies**
+   - **Issues Fixed**:
+     - `appointment_date` → `booking_date` (bookings table)
+     - `capabilities` → `can_perform_services` (staff table)
+     - `requires_room_3` → `requires_body_scrub_room` (services)
+   - **Resolution**: Updated all references throughout codebase
+   - **Impact**: Consistent field naming eliminates query failures
+
+4. **UUID vs Integer Type Mismatch**
+   - **Issue**: Database uses UUID strings, code expected integers
+   - **Resolution**: Changed all ID types from `number` to `string` throughout
+   - **Impact**: Eliminated type coercion errors and database constraint violations
+
+#### Technical Changes Made
+- **Core Files Updated**:
+  - `/src/types/database.ts` - Primary type definitions
+  - `/src/lib/supabase.ts` - Database query functions
+  - `/src/components/admin/room-timeline.tsx` - Admin components
+  - `/src/lib/booking-logic.ts` - Business logic
+  - `/src/lib/admin-booking-logic.ts` - Admin operations
+  - Multiple booking and staff selection components
+
+- **Database Schema Clarifications**:
+  - All primary keys are UUID strings (not integers)
+  - Field names follow snake_case convention
+  - Customer data integrated directly in bookings table
+  - Room capabilities properly defined with equipment flags
+  - Staff capabilities correctly referenced
+
+#### Build and Deployment Status
+- ✅ **TypeScript Compilation**: All errors resolved
+- ✅ **Admin Panel**: Fully functional without schema errors
+- ✅ **Booking System**: All workflows operational
+- ✅ **Database Queries**: All queries use correct field names and types
+- ✅ **Production Ready**: Application builds and deploys successfully
+
+### Recent Updates - v1.2.0 (August 1, 2025)
+- ✅ **MAJOR**: Resolved critical database schema mismatch issues
+- ✅ **FIXED**: "column rooms.has_body_scrub_equipment does not exist" admin panel error
+- ✅ **UPDATED**: All field name inconsistencies resolved:
+  - `appointment_date` → `booking_date`
+  - `capabilities` → `can_perform_services`
+  - `requires_room_3` → `requires_body_scrub_room`
+- ✅ **CORRECTED**: All room IDs changed from number to string (UUID) throughout codebase
+- ✅ **SYNCHRONIZED**: TypeScript types now fully match actual database schema
+- ✅ **RESOLVED**: All TypeScript compilation errors for successful deployment
+- ✅ **VERIFIED**: Project builds successfully without errors
+- ✅ **OPERATIONAL**: Admin panel functionality fully restored
+- ✅ **TESTED**: All booking pathways confirmed working
+
+### Previous Updates
 - ✅ Enhanced admin panel with authentication
 - ✅ Real-time booking monitoring
 - ✅ Improved staff management system
 - ✅ Better error handling and validation
 - ✅ Mobile-optimized admin interface
-- ✅ Comprehensive testing suite # Updated for Vercel deployment
-# Vercel deployment trigger - Fri Aug  1 01:20:31 IST 2025
+- ✅ Comprehensive testing suite

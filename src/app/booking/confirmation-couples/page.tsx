@@ -104,7 +104,7 @@ export default function CouplesConfirmationPage() {
           customer_name: customerInfo.name,
           customer_email: customerInfo.email,
           customer_phone: customerInfo.phone,
-          appointment_date: selectedDate,
+          booking_date: selectedDate,
           start_time: selectedTime,
           special_requests: customerInfo.specialRequests
         })
@@ -225,7 +225,7 @@ export default function CouplesConfirmationPage() {
           customer_name: customerInfo.name,
           customer_email: customerInfo.email,
           customer_phone: customerInfo.phone,
-          appointment_date: selectedDate,
+          booking_date: selectedDate,
           start_time: selectedTime,
           special_requests: customerInfo.specialRequests
         })

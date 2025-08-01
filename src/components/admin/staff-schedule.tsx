@@ -149,7 +149,7 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
 
   const renderDayView = () => {
     const todayBookings = bookings.filter(
-      booking => booking.appointment_date === currentDate.toISOString().split("T")[0]
+      booking => booking.booking_date === currentDate.toISOString().split("T")[0]
     )
 
     if (todayBookings.length === 0) {
@@ -198,7 +198,7 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
                     {formatTime(booking.start_time)}
                   </span>
                   <span className="text-sm text-gray-500">
-                    ({booking.duration}min)
+                    ({booking.service.duration}min)
                   </span>
                   {isSpecialRequest && (
                     <span className="text-amber-600 text-xs font-medium bg-amber-100 px-2 py-0.5 rounded-full">
@@ -282,7 +282,7 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
         {weekDays.map((day) => {
           const dayStr = day.toISOString().split("T")[0]
           const dayBookings = bookings.filter(
-            booking => booking.appointment_date === dayStr
+            booking => booking.booking_date === dayStr
           )
 
           return (

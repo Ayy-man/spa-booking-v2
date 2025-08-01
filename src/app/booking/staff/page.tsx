@@ -345,7 +345,7 @@ export default function StaffPage() {
                           {/* Staff Photo Placeholder */}
                           <div className="w-18 h-18 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center shadow-md">
                             <span className="text-2xl font-bold text-gray-600">
-                              {member.initials || member.name.split(' ').map(n => n[0]).join('')}
+                              {member.name.split(' ').map(n => n[0]).join('')}
                             </span>
                           </div>
 
@@ -355,14 +355,14 @@ export default function StaffPage() {
                             </h3>
                             
                             <div className="space-y-2 mb-4">
-                              {member.specialties && (
+                              {member.can_perform_services && member.can_perform_services.length > 0 && (
                                 <p className="text-base text-gray-700 font-medium">
-                                  {member.specialties}
+                                  {member.can_perform_services.join(', ')}
                                 </p>
                               )}
                               
                               <div className="flex flex-wrap gap-2">
-                                {(member.capabilities || []).map((serviceType, index) => (
+                                {(member.can_perform_services || []).map((serviceType, index) => (
                                   <Badge 
                                     key={index}
                                     className={`text-sm ${

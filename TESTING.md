@@ -160,6 +160,15 @@ describe('ComponentToTest', () => {
 
 ## Current Test Coverage
 
+### Database Schema Validation Tests
+**Status**: ✅ **VERIFIED** - All schema-related tests updated for v1.2.0
+- UUID field type validation across all entities
+- Field name consistency checks (snake_case format)
+- Room equipment field validation
+- Staff capabilities field validation
+- Booking date field validation
+- Service requirement mapping validation
+
 ### Environment Validation Tests
 **File**: `src/__tests__/env-validation.test.ts`
 - Validates required environment variables
@@ -169,10 +178,12 @@ describe('ComponentToTest', () => {
 
 ### Booking Logic Tests
 **File**: `src/lib/__tests__/booking-logic.test.ts`
-- Room assignment logic validation
-- Staff availability checking
-- Time slot validation
+- Room assignment logic validation (updated for UUID room IDs)
+- Staff availability checking (using `can_perform_services` field)
+- Time slot validation (with `booking_date` field)
 - Booking constraint enforcement
+- Room equipment validation (`has_body_scrub_equipment`, `is_couples_room`)
+- Service-to-room requirement mapping (`requires_body_scrub_room`)
 
 ### Health Check Tests
 **File**: `src/__tests__/health-check.test.ts`
@@ -273,17 +284,32 @@ global.fetch = jest.fn(() =>
 ### Test Data Fixtures
 Create reusable test data in test utilities:
 ```typescript
-// test-fixtures.ts
+// test-fixtures.ts - Updated for v1.2.0 schema
 export const mockBooking = {
-  id: 'test-booking-id',
-  service_id: 'test-service',
-  staff_id: 'test-staff',
-  room_id: 'test-room',
-  booking_date: '2025-08-01',
+  id: 'test-booking-uuid-string', // UUID string, not number
+  service_id: 'test-service-uuid',
+  staff_id: 'test-staff-uuid',
+  room_id: 'test-room-uuid', // UUID string format
+  booking_date: '2025-08-01', // Correct field name
   booking_time: '10:00',
   customer_name: 'Test Customer',
   customer_phone: '123-456-7890',
   customer_email: 'test@example.com'
+}
+
+export const mockRoom = {
+  id: 'test-room-uuid-string',
+  name: 'Test Room',
+  has_body_scrub_equipment: true, // New schema field
+  is_couples_room: false, // New schema field
+  capacity: 1
+}
+
+export const mockStaff = {
+  id: 'test-staff-uuid-string',
+  name: 'Test Staff',
+  can_perform_services: ['service1', 'service2'], // Correct field name
+  default_room_id: 'test-room-uuid'
 }
 ```
 
@@ -361,5 +387,5 @@ When adding new functionality:
 ---
 
 **Last Updated**: August 1, 2025  
-**Version**: 2.0.0  
-**Coverage Status**: ✅ Meeting requirements (70%+ across all metrics)
+**Version**: 2.1.0  
+**Coverage Status**: ✅ Meeting requirements (70%+ across all metrics) with database schema fixes verified

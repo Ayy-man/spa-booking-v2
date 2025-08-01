@@ -53,7 +53,7 @@ export default function ConfirmationPage() {
     try {
 
       // First, get optimal room assignment
-      let roomId = 1; // Default fallback to Room 1
+      let roomId = 'room_1'; // Default fallback to Room 1
       try {
         const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
           bookingData.service.id,
@@ -62,8 +62,8 @@ export default function ConfirmationPage() {
           bookingData.time
         )
         
-        if (roomAssignment && roomAssignment.room_id) {
-          roomId = roomAssignment.room_id
+        if (roomAssignment && roomAssignment.assigned_room_id) {
+          roomId = roomAssignment.assigned_room_id
         }
       } catch (roomError) {
         // Continue with default room
@@ -77,7 +77,7 @@ export default function ConfirmationPage() {
         customer_name: bookingData.customer.name,
         customer_email: bookingData.customer.email,
         customer_phone: bookingData.customer.phone || undefined,
-        appointment_date: bookingData.date,
+        booking_date: bookingData.date,
         start_time: bookingData.time,
         special_requests: bookingData.customer.specialRequests || undefined
       })
@@ -129,8 +129,8 @@ export default function ConfirmationPage() {
             price: bookingData.service.price,
             staff: (staffNameMap as any)[bookingData.staff] || bookingData.staff,
             staffId: bookingData.staff,
-            room: `Room ${roomId}`,
-            roomId: roomId.toString()
+            room: roomId,
+            roomId: roomId
           }
         )
         

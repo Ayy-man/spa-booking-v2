@@ -65,7 +65,7 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
     customerEmail: "",
     serviceId: "",
     staffId: "",
-    roomId: 1,
+    roomId: "",
     startTime: "",
     specialRequests: ""
   })
@@ -77,7 +77,7 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
     startTime: "",
     endTime: "",
     reason: "",
-    roomId: 1
+    roomId: ""
   })
 
   // Options data
@@ -164,7 +164,7 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
             customerEmail: "",
             serviceId: "",
             staffId: "",
-            roomId: 1,
+            roomId: "",
             startTime: "",
             specialRequests: ""
           })
@@ -188,7 +188,7 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
             startTime: "",
             endTime: "",
             reason: "",
-            roomId: 1
+            roomId: ""
           })
           break
       }
@@ -466,15 +466,15 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
                 <div>
                   <Label>Room *</Label>
                   <Select
-                    value={walkInData.roomId.toString()}
-                    onValueChange={(value) => setWalkInData(prev => ({ ...prev, roomId: parseInt(value) }))}
+                    value={walkInData.roomId}
+                    onValueChange={(value) => setWalkInData(prev => ({ ...prev, roomId: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select room" />
                     </SelectTrigger>
                     <SelectContent>
                       {rooms.map((room) => (
-                        <SelectItem key={room.id} value={room.id.toString()}>
+                        <SelectItem key={room.id} value={room.id}>
                           Room {room.name}
                         </SelectItem>
                       ))}
@@ -557,15 +557,15 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
                 <div>
                   <Label>Room *</Label>
                   <Select
-                    value={blockData.roomId.toString()}
-                    onValueChange={(value) => setBlockData(prev => ({ ...prev, roomId: parseInt(value) }))}
+                    value={blockData.roomId}
+                    onValueChange={(value) => setBlockData(prev => ({ ...prev, roomId: value }))}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select room" />
                     </SelectTrigger>
                     <SelectContent>
                       {rooms.map((room) => (
-                        <SelectItem key={room.id} value={room.id.toString()}>
+                        <SelectItem key={room.id} value={room.id}>
                           Room {room.name}
                         </SelectItem>
                       ))}

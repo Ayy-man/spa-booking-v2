@@ -79,6 +79,24 @@ WHERE schemaname = 'public';
 SELECT column_name, data_type, is_nullable 
 FROM information_schema.columns 
 WHERE table_name = 'admin_users';
+
+-- Verify room schema includes equipment fields
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'rooms' 
+AND column_name IN ('has_body_scrub_equipment', 'is_couples_room');
+
+-- Check bookings table uses correct field names
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'bookings' 
+AND column_name = 'booking_date';
+
+-- Verify staff capabilities field
+SELECT column_name, data_type 
+FROM information_schema.columns 
+WHERE table_name = 'staff' 
+AND column_name = 'can_perform_services';
 ```
 
 #### 1.4 Configure Authentication
@@ -182,16 +200,29 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "uptime": 123.456,
   "timestamp": "2025-08-01T...",
   "responseTime": 45,
   "environment": "production",
   "checks": {
     "database": "ok",
-    "environment": "ok"
+    "environment": "ok",
+    "schema": "synchronized"
   }
 }
+```
+
+#### 4.1.1 Database Schema Validation
+Verify that the database schema fixes are properly deployed:
+```bash
+# Test admin panel (should not show "column does not exist" errors)
+curl https://your-domain.com/admin/bookings
+
+# Verify booking creation works with correct field names
+curl -X POST https://your-domain.com/api/bookings \
+  -H "Content-Type: application/json" \
+  -d '{"service_id":"test","booking_date":"2025-08-02","booking_time":"10:00"}'
 ```
 
 #### 4.2 Functional Testing
@@ -274,12 +305,18 @@ node -e "console.log(process.env.NEXT_PUBLIC_SUPABASE_URL)"
 2. Check API keys are correct
 3. Ensure RLS policies allow access
 4. Verify connection pooling settings
+5. **NEW**: Confirm database schema matches TypeScript types
+6. **NEW**: Verify all field names use snake_case format
+7. **NEW**: Check that room equipment fields exist in database
 
 #### Build Failures
 1. Check TypeScript errors: `npm run build`
 2. Verify all dependencies: `npm ci`
 3. Check environment variables are set
 4. Review build logs for specific errors
+5. **RESOLVED**: Database schema mismatch issues (fixed in v1.2.0)
+6. **RESOLVED**: Field name inconsistencies (fixed in v1.2.0)
+7. **RESOLVED**: UUID vs integer type mismatches (fixed in v1.2.0)
 
 #### Performance Issues
 1. Check database query performance in Supabase
@@ -315,5 +352,5 @@ Maintain a list of emergency contacts for:
 ---
 
 **Last Updated**: August 1, 2025  
-**Version**: 2.0.0  
-**Status**: Production Ready
+**Version**: 2.1.0  
+**Status**: Production Ready with Database Schema Fixes Complete
