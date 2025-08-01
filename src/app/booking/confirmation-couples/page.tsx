@@ -41,6 +41,7 @@ export default function CouplesConfirmationPage() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string>('')
   const [bookingResults, setBookingResults] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     // Get all booking data from localStorage
@@ -64,6 +65,9 @@ export default function CouplesConfirmationPage() {
     if (customerData) {
       setCustomerInfo(JSON.parse(customerData))
     }
+    
+    // Set loading to false after attempting to load data
+    setIsLoading(false)
   }, [])
 
   const handleConfirmBooking = async () => {
@@ -337,6 +341,21 @@ export default function CouplesConfirmationPage() {
     })
   }
 
+  // Show loading state while data is being loaded from localStorage
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background py-8">
+        <div className="container mx-auto px-4 text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <h1 className="text-2xl font-heading text-primary-dark mb-4">
+            Loading your booking details...
+          </h1>
+        </div>
+      </div>
+    )
+  }
+
+  // Show missing information only after loading is complete and data is actually missing
   if (!bookingData || !customerInfo) {
     return (
       <div className="min-h-screen bg-background py-8">
@@ -344,6 +363,9 @@ export default function CouplesConfirmationPage() {
           <h1 className="text-2xl font-heading text-primary-dark mb-4">
             Booking Information Missing
           </h1>
+          <p className="text-gray-600 mb-6">
+            It looks like your booking session has expired or the booking data is incomplete.
+          </p>
           <Link href="/booking" className="text-primary hover:text-primary-dark">
             ← Start New Booking
           </Link>
