@@ -105,31 +105,31 @@ export async function POST(request: Request) {
             booking_type: fullBooking.booking_type
           },
           customer: {
-            id: fullBooking.customer.id,
-            first_name: fullBooking.customer.first_name,
-            last_name: fullBooking.customer.last_name,
-            email: fullBooking.customer.email,
-            phone: fullBooking.customer.phone,
-            full_name: `${fullBooking.customer.first_name} ${fullBooking.customer.last_name}`
+            id: fullBooking.customer?.id,
+            first_name: fullBooking.customer?.first_name,
+            last_name: fullBooking.customer?.last_name,
+            email: fullBooking.customer?.email,
+            phone: fullBooking.customer?.phone,
+            full_name: `${fullBooking.customer?.first_name || ''} ${fullBooking.customer?.last_name || ''}`.trim()
           },
           service: {
-            id: fullBooking.service.id,
-            name: fullBooking.service.name,
-            category: fullBooking.service.category,
-            duration: fullBooking.service.duration,
-            price: fullBooking.service.price,
-            description: fullBooking.service.description
+            id: fullBooking.service?.id,
+            name: fullBooking.service?.name,
+            category: fullBooking.service?.category,
+            duration: fullBooking.service?.duration,
+            price: fullBooking.service?.price,
+            description: fullBooking.service?.description
           },
           staff: {
-            id: fullBooking.staff.id,
-            name: fullBooking.staff.name,
-            email: fullBooking.staff.email,
-            role: fullBooking.staff.role
+            id: fullBooking.staff?.id,
+            name: fullBooking.staff?.name,
+            email: fullBooking.staff?.email,
+            role: fullBooking.staff?.role
           },
           room: {
-            id: fullBooking.room.id,
-            name: fullBooking.room.name,
-            capacity: fullBooking.room.capacity
+            id: fullBooking.room?.id,
+            name: fullBooking.room?.name,
+            capacity: fullBooking.room?.capacity
           },
           appointment_details: {
             date_formatted: formatDate(fullBooking.appointment_date),
