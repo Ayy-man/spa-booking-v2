@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabaseClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 
 interface Booking {
@@ -31,7 +31,7 @@ export default function SimpleAdminPage() {
       setLoading(true)
       // Get today's bookings
       const today = new Date().toISOString().split('T')[0]
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from('bookings')
         .select(`
           booking_id,
@@ -74,7 +74,7 @@ export default function SimpleAdminPage() {
   const markAsShow = async (booking: Booking) => {
     try {
       // Update booking status
-      const { error } = await supabaseClient
+      const { error } = await supabase
         .from('bookings')
         .update({ status: 'completed' })
         .eq('booking_id', booking.booking_id)
@@ -117,7 +117,7 @@ export default function SimpleAdminPage() {
   const markAsNoShow = async (booking: Booking) => {
     try {
       // Update booking status
-      const { error } = await supabaseClient
+      const { error } = await supabase
         .from('bookings')
         .update({ status: 'no_show' })
         .eq('booking_id', booking.booking_id)
