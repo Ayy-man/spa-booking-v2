@@ -216,7 +216,7 @@ export default function CouplesConfirmationPage() {
           selectedTime
         )
         
-        const roomId = roomAssignment?.room_id || 1
+        const roomId = roomAssignment?.assigned_room_id || 'room_1'
 
         const bookingResult = await supabaseClient.createBooking({
           service_id: primaryServiceData.id,
