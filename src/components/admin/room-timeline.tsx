@@ -64,7 +64,7 @@ export function RoomTimeline({
   refreshInterval = 30000 
 }: RoomTimelineProps) {
   const [bookings, setBookings] = useState<BookingWithRelations[]>([])
-  const [rooms, setRooms] = useState<Array<{ id: number; name: string; capabilities: string[]; has_body_scrub_equipment?: boolean; is_couples_room?: boolean }>>([])
+  const [rooms, setRooms] = useState<Array<{ id: number; name: string; capabilities: string[] }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
@@ -118,7 +118,7 @@ export function RoomTimeline({
       // Fetch active rooms
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
-        .select('id, name, capabilities, has_body_scrub_equipment, is_couples_room')
+        .select('id, name, capabilities')
         .eq('is_active', true)
         .order('name', { ascending: true })
 

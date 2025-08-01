@@ -5,11 +5,14 @@ import { supabase } from '@/lib/supabase'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 
 interface Booking {
-  booking_id: string
-  customer_name: string
-  customer_email: string
-  customer_phone?: string
-  booking_date: string
+  id: string
+  customer: {
+    first_name: string
+    last_name: string
+    email: string
+    phone?: string
+  }
+  appointment_date: string
   start_time: string
   status: string
   service_name?: string
@@ -34,33 +37,29 @@ export default function SimpleAdminPage() {
       const { data, error } = await supabase
         .from('bookings')
         .select(`
-          booking_id,
-          customer_name,
-          customer_email,
-          customer_phone,
-          booking_date,
+          id,
+          appointment_date,
           start_time,
           status,
-          services(name),
-          staff(name),
-          rooms(name)
+          service:services(name),
+          staff:staff(name),
+          room:rooms(name),
+          customer:customers(first_name, last_name, email, phone)
         `)
-        .eq('booking_date', today)
+        .eq('appointment_date', today)
         .order('start_time')
 
       if (error) throw error
 
-      const formattedBookings = data?.map(booking => ({
-        booking_id: booking.booking_id,
-        customer_name: booking.customer_name,
-        customer_email: booking.customer_email,
-        customer_phone: booking.customer_phone,
-        booking_date: booking.booking_date,
+      const formattedBookings = data?.map((booking: any) => ({
+        id: booking.id,
+        customer: booking.customer,
+        appointment_date: booking.appointment_date,
         start_time: booking.start_time,
         status: booking.status,
-        service_name: booking.services?.[0]?.name,
-        staff_name: booking.staff?.[0]?.name,
-        room_name: booking.rooms?.[0]?.name
+        service_name: booking.service?.name,
+        staff_name: booking.staff?.name,
+        room_name: booking.room?.name
       })) || []
 
       setBookings(formattedBookings)
@@ -77,22 +76,22 @@ export default function SimpleAdminPage() {
       const { error } = await supabase
         .from('bookings')
         .update({ status: 'completed' })
-        .eq('booking_id', booking.booking_id)
+        .eq('id', booking.id)
 
       if (error) throw error
 
       // Send webhook to GHL using the proper webhook sender
       const webhookResult = await ghlWebhookSender.sendShowNoShowWebhook(
-        booking.booking_id,
+        booking.id,
         {
-          name: booking.customer_name,
-          email: booking.customer_email,
-          phone: booking.customer_phone
+          name: booking.customer.first_name + ' ' + booking.customer.last_name,
+          email: booking.customer.email,
+          phone: booking.customer.phone
         },
         {
           service: booking.service_name || 'Unknown Service',
           serviceCategory: 'spa_treatment', // You might want to get this from the booking
-          date: booking.booking_date,
+          date: booking.appointment_date,
           time: booking.start_time,
           duration: 60, // Default duration, should be from booking data
           price: 0, // Should be from booking data
@@ -120,22 +119,22 @@ export default function SimpleAdminPage() {
       const { error } = await supabase
         .from('bookings')
         .update({ status: 'no_show' })
-        .eq('booking_id', booking.booking_id)
+        .eq('id', booking.id)
 
       if (error) throw error
 
       // Send webhook to GHL using the proper webhook sender
       const webhookResult = await ghlWebhookSender.sendShowNoShowWebhook(
-        booking.booking_id,
+        booking.id,
         {
-          name: booking.customer_name,
-          email: booking.customer_email,
-          phone: booking.customer_phone
+          name: booking.customer.first_name + ' ' + booking.customer.last_name,
+          email: booking.customer.email,
+          phone: booking.customer.phone
         },
         {
           service: booking.service_name || 'Unknown Service',
           serviceCategory: 'spa_treatment', // You might want to get this from the booking
-          date: booking.booking_date,
+          date: booking.appointment_date,
           time: booking.start_time,
           duration: 60, // Default duration, should be from booking data
           price: 0, // Should be from booking data
@@ -197,13 +196,13 @@ export default function SimpleAdminPage() {
             ) : (
               <div className="space-y-4">
                 {bookings.map((booking) => (
-                  <div key={booking.booking_id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={booking.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{booking.customer_name}</h3>
-                        <p className="text-gray-600">{booking.customer_email}</p>
-                        {booking.customer_phone && (
-                          <p className="text-gray-600">{booking.customer_phone}</p>
+                        <h3 className="font-semibold text-lg">{booking.customer.first_name} {booking.customer.last_name}</h3>
+                        <p className="text-gray-600">{booking.customer.email}</p>
+                        {booking.customer.phone && (
+                          <p className="text-gray-600">{booking.customer.phone}</p>
                         )}
                         <div className="mt-2 text-sm text-gray-500">
                           <p><strong>Service:</strong> {booking.service_name}</p>

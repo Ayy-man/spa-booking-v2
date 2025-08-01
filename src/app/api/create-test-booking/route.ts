@@ -9,21 +9,21 @@ export async function POST(request: NextRequest) {
     const endTime = '15:00:00' // 1 hour duration
 
     const testBooking = {
-      customer_name: 'Test Customer',
-      customer_email: 'test@example.com',
-      customer_phone: '+1-671-555-0123',
+      customer_id: '00000000-0000-0000-0000-000000000001',
       service_id: 'placenta_collagen_facial',
       staff_id: 'selma_villaver',
-      room_id: '11111111-1111-1111-1111-111111111111',
-      booking_date: today,
+      room_id: 1,
+      appointment_date: today,
       start_time: startTime,
       end_time: endTime,
       duration: 60,
-      price: 90,
+      total_price: 90,
+      discount: 0,
+      final_price: 90,
       status: 'confirmed',
       payment_status: 'paid',
       booking_source: 'test',
-      special_requests: 'Test booking for show/no-show functionality',
+      notes: 'Test booking for show/no-show functionality',
       internal_notes: 'Test booking created via API'
     }
 

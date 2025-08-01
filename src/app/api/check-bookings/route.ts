@@ -10,7 +10,8 @@ export async function GET() {
         *,
         service:services(*),
         staff:staff(*),
-        room:rooms(*)
+        room:rooms(*),
+        customer:customers(*)
       `)
       .order('created_at', { ascending: false })
       .limit(10)
@@ -28,11 +29,11 @@ export async function GET() {
       bookings: bookings || [],
       summary: bookings?.map(b => ({
         id: b.id,
-        customer: b.customer_name,
+        customer: b.customer?.first_name + ' ' + b.customer?.last_name,
         service: b.service?.name,
         staff: b.staff?.name,
         room: b.room?.name,
-        date: b.booking_date,
+        date: b.appointment_date,
         time: b.start_time,
         status: b.status,
         created: new Date(b.created_at).toLocaleString()

@@ -45,7 +45,7 @@ export async function GET() {
       staff_id: 'robyn_camacho',
       customer_name: 'Test Customer',
       customer_email: 'test@example.com',
-      booking_date: new Date().toISOString().split('T')[0],
+      appointment_date: new Date().toISOString().split('T')[0],
       start_time: '14:00'
     }
   })
