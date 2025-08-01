@@ -118,33 +118,24 @@ export default function CouplesConfirmationPage() {
           throw new Error('Couples booking failed - no bookings created')
         }
 
-        // Handle different possible result structures
-        let bookingResults = []
-        if (couplesResult[0] && couplesResult[0].booking_id) {
-          // New structure from process_couples_booking_v2
-          bookingResults = couplesResult
-        } else if (couplesResult[0] && couplesResult[0].booking1_id) {
-          // Old structure from process_couples_booking
-          bookingResults = [
-            {
-              booking_id: couplesResult[0].booking1_id,
-              room_id: couplesResult[0].room_id,
-              booking_group_id: couplesResult[0].booking_group_id
-            }
-          ]
-          if (couplesResult[0].booking2_id) {
-            bookingResults.push({
-              booking_id: couplesResult[0].booking2_id,
-              room_id: couplesResult[0].room_id,
-              booking_group_id: couplesResult[0].booking_group_id
-            })
-          }
-        } else {
-          throw new Error('Invalid booking result - unexpected format')
+        // Check if any booking failed
+        const failedBooking = couplesResult.find(result => result.success === false)
+        if (failedBooking) {
+          throw new Error(failedBooking.error_message || 'Booking failed')
         }
 
-        // Use the processed booking results
-        const processedResults = bookingResults
+        // Filter successful bookings and format them
+        const successfulBookings = couplesResult.filter(result => result.success === true)
+        if (successfulBookings.length === 0) {
+          throw new Error('No successful bookings created')
+        }
+
+        // Format the results for frontend use
+        const processedResults = successfulBookings.map(result => ({
+          booking_id: result.booking_id,
+          room_id: result.room_id,
+          booking_group_id: result.booking_group_id
+        }))
 
         setBookingResults(processedResults)
         
