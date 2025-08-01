@@ -119,19 +119,19 @@ export default function CouplesConfirmationPage() {
         }
 
         // Check if any booking failed
-        const failedBooking = couplesResult.find(result => result.success === false)
+        const failedBooking = couplesResult.find((result: any) => result.success === false)
         if (failedBooking) {
           throw new Error(failedBooking.error_message || 'Booking failed')
         }
 
         // Filter successful bookings and format them
-        const successfulBookings = couplesResult.filter(result => result.success === true)
+        const successfulBookings = couplesResult.filter((result: any) => result.success === true)
         if (successfulBookings.length === 0) {
           throw new Error('No successful bookings created')
         }
 
         // Format the results for frontend use
-        const processedResults = successfulBookings.map(result => ({
+        const processedResults = successfulBookings.map((result: any) => ({
           booking_id: result.booking_id,
           room_id: result.room_id,
           booking_group_id: result.booking_group_id
