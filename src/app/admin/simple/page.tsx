@@ -58,9 +58,9 @@ export default function SimpleAdminPage() {
         booking_date: booking.booking_date,
         start_time: booking.start_time,
         status: booking.status,
-        service_name: booking.services?.name,
-        staff_name: booking.staff?.name,
-        room_name: booking.rooms?.name
+        service_name: booking.services?.[0]?.name,
+        staff_name: booking.staff?.[0]?.name,
+        room_name: booking.rooms?.[0]?.name
       })) || []
 
       setBookings(formattedBookings)
