@@ -118,7 +118,7 @@ export default function CouplesConfirmationPage() {
           throw new Error('Couples booking failed - no bookings created')
         }
 
-        // Check if any booking failed
+        // Check if any booking failed 
         const failedBooking = couplesResult.find((result: any) => result.success === false)
         if (failedBooking) {
           throw new Error(failedBooking.error_message || 'Booking failed')
