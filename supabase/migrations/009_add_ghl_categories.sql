@@ -7,13 +7,13 @@ ALTER TABLE services ADD COLUMN ghl_category VARCHAR(100);
 -- Update existing services with GHL categories
 -- FACE TREATMENTS
 UPDATE services SET ghl_category = 'FACE TREATMENTS' 
-WHERE category IN ('facial') 
+WHERE category = 'facial' 
 AND name NOT LIKE '%package%' 
 AND name NOT LIKE '%+%';
 
 -- BODY MASSAGES
 UPDATE services SET ghl_category = 'BODY MASSAGES' 
-WHERE category IN ('massage') 
+WHERE category = 'massage' 
 AND name NOT LIKE '%package%' 
 AND name NOT LIKE '%+%';
 
@@ -25,7 +25,7 @@ AND name NOT LIKE '%+%';
 
 -- Waxing Services
 UPDATE services SET ghl_category = 'Waxing Services' 
-WHERE category IN ('waxing') 
+WHERE category = 'waxing' 
 AND name NOT LIKE '%package%' 
 AND name NOT LIKE '%+%';
 
