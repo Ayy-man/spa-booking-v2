@@ -372,12 +372,75 @@ class GHLWebhookSender {
    */
   private formatNormalizedDateTime(date: string, time: string): string {
     try {
-      // Parse the date and time
-      const [year, month, day] = date.split('-').map(Number)
-      const [hour, minute] = time.split(':').map(Number)
+      // Validate inputs
+      if (!date || !time) {
+        console.warn('formatNormalizedDateTime: Missing date or time', { date, time })
+        return `${date || 'Unknown Date'} at ${time || 'Unknown Time'}`
+      }
+
+      // Handle different date formats
+      let year: number, month: number, day: number
       
-      // Create a Date object
+      if (date.includes('T') || date.includes('Z')) {
+        // Format: ISO string like "2025-08-05T00:00:00.000Z"
+        const parsedDate = new Date(date)
+        if (isNaN(parsedDate.getTime())) {
+          console.warn('formatNormalizedDateTime: Invalid ISO date format', { date })
+          return `${date} at ${time}`
+        }
+        year = parsedDate.getFullYear()
+        month = parsedDate.getMonth() + 1
+        day = parsedDate.getDate()
+      } else if (date.includes('-')) {
+        // Format: "2025-08-05"
+        [year, month, day] = date.split('-').map(Number)
+      } else if (date.includes('/')) {
+        // Format: "08/05/2025"
+        [month, day, year] = date.split('/').map(Number)
+      } else {
+        // Try to parse as any other date format
+        const parsedDate = new Date(date)
+        if (isNaN(parsedDate.getTime())) {
+          console.warn('formatNormalizedDateTime: Invalid date format', { date })
+          return `${date} at ${time}`
+        }
+        year = parsedDate.getFullYear()
+        month = parsedDate.getMonth() + 1
+        day = parsedDate.getDate()
+      }
+
+      // Handle different time formats
+      let hour: number, minute: number
+      
+      if (time.includes(':')) {
+        // Format: "10:30" or "14:30"
+        [hour, minute] = time.split(':').map(Number)
+      } else if (time.includes(' ')) {
+        // Format: "10:30 AM" or "2:30 PM"
+        const timeParts = time.split(' ')
+        const [timeStr, period] = timeParts
+        const [h, m] = timeStr.split(':').map(Number)
+        hour = period?.toUpperCase() === 'PM' && h !== 12 ? h + 12 : h
+        minute = m
+      } else {
+        console.warn('formatNormalizedDateTime: Invalid time format', { time })
+        return `${date} at ${time}`
+      }
+
+      // Validate parsed values
+      if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
+        console.warn('formatNormalizedDateTime: Invalid parsed values', { year, month, day, hour, minute })
+        return `${date} at ${time}`
+      }
+
+      // Create a Date object (month is 0-indexed in JavaScript Date)
       const appointmentDate = new Date(year, month - 1, day, hour, minute)
+      
+      // Validate the created date
+      if (isNaN(appointmentDate.getTime())) {
+        console.warn('formatNormalizedDateTime: Invalid date object created', { year, month, day, hour, minute })
+        return `${date} at ${time}`
+      }
       
       // Format the date
       const dateOptions: Intl.DateTimeFormatOptions = {
@@ -399,8 +462,9 @@ class GHLWebhookSender {
       
       return `${formattedDate} at ${formattedTime}`
     } catch (error) {
+      console.error('formatNormalizedDateTime: Error formatting date/time', { date, time, error })
       // Fallback to simple format if parsing fails
-      return `${date} at ${time}`
+      return `${date || 'Unknown Date'} at ${time || 'Unknown Time'}`
     }
   }
 }
