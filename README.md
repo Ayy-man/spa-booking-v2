@@ -319,6 +319,18 @@ curl https://your-domain.com/api/health
 
 For detailed deployment instructions, see [`PRODUCTION_DEPLOYMENT.md`](./PRODUCTION_DEPLOYMENT.md)
 
+## 📡 24-Hour Reminder Webhook
+
+The system includes an automated 24-hour appointment reminder webhook that integrates with GoHighLevel:
+
+- **Automatic Reminders**: Sends booking details 24 hours before appointments
+- **Comprehensive Data**: Includes customer, service, staff, and room information
+- **Duplicate Prevention**: Tracks sent reminders to avoid multiple notifications
+- **Hourly Execution**: Cron job runs every hour for precise timing
+- **Error Handling**: Robust retry logic and detailed logging
+
+For complete implementation details, see [`24hr-reminder-implementation-log.md`](./docs/24hr-reminder-implementation-log.md)
+
 ## 📱 User Flow
 
 ### Customer Booking Flow
