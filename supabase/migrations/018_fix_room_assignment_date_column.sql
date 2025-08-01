@@ -1,7 +1,6 @@
--- CRITICAL FIX: Update all database functions to use TEXT instead of UUID for service_id and staff_id
--- This fixes the "invalid input syntax for type uuid" error in couples booking
+-- Fix room assignment function to use correct column name 'appointment_date' instead of 'booking_date'
+-- This fixes the "room not available for given time" error
 
--- 1. Fix assign_optimal_room function
 DROP FUNCTION IF EXISTS assign_optimal_room CASCADE;
 
 CREATE OR REPLACE FUNCTION assign_optimal_room(
@@ -34,7 +33,7 @@ BEGIN
     IF service_record.requires_room_3 = true THEN
         -- Check if Room 3 is available
         IF p_booking_date IS NOT NULL AND p_start_time IS NOT NULL THEN
-            -- Check for conflicts in Room 3
+            -- Check for conflicts in Room 3 using correct column name
             IF NOT EXISTS (
                 SELECT 1 FROM bookings 
                 WHERE room_id = 3 
@@ -159,105 +158,41 @@ BEGIN
         END IF;
     END LOOP;
     
+    -- If no room found based on capabilities, try any available room (failsafe)
+    FOR room_record IN 
+        SELECT r.* FROM rooms r 
+        WHERE r.is_active = true 
+        ORDER BY r.id
+    LOOP
+        -- Check availability if date/time provided
+        IF p_booking_date IS NOT NULL AND p_start_time IS NOT NULL THEN
+            IF NOT EXISTS (
+                SELECT 1 FROM bookings 
+                WHERE room_id = room_record.id 
+                AND appointment_date = p_booking_date 
+                AND (
+                    (start_time <= p_start_time AND end_time > p_start_time) OR
+                    (start_time < (p_start_time + INTERVAL '1 minute' * service_record.duration) AND end_time >= (p_start_time + INTERVAL '1 minute' * service_record.duration))
+                )
+                AND status != 'cancelled'
+            ) THEN
+                RETURN QUERY SELECT room_record.id, room_record.name::VARCHAR, 'Available room (fallback)'::TEXT;
+                RETURN;
+            END IF;
+        ELSE
+            -- No time specified, use first available room
+            RETURN QUERY SELECT room_record.id, room_record.name::VARCHAR, 'Room available (fallback)'::TEXT;
+            RETURN;
+        END IF;
+    END LOOP;
+    
     -- No suitable room found
     RETURN QUERY SELECT NULL::INTEGER, NULL::VARCHAR, 'No suitable room available'::TEXT;
 END;
 $$ LANGUAGE plpgsql;
 
--- 2. Fix check_staff_capability function
-DROP FUNCTION IF EXISTS check_staff_capability CASCADE;
-
-CREATE OR REPLACE FUNCTION check_staff_capability(
-    p_staff_id TEXT,
-    p_service_id TEXT
-)
-RETURNS BOOLEAN AS $$
-DECLARE
-    service_category service_category;
-    staff_capabilities service_category[];
-BEGIN
-    -- Get service category
-    SELECT category INTO service_category FROM services WHERE id = p_service_id;
-    
-    IF NOT FOUND THEN
-        RETURN false;
-    END IF;
-    
-    -- Get staff capabilities
-    SELECT capabilities INTO staff_capabilities FROM staff WHERE id = p_staff_id AND is_active = true;
-    
-    IF NOT FOUND THEN
-        RETURN false;
-    END IF;
-    
-    -- Check if staff has the required capability
-    RETURN service_category = ANY(staff_capabilities);
-END;
-$$ LANGUAGE plpgsql;
-
--- 3. Fix get_staff_schedule function
-DROP FUNCTION IF EXISTS get_staff_schedule CASCADE;
-
-CREATE OR REPLACE FUNCTION get_staff_schedule(
-    p_staff_id TEXT,
-    p_date DATE
-)
-RETURNS TABLE (
-    is_working BOOLEAN,
-    start_time TIME,
-    end_time TIME,
-    break_start TIME,
-    break_end TIME,
-    notes TEXT
-) AS $$
-DECLARE
-    schedule_record RECORD;
-    day_of_week INTEGER;
-    staff_work_days INTEGER[];
-BEGIN
-    -- Get the day of week (0 = Sunday, 1 = Monday, etc.)
-    day_of_week := EXTRACT(DOW FROM p_date);
-    
-    -- First check if there's a specific schedule for this date
-    SELECT * INTO schedule_record 
-    FROM staff_schedules 
-    WHERE staff_id = p_staff_id AND date = p_date;
-    
-    IF FOUND THEN
-        RETURN QUERY SELECT 
-            schedule_record.is_available,
-            schedule_record.start_time,
-            schedule_record.end_time,
-            schedule_record.break_start,
-            schedule_record.break_end,
-            schedule_record.notes;
-        RETURN;
-    END IF;
-    
-    -- Fall back to staff's regular work days
-    SELECT work_days INTO staff_work_days FROM staff WHERE id = p_staff_id AND is_active = true;
-    
-    IF NOT FOUND THEN
-        RETURN QUERY SELECT false, NULL::TIME, NULL::TIME, NULL::TIME, NULL::TIME, 'Staff not found'::TEXT;
-        RETURN;
-    END IF;
-    
-    -- Check if staff works on this day of week
-    IF day_of_week = ANY(staff_work_days) THEN
-        -- Return default working hours (can be customized)
-        RETURN QUERY SELECT true, '09:00'::TIME, '18:00'::TIME, '12:00'::TIME, '13:00'::TIME, 'Regular schedule'::TEXT;
-    ELSE
-        RETURN QUERY SELECT false, NULL::TIME, NULL::TIME, NULL::TIME, NULL::TIME, 'Not scheduled to work'::TEXT;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
-
 -- Grant permissions
 GRANT EXECUTE ON FUNCTION assign_optimal_room TO authenticated, anon;
-GRANT EXECUTE ON FUNCTION check_staff_capability TO authenticated, anon;
-GRANT EXECUTE ON FUNCTION get_staff_schedule TO authenticated, anon;
 
--- Comments
-COMMENT ON FUNCTION assign_optimal_room IS 'Assigns optimal room based on service requirements and availability - TEXT parameters';
-COMMENT ON FUNCTION check_staff_capability IS 'Checks if staff member can perform specific service - TEXT parameters';
-COMMENT ON FUNCTION get_staff_schedule IS 'Gets staff schedule for specific date - TEXT parameters';
+-- Comment
+COMMENT ON FUNCTION assign_optimal_room IS 'Assigns optimal room based on service requirements and availability - Fixed date column reference';
