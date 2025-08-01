@@ -20,6 +20,7 @@ import {
   validateBookingTime,
   calculateEndTime
 } from "@/lib/admin-booking-logic"
+import { ghlWebhookSender } from "@/lib/ghl-webhook-sender"
 
 interface QuickActionsProps {
   booking?: BookingWithRelations
@@ -156,6 +157,61 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
             walkInData.specialRequests || undefined
           )
           if (!walkInResult.success) throw new Error(walkInResult.error)
+          
+          // Send walk-in webhook to GHL
+          try {
+            const selectedService = services.find(s => s.id === walkInData.serviceId)
+            const selectedStaff = staff.find(s => s.id === walkInData.staffId)
+            const selectedRoom = rooms.find(r => r.id === walkInData.roomId)
+            
+            if (selectedService) {
+              const serviceCategory = getServiceCategory(selectedService.name)
+              const ghlCategory = getGHLServiceCategory(selectedService.name)
+              
+              // Determine if this is an immediate walk-in (no start time specified)
+              const isImmediate = !walkInData.startTime
+              
+              // Use current date and time for immediate walk-ins, or specified time for scheduled
+              const currentDate = new Date().toISOString().split('T')[0]
+              const currentTime = new Date().toTimeString().split(' ')[0].substring(0, 5)
+              
+              const result = await ghlWebhookSender.sendWalkInWebhook(
+                walkInResult.bookingId,
+                {
+                  name: walkInData.customerName,
+                  email: walkInData.customerEmail || '',
+                  phone: walkInData.customerPhone || '',
+                  isNewCustomer: true
+                },
+                {
+                  service: selectedService.name,
+                  serviceId: selectedService.id,
+                  serviceCategory,
+                  ghlCategory,
+                  date: isImmediate ? currentDate : currentDate, // For now, use current date
+                  time: isImmediate ? currentTime : walkInData.startTime,
+                  duration: selectedService.duration,
+                  price: selectedService.price,
+                  staff: selectedStaff?.name || 'Any Available',
+                  staffId: selectedStaff?.id || '',
+                  room: selectedRoom ? `Room ${selectedRoom.name}` : 'TBD',
+                  roomId: selectedRoom?.id || ''
+                },
+                isImmediate
+              )
+              
+              if (result.success) {
+                // Webhook sent successfully
+              } else {
+                // Log webhook error but don't fail the booking
+                console.error('Walk-in webhook failed:', result.error)
+              }
+            }
+          } catch (error) {
+            // Don't fail the booking if webhook fails
+            console.error('Walk-in webhook error:', error)
+          }
+          
           setSuccess(`Walk-in booking created successfully (ID: ${walkInResult.bookingId})`)
           // Reset form
           setWalkInData({
@@ -699,4 +755,30 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
       {activeAction && renderActionForm()}
     </div>
   )
+
+  // Helper function to get service category from service name
+  const getServiceCategory = (serviceName: string): string => {
+    const name = serviceName.toLowerCase()
+    
+    if (name.includes('facial')) return 'facial'
+    if (name.includes('massage')) return 'massage'
+    if (name.includes('scrub') || name.includes('treatment') || name.includes('moisturizing')) return 'body_treatment'
+    if (name.includes('wax')) return 'waxing'
+    if (name.includes('package')) return 'package'
+    
+    return 'facial' // default
+  }
+
+  // Helper function to get GHL service category
+  const getGHLServiceCategory = (serviceName: string): string => {
+    const name = serviceName.toLowerCase()
+    
+    if (name.includes('facial')) return 'facial'
+    if (name.includes('massage')) return 'massage'
+    if (name.includes('scrub') || name.includes('treatment') || name.includes('moisturizing')) return 'body_treatment'
+    if (name.includes('wax')) return 'waxing'
+    if (name.includes('package')) return 'package'
+    
+    return 'facial' // default
+  }
 }

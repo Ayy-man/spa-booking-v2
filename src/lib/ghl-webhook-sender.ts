@@ -35,7 +35,8 @@ class GHLWebhookSender {
     newCustomer: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/57269a47-d804-4747-86d4-5a3f81013407',
     bookingConfirmation: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/ad60157f-9851-4392-b9ad-cf28c139f881',
     bookingUpdate: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/0946bcf5-c598-4817-a103-2b207e4d6bfc',
-    showNoShow: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/3d204c22-6f87-4b9d-84a5-3aa8dd2119c4'
+    showNoShow: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/3d204c22-6f87-4b9d-84a5-3aa8dd2119c4',
+    walkIn: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/7768c4e4-e124-46ee-a439-52bb2d9da84e'
   }
 
   async sendNewCustomerWebhook(customer: CustomerData, booking: BookingData): Promise<WebhookResponse> {
@@ -343,6 +344,91 @@ class GHLWebhookSender {
       }
 
       const response = await fetch(this.webhookUrls.showNoShow, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': `${BUSINESS_CONFIG.name.replace(/\s+/g, '-')}-Booking-App/1.0`,
+        },
+        body: JSON.stringify(payload),
+        mode: 'cors',
+        cache: 'no-cache'
+      })
+
+      if (response.ok) {
+        return { success: true }
+      } else {
+        const errorText = await response.text()
+        return { success: false, error: errorText }
+      }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  }
+
+  async sendWalkInWebhook(
+    bookingId: string,
+    customer: CustomerData,
+    booking: BookingData,
+    isImmediate: boolean = false,
+    ghlContactId?: string
+  ): Promise<WebhookResponse> {
+    try {
+      // Format normalized date and time
+      const normalizedTime = this.formatNormalizedDateTime(booking.date, booking.time)
+      
+      const payload = {
+        event: 'walk_in_booking',
+        booking_id: bookingId,
+        customer: {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone || '',
+          ghl_contact_id: ghlContactId || '',
+          is_new_customer: true, // Walk-ins are typically new customers
+          source: 'admin_walk_in'
+        },
+        appointment: {
+          service: booking.service,
+          service_id: booking.serviceId || '',
+          service_category: booking.serviceCategory,
+          ghl_category: booking.ghlCategory || booking.serviceCategory,
+          service_description: `${booking.service} treatment`,
+          staff: booking.staff || 'Any Available',
+          staff_id: booking.staffId || '',
+          room: booking.room || 'TBD',
+          room_id: booking.roomId || '',
+          date: booking.date,
+          time: booking.time,
+          normalized_time: normalizedTime,
+          duration: booking.duration,
+          price: booking.price,
+          currency: PAYMENT_CONFIG.currency,
+          status: 'confirmed',
+          booking_type: isImmediate ? 'immediate_walk_in' : 'scheduled_walk_in',
+          confirmation_code: `WALKIN${Date.now()}`
+        },
+        location: {
+          name: BUSINESS_CONFIG.name,
+          address: BUSINESS_CONFIG.address,
+          phone: BUSINESS_CONFIG.phone
+        },
+        payment: {
+          method: 'walk_in_payment',
+          amount: booking.price,
+          currency: PAYMENT_CONFIG.currency,
+          status: 'pending', // Walk-ins typically pay at the time of service
+          transaction_id: `walkin_${Date.now()}`
+        },
+        system_data: {
+          created_at: new Date().toISOString(),
+          confirmed_at: new Date().toISOString(),
+          booking_source: 'admin_panel',
+          session_id: `admin_session_${Date.now()}`,
+          walk_in_type: isImmediate ? 'immediate' : 'scheduled'
+        }
+      }
+
+      const response = await fetch(this.webhookUrls.walkIn, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
