@@ -52,8 +52,20 @@ export default function CouplesConfirmationPage() {
     const secondaryStaffData = localStorage.getItem('secondaryStaff')
     const customerData = localStorage.getItem('customerInfo')
 
+    // Debug logging to understand what's in localStorage
+    console.log('Couples Confirmation Page - localStorage debug:', {
+      bookingDataStr,
+      dateData,
+      timeData,
+      staffData,
+      secondaryStaffData,
+      customerData,
+      allKeys: Object.keys(localStorage)
+    })
+
     if (bookingDataStr) {
       const parsedBookingData = JSON.parse(bookingDataStr)
+      console.log('Parsed booking data:', parsedBookingData)
       setBookingData(parsedBookingData)
     }
     
@@ -452,13 +464,24 @@ export default function CouplesConfirmationPage() {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4 max-w-2xl">
+        {/* Debug Info - Remove this after fixing */}
+        <div className="bg-yellow-100 border border-yellow-400 p-4 rounded mb-4 text-sm">
+          <h3 className="font-bold mb-2">Debug Info:</h3>
+          <p><strong>bookingData:</strong> {bookingData ? JSON.stringify(bookingData, null, 2) : 'null'}</p>
+          <p><strong>customerInfo:</strong> {customerInfo ? JSON.stringify(customerInfo, null, 2) : 'null'}</p>
+          <p><strong>selectedDate:</strong> {selectedDate || 'null'}</p>
+          <p><strong>selectedTime:</strong> {selectedTime || 'null'}</p>
+          <p><strong>selectedStaff:</strong> {selectedStaff || 'null'}</p>
+          <p><strong>secondaryStaff:</strong> {secondaryStaff || 'null'}</p>
+        </div>
+        
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/booking/customer-info" className="text-primary hover:text-primary-dark transition-colors">
             ← Back to Customer Info
           </Link>
           <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
-            Confirm Your {bookingData.isCouplesBooking ? 'Couples ' : ''}Booking
+            Confirm Your {bookingData?.isCouplesBooking ? 'Couples ' : ''}Booking
           </h1>
           <p className="text-gray-600">
             Please review your booking details before confirming

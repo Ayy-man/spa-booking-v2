@@ -23,13 +23,24 @@ export default function CustomerInfoPage() {
   const [selectedStaff, setSelectedStaff] = useState<string>('')
 
   useEffect(() => {
-    // Get data from localStorage
+    // Get data from localStorage - check both single and couples booking formats
     const serviceData = localStorage.getItem('selectedService')
+    const bookingDataStr = localStorage.getItem('bookingData')
     const dateData = localStorage.getItem('selectedDate')
     const timeData = localStorage.getItem('selectedTime')
     const staffData = localStorage.getItem('selectedStaff')
 
-    if (serviceData) setSelectedService(JSON.parse(serviceData))
+    // Handle couples booking data structure
+    if (bookingDataStr) {
+      const bookingData = JSON.parse(bookingDataStr)
+      if (bookingData.primaryService) {
+        setSelectedService(bookingData.primaryService)
+      }
+    } else if (serviceData) {
+      // Handle regular booking data structure
+      setSelectedService(JSON.parse(serviceData))
+    }
+    
     if (dateData) setSelectedDate(dateData)
     if (timeData) setSelectedTime(timeData)
     if (staffData) setSelectedStaff(staffData)
