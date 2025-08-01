@@ -157,7 +157,7 @@ export function canAccommodateService(
     
     return true
   } catch (error) {
-    console.error('Error checking service accommodation:', error)
+    // Error checking service accommodation, return safe default
     return false
   }
 }
@@ -385,9 +385,8 @@ export function calculateEndTime(startTime: string, duration: number): string {
     const endDateTime = addMinutes(startDateTime, duration)
     return format(endDateTime, 'HH:mm')
   } catch (error) {
-    // Return a safe default or re-throw based on needs
-    console.error('Error calculating end time:', error)
-    return startTime // Fallback to start time if calculation fails
+    // Return a safe default - fallback to start time if calculation fails
+    return startTime
   }
 }
 

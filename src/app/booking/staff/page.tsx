@@ -161,7 +161,7 @@ export default function StaffPage() {
         
         setAvailableStaff(activeStaff)
       } catch (fallbackError) {
-        console.error('Failed to fetch staff:', fallbackError)
+        // Staff fetch failed, show empty state
         setAvailableStaff([])
       }
     } finally {

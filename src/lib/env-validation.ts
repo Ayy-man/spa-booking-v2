@@ -89,7 +89,7 @@ export function getEnvConfig(): EnvConfig {
     try {
       envConfig = validateEnvironment()
     } catch (error) {
-      console.error('Environment validation failed:', error)
+      // Environment validation errors should be thrown for proper handling
       throw error
     }
   }

@@ -92,8 +92,8 @@ export default function CustomerInfoPage() {
           // Failed to send new customer data to GHL
         }
       } catch (error) {
-        console.error('Error sending new customer data to GHL:', error)
         // Don't block the booking flow if GHL webhook fails
+        // Error is logged in the webhook sender
       }
     }
     

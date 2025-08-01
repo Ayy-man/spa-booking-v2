@@ -303,7 +303,7 @@ export const supabaseClient = {
     })
 
     if (error) {
-      console.error('Couples booking error:', error)
+      // Couples booking error - re-throw for proper handling
       throw error
     }
     

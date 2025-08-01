@@ -103,7 +103,7 @@ export default function SimpleAdminPage() {
       )
       
       if (!webhookResult.success) {
-        console.error('Webhook failed:', webhookResult.error)
+        // Webhook failed - error logged in webhook sender
       }
       
       // Refresh bookings
@@ -146,7 +146,7 @@ export default function SimpleAdminPage() {
       )
       
       if (!webhookResult.success) {
-        console.error('Webhook failed:', webhookResult.error)
+        // Webhook failed - error logged in webhook sender
       }
       
       // Refresh bookings

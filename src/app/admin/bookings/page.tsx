@@ -24,7 +24,7 @@ export default function AdminBookingsPage() {
       setAuthChecked(true)
       await fetchBookings()
     } catch (error) {
-      console.error('Auth check failed:', error)
+      // Auth check failed, redirect to login
       router.push('/admin/login')
     }
   }, [router])

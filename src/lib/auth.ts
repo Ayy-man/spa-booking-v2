@@ -105,7 +105,6 @@ export const auth = {
 
       return data && (data.role === 'admin' || data.role === 'staff')
     } catch (error) {
-      console.error('Error checking admin status:', error)
       return false
     }
   },
@@ -133,7 +132,6 @@ export const auth = {
       const isAdmin = await auth.isAdminUser(session.user.id)
       return isAdmin
     } catch (error) {
-      console.error('Error validating admin session:', error)
       return false
     }
   }

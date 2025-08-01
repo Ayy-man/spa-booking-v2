@@ -119,7 +119,7 @@ export default function CouplesStaffPage() {
       
       
     } catch (error) {
-      console.error('Error fetching available staff:', error)
+      // Error fetching staff capabilities, using fallback
       // Final fallback - show all active staff who work on this day
       try {
         const allStaff = await supabaseClient.getStaff()
@@ -140,7 +140,7 @@ export default function CouplesStaffPage() {
         })
         setStaffMap(nameMap)
       } catch (fallbackError) {
-        console.error('Fallback failed:', fallbackError)
+        // Both primary and fallback failed, show empty state
         setAvailableStaff([])
         setPrimaryServiceStaff([])
         setSecondaryServiceStaff([])

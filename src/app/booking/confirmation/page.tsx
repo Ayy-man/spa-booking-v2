@@ -146,8 +146,8 @@ export default function ConfirmationPage() {
           // Failed to send booking confirmation to GHL
         }
       } catch (error) {
-        console.error('Error sending booking confirmation to GHL:', error)
         // Don't fail the booking if GHL webhook fails
+        // Error is logged in the webhook sender
       }
       
       setIsSuccess(true)

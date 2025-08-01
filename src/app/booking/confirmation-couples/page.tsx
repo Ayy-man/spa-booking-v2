@@ -140,7 +140,6 @@ export default function CouplesConfirmationPage() {
             })
           }
         } else {
-          console.error('Invalid couples booking result structure:', couplesResult)
           throw new Error('Invalid booking result - unexpected format')
         }
 
@@ -207,8 +206,8 @@ export default function CouplesConfirmationPage() {
           }
           
         } catch (error) {
-          console.error('Error sending couples booking confirmations to GHL:', error)
           // Don't fail the booking if GHL webhook fails
+          // Error is logged in the webhook sender
         }
   
       } else {
@@ -267,8 +266,8 @@ export default function CouplesConfirmationPage() {
           )
           
         } catch (error) {
-          console.error('Error sending single booking confirmation to GHL:', error)
           // Don't fail the booking if GHL webhook fails
+          // Error is logged in the webhook sender
         }
         
         // Track successful couples booking confirmation
