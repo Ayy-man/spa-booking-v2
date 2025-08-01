@@ -11,24 +11,24 @@ CREATE OR REPLACE FUNCTION process_couples_booking_v2(
     p_booking_date DATE,
     p_customer_email VARCHAR,
     p_customer_name VARCHAR,
-    p_primary_service_id UUID,
-    p_primary_staff_id UUID,
-    p_secondary_service_id UUID,
-    p_secondary_staff_id UUID,
+    p_primary_service_id TEXT,
+    p_primary_staff_id TEXT,
+    p_secondary_service_id TEXT,
+    p_secondary_staff_id TEXT,
     p_start_time TIME,
     p_customer_phone VARCHAR DEFAULT NULL,
     p_special_requests TEXT DEFAULT NULL
 )
 RETURNS TABLE (
     booking_id UUID,
-    room_id UUID,
+    room_id INTEGER,
     booking_group_id UUID,
     success BOOLEAN,
     error_message TEXT
 ) AS $$
 DECLARE
     v_booking_group_id UUID;
-    v_room_id UUID;
+    v_room_id INTEGER;
     v_room_name VARCHAR;
     v_assignment_reason TEXT;
     v_booking1_id UUID;
@@ -44,14 +44,14 @@ BEGIN
     -- Get primary service details
     SELECT * INTO v_primary_service FROM services WHERE id = p_primary_service_id;
     IF NOT FOUND THEN
-        RETURN QUERY SELECT NULL::UUID, NULL::UUID, NULL::UUID, false, 'Primary service not found';
+        RETURN QUERY SELECT NULL::UUID, NULL::INTEGER, NULL::UUID, false, 'Primary service not found';
         RETURN;
     END IF;
     
     -- Get secondary service details
     SELECT * INTO v_secondary_service FROM services WHERE id = p_secondary_service_id;
     IF NOT FOUND THEN
-        RETURN QUERY SELECT NULL::UUID, NULL::UUID, NULL::UUID, false, 'Secondary service not found';
+        RETURN QUERY SELECT NULL::UUID, NULL::INTEGER, NULL::UUID, false, 'Secondary service not found';
         RETURN;
     END IF;
     
@@ -72,21 +72,21 @@ BEGIN
     END IF;
     
     IF v_room_id IS NULL THEN
-        RETURN QUERY SELECT NULL::UUID, NULL::UUID, NULL::UUID, false, 
+        RETURN QUERY SELECT NULL::UUID, NULL::INTEGER, NULL::UUID, false, 
             COALESCE(v_assignment_reason, 'No suitable room available for couples booking');
         RETURN;
     END IF;
     
     -- Check room capacity
     IF (SELECT capacity FROM rooms WHERE id = v_room_id) < 2 THEN
-        RETURN QUERY SELECT NULL::UUID, NULL::UUID, NULL::UUID, false, 
+        RETURN QUERY SELECT NULL::UUID, NULL::INTEGER, NULL::UUID, false, 
             'Selected room does not have capacity for couples';
         RETURN;
     END IF;
     
     -- Validate staff availability
     IF p_primary_staff_id = p_secondary_staff_id THEN
-        RETURN QUERY SELECT NULL::UUID, NULL::UUID, NULL::UUID, false, 
+        RETURN QUERY SELECT NULL::UUID, NULL::INTEGER, NULL::UUID, false, 
             'Cannot book the same staff member for both services';
         RETURN;
     END IF;
@@ -126,7 +126,7 @@ BEGIN
         END IF;
         
     EXCEPTION WHEN OTHERS THEN
-        RETURN QUERY SELECT NULL::UUID, NULL::UUID, NULL::UUID, false, 
+        RETURN QUERY SELECT NULL::UUID, NULL::INTEGER, NULL::UUID, false, 
             'Failed to create bookings: ' || SQLERRM;
         RETURN;
     END;
