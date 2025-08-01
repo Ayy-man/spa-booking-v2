@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { format, addDays, startOfDay, isSameDay } from 'date-fns'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
-import BookingSummary from '@/components/booking/BookingSummary'
+
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { TimeSlotSkeleton } from '@/components/ui/skeleton-loader'
 import { analytics } from '@/lib/analytics'
@@ -207,9 +207,8 @@ export default function DateTimePage() {
       
       <div className="min-h-screen bg-background section-spacing">
         <div className="container mx-auto px-6 max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="space-y-8">
               {/* Header */}
               <div className="text-center lg:text-left">
                 <Link 
@@ -320,12 +319,7 @@ export default function DateTimePage() {
               )}
             </div>
 
-            {/* Sidebar - Booking Summary */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-8">
-                <BookingSummary />
-              </div>
-            </div>
+
           </div>
 
           {/* Continue Button */}

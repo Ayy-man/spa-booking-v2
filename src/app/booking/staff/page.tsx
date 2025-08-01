@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle, StarIcon, CheckCircleIcon } from 'lucide-react'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
-import BookingSummary from '@/components/booking/BookingSummary'
+
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { StaffCardSkeleton } from '@/components/ui/skeleton-loader'
 import { analytics } from '@/lib/analytics'
@@ -204,9 +204,8 @@ export default function StaffPage() {
       
       <div className="min-h-screen bg-background section-spacing">
         <div className="container mx-auto px-6 max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="space-y-8">
               {/* Header */}
               <div className="text-center lg:text-left">
                 <Link 
@@ -268,10 +267,10 @@ export default function StaffPage() {
                   <div className="space-y-6">
                     {/* Enhanced Any Available Staff Option */}
                     <div 
-                      className={`relative p-6 rounded-2xl cursor-pointer transition-all duration-300 border-3 ${
+                      className={`relative p-6 rounded-2xl cursor-pointer transition-all duration-300 border-[3px] ${
                         selectedStaff === 'any' 
-                          ? 'border-primary bg-gradient-to-br from-primary/10 to-primary/5 shadow-2xl scale-[1.02]' 
-                          : 'border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-transparent hover:border-primary hover:shadow-xl hover:scale-[1.01]'
+                          ? 'border-primary bg-gradient-to-br from-primary/10 to-primary/5 shadow-2xl scale-[1.02] ring-2 ring-primary/20' 
+                          : 'border-dashed border-primary/50 bg-gradient-to-br from-primary/5 to-transparent hover:border-primary hover:shadow-xl hover:scale-[1.01] hover:ring-1 hover:ring-primary/30'
                       }`}
                       onClick={() => handleStaffSelect('any')}
                     >
@@ -391,12 +390,7 @@ export default function StaffPage() {
               </div>
             </div>
 
-            {/* Sidebar - Booking Summary */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-8">
-                <BookingSummary />
-              </div>
-            </div>
+
           </div>
 
           {/* Continue Button */}

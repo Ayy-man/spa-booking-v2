@@ -40,6 +40,9 @@ class GHLWebhookSender {
 
   async sendNewCustomerWebhook(customer: CustomerData, booking: BookingData): Promise<WebhookResponse> {
     try {
+      // Format normalized date and time
+      const normalizedTime = this.formatNormalizedDateTime(booking.date, booking.time)
+      
       const payload = {
         event: 'new_customer',
         customer: {
@@ -57,6 +60,7 @@ class GHLWebhookSender {
           service_description: `${booking.service} treatment`,
           date: booking.date,
           time: booking.time,
+          normalized_time: normalizedTime,
           duration: booking.duration,
           price: booking.price,
           currency: PAYMENT_CONFIG.currency,
@@ -106,6 +110,9 @@ class GHLWebhookSender {
     ghlContactId?: string
   ): Promise<WebhookResponse> {
     try {
+      // Format normalized date and time
+      const normalizedTime = this.formatNormalizedDateTime(booking.date, booking.time)
+      
       const payload = {
         event: 'booking_confirmed',
         booking_id: bookingId,
@@ -129,6 +136,7 @@ class GHLWebhookSender {
           room_id: booking.roomId || '',
           date: booking.date,
           time: booking.time,
+          normalized_time: normalizedTime,
           duration: booking.duration,
           price: booking.price,
           currency: PAYMENT_CONFIG.currency,
@@ -194,6 +202,11 @@ class GHLWebhookSender {
     ghlContactId?: string
   ): Promise<WebhookResponse> {
     try {
+      // Format normalized date and time for new appointment time
+      const newDate = changes.newDate || booking.date
+      const newTime = changes.newTime || booking.time
+      const normalizedTime = this.formatNormalizedDateTime(newDate, newTime)
+      
       const payload = {
         event: 'booking_updated',
         booking_id: bookingId,
@@ -207,9 +220,9 @@ class GHLWebhookSender {
           old_status: changes.oldStatus,
           new_status: changes.newStatus,
           old_date: changes.oldDate || booking.date,
-          new_date: changes.newDate || booking.date,
+          new_date: newDate,
           old_time: changes.oldTime || booking.time,
-          new_time: changes.newTime || booking.time,
+          new_time: newTime,
           reason: changes.reason || 'No reason provided',
           requested_by: changes.requestedBy || 'system'
         },
@@ -222,8 +235,9 @@ class GHLWebhookSender {
           staff_id: booking.staffId || '',
           room: booking.room || 'TBD',
           room_id: booking.roomId || '',
-          date: changes.newDate || booking.date,
-          time: changes.newTime || booking.time,
+          date: newDate,
+          time: newTime,
+          normalized_time: normalizedTime,
           duration: booking.duration,
           price: booking.price,
           currency: PAYMENT_CONFIG.currency,
@@ -268,6 +282,9 @@ class GHLWebhookSender {
     ghlContactId?: string
   ): Promise<WebhookResponse> {
     try {
+      // Format normalized date and time
+      const normalizedTime = this.formatNormalizedDateTime(booking.date, booking.time)
+      
       const payload = {
         event: 'appointment_attendance',
         booking_id: bookingId,
@@ -291,6 +308,7 @@ class GHLWebhookSender {
           room_id: booking.roomId || '',
           date: booking.date,
           time: booking.time,
+          normalized_time: normalizedTime,
           duration: booking.duration,
           price: booking.price,
           currency: PAYMENT_CONFIG.currency,
@@ -343,6 +361,46 @@ class GHLWebhookSender {
       }
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  }
+
+  /**
+   * Format date and time into a human-readable string
+   * @param date - Date string (e.g., "2025-08-05")
+   * @param time - Time string (e.g., "10:30")
+   * @returns Formatted string like "Monday, August 5, 2025 at 10:30 AM"
+   */
+  private formatNormalizedDateTime(date: string, time: string): string {
+    try {
+      // Parse the date and time
+      const [year, month, day] = date.split('-').map(Number)
+      const [hour, minute] = time.split(':').map(Number)
+      
+      // Create a Date object
+      const appointmentDate = new Date(year, month - 1, day, hour, minute)
+      
+      // Format the date
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }
+      
+      // Format the time
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      }
+      
+      const formattedDate = appointmentDate.toLocaleDateString('en-US', dateOptions)
+      const formattedTime = appointmentDate.toLocaleTimeString('en-US', timeOptions)
+      
+      return `${formattedDate} at ${formattedTime}`
+    } catch (error) {
+      // Fallback to simple format if parsing fails
+      return `${date} at ${time}`
     }
   }
 }

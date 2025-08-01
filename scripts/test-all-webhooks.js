@@ -1,172 +1,470 @@
 #!/usr/bin/env node
 
 /**
- * Test Script for All GHL Webhooks
- * 
- * This script tests all four webhook endpoints:
- * 1. New Customer Webhook
- * 2. Booking Confirmation Webhook
- * 3. Booking Update Webhook
- * 4. Show/No-Show Webhook
+ * Demo Webhook Sender for GoHighLevel
+ * Tests all webhook endpoints with sample data
  */
 
-const BASE_URL = 'http://localhost:3000';
+const BUSINESS_CONFIG = {
+  name: "Dermal Skin Clinic and Spa Guam",
+  address: "123 Marine Corps Dr, Tamuning, GU 96913",
+  phone: "(671) 647-7546",
+  location: "Guam"
+}
 
-// Test data
-const testCustomer = {
-  name: 'Jane Smith',
-  email: 'jane.smith@example.com',
-  phone: '+1-671-555-0456',
-  isNewCustomer: true
-};
+const PAYMENT_CONFIG = {
+  currency: "USD"
+}
 
-const testBooking = {
-  service: 'Deep Tissue Massage',
-  serviceId: 'massage_002',
-  serviceCategory: 'Massage Services',
-  date: '2024-01-20',
-  time: '16:00',
-  duration: 90,
-  price: 120,
-  staff: 'Mike Johnson',
-  staffId: 'staff_002',
-  room: 'Massage Room 2',
-  roomId: 2
-};
+const webhookUrls = {
+  newCustomer: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/57269a47-d804-4747-86d4-5a3f81013407',
+  bookingConfirmation: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/ad60157f-9851-4392-b9ad-cf28c139f881',
+  bookingUpdate: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/0946bcf5-c598-4817-a103-2b207e4d6bfc',
+  showNoShow: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/3d204c22-6f87-4b9d-84a5-3aa8dd2119c4'
+}
 
-async function testWebhook(endpoint, data) {
+/**
+ * Format date and time into a human-readable string
+ */
+function formatNormalizedDateTime(date, time) {
   try {
-    console.log(`\n🧪 Testing ${endpoint}...`);
+    const [year, month, day] = date.split('-').map(Number)
+    const [hour, minute] = time.split(':').map(Number)
     
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
+    const appointmentDate = new Date(year, month - 1, day, hour, minute)
+    
+    const dateOptions = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }
+    
+    const timeOptions = {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }
+    
+    const formattedDate = appointmentDate.toLocaleDateString('en-US', dateOptions)
+    const formattedTime = appointmentDate.toLocaleTimeString('en-US', timeOptions)
+    
+    return `${formattedDate} at ${formattedTime}`
+  } catch (error) {
+    return `${date} at ${time}`
+  }
+}
+
+/**
+ * Send webhook to specified URL
+ */
+async function sendWebhook(url, payload, webhookName) {
+  try {
+    console.log(`\n🚀 Sending ${webhookName} webhook...`)
+    console.log(`📡 URL: ${url}`)
+    console.log(`📦 Payload:`, JSON.stringify(payload, null, 2))
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'User-Agent': `${BUSINESS_CONFIG.name.replace(/\s+/g, '-')}-Booking-App/1.0`,
       },
-      body: JSON.stringify(data),
-    });
+      body: JSON.stringify(payload)
+    })
 
-    const result = await response.json();
-    
-    if (result.success) {
-      console.log(`✅ ${endpoint} - SUCCESS`);
-      console.log(`   Message: ${result.message}`);
-      if (result.data) {
-        console.log(`   Data:`, JSON.stringify(result.data, null, 2));
-      }
+    if (response.ok) {
+      console.log(`✅ ${webhookName} webhook sent successfully!`)
+      console.log(`📊 Status: ${response.status} ${response.statusText}`)
     } else {
-      console.log(`❌ ${endpoint} - FAILED`);
-      console.log(`   Error: ${result.error}`);
+      const errorText = await response.text()
+      console.log(`❌ ${webhookName} webhook failed!`)
+      console.log(`📊 Status: ${response.status} ${response.statusText}`)
+      console.log(`🔍 Error: ${errorText}`)
     }
-    
-    return result.success;
   } catch (error) {
-    console.log(`❌ ${endpoint} - ERROR`);
-    console.log(`   Error: ${error.message}`);
-    return false;
+    console.log(`💥 ${webhookName} webhook error:`, error.message)
   }
 }
 
-async function runAllTests() {
-  console.log('🚀 Starting GHL Webhook Tests...\n');
+/**
+ * Test 1: New Customer Webhook
+ */
+async function testNewCustomerWebhook() {
+  const normalizedTime = formatNormalizedDateTime('2025-01-27', '14:30')
   
-  const results = {
-    newCustomer: false,
-    bookingConfirmation: false,
-    bookingUpdate: false,
-    showNoShow: false
-  };
+  const payload = {
+    event: 'new_customer',
+    customer: {
+      name: 'John Smith',
+      email: 'john.smith@example.com',
+      phone: '+1-671-555-0123',
+      is_new_customer: true,
+      source: 'spa_booking_website',
+      created_at: new Date().toISOString()
+    },
+    booking: {
+      service: 'Deep Cleansing Facial (for Men & Women)',
+      service_id: 'facial-001',
+      service_category: 'facial',
+      service_description: 'Deep Cleansing Facial (for Men & Women) treatment',
+      date: '2025-01-27',
+      time: '14:30',
+      normalized_time: normalizedTime,
+      duration: 60,
+      price: 79,
+      currency: PAYMENT_CONFIG.currency,
+      location: `${BUSINESS_CONFIG.name}, ${BUSINESS_CONFIG.location}`,
+      booking_notes: 'First-time customer'
+    },
+    preferences: {
+      communication_preference: 'email',
+      marketing_consent: true,
+      special_requests: ''
+    },
+    system_data: {
+      booking_id: `demo_booking_${Date.now()}`,
+      session_id: `demo_session_${Date.now()}`,
+      user_agent: 'Demo-Test-Script/1.0',
+      ip_address: 'demo',
+      referrer: 'demo'
+    }
+  }
 
-  // Test 1: New Customer Webhook
-  results.newCustomer = await testWebhook('/api/test-booking', {
-    customer: testCustomer,
-    booking: testBooking
-  });
+  await sendWebhook(webhookUrls.newCustomer, payload, 'New Customer')
+}
 
-  // Test 2: Booking Confirmation Webhook
-  results.bookingConfirmation = await testWebhook('/api/test-booking', {
-    customer: { ...testCustomer, isNewCustomer: false },
-    booking: testBooking,
-    confirm: true
-  });
+/**
+ * Test 2: Booking Confirmation Webhook
+ */
+async function testBookingConfirmationWebhook() {
+  const normalizedTime = formatNormalizedDateTime('2025-01-28', '10:00')
+  
+  const payload = {
+    event: 'booking_confirmed',
+    booking_id: `demo_confirmed_${Date.now()}`,
+    customer: {
+      name: 'Sarah Johnson',
+      email: 'sarah.johnson@example.com',
+      phone: '+1-671-555-0456',
+      ghl_contact_id: 'demo_contact_123',
+      is_new_customer: false,
+      total_bookings: 3
+    },
+    appointment: {
+      service: 'Swedish Massage',
+      service_id: 'massage-001',
+      service_category: 'massage',
+      ghl_category: 'massage',
+      service_description: 'Swedish Massage treatment',
+      staff: 'Selma',
+      staff_id: 'staff_selma_001',
+      room: 'Room 1',
+      room_id: 'room_1',
+      date: '2025-01-28',
+      time: '10:00',
+      normalized_time: normalizedTime,
+      duration: 90,
+      price: 120,
+      currency: PAYMENT_CONFIG.currency,
+      status: 'confirmed',
+      confirmation_code: `CONF${Date.now()}`
+    },
+    location: {
+      name: BUSINESS_CONFIG.name,
+      address: BUSINESS_CONFIG.address,
+      phone: BUSINESS_CONFIG.phone
+    },
+    payment: {
+      method: 'online_payment',
+      amount: 120,
+      currency: PAYMENT_CONFIG.currency,
+      status: 'paid',
+      transaction_id: `demo_txn_${Date.now()}`
+    },
+    system_data: {
+      created_at: new Date().toISOString(),
+      confirmed_at: new Date().toISOString(),
+      booking_source: 'website',
+      session_id: `demo_session_${Date.now()}`
+    }
+  }
 
-  // Test 3: Booking Update Webhook
-  results.bookingUpdate = await testWebhook('/api/test-booking', {
-    customer: { ...testCustomer, isNewCustomer: false },
-    booking: { ...testBooking, date: '2024-01-21', time: '17:00' },
-    update: true,
+  await sendWebhook(webhookUrls.bookingConfirmation, payload, 'Booking Confirmation')
+}
+
+/**
+ * Test 3: Booking Update Webhook
+ */
+async function testBookingUpdateWebhook() {
+  const oldNormalizedTime = formatNormalizedDateTime('2025-01-29', '15:00')
+  const newNormalizedTime = formatNormalizedDateTime('2025-01-30', '16:00')
+  
+  const payload = {
+    event: 'booking_updated',
+    booking_id: `demo_updated_${Date.now()}`,
+    customer: {
+      name: 'Mike Davis',
+      email: 'mike.davis@example.com',
+      phone: '+1-671-555-0789',
+      ghl_contact_id: 'demo_contact_456'
+    },
     changes: {
-      oldDate: '2024-01-20',
-      newDate: '2024-01-21',
-      oldTime: '16:00',
-      newTime: '17:00',
-      reason: 'Customer requested reschedule'
+      old_status: 'confirmed',
+      new_status: 'rescheduled',
+      old_date: '2025-01-29',
+      new_date: '2025-01-30',
+      old_time: '15:00',
+      new_time: '16:00',
+      reason: 'Customer requested reschedule',
+      requested_by: 'customer'
+    },
+    appointment: {
+      service: 'Hot Stone Massage',
+      service_id: 'massage-002',
+      service_category: 'massage',
+      ghl_category: 'massage',
+      staff: 'Robyn',
+      staff_id: 'staff_robyn_001',
+      room: 'Room 3',
+      room_id: 'room_3',
+      date: '2025-01-30',
+      time: '16:00',
+      normalized_time: newNormalizedTime,
+      duration: 120,
+      price: 150,
+      currency: PAYMENT_CONFIG.currency,
+      status: 'rescheduled'
+    },
+    system_data: {
+      updated_at: new Date().toISOString(),
+      updated_by: 'customer',
+      change_source: 'website',
+      session_id: `demo_session_${Date.now()}`
     }
-  });
-
-  // Test 4: Show/No-Show Webhook - Show
-  results.showNoShow = await testWebhook('/api/test-show-no-show-webhook', {
-    status: 'show',
-    adminNotes: 'Customer arrived 5 minutes early and was very satisfied with the service'
-  });
-
-  // Test 5: Show/No-Show Webhook - No Show
-  await testWebhook('/api/test-show-no-show-webhook', {
-    status: 'no_show',
-    adminNotes: 'Customer did not arrive and did not call to cancel. Follow-up required.'
-  });
-
-  // Summary
-  console.log('\n📊 Test Results Summary:');
-  console.log('========================');
-  Object.entries(results).forEach(([test, success]) => {
-    console.log(`${success ? '✅' : '❌'} ${test}: ${success ? 'PASSED' : 'FAILED'}`);
-  });
-
-  const passedTests = Object.values(results).filter(Boolean).length;
-  const totalTests = Object.keys(results).length;
-  
-  console.log(`\n🎯 Overall: ${passedTests}/${totalTests} tests passed`);
-  
-  if (passedTests === totalTests) {
-    console.log('🎉 All webhook tests completed successfully!');
-  } else {
-    console.log('⚠️  Some tests failed. Check the logs above for details.');
   }
+
+  await sendWebhook(webhookUrls.bookingUpdate, payload, 'Booking Update')
 }
 
-// Check if server is running
-async function checkServer() {
-  try {
-    const response = await fetch(`${BASE_URL}/api/test-show-no-show-webhook`, {
-      method: 'GET'
-    });
-    return response.ok;
-  } catch (error) {
-    return false;
+/**
+ * Test 4: Show/No-Show Webhook
+ */
+async function testShowNoShowWebhook() {
+  const normalizedTime = formatNormalizedDateTime('2025-01-27', '11:00')
+  
+  const payload = {
+    event: 'appointment_attendance',
+    booking_id: `demo_attendance_${Date.now()}`,
+    customer: {
+      name: 'Lisa Chen',
+      email: 'lisa.chen@example.com',
+      phone: '+1-671-555-0321',
+      ghl_contact_id: 'demo_contact_789',
+      is_new_customer: false,
+      total_bookings: 5
+    },
+    appointment: {
+      service: 'Anti-Aging Facial',
+      service_id: 'facial-002',
+      service_category: 'facial',
+      ghl_category: 'facial',
+      service_description: 'Anti-Aging Facial treatment',
+      staff: 'Tanisha',
+      staff_id: 'staff_tanisha_001',
+      room: 'Room 2',
+      room_id: 'room_2',
+      date: '2025-01-27',
+      time: '11:00',
+      normalized_time: normalizedTime,
+      duration: 75,
+      price: 95,
+      currency: PAYMENT_CONFIG.currency,
+      status: 'completed'
+    },
+    attendance: {
+      status: 'show',
+      marked_at: new Date().toISOString(),
+      marked_by: 'admin_panel',
+      admin_notes: 'Customer arrived on time, service completed successfully',
+      follow_up_required: false,
+      follow_up_priority: 'normal'
+    },
+    location: {
+      name: BUSINESS_CONFIG.name,
+      address: BUSINESS_CONFIG.address,
+      phone: BUSINESS_CONFIG.phone
+    },
+    business_impact: {
+      revenue_impact: 95,
+      time_slot_utilization: 'utilized',
+      staff_availability: 'occupied',
+      customer_satisfaction: 'positive'
+    },
+    system_data: {
+      created_at: new Date().toISOString(),
+      attendance_marked_at: new Date().toISOString(),
+      booking_source: 'website',
+      session_id: `demo_session_${Date.now()}`,
+      admin_session: `demo_admin_${Date.now()}`
+    }
   }
+
+  await sendWebhook(webhookUrls.showNoShow, payload, 'Show/No-Show')
 }
 
-// Main execution
-async function main() {
-  console.log('🔍 Checking if server is running...');
+/**
+ * Test 5: No-Show Webhook
+ */
+async function testNoShowWebhook() {
+  const normalizedTime = formatNormalizedDateTime('2025-01-26', '13:00')
   
-  const serverRunning = await checkServer();
-  if (!serverRunning) {
-    console.log('❌ Server is not running. Please start the development server with:');
-    console.log('   npm run dev');
-    console.log('\nThen run this script again.');
-    process.exit(1);
+  const payload = {
+    event: 'appointment_attendance',
+    booking_id: `demo_noshow_${Date.now()}`,
+    customer: {
+      name: 'Alex Rodriguez',
+      email: 'alex.rodriguez@example.com',
+      phone: '+1-671-555-0654',
+      ghl_contact_id: 'demo_contact_101',
+      is_new_customer: true,
+      total_bookings: 1
+    },
+    appointment: {
+      service: 'Body Scrub',
+      service_id: 'body-001',
+      service_category: 'body_treatment',
+      ghl_category: 'body_treatment',
+      service_description: 'Body Scrub treatment',
+      staff: 'Robyn',
+      staff_id: 'staff_robyn_001',
+      room: 'Room 3',
+      room_id: 'room_3',
+      date: '2025-01-26',
+      time: '13:00',
+      normalized_time: normalizedTime,
+      duration: 90,
+      price: 110,
+      currency: PAYMENT_CONFIG.currency,
+      status: 'no_show'
+    },
+    attendance: {
+      status: 'no_show',
+      marked_at: new Date().toISOString(),
+      marked_by: 'admin_panel',
+      admin_notes: 'Customer did not show up, no call received',
+      follow_up_required: true,
+      follow_up_priority: 'high'
+    },
+    location: {
+      name: BUSINESS_CONFIG.name,
+      address: BUSINESS_CONFIG.address,
+      phone: BUSINESS_CONFIG.phone
+    },
+    business_impact: {
+      revenue_impact: 0,
+      time_slot_utilization: 'wasted',
+      staff_availability: 'available',
+      customer_satisfaction: 'negative'
+    },
+    system_data: {
+      created_at: new Date().toISOString(),
+      attendance_marked_at: new Date().toISOString(),
+      booking_source: 'website',
+      session_id: `demo_session_${Date.now()}`,
+      admin_session: `demo_admin_${Date.now()}`
+    }
   }
-  
-  console.log('✅ Server is running. Starting tests...\n');
-  
-  await runAllTests();
+
+  await sendWebhook(webhookUrls.showNoShow, payload, 'No-Show')
 }
 
-// Handle script execution
-if (require.main === module) {
-  main().catch(console.error);
+/**
+ * Test 6: Couples Booking Webhook
+ */
+async function testCouplesBookingWebhook() {
+  const normalizedTime = formatNormalizedDateTime('2025-01-31', '16:30')
+  
+  const payload = {
+    event: 'booking_confirmed',
+    booking_id: `demo_couples_${Date.now()}`,
+    customer: {
+      name: 'Emma & David Wilson',
+      email: 'emma.david@example.com',
+      phone: '+1-671-555-0987',
+      ghl_contact_id: 'demo_contact_couples',
+      is_new_customer: true,
+      total_bookings: 1
+    },
+    appointment: {
+      service: 'Couples Massage Package',
+      service_id: 'couples-001',
+      service_category: 'package',
+      ghl_category: 'package',
+      service_description: 'Couples Massage Package treatment',
+      staff: 'Any Available',
+      staff_id: 'any',
+      room: 'Room 3',
+      room_id: 'room_3',
+      date: '2025-01-31',
+      time: '16:30',
+      normalized_time: normalizedTime,
+      duration: 120,
+      price: 200,
+      currency: PAYMENT_CONFIG.currency,
+      status: 'confirmed',
+      confirmation_code: `COUPLES${Date.now()}`
+    },
+    location: {
+      name: BUSINESS_CONFIG.name,
+      address: BUSINESS_CONFIG.address,
+      phone: BUSINESS_CONFIG.phone
+    },
+    payment: {
+      method: 'online_payment',
+      amount: 200,
+      currency: PAYMENT_CONFIG.currency,
+      status: 'paid',
+      transaction_id: `demo_couples_txn_${Date.now()}`
+    },
+    system_data: {
+      created_at: new Date().toISOString(),
+      confirmed_at: new Date().toISOString(),
+      booking_source: 'website',
+      session_id: `demo_couples_session_${Date.now()}`
+    }
+  }
+
+  await sendWebhook(webhookUrls.bookingConfirmation, payload, 'Couples Booking')
 }
 
-module.exports = { testWebhook, runAllTests }; 
+/**
+ * Main function to run all tests
+ */
+async function runAllTests() {
+  console.log('🎯 Starting GoHighLevel Webhook Demo Tests...')
+  console.log('=' .repeat(60))
+  
+  const tests = [
+    { name: 'New Customer', fn: testNewCustomerWebhook },
+    { name: 'Booking Confirmation', fn: testBookingConfirmationWebhook },
+    { name: 'Booking Update', fn: testBookingUpdateWebhook },
+    { name: 'Show Attendance', fn: testShowNoShowWebhook },
+    { name: 'No-Show', fn: testNoShowWebhook },
+    { name: 'Couples Booking', fn: testCouplesBookingWebhook }
+  ]
+
+  for (const test of tests) {
+    console.log(`\n${'='.repeat(20)} ${test.name} Test ${'='.repeat(20)}`)
+    await test.fn()
+    // Add a small delay between tests
+    await new Promise(resolve => setTimeout(resolve, 1000))
+  }
+
+  console.log('\n🎉 All webhook tests completed!')
+  console.log('📋 Check your GoHighLevel dashboard to see the incoming webhook data.')
+  console.log('🔍 Look for the new "normalized_time" field in the webhook payloads.')
+}
+
+// Run the tests
+runAllTests().catch(console.error) 

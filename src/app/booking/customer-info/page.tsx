@@ -5,7 +5,7 @@ import Link from 'next/link'
 import CustomerForm, { CustomerFormData } from '@/components/booking/CustomerForm'
 import { staffNameMap } from '@/lib/staff-data'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
-import BookingSummary from '@/components/booking/BookingSummary'
+
 import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 import { getGHLServiceCategory } from '@/lib/staff-data'
@@ -169,9 +169,8 @@ export default function CustomerInfoPage() {
       
       <div className="min-h-screen bg-background section-spacing">
         <div className="container mx-auto px-6 max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2">
+          <div className="max-w-4xl mx-auto">
+            <div>
               {/* Header */}
               <div className="text-center lg:text-left mb-8">
                 <Link 
@@ -192,12 +191,7 @@ export default function CustomerInfoPage() {
               <CustomerForm onSubmit={handleSubmit} />
             </div>
 
-            {/* Sidebar - Booking Summary */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-8">
-                <BookingSummary />
-              </div>
-            </div>
+
           </div>
         </div>
       </div>

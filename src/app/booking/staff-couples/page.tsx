@@ -195,9 +195,13 @@ export default function CouplesStaffPage() {
   }) => (
     <Card 
       className={`p-6 cursor-pointer transition-all duration-200 hover:shadow-lg ${
-        isSelected 
-          ? 'ring-2 ring-primary border-primary bg-accent/20' 
-          : 'hover:border-accent'
+        member.id === 'any'
+          ? isSelected
+            ? 'border-[3px] border-primary bg-gradient-to-br from-primary/10 to-primary/5 ring-2 ring-primary/20 shadow-xl'
+            : 'border-[3px] border-dashed border-primary/50 bg-gradient-to-br from-primary/5 to-transparent hover:border-primary hover:ring-1 hover:ring-primary/30'
+          : isSelected 
+            ? 'ring-2 ring-primary border-primary bg-accent/20' 
+            : 'hover:border-accent'
       }`}
       onClick={() => onSelect(member.id)}
     >
