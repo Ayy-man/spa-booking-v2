@@ -157,6 +157,7 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
             walkInData.specialRequests || undefined
           )
           if (!walkInResult.success) throw new Error(walkInResult.error)
+          if (!walkInResult.bookingId) throw new Error('No booking ID returned')
           
           // Send walk-in webhook to GHL
           try {
