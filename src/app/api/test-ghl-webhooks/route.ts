@@ -6,7 +6,6 @@ export async function GET(request: NextRequest) {
     const tests = []
     
     // Test 1: New Customer Webhook
-    console.log('Testing new customer webhook...')
     const newCustomerResult = await ghlWebhookSender.sendNewCustomerWebhook(
       {
         name: 'Test Customer',
@@ -31,7 +30,6 @@ export async function GET(request: NextRequest) {
     })
 
     // Test 2: Booking Confirmation Webhook
-    console.log('Testing booking confirmation webhook...')
     const bookingConfirmationResult = await ghlWebhookSender.sendBookingConfirmationWebhook(
       'test_booking_123',
       {
@@ -62,7 +60,6 @@ export async function GET(request: NextRequest) {
     })
 
     // Test 3: Booking Update Webhook
-    console.log('Testing booking update webhook...')
     const bookingUpdateResult = await ghlWebhookSender.sendBookingUpdateWebhook(
       'test_booking_123',
       {

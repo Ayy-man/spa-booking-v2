@@ -6,7 +6,6 @@ export async function GET(request: NextRequest) {
     const results = []
     
     // Test 1: Complete new customer flow
-    console.log('Testing complete new customer flow...')
     const newCustomerTest = await ghlWebhookSender.sendNewCustomerWebhook(
       {
         name: 'Sarah Johnson',
@@ -32,7 +31,6 @@ export async function GET(request: NextRequest) {
     })
 
     // Test 2: Couples booking confirmation flow
-    console.log('Testing couples booking confirmation flow...')
     const couplesBookingTest = await ghlWebhookSender.sendBookingConfirmationWebhook(
       'couples_booking_001',
       {
@@ -64,7 +62,6 @@ export async function GET(request: NextRequest) {
     })
 
     // Test 3: Single service booking
-    console.log('Testing single service booking...')
     const singleBookingTest = await ghlWebhookSender.sendBookingConfirmationWebhook(
       'single_booking_002',
       {
@@ -96,7 +93,6 @@ export async function GET(request: NextRequest) {
     })
 
     // Test 4: Booking cancellation
-    console.log('Testing booking cancellation...')
     const cancellationTest = await ghlWebhookSender.sendBookingUpdateWebhook(
       'single_booking_002',
       {
@@ -133,7 +129,6 @@ export async function GET(request: NextRequest) {
     })
 
     // Test 5: Booking reschedule
-    console.log('Testing booking reschedule...')
     const rescheduleTest = await ghlWebhookSender.sendBookingUpdateWebhook(
       'couples_booking_001',
       {
@@ -174,7 +169,6 @@ export async function GET(request: NextRequest) {
     })
 
     // Test 6: High-value package booking
-    console.log('Testing high-value package booking...')
     const packageBookingTest = await ghlWebhookSender.sendBookingConfirmationWebhook(
       'package_booking_001',
       {

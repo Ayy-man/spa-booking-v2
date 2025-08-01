@@ -29,13 +29,13 @@ interface RoomTimelineProps {
 interface DragState {
   isDragging: boolean
   draggedBooking: BookingWithRelations | null
-  targetRoomId: number | null
+  targetRoomId: string | null
   targetTimeSlot: string | null
 }
 
 interface RescheduleData {
   booking: BookingWithRelations
-  newRoomId: number
+  newRoomId: string
   newTimeSlot: string
   newRoomName: string
 }
@@ -64,7 +64,7 @@ export function RoomTimeline({
   refreshInterval = 30000 
 }: RoomTimelineProps) {
   const [bookings, setBookings] = useState<BookingWithRelations[]>([])
-  const [rooms, setRooms] = useState<Array<{ id: number; name: string }>>([])
+  const [rooms, setRooms] = useState<Array<{ id: string; name: string; has_body_scrub_equipment: boolean }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
@@ -118,7 +118,7 @@ export function RoomTimeline({
       // Fetch active rooms
       const { data: roomsData, error: roomsError } = await supabase
         .from('rooms')
-        .select('id, name')
+        .select('id, name, has_body_scrub_equipment')
         .eq('is_active', true)
         .order('id', { ascending: true })
 
@@ -154,7 +154,7 @@ export function RoomTimeline({
   }, [autoRefresh, refreshInterval, fetchData])
 
   // Get booking for a specific room and time slot
-  const getBookingForSlot = useCallback((roomId: number, timeString: string): BookingWithRelations | null => {
+  const getBookingForSlot = useCallback((roomId: string, timeString: string): BookingWithRelations | null => {
     return bookings.find(booking => {
       if (booking.room_id !== roomId) return false
       
@@ -166,7 +166,7 @@ export function RoomTimeline({
   }, [bookings])
 
   // Calculate room utilization percentage
-  const getRoomUtilization = useCallback((roomId: number): number => {
+  const getRoomUtilization = useCallback((roomId: string): number => {
     const roomBookings = bookings.filter(b => b.room_id === roomId)
     const totalBookedMinutes = roomBookings.reduce((total, booking) => total + booking.duration, 0)
     const totalBusinessMinutes = (BUSINESS_HOURS.end - BUSINESS_HOURS.start) * 60
@@ -244,7 +244,7 @@ export function RoomTimeline({
     e.dataTransfer.dropEffect = 'move'
   }, [])
 
-  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: number, timeSlot: string) => {
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: string, timeSlot: string) => {
     e.preventDefault()
     if (dragState.isDragging) {
       setDragState(prev => ({
@@ -267,7 +267,7 @@ export function RoomTimeline({
     }
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: number, timeSlot: string) => {
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>, roomId: string, timeSlot: string) => {
     e.preventDefault()
     
     if (!dragState.draggedBooking) return
@@ -300,8 +300,8 @@ export function RoomTimeline({
     const serviceName = dragState.draggedBooking.service.name.toLowerCase()
     const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
     
-    // Body scrubs can only be done in Room 3
-    if (isBodyScrub && roomId !== 3) {
+    // Body scrubs can only be done in rooms with body scrub equipment
+    if (isBodyScrub && (!targetRoom || !targetRoom.has_body_scrub_equipment)) {
       setError('Body scrub services can only be performed in Room 3')
       setDragState({
         isDragging: false,
@@ -643,7 +643,7 @@ export function RoomTimeline({
                                   const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
                                   
                                   // Invalid drop zones
-                                  if (isBodyScrub && room.id !== 3) return "bg-red-50 border-red-300 ring-2 ring-red-200"
+                                  if (isBodyScrub && !room.has_body_scrub_equipment) return "bg-red-50 border-red-300 ring-2 ring-red-200"
                                   
                                   // Check for existing booking conflicts
                                   const existingBooking = getBookingForSlot(room.id, slot.timeString)
@@ -660,8 +660,8 @@ export function RoomTimeline({
                               dragState.isDragging && dragState.draggedBooking && (() => {
                                 const serviceName = dragState.draggedBooking.service.name.toLowerCase()
                                 const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
-                                if (isBodyScrub && room.id === 3) return "ring-1 ring-green-300 bg-green-50/30"
-                                if (isBodyScrub && room.id !== 3) return "ring-1 ring-red-300 bg-red-50/30"
+                                if (isBodyScrub && room.has_body_scrub_equipment) return "ring-1 ring-green-300 bg-green-50/30"
+                                if (isBodyScrub && !room.has_body_scrub_equipment) return "ring-1 ring-red-300 bg-red-50/30"
                                 return ""
                               })()
                             )}
@@ -949,7 +949,7 @@ export function RoomTimeline({
                         for (const slot of timeSlots) {
                           for (const room of rooms) {
                             // Skip if body scrub and not Room 3
-                            if (isBodyScrub && room.id !== 3) continue
+                            if (isBodyScrub && !room.has_body_scrub_equipment) continue
                             
                             const existingBooking = getBookingForSlot(room.id, slot.timeString)
                             if (!existingBooking) {
@@ -989,7 +989,7 @@ export function RoomTimeline({
                         
                         for (const room of rooms) {
                           if (room.id === clickRescheduleBooking.room_id) continue // Skip current room
-                          if (isBodyScrub && room.id !== 3) continue // Body scrub constraint
+                          if (isBodyScrub && !room.has_body_scrub_equipment) continue // Body scrub constraint
                           
                           const existingBooking = getBookingForSlot(room.id, currentTime)
                           if (!existingBooking) {
@@ -1032,7 +1032,7 @@ export function RoomTimeline({
                             {rooms.map(room => {
                               const serviceName = clickRescheduleBooking.service.name.toLowerCase()
                               const isBodyScrub = serviceName.includes('scrub') || serviceName.includes('salt')
-                              const isCompatible = !isBodyScrub || room.id === 3
+                              const isCompatible = !isBodyScrub || room.has_body_scrub_equipment
                               const existingBooking = getBookingForSlot(room.id, slot.timeString)
                               
                               return (

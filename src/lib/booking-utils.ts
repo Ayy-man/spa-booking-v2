@@ -9,7 +9,10 @@
 export function isSpecialStaffRequest(booking: any): boolean {
   // Check if customer specifically requested this staff member
   // (as opposed to selecting "Any Available" which would be staff_id: 'any-available')
-  return booking.staff_id !== 'any-available' && booking.staff_id !== null && booking.staff_id !== 'any'
+  if (!booking || booking.staff_id === undefined || booking.staff_id === null || booking.staff_id === '') {
+    return false
+  }
+  return booking.staff_id !== 'any-available' && booking.staff_id !== 'any'
 }
 
 /**
@@ -18,6 +21,9 @@ export function isSpecialStaffRequest(booking: any): boolean {
  * @returns boolean - true if service is for couples
  */
 export function isCouplesService(serviceName: string): boolean {
+  if (!serviceName || typeof serviceName !== 'string') {
+    return false
+  }
   const couplesKeywords = ['couples', 'couple', 'duo', 'double', 'partner']
   return couplesKeywords.some(keyword => 
     serviceName.toLowerCase().includes(keyword)
@@ -30,20 +36,25 @@ export function isCouplesService(serviceName: string): boolean {
  * @returns number - Duration in minutes
  */
 export function getBookingDuration(serviceName: string): number {
+  if (!serviceName || typeof serviceName !== 'string') {
+    return 60 // Default duration
+  }
+  
   // Default durations for different service types
+  // Order matters - more specific matches should come first
   const durationMap: Record<string, number> = {
-    'facial': 60,
-    'massage': 90,
-    'body scrub': 45,
-    'couples massage': 90,
     'deep cleansing facial': 75,
+    'anti-aging facial': 90,
     'hydrating facial': 60,
-    'anti-aging facial': 90
+    'couples massage': 90,
+    'body scrub': 45,
+    'facial': 60,
+    'massage': 90
   }
   
   const lowerServiceName = serviceName.toLowerCase()
   
-  // Find matching service type
+  // Find matching service type (first match wins, so specific matches come first)
   for (const [key, duration] of Object.entries(durationMap)) {
     if (lowerServiceName.includes(key)) {
       return duration
@@ -60,14 +71,19 @@ export function getBookingDuration(serviceName: string): number {
  * @returns string | null - Room restriction or null if no restriction
  */
 export function getServiceRoomRestriction(serviceName: string): string | null {
+  if (!serviceName || typeof serviceName !== 'string') {
+    return null
+  }
+  
   const lowerServiceName = serviceName.toLowerCase()
   
   // Body scrubs can only be done in Room 3 (has special equipment)
-  if (lowerServiceName.includes('body scrub')) {
+  // This takes precedence over couples requirement
+  if (lowerServiceName.includes('body scrub') || lowerServiceName.includes('scrub')) {
     return 'Room 3'
   }
   
-  // Couples services need larger rooms (Room 1 or 2)
+  // Couples services need larger rooms (Room 2 or 3, not Room 1)
   if (isCouplesService(serviceName)) {
     return 'Room 1 or 2'
   }

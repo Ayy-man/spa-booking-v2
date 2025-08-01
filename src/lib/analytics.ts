@@ -8,7 +8,6 @@ const safeTrack = (event: string, properties?: any) => {
     track(event, properties)
   } catch (error) {
     // Silently fail if analytics is blocked by ad blockers
-    console.debug('Analytics blocked:', error)
   }
 }
 

@@ -17,7 +17,7 @@ export interface Database {
           customer_id: string
           service_id: string
           staff_id: string
-          room_id: number
+          room_id: string
           appointment_date: string
           start_time: string
           end_time: string
@@ -42,7 +42,7 @@ export interface Database {
           customer_id: string
           service_id: string
           staff_id: string
-          room_id: number
+          room_id: string
           appointment_date: string
           start_time: string
           end_time: string
@@ -67,7 +67,7 @@ export interface Database {
           customer_id?: string
           service_id?: string
           staff_id?: string
-          room_id?: number
+          room_id?: string
           appointment_date?: string
           start_time?: string
           end_time?: string
@@ -170,7 +170,7 @@ export interface Database {
       }
       rooms: {
         Row: {
-          id: number
+          id: string
           name: string
           capacity: number
           capabilities: string[]
@@ -181,7 +181,7 @@ export interface Database {
           updated_at: string
         }
         Insert: {
-          id: number
+          id: string
           name: string
           capacity: number
           capabilities?: string[]
@@ -192,7 +192,7 @@ export interface Database {
           updated_at?: string
         }
         Update: {
-          id?: number
+          id?: string
           name?: string
           capacity?: number
           capabilities?: string[]
@@ -256,7 +256,7 @@ export interface Database {
           specialties: string | null
           capabilities: string[]
           work_days: number[]
-          default_room_id: number | null
+          default_room_id: string | null
           role: string
           initials: string | null
           hourly_rate: number | null
@@ -273,7 +273,7 @@ export interface Database {
           specialties?: string | null
           capabilities?: string[]
           work_days?: number[]
-          default_room_id?: number | null
+          default_room_id?: string | null
           role?: string
           initials?: string | null
           hourly_rate?: number | null
@@ -290,7 +290,7 @@ export interface Database {
           specialties?: string | null
           capabilities?: string[]
           work_days?: number[]
-          default_room_id?: number | null
+          default_room_id?: string | null
           role?: string
           initials?: string | null
           hourly_rate?: number | null

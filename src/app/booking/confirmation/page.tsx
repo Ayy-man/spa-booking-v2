@@ -132,9 +132,8 @@ export default function ConfirmationPage() {
         )
         
         if (result.success) {
-          console.log('Booking confirmation sent to GHL successfully')
         } else {
-          console.warn('Failed to send booking confirmation to GHL:', result.error)
+          // Failed to send booking confirmation to GHL
         }
       } catch (error) {
         console.error('Error sending booking confirmation to GHL:', error)

@@ -17,7 +17,7 @@ interface FilterBarProps {
   onStaffFilter: (staffId: string | null) => void
   onStatusFilter: (status: string | null) => void
   onClearFilters: () => void
-  rooms: Array<{ id: number; name: string }>
+  rooms: Array<{ id: string; name: string }>
   staff: Array<{ id: string; name: string }>
   selectedRoom: string | null
   selectedStaff: string | null

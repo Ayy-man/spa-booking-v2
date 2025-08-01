@@ -61,15 +61,9 @@ export default function CouplesStaffPage() {
     
     setLoadingStaff(true)
     try {
-      console.log('=== COUPLES BOOKING STAFF FILTERING DEBUG ===')
-      console.log('Primary Service:', bookingData.primaryService.name)
-      console.log('Secondary Service:', bookingData.secondaryService?.name)
-      console.log('Selected Date:', selectedDate)
-      console.log('Selected Time:', selectedTime)
       
       // Get all staff first
       const allStaff = await supabaseClient.getStaff()
-      console.log('All staff fetched:', allStaff.map(s => ({ name: s.name, capabilities: s.capabilities })))
       
       // Get service categories
       const primaryServiceCategory = getServiceCategory(bookingData.primaryService.name)
@@ -77,8 +71,6 @@ export default function CouplesStaffPage() {
         ? getServiceCategory(bookingData.secondaryService.name) 
         : null
       
-      console.log('Primary service category:', primaryServiceCategory)
-      console.log('Secondary service category:', secondaryServiceCategory)
       
       // Filter staff for primary service (Person 1)
       const primaryServiceCapableStaff = allStaff.filter(staff => {
@@ -87,12 +79,10 @@ export default function CouplesStaffPage() {
         const hasCapability = canDatabaseStaffPerformService(staff, primaryServiceCategory)
         const worksOnDay = isDatabaseStaffAvailableOnDate(staff, selectedDate)
         
-        console.log(`Primary Service - Staff ${staff.name}: capability=${hasCapability}, worksOnDay=${worksOnDay}, category=${primaryServiceCategory}, staffCapabilities=${JSON.stringify(staff.capabilities)}`)
         
         return hasCapability && worksOnDay
       })
       
-      console.log('Staff available for primary service:', primaryServiceCapableStaff.map(s => s.name))
       setPrimaryServiceStaff(primaryServiceCapableStaff)
       
       // Filter staff for secondary service (Person 2) if it exists
@@ -104,12 +94,10 @@ export default function CouplesStaffPage() {
           const hasCapability = canDatabaseStaffPerformService(staff, secondaryServiceCategory)
           const worksOnDay = isDatabaseStaffAvailableOnDate(staff, selectedDate)
           
-          console.log(`Secondary Service - Staff ${staff.name}: capability=${hasCapability}, worksOnDay=${worksOnDay}, category=${secondaryServiceCategory}, staffCapabilities=${JSON.stringify(staff.capabilities)}`)
           
           return hasCapability && worksOnDay
         })
         
-        console.log('Staff available for secondary service:', secondaryServiceCapableStaff.map(s => s.name))
         setSecondaryServiceStaff(secondaryServiceCapableStaff)
       } else {
         // If no secondary service (same service for both), use primary service staff
@@ -129,7 +117,6 @@ export default function CouplesStaffPage() {
       })
       setStaffMap(nameMap)
       
-      console.log('=== END COUPLES BOOKING STAFF FILTERING DEBUG ===')
       
     } catch (error) {
       console.error('Error fetching available staff:', error)

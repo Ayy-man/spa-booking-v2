@@ -36,14 +36,14 @@ interface Service {
 }
 
 interface Room {
-  id: number
+  id: string
   name: string
 }
 
 interface StaffMember {
   id: string
   name: string
-  default_room_id: number | null
+  default_room_id: string | null
 }
 
 type ActionType = "complete" | "no_show" | "walk_in" | "block_time" | null

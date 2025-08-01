@@ -74,9 +74,8 @@ export default function CustomerInfoPage() {
         )
         
         if (result.success) {
-          console.log('New customer data sent to GHL successfully')
         } else {
-          console.warn('Failed to send new customer data to GHL:', result.error)
+          // Failed to send new customer data to GHL
         }
       } catch (error) {
         console.error('Error sending new customer data to GHL:', error)

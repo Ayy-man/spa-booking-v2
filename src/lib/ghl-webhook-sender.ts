@@ -21,7 +21,7 @@ interface BookingData {
   staff?: string
   staffId?: string
   room?: string
-  roomId?: number
+  roomId?: string
 }
 
 interface WebhookResponse {
@@ -38,7 +38,6 @@ class GHLWebhookSender {
   }
 
   async sendNewCustomerWebhook(customer: CustomerData, booking: BookingData): Promise<WebhookResponse> {
-    console.log('Sending new customer webhook to GHL:', { customer: customer.name, service: booking.service })
     try {
       const payload = {
         event: 'new_customer',
@@ -105,7 +104,6 @@ class GHLWebhookSender {
     booking: BookingData,
     ghlContactId?: string
   ): Promise<WebhookResponse> {
-    console.log('Sending booking confirmation webhook to GHL:', { bookingId, customer: customer.name })
     try {
       const payload = {
         event: 'booking_confirmed',
@@ -126,7 +124,7 @@ class GHLWebhookSender {
           staff: booking.staff || 'Any Available',
           staff_id: booking.staffId || '',
           room: booking.room || 'TBD',
-          room_id: booking.roomId || 0,
+          room_id: booking.roomId || '',
           date: booking.date,
           time: booking.time,
           duration: booking.duration,
@@ -220,7 +218,7 @@ class GHLWebhookSender {
           staff: booking.staff || 'Any Available',
           staff_id: booking.staffId || '',
           room: booking.room || 'TBD',
-          room_id: booking.roomId || 0,
+          room_id: booking.roomId || '',
           date: changes.newDate || booking.date,
           time: changes.newTime || booking.time,
           duration: booking.duration,
@@ -266,7 +264,6 @@ class GHLWebhookSender {
     adminNotes?: string,
     ghlContactId?: string
   ): Promise<WebhookResponse> {
-    console.log('Sending show/no-show webhook to GHL:', { bookingId, customer: customer.name, status })
     try {
       const payload = {
         event: 'appointment_attendance',
@@ -287,7 +284,7 @@ class GHLWebhookSender {
           staff: booking.staff || 'Any Available',
           staff_id: booking.staffId || '',
           room: booking.room || 'TBD',
-          room_id: booking.roomId || 0,
+          room_id: booking.roomId || '',
           date: booking.date,
           time: booking.time,
           duration: booking.duration,

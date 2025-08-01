@@ -50,7 +50,6 @@ export default function StaffPage() {
   }, [selectedService])
 
   useEffect(() => {
-    console.log('StaffPage useEffect running')
     
     // Get data from localStorage
     const bookingDataStr = localStorage.getItem('bookingData')
@@ -58,18 +57,11 @@ export default function StaffPage() {
     const dateData = localStorage.getItem('selectedDate')
     const timeData = localStorage.getItem('selectedTime')
 
-    console.log('LocalStorage data:', {
-      bookingDataStr,
-      serviceDataStr,
-      dateData,
-      timeData
-    })
 
     if (bookingDataStr) {
       const parsedBookingData = JSON.parse(bookingDataStr)
       setBookingData(parsedBookingData)
       setSelectedService(parsedBookingData.primaryService)
-      console.log('Set booking data from bookingDataStr:', parsedBookingData)
     } else if (serviceDataStr) {
       // Fallback for backward compatibility
       const parsedService = JSON.parse(serviceDataStr)
@@ -80,7 +72,6 @@ export default function StaffPage() {
         totalPrice: parsedService.price,
         totalDuration: parsedService.duration
       })
-      console.log('Set service data from serviceDataStr:', parsedService)
     }
     
     if (dateData) setSelectedDate(dateData)
@@ -88,25 +79,16 @@ export default function StaffPage() {
     
     // Fetch available staff from Supabase
     if ((bookingDataStr || serviceDataStr) && dateData && timeData) {
-      console.log('Conditions met, calling fetchAvailableStaff')
       fetchAvailableStaff()
     } else {
-      console.log('Conditions not met for fetchAvailableStaff:', {
-        hasBookingOrService: !!(bookingDataStr || serviceDataStr),
-        hasDate: !!dateData,
-        hasTime: !!timeData
-      })
     }
   }, [])
 
   const fetchAvailableStaff = async () => {
-    console.log('fetchAvailableStaff called')
     setLoadingStaff(true)
     try {
       // Get the service from Supabase to get the correct ID
-      console.log('Fetching services from Supabase...')
       const services = await supabaseClient.getServices()
-      console.log('Services fetched:', services)
       
       // Get service data directly from localStorage to avoid race conditions
       const bookingDataStr = localStorage.getItem('bookingData')
@@ -121,29 +103,22 @@ export default function StaffPage() {
         selectedServiceData = JSON.parse(serviceDataStr)
       }
       
-      console.log('Selected service data:', selectedServiceData)
-      console.log('From bookingData:', bookingDataStr ? JSON.parse(bookingDataStr).primaryService : null)
-      console.log('From serviceData:', serviceDataStr ? JSON.parse(serviceDataStr) : null)
       
       const matchingService = services.find(s => 
         s.name.toLowerCase() === selectedServiceData?.name.toLowerCase()
       )
       
       if (!matchingService) {
-        console.log('No matching service found, using fallback logic')
         // Fallback: show all active staff for now
         const allStaff = await supabaseClient.getStaff()
         const activeStaff = allStaff.filter(staff => staff.is_active && staff.id !== 'any')
-        console.log('No matching service found, showing all active staff:', activeStaff)
         setAvailableStaff(activeStaff)
         return
       }
       
-      console.log('Matching service found:', matchingService)
       
       // Simplified logic: Get all staff and filter by capability and availability
       const allStaff = await supabaseClient.getStaff()
-      console.log('All staff fetched:', allStaff)
       
       const dateData = localStorage.getItem('selectedDate')
       const timeData = localStorage.getItem('selectedTime')
@@ -155,7 +130,6 @@ export default function StaffPage() {
                  staff.id !== 'any' &&
                  canDatabaseStaffPerformService(staff, matchingService.category)
         })
-        console.log('No date/time, showing capable staff:', capableStaff)
         setAvailableStaff(capableStaff)
         return
       }
@@ -170,28 +144,21 @@ export default function StaffPage() {
         const hasCapability = canDatabaseStaffPerformService(staff, matchingService.category)
         const worksOnDay = isDatabaseStaffAvailableOnDate(staff, dateData)
         
-        console.log(`Staff ${staff.name}: capability=${hasCapability}, worksOnDay=${worksOnDay}, category=${matchingService.category}, staffCapabilities=${JSON.stringify(staff.capabilities)}`)
         
         return hasCapability && worksOnDay
       })
       
-      console.log('Staff available for this day and service:', availableStaffForDay)
       setAvailableStaff(availableStaffForDay)
     } catch (error: any) {
-      console.log('Advanced availability check failed, using simple fallback:', error)
       
       // Fallback: Show all active staff
       try {
-        console.log('Fallback: Fetching all staff...')
         const allStaff = await supabaseClient.getStaff()
-        console.log('Fallback: All staff from database:', allStaff)
         
         const activeStaff = allStaff.filter(staff => {
-          console.log('Checking staff:', staff.name, 'is_active:', staff.is_active, 'id:', staff.id)
           return staff.is_active && staff.id !== 'any'
         })
         
-        console.log('Fallback: Active staff after filtering:', activeStaff)
         setAvailableStaff(activeStaff)
       } catch (fallbackError) {
         console.error('Failed to fetch staff:', fallbackError)

@@ -11,10 +11,8 @@ export async function GET() {
   }
 
   try {
-    console.log('🧪 Testing all webhooks...')
     
     // Test 1: New Customer Webhook
-    console.log('📧 Testing new customer webhook...')
     try {
       const newCustomerResult = await ghlWebhookSender.sendNewCustomerWebhook(
         {
@@ -46,7 +44,6 @@ export async function GET() {
     }
 
     // Test 2: Booking Confirmation Webhook
-    console.log('✅ Testing booking confirmation webhook...')
     try {
       const bookingId = `test_booking_${Date.now()}`
       const confirmationResult = await ghlWebhookSender.sendBookingConfirmationWebhook(
@@ -82,7 +79,6 @@ export async function GET() {
     }
 
     // Test 3: Booking Update Webhook
-    console.log('🔄 Testing booking update webhook...')
     try {
       const bookingId = `test_booking_${Date.now()}`
       const updateResult = await ghlWebhookSender.sendBookingUpdateWebhook(
@@ -125,7 +121,6 @@ export async function GET() {
     }
 
     // Test 4: Show/No-Show Webhook
-    console.log('📋 Testing show/no-show webhook...')
     try {
       const bookingId = `test_booking_${Date.now()}`
       const showResult = await ghlWebhookSender.sendShowNoShowWebhook(
@@ -169,8 +164,6 @@ export async function GET() {
       allPassed: Object.values(results).every(r => r.success)
     }
 
-    console.log('✅ All webhook tests completed')
-    console.log('📊 Summary:', summary)
 
     return NextResponse.json({
       success: true,

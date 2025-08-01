@@ -196,10 +196,26 @@ npm run test:watch   # Run tests in watch mode
 
 ## 🧪 Testing
 
-### Automated Testing
-- **Unit Tests**: Component and utility testing
-- **Integration Tests**: API and database testing
-- **E2E Tests**: Full booking flow testing
+### Test Suite Overview
+- **Jest Testing Framework**: Comprehensive unit and integration testing
+- **React Testing Library**: Component testing utilities
+- **Coverage Threshold**: 70% minimum across all metrics
+- **CI/CD Integration**: Automated testing on deployment
+
+### Available Test Commands
+```bash
+npm run test              # Run all tests
+npm run test:watch        # Run tests in watch mode
+npm run test:coverage     # Run tests with coverage report
+npm run test:ci           # Run tests for CI/CD pipeline
+```
+
+### Test Coverage Areas
+- **Booking Logic**: Core business logic validation
+- **Environment Validation**: Configuration and security checks
+- **Webhook Integration**: GoHighLevel integration testing
+- **Database Utilities**: Data access layer testing
+- **Health Checks**: System monitoring and status validation
 
 ### Manual Testing Checklist
 - [x] All 44 services can be booked
@@ -212,27 +228,88 @@ npm run test:watch   # Run tests in watch mode
 - [x] Data persists correctly
 - [x] Admin authentication works
 - [x] Couples booking flow complete
+- [x] Environment validation working
+- [x] Health check endpoint operational
+- [x] Production build successful
+- [x] Security measures implemented
 
-## 🚀 Deployment
+## 🚀 Production Deployment
 
-### Vercel Deployment
-1. Connect your GitHub repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
+### Prerequisites
+- Node.js 18+ environment
+- Supabase project configured
+- Environment variables validated
+- Database migrations completed
+- Health checks passing
 
-### Supabase Setup
-1. Create new Supabase project
-2. Run database migrations from `/supabase/migrations/`
-3. Set up Row Level Security (RLS)
-4. Configure authentication
-
-### Environment Variables (Production)
+### Quick Deploy to Vercel
 ```bash
-NEXT_PUBLIC_APP_URL=https://your-production-domain.com
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# 1. Verify environment variables
+npm run test:ci
+
+# 2. Build and validate
+npm run build
+
+# 3. Deploy to Vercel
+vercel --prod
 ```
+
+### Detailed Deployment Process
+
+#### 1. Environment Setup
+Set these variables in your production environment:
+```bash
+# Required - Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+
+# Required - Application Configuration
+NEXT_PUBLIC_APP_URL=https://your-production-domain.com
+NODE_ENV=production
+
+# Optional - Business Configuration
+NEXT_PUBLIC_CLINIC_NAME="Dermal Skin Clinic and Spa Guam"
+NEXT_PUBLIC_CLINIC_PHONE="(671) 647-7546"
+NEXT_PUBLIC_CLINIC_ADDRESS="123 Marine Corps Dr, Tamuning, GU 96913"
+NEXT_PUBLIC_BUSINESS_HOURS_START=09:00
+NEXT_PUBLIC_BUSINESS_HOURS_END=19:00
+NEXT_PUBLIC_MAX_ADVANCE_BOOKING_DAYS=30
+NEXT_PUBLIC_BUFFER_TIME_MINUTES=15
+```
+
+#### 2. Database Migration
+Run migrations in order from `/supabase/migrations/`:
+```sql
+-- 1. Initial schema (001_initial_schema.sql)
+-- 2. RLS policies (002_rls_policies.sql)
+-- 3. Booking functions (003_booking_functions.sql)
+-- 4. Seed data (004_seed_data.sql)
+-- 5. Missing services (005_add_missing_services.sql)
+-- 6. Couples booking (006_couples_booking_support.sql)
+-- 7. Fix couples function (007_fix_couples_booking_function.sql)
+-- 8. Admin users table (008_admin_users_table.sql)
+```
+
+#### 3. Security Configuration
+- Ensure RLS policies are enabled
+- Verify admin_users table is properly secured
+- Configure middleware protection for admin routes
+- Set up proper CORS policies
+
+#### 4. Health Check Validation
+Verify deployment health:
+```bash
+curl https://your-domain.com/api/health
+```
+
+### Monitoring & Maintenance
+- **Health Endpoint**: `/api/health` for system status
+- **Error Tracking**: Built-in error boundaries and logging
+- **Performance Monitoring**: Vercel Analytics integration
+- **Database Monitoring**: Supabase dashboard for queries and performance
+
+For detailed deployment instructions, see [`PRODUCTION_DEPLOYMENT.md`](./PRODUCTION_DEPLOYMENT.md)
 
 ## 📱 User Flow
 

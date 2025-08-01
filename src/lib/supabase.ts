@@ -84,7 +84,7 @@ export const supabaseClient = {
   async createBooking(booking: {
     service_id: string
     staff_id: string
-    room_id: number
+    room_id: string
     customer_name: string
     customer_email: string
     customer_phone?: string

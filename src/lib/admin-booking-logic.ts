@@ -349,7 +349,7 @@ export async function getStaffSchedule(
 // Get all staff for schedule view
 export async function getAllActiveStaff(): Promise<{ 
   success: boolean; 
-  data?: Array<{ id: string; name: string; default_room_id: number | null }>; 
+  data?: Array<{ id: string; name: string; default_room_id: string | null }>; 
   error?: string 
 }> {
   try {

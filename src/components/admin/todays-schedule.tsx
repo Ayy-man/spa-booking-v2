@@ -22,7 +22,7 @@ export function TodaysSchedule({
 }: TodaysScheduleProps) {
   const [bookings, setBookings] = useState<BookingWithRelations[]>([])
   const [filteredBookings, setFilteredBookings] = useState<BookingWithRelations[]>([])
-  const [rooms, setRooms] = useState<Array<{ id: number; name: string }>>([])
+  const [rooms, setRooms] = useState<Array<{ id: string; name: string }>>([])
   const [staff, setStaff] = useState<Array<{ id: string; name: string }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')

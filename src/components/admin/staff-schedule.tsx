@@ -19,7 +19,7 @@ type ViewMode = "day" | "week"
 interface StaffOption {
   id: string
   name: string
-  default_room_id: number | null
+  default_room_id: string | null
 }
 
 interface StaffScheduleProps {

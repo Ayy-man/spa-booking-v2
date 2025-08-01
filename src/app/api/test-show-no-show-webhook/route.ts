@@ -31,7 +31,6 @@ export async function POST(request: NextRequest) {
     const bookingId = 'booking_test_001'
     const ghlContactId = 'ghl_contact_123'
 
-    console.log(`Testing show/no-show webhook with status: ${status}`)
 
     const result = await ghlWebhookSender.sendShowNoShowWebhook(
       bookingId,

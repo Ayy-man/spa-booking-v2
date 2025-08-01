@@ -210,7 +210,7 @@ export function getAccommodationDetails(
 export function checkBookingConflicts(
   newBooking: {
     staff_id: string
-    room_id: number
+    room_id: string
     appointment_date: string
     start_time: string
     end_time: string

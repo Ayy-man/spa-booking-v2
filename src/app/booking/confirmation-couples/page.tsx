@@ -109,7 +109,6 @@ export default function CouplesConfirmationPage() {
           special_requests: customerInfo.specialRequests
         })
 
-        console.log('Couples booking result:', couplesResult)
         
         if (!couplesResult || couplesResult.length === 0) {
           throw new Error('Couples booking failed - no bookings created')
@@ -203,7 +202,6 @@ export default function CouplesConfirmationPage() {
             )
           }
           
-          console.log('Couples booking confirmations sent to GHL successfully')
         } catch (error) {
           console.error('Error sending couples booking confirmations to GHL:', error)
           // Don't fail the booking if GHL webhook fails
@@ -264,7 +262,6 @@ export default function CouplesConfirmationPage() {
             }
           )
           
-          console.log('Single booking confirmation sent to GHL successfully')
         } catch (error) {
           console.error('Error sending single booking confirmation to GHL:', error)
           // Don't fail the booking if GHL webhook fails
