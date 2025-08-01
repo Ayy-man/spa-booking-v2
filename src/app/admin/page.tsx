@@ -15,7 +15,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-type TabValue = "schedule" | "timeline" | "staff" | "settings"
+type TabValue = "schedule" | "timeline" | "staff"
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabValue>("schedule")
@@ -35,11 +35,6 @@ export default function AdminDashboardPage() {
       value: "staff" as const,
       label: "Staff Schedule",
       description: "Staff availability and assignments"
-    },
-    {
-      value: "settings" as const,
-      label: "Settings",
-      description: "System configuration and preferences"
     }
   ]
 
@@ -72,7 +67,7 @@ export default function AdminDashboardPage() {
 
       {/* Tab Navigation */}
       <Tabs className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex h-auto p-1">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex h-auto p-1">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -102,29 +97,6 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="staff" activeValue={activeTab}>
             <StaffSchedule />
-          </TabsContent>
-
-
-          <TabsContent value="settings" activeValue={activeTab}>
-            <Card className="p-8 text-center">
-              <div className="space-y-4">
-                <div className="text-6xl">⚙️</div>
-                <div>
-                  <h3 className="text-xl font-medium text-gray-900 mb-2">
-                    System Settings
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Configure system preferences, business hours, and operational settings.
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    This feature is coming soon. Current settings are managed through the database.
-                  </p>
-                </div>
-                <Button variant="outline" className="mt-4" disabled>
-                  Coming Soon
-                </Button>
-              </div>
-            </Card>
           </TabsContent>
         </div>
       </Tabs>
