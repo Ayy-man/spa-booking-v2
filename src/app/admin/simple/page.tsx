@@ -213,14 +213,7 @@ export default function SimpleAdminPage() {
                       </div>
                       
                       <div className="flex flex-col items-end">
-                        <div className={`px-3 py-1 rounded-full text-sm font-medium mb-3 ${
-                          booking.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          booking.status === 'no_show' ? 'bg-red-100 text-red-800' :
-                          booking.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
-                          'bg-blue-100 text-blue-800'
-                        }`}>
-                          {booking.status}
-                        </div>
+                        {/* Status badge removed per user request */}
                         
                         {booking.status === 'confirmed' && (
                           <div className="flex space-x-2">

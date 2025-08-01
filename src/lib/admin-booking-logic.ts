@@ -99,11 +99,27 @@ export async function createWalkInBooking(
     let customerId: string
     
     // First try to find existing customer by email or phone
-    const { data: existingCustomer } = await supabase
+    let existingCustomer = null
+    const { data: customerByEmail } = await supabase
       .from('customers')
       .select('id')
-      .or(`email.eq.${finalCustomerEmail},phone.eq.${customerPhone.trim()}`)
-      .single()
+      .eq('email', finalCustomerEmail)
+      .maybeSingle()
+
+    if (customerByEmail) {
+      existingCustomer = customerByEmail
+    } else {
+      // If not found by email, try by phone
+      const { data: customerByPhone } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('phone', customerPhone.trim())
+        .maybeSingle()
+      
+      if (customerByPhone) {
+        existingCustomer = customerByPhone
+      }
+    }
 
     if (existingCustomer) {
       customerId = existingCustomer.id
@@ -119,7 +135,7 @@ export async function createWalkInBooking(
           first_name: firstName,
           last_name: lastName,
           email: finalCustomerEmail,
-          phone: customerPhone.trim(),
+          phone: customerPhone.trim() || null,
           marketing_consent: false,
           is_active: true
         })
@@ -218,7 +234,7 @@ export async function blockTimeSlot(
           first_name: 'SYSTEM',
           last_name: 'BLOCK',
           email: 'system@dermalskinclinic.com',
-          phone: '',
+          phone: null,
           marketing_consent: false,
           is_active: true
         })

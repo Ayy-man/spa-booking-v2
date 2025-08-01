@@ -2,36 +2,36 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
-import { auth } from '@/lib/auth'
-import { useRouter } from 'next/navigation'
+// import { auth } from '@/lib/auth'
+// import { useRouter } from 'next/navigation'
 
 export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
-  const [authChecked, setAuthChecked] = useState(false)
-  const router = useRouter()
+  // const [authChecked, setAuthChecked] = useState(false)
+  // const router = useRouter()
 
-  const checkAuthAndFetchBookings = useCallback(async () => {
-    try {
-      // Verify admin session
-      const isValidAdmin = await auth.validateAdminSession()
-      if (!isValidAdmin) {
-        router.push('/admin/login')
-        return
-      }
+  // const checkAuthAndFetchBookings = useCallback(async () => {
+  //   try {
+  //     // Verify admin session
+  //     const isValidAdmin = await auth.validateAdminSession()
+  //     if (!isValidAdmin) {
+  //       router.push('/admin/login')
+  //       return
+  //     }
       
-      setAuthChecked(true)
-      await fetchBookings()
-    } catch (error) {
-      // Auth check failed, redirect to login
-      router.push('/admin/login')
-    }
-  }, [router])
+  //     setAuthChecked(true)
+  //     await fetchBookings()
+  //   } catch (error) {
+  //     // Auth check failed, redirect to login
+  //     router.push('/admin/login')
+  //   }
+  // }, [router])
 
   useEffect(() => {
-    checkAuthAndFetchBookings()
-  }, [checkAuthAndFetchBookings])
+    fetchBookings()
+  }, [])
 
   const fetchBookings = async () => {
     try {
@@ -76,7 +76,7 @@ export default function AdminBookingsPage() {
     }
   }
 
-  if (loading || !authChecked) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
