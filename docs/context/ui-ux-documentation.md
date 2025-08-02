@@ -681,4 +681,168 @@ The implemented design system and component library provides a solid foundation 
 - tailwind.config.js - WCAG AA compliant color palette
 - Responsive utilities - Mobile-first approach
 - Animation utilities - Smooth transitions
-- Accessibility utilities - Focus and contrast improvements 
+- Accessibility utilities - Focus and contrast improvements
+
+---
+
+## SaaS UI/UX Requirements - August 2, 2025
+
+### Multi-Tenant Design Considerations
+The current UI/UX is designed for a single spa. SaaS transformation requires significant design system changes:
+
+### 1. White-Label Customization Interface
+**Business Branding Portal**
+- Logo upload and positioning controls
+- Color scheme customization (primary, secondary, accent)
+- Font selection from approved list
+- Custom CSS injection (sandboxed)
+- Preview mode for changes
+
+**Dynamic Theming System**
+```css
+/* Current hard-coded approach */
+:root {
+  --primary: #A64D5F;
+  --primary-dark: #8B4351;
+}
+
+/* Required dynamic approach */
+:root {
+  --primary: var(--tenant-primary, #A64D5F);
+  --primary-dark: var(--tenant-primary-dark, #8B4351);
+  --font-heading: var(--tenant-font-heading, 'Playfair Display');
+  --font-body: var(--tenant-font-body, 'Inter');
+}
+```
+
+### 2. Multi-Business Navigation
+**Tenant Switcher Component**
+- Business dropdown for users with multiple accounts
+- Visual indicator of current business context
+- Quick switch without re-authentication
+- Business logo in navigation
+
+**URL Structure Changes**
+```
+Current: /booking/service
+SaaS: /{business-slug}/booking/service
+      or
+      {business-subdomain}.app.com/booking/service
+```
+
+### 3. Subscription & Billing UI
+**Account Management Pages**
+- Subscription status dashboard
+- Usage metrics visualization
+- Billing history table
+- Payment method management
+- Plan upgrade/downgrade flow
+
+**Plan Selection Interface**
+- Feature comparison table
+- Pricing calculator
+- Trial period indicators
+- Upgrade incentives
+
+### 4. Customer Portal Design
+**Self-Service Features**
+- Booking history with filters
+- Upcoming appointments
+- Cancellation/rescheduling interface
+- Profile management
+- Preference settings
+
+**Multi-Business Support**
+- Business directory for customers
+- Favorite businesses
+- Cross-business booking history
+- Unified customer profile
+
+### 5. Super Admin Interface
+**Platform Management**
+- Tenant list with search/filters
+- Usage analytics dashboards
+- System health monitoring
+- Feature flag controls
+- Support ticket integration
+
+**Business Onboarding Wizard**
+- Step-by-step setup guide
+- Progress indicators
+- Contextual help
+- Skip options for experienced users
+
+### 6. API Documentation Portal
+**Developer Experience**
+- Interactive API explorer
+- Code examples in multiple languages
+- Authentication guide
+- Webhook testing tools
+- SDK downloads
+
+### 7. Responsive Considerations
+**Additional Breakpoints**
+- Tablet landscape: 1024px-1280px
+- Large desktop: > 1920px
+- Multi-column layouts for admin panels
+
+### 8. Localization Requirements
+**Multi-Language Support**
+- RTL layout support
+- Date/time format variations
+- Currency display options
+- Translated UI elements
+- Locale-specific imagery
+
+### 9. Performance UI/UX
+**Loading States for Multi-Tenant**
+- Tenant resolution loading
+- Lazy loading for heavy dashboards
+- Pagination for large datasets
+- Virtual scrolling for lists
+
+### 10. Error Handling Enhancement
+**Tenant-Specific Errors**
+- Subscription expired states
+- Usage limit exceeded messages
+- Tenant not found pages
+- Maintenance mode per tenant
+
+### Design System Extensions Needed
+1. **Component Variants**
+   - Tenant-aware components
+   - Plan-restricted features
+   - Usage indicators
+   - Billing alerts
+
+2. **New Components Required**
+   - TenantSwitcher
+   - SubscriptionStatus
+   - UsageMetrics
+   - PlanSelector
+   - OnboardingWizard
+   - ApiDocumentation
+
+3. **Theme Management**
+   - Theme preview component
+   - Color picker with brand safety
+   - Font preview system
+   - CSS variable management
+
+4. **Dashboard Templates**
+   - Business owner dashboard
+   - Super admin dashboard
+   - Customer portal layout
+   - API documentation layout
+
+### Accessibility in Multi-Tenant Context
+- Screen reader announcements for tenant context
+- Keyboard shortcuts for tenant switching
+- High contrast mode per tenant preference
+- Consistent navigation across tenants
+
+### Mobile App Considerations
+- Native app design patterns
+- Offline booking capabilities
+- Push notification design
+- Biometric authentication UI 

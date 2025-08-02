@@ -711,6 +711,48 @@ Allow customers to book any service as a couples appointment, not just pre-desig
 
 ---
 
+## Future Enhancements & Roadmap
+
+### ENHANCEMENT-002: SaaS Platform Transformation 🔴 NEW
+**Date Identified**: August 2, 2025
+**Priority**: Strategic/Long-term
+**Status**: Assessment Complete
+**Timeline**: 6-9 months implementation
+
+#### Description
+Transform the current single-tenant medical spa booking system into a multi-tenant SaaS platform to serve multiple businesses with customizable features, white-labeling, and subscription billing.
+
+#### Current Limitations
+- **Single-tenant architecture**: System supports only one business
+- **No tenant isolation**: Database lacks business_id fields
+- **Limited authentication**: No customer portal or multi-business support
+- **No billing system**: Missing subscription and payment infrastructure
+- **Hard-coded configuration**: No per-business customization
+- **Fixed integrations**: GoHighLevel webhooks hard-coded
+
+#### Required Changes
+1. **Database Multi-tenancy** - Complete schema redesign with tenant isolation
+2. **Authentication Overhaul** - Multi-business support with role-based access
+3. **Billing Infrastructure** - Stripe integration for subscriptions
+4. **White-label Support** - Custom branding and domains
+5. **API Platform** - RESTful API with per-tenant rate limiting
+6. **Performance** - Redis caching, CDN, connection pooling
+7. **Super-admin Portal** - Tenant management and analytics
+
+#### Business Value
+- Serve multiple medical spas from single platform
+- Recurring revenue through subscriptions
+- Reduced operational costs per customer
+- Scalable business model
+- Market expansion opportunities
+
+#### User Stories
+- "As a spa owner, I can sign up and customize the booking system for my business"
+- "As a SaaS admin, I can manage multiple tenants and their subscriptions"
+- "As a customer, I can book appointments at my local spa with their branding"
+
+---
+
 ## Release Notes Template
 
 ### Version [X.X.X] - [Date]

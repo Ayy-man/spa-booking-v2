@@ -145,4 +145,58 @@
 
 6. **Special Services**
    - Basic Vajacial Cleaning + Brazilian Wax: 30 mins, $90
-   - Dermal VIP Card: 30 mins, $50/year 
+   - Dermal VIP Card: 30 mins, $50/year
+
+## Production System Configuration - August 2, 2025
+
+### Current State: Production Single-Tenant System
+The business logic is optimized specifically for Dermal Skin Clinic and Spa Guam's operations, providing a robust and efficient booking system tailored to their unique requirements.
+
+### Production Business Configuration
+1. **Service Catalog Management**
+   - 44 active services across 7 categories (facial, massage, body_treatment, body_scrub, waxing, packages, membership)
+   - Fixed pricing structure optimized for Guam market
+   - Service duration-based scheduling with 15-minute intervals
+   - Category-based filtering and display organization
+
+2. **Staff Management System**
+   - 4 active staff members with individual specializations and schedules
+   - Staff capability matrix ensuring only qualified staff are assigned to services
+   - Individual work schedules (e.g., Leonel Sundays-only, Tanisha off Tue/Thu)
+   - Default room assignments for operational efficiency
+
+3. **Room Configuration**
+   - 3 treatment rooms with specific capabilities and capacity
+   - Room 3 exclusive for body scrub services (special equipment/amenities)
+   - Rooms 2 & 3 couples-capable for synchronized treatments
+   - Intelligent room assignment algorithm based on service requirements
+
+4. **Operational Rules**
+   - Operating hours: 9 AM - 7 PM daily
+   - 15-minute buffer time between appointments
+   - 30-day advance booking window
+   - Same-day booking restrictions based on staff availability
+
+5. **GoHighLevel Integration**
+   - New customer webhook triggers for lead management
+   - Booking confirmation notifications for customer follow-up
+   - Status update webhooks for appointment changes
+   - Show/no-show tracking for customer relationship management
+
+### Data Security & Privacy
+- Row-level security policies protecting customer information
+- Encrypted data storage with Supabase managed encryption
+- Secure admin authentication with role-based access control
+- HIPAA-conscious handling of medical notes and customer preferences
+
+### Performance Optimization
+- Indexed database queries for sub-300ms response times
+- Real-time availability checking to prevent double bookings
+- Optimized business logic functions for complex scheduling scenarios
+- Efficient room assignment algorithm preventing conflicts
+
+### Monitoring & Reliability
+- Health check endpoints for system monitoring
+- Automated backup and recovery procedures
+- Error tracking and logging for operational support
+- Real-time updates across admin interfaces for immediate visibility 

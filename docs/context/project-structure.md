@@ -297,4 +297,80 @@ STRIPE_SECRET_KEY=your_stripe_key
 - Page structure components
 - Navigation and common UI elements
 - Responsive layout management
-- Cross-page consistency 
+- Cross-page consistency
+
+## Production System Architecture - August 2, 2025
+
+### Current Production Structure
+The project structure is optimized for a single-tenant medical spa booking system, providing robust functionality specifically tailored for Dermal Skin Clinic and Spa Guam's operations.
+
+### Production System Components
+1. **Complete Customer Interface**
+   - Service selection with 44 active services across 7 categories
+   - Real-time availability checking with staff and room constraints
+   - Couples booking functionality for synchronized appointments
+   - Complete booking flow with confirmation and customer data collection
+
+2. **Comprehensive Admin Panel**
+   - Secure authentication system with role-based access (admin, staff, manager roles)
+   - Today's schedule dashboard with real-time booking updates
+   - Interactive room timeline with drag-and-drop rescheduling capabilities
+   - Staff schedule management and availability tracking
+   - Quick actions for booking status updates and customer management
+
+3. **Robust Database Infrastructure**
+   - Production Supabase PostgreSQL with comprehensive business logic functions
+   - Row-level security policies ensuring data protection and access control
+   - 44 services, 4 staff members, 3 rooms with complete capability matrices
+   - Automated booking functions preventing conflicts and optimizing room assignments
+
+4. **External Integration Platform**
+   - GoHighLevel webhook integration for customer relationship management
+   - 24-hour reminder system with SMS/email capabilities
+   - Show/no-show tracking for customer follow-up and analytics
+   - Customizable webhook payloads for various business events
+
+### Production File Structure Overview
+```
+medspav2/ (Production System)
+├── src/
+│   ├── app/                    # Next.js App Router (Production Pages)
+│   │   ├── admin/              # Complete admin panel with authentication
+│   │   ├── booking/            # Full customer booking flow (5 steps)
+│   │   └── api/                # Production API endpoints with business logic
+│   ├── components/
+│   │   ├── admin/              # Admin panel components (timeline, scheduling)
+│   │   ├── booking/            # Booking flow components (progress, summary)
+│   │   └── ui/                 # Reusable UI components (shadcn/ui based)
+│   ├── lib/                    # Production business logic and utilities
+│   │   ├── booking-logic.ts    # Core booking validation and processing
+│   │   ├── admin-booking-logic.ts # Admin-specific operations
+│   │   ├── auth.ts             # Authentication and session management
+│   │   └── supabase.ts         # Database client configuration
+│   └── types/                  # TypeScript definitions for all data models
+├── docs/                       # Comprehensive documentation suite
+├── supabase/migrations/        # Database schema and migration files
+├── jest.config.js              # Testing configuration (70%+ coverage)
+└── vercel.json                 # Production deployment configuration
+```
+
+### Database Production Schema
+Current production database includes:
+- **Complete service catalog**: 44 services with pricing, duration, and category data
+- **Staff management**: 4 staff members with schedules, capabilities, and room assignments
+- **Room configuration**: 3 treatment rooms with capacity and capability definitions
+- **Customer data**: Secure customer information with privacy-conscious design
+- **Booking system**: Comprehensive booking management with status tracking and audit trails
+- **Admin authentication**: Role-based access control for administrative functions
+
+### Integration Capabilities
+- **GoHighLevel webhooks**: 4 webhook types for comprehensive customer lifecycle management
+- **24-hour reminders**: Automated SMS/email reminder system with delivery tracking
+- **Real-time updates**: Supabase real-time subscriptions for live admin panel updates
+- **Health monitoring**: Built-in health check endpoints for system monitoring and maintenance
+
+### Performance & Reliability Features
+- **Optimized queries**: Database indexes and functions ensuring sub-300ms response times
+- **Error handling**: Comprehensive error tracking and logging throughout the system
+- **Testing coverage**: 70%+ test coverage with Jest and React Testing Library
+- **Security measures**: Row-level security policies, encrypted data storage, secure authentication 
