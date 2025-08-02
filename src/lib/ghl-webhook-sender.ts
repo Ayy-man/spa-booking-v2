@@ -39,6 +39,195 @@ class GHLWebhookSender {
     walkIn: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/7768c4e4-e124-46ee-a439-52bb2d9da84e'
   }
 
+  async sendConditionalStatusWebhook(
+    customer: CustomerData, 
+    booking: BookingData, 
+    status: string
+  ): Promise<WebhookResponse> {
+    try {
+      // Conditional logic based on appointment status
+      switch (status.toLowerCase()) {
+        case 'no_show':
+          return await this.sendRebookingSMS(customer, booking)
+        
+        case 'rescheduled':
+          // Do nothing for rescheduled appointments
+          return { success: true }
+        
+        case 'completed':
+          return await this.sendPostCareSequence(customer, booking)
+        
+        default:
+          // For other statuses, use the regular booking update webhook
+          return await this.sendBookingUpdateWebhook(customer, booking, status)
+      }
+    } catch (error) {
+      console.error('Error in conditional status webhook:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  }
+
+  private async sendRebookingSMS(customer: CustomerData, booking: BookingData): Promise<WebhookResponse> {
+    try {
+      const payload = {
+        event: 'no_show_rebooking',
+        trigger_type: 'rebooking_sms',
+        customer: {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone || '',
+          source: 'spa_booking_website'
+        },
+        booking: {
+          service: booking.service,
+          service_category: booking.serviceCategory,
+          ghl_category: booking.ghlCategory,
+          date: booking.date,
+          time: booking.time,
+          duration: booking.duration,
+          price: booking.price,
+          staff: booking.staff || 'Staff Member',
+          room: booking.room || 'Treatment Room'
+        },
+        message: {
+          type: 'rebooking_reminder',
+          priority: 'high',
+          automation_trigger: 'no_show_detected'
+        }
+      }
+
+      const response = await fetch(this.webhookUrls.showNoShow, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': `${BUSINESS_CONFIG.name.replace(/\s+/g, '-')}-Booking-App/1.0`,
+        },
+        body: JSON.stringify(payload),
+        mode: 'cors',
+        cache: 'no-cache'
+      })
+
+      if (response.ok) {
+        console.log('No-show rebooking SMS triggered successfully')
+        return { success: true }
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to trigger rebooking SMS:', errorText)
+        return { success: false, error: errorText }
+      }
+    } catch (error) {
+      console.error('Error sending rebooking SMS:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  }
+
+  private async sendPostCareSequence(customer: CustomerData, booking: BookingData): Promise<WebhookResponse> {
+    try {
+      const payload = {
+        event: 'appointment_completed',
+        trigger_type: 'post_care_sequence',
+        customer: {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone || '',
+          source: 'spa_booking_website'
+        },
+        booking: {
+          service: booking.service,
+          service_category: booking.serviceCategory,
+          ghl_category: booking.ghlCategory,
+          date: booking.date,
+          time: booking.time,
+          duration: booking.duration,
+          price: booking.price,
+          staff: booking.staff || 'Staff Member',
+          room: booking.room || 'Treatment Room'
+        },
+        automation: {
+          type: 'post_care_followup',
+          service_specific: booking.ghlCategory || booking.serviceCategory,
+          priority: 'normal'
+        }
+      }
+
+      const response = await fetch(this.webhookUrls.bookingUpdate, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': `${BUSINESS_CONFIG.name.replace(/\s+/g, '-')}-Booking-App/1.0`,
+        },
+        body: JSON.stringify(payload),
+        mode: 'cors',
+        cache: 'no-cache'
+      })
+
+      if (response.ok) {
+        console.log('Post-care sequence triggered successfully')
+        return { success: true }
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to trigger post-care sequence:', errorText)
+        return { success: false, error: errorText }
+      }
+    } catch (error) {
+      console.error('Error sending post-care sequence:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  }
+
+  private async sendBookingUpdateWebhook(customer: CustomerData, booking: BookingData, status: string): Promise<WebhookResponse> {
+    try {
+      const payload = {
+        event: 'booking_status_update',
+        customer: {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone || '',
+          source: 'spa_booking_website'
+        },
+        booking: {
+          service: booking.service,
+          service_category: booking.serviceCategory,
+          ghl_category: booking.ghlCategory,
+          date: booking.date,
+          time: booking.time,
+          duration: booking.duration,
+          price: booking.price,
+          staff: booking.staff || 'Staff Member',
+          room: booking.room || 'Treatment Room',
+          status: status
+        },
+        metadata: {
+          updated_at: new Date().toISOString(),
+          source: 'admin_panel'
+        }
+      }
+
+      const response = await fetch(this.webhookUrls.bookingUpdate, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': `${BUSINESS_CONFIG.name.replace(/\s+/g, '-')}-Booking-App/1.0`,
+        },
+        body: JSON.stringify(payload),
+        mode: 'cors',
+        cache: 'no-cache'
+      })
+
+      if (response.ok) {
+        console.log(`Booking status update webhook sent successfully for status: ${status}`)
+        return { success: true }
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to send booking update webhook:', errorText)
+        return { success: false, error: errorText }
+      }
+    } catch (error) {
+      console.error('Error sending booking update webhook:', error)
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    }
+  }
+
   async sendNewCustomerWebhook(customer: CustomerData, booking: BookingData): Promise<WebhookResponse> {
     try {
       // Format normalized date and time

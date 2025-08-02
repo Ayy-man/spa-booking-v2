@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { CheckCircleIcon, AlertCircleIcon } from 'lucide-react'
 import { ButtonLoading } from '@/components/ui/loading-spinner'
+import PaymentOptionComponent from './PaymentOption'
+import { getPaymentOptions, PaymentType } from '@/lib/payment-config'
 
 const customerFormSchema = z.object({
   name: z.string()
@@ -20,14 +22,13 @@ const customerFormSchema = z.object({
     .email('Please enter a valid email address')
     .max(100, 'Email must be less than 100 characters'),
   phone: z.string()
-    .optional()
-    .refine((val) => !val || /^\+?[\d\s\-\(\)]{10,15}$/.test(val), {
-      message: 'Please enter a valid phone number'
-    }),
+    .min(1, 'Phone number is required')
+    .regex(/^\+?[\d\s\-\(\)]{10,15}$/, 'Please enter a valid phone number'),
   specialRequests: z.string()
     .max(500, 'Special requests must be less than 500 characters')
     .optional(),
-  isNewCustomer: z.boolean().default(false)
+  isNewCustomer: z.boolean().default(false),
+  paymentType: z.enum(['deposit', 'full']).default('deposit')
 })
 
 export type CustomerFormData = z.infer<typeof customerFormSchema>
@@ -36,16 +37,18 @@ interface CustomerFormProps {
   onSubmit: (data: CustomerFormData) => void
   loading?: boolean
   initialData?: Partial<CustomerFormData>
+  servicePrice?: number
 }
 
-export default function CustomerForm({ onSubmit, loading = false, initialData }: CustomerFormProps) {
+export default function CustomerForm({ onSubmit, loading = false, initialData, servicePrice = 0 }: CustomerFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
     register,
     handleSubmit,
     formState: { errors, isValid, touchedFields },
-    watch
+    watch,
+    setValue
   } = useForm<CustomerFormData>({
     resolver: zodResolver(customerFormSchema),
     defaultValues: {
@@ -53,7 +56,8 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
       email: initialData?.email || '',
       phone: initialData?.phone || '',
       specialRequests: initialData?.specialRequests || '',
-      isNewCustomer: initialData?.isNewCustomer || false
+      isNewCustomer: initialData?.isNewCustomer || false,
+      paymentType: initialData?.paymentType || 'deposit'
     },
     mode: 'onChange'
   })
@@ -96,7 +100,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
     }
   }
 
-  const isFormValid = isValid && formData.name && formData.email
+  const isFormValid = isValid && formData.name && formData.email && formData.phone
 
   return (
     <Card className="p-6">
@@ -179,7 +183,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
         {/* Customer Phone */}
         <div className="space-y-2">
           <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-            Phone Number <span className="text-gray-400">(Optional)</span>
+            Phone Number *
           </Label>
           <div className="relative">
             <Input
@@ -209,7 +213,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
             </p>
           )}
           <p className="text-xs text-gray-500">
-            We may contact you if there are any changes to your appointment
+            Required for appointment confirmations and important updates
           </p>
         </div>
 
@@ -256,12 +260,24 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
                 This is my first visit to Dermal Skin Clinic
               </Label>
               <p className="text-xs text-gray-600 mt-1">
-                New customers require a $25 deposit to secure their booking. 
-                Existing customers can book without a deposit.
+                New customers require payment to secure their booking. 
+                Existing customers can choose their payment preference.
               </p>
             </div>
           </div>
         </div>
+
+        {/* Payment Options - Show for new customers or if service price is available */}
+        {(formData.isNewCustomer || servicePrice > 0) && (
+          <PaymentOptionComponent
+            options={getPaymentOptions(servicePrice)}
+            selectedType={formData.paymentType as PaymentType}
+            onSelectionChange={(type) => {
+              setValue('paymentType', type, { shouldValidate: true })
+            }}
+            isNewCustomer={formData.isNewCustomer}
+          />
+        )}
 
         {/* Privacy Notice */}
         <div className="bg-gray-50 rounded-lg p-4">

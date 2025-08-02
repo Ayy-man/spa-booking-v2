@@ -7,7 +7,8 @@ export const BUSINESS_HOURS = {
   end: '19:00', 
   lastBookingOffset: 60, // 1 hour before closing
   slotDuration: 15, // 15-minute time slots
-  bufferTime: 15, // 15 minutes between appointments for cleaning
+  bufferTime: 10, // 10 minutes default buffer between appointments for cleaning
+  waxingBufferTime: 0, // 0 minutes buffer for waxing services
   maxAdvanceDays: 30, // Maximum days in advance for booking
   minNoticeHours: 1, // Minimum hours notice for same-day bookings
 }
@@ -37,6 +38,29 @@ export const SERVICE_REQUIREMENTS = {
 } as const
 
 /**
+ * Get buffer time for a specific service
+ */
+export function getServiceBufferTime(service: Service): number {
+  // Check if service has a specific buffer time defined
+  if (service.buffer_time !== undefined) {
+    return service.buffer_time
+  }
+  
+  // Check if it's a waxing service by name or category
+  const serviceName = service.name.toLowerCase()
+  const isWaxingService = 
+    service.category === 'waxing' ||
+    serviceName.includes('wax') ||
+    serviceName.includes('eyebrow') ||
+    serviceName.includes('lip') ||
+    serviceName.includes('chin') ||
+    serviceName.includes('brazilian') ||
+    serviceName.includes('bikini')
+  
+  return isWaxingService ? BUSINESS_HOURS.waxingBufferTime : BUSINESS_HOURS.bufferTime
+}
+
+/**
  * Generate time slots for a given date with availability consideration
  */
 export function generateTimeSlots(
@@ -51,6 +75,7 @@ export function generateTimeSlots(
   // Calculate the latest start time based on service duration
   let latestStartTime = endTime
   if (considerLastBooking && serviceDuration) {
+    // Use default buffer time when service object is not available
     latestStartTime = addMinutes(endTime, -(serviceDuration + BUSINESS_HOURS.bufferTime))
   } else {
     latestStartTime = addMinutes(endTime, -BUSINESS_HOURS.lastBookingOffset)
@@ -128,7 +153,8 @@ export function canAccommodateService(
   startTime: string,
   serviceDuration: number,
   date: Date,
-  includeBuffer: boolean = true
+  includeBuffer: boolean = true,
+  service?: Service
 ): boolean {
   try {
     const startDateTime = parseISO(`${format(date, 'yyyy-MM-dd')}T${startTime}:00`)
@@ -141,7 +167,9 @@ export function canAccommodateService(
     }
     
     // Calculate end time with optional buffer
-    const totalDuration = serviceDuration + (includeBuffer ? BUSINESS_HOURS.bufferTime : 0)
+    const bufferTime = includeBuffer ? 
+      (service ? getServiceBufferTime(service) : BUSINESS_HOURS.bufferTime) : 0
+    const totalDuration = serviceDuration + bufferTime
     const endDateTime = addMinutes(startDateTime, totalDuration)
     
     // Check if service can be completed before business closes
@@ -217,16 +245,19 @@ export function checkBookingConflicts(
     service_id?: string
   },
   existingBookings: Booking[],
-  includeBufferTime: boolean = true
+  includeBufferTime: boolean = true,
+  newService?: Service
 ): BookingConflict[] {
   const conflicts: BookingConflict[] = []
   
   const newStart = parseISO(`${newBooking.appointment_date}T${newBooking.start_time}:00`)
   const newEnd = parseISO(`${newBooking.appointment_date}T${newBooking.end_time}:00`)
   
-  // Add buffer time if requested (15 minutes before and after)
-  const bufferStart = includeBufferTime ? addMinutes(newStart, -BUSINESS_HOURS.bufferTime) : newStart
-  const bufferEnd = includeBufferTime ? addMinutes(newEnd, BUSINESS_HOURS.bufferTime) : newEnd
+  // Add buffer time if requested (service-specific buffer time)
+  const bufferTimeForNewService = includeBufferTime ? 
+    (newService ? getServiceBufferTime(newService) : BUSINESS_HOURS.bufferTime) : 0
+  const bufferStart = includeBufferTime ? addMinutes(newStart, -bufferTimeForNewService) : newStart
+  const bufferEnd = includeBufferTime ? addMinutes(newEnd, bufferTimeForNewService) : newEnd
   
   for (const booking of existingBookings) {
     // Skip cancelled bookings
@@ -236,9 +267,10 @@ export function checkBookingConflicts(
     const existingEnd = parseISO(`${booking.appointment_date}T${booking.end_time}:00`)
     
     // Check for time overlap with buffer consideration
-    // Add buffer to existing booking as well for proper conflict detection
-    const existingBufferStart = includeBufferTime ? addMinutes(existingStart, -BUSINESS_HOURS.bufferTime) : existingStart
-    const existingBufferEnd = includeBufferTime ? addMinutes(existingEnd, BUSINESS_HOURS.bufferTime) : existingEnd
+    // Use default buffer for existing bookings since we don't have their service info
+    const existingBufferTime = includeBufferTime ? BUSINESS_HOURS.bufferTime : 0
+    const existingBufferStart = includeBufferTime ? addMinutes(existingStart, -existingBufferTime) : existingStart
+    const existingBufferEnd = includeBufferTime ? addMinutes(existingEnd, existingBufferTime) : existingEnd
     
     const hasOverlap = (
       // New booking overlaps with existing booking (including buffers)
@@ -409,9 +441,12 @@ export function calculateNextAvailableSlot(
  */
 export function getTotalAppointmentDuration(
   serviceDuration: number,
-  includeBuffer: boolean = true
+  includeBuffer: boolean = true,
+  service?: Service
 ): number {
-  return serviceDuration + (includeBuffer ? BUSINESS_HOURS.bufferTime : 0)
+  const bufferTime = includeBuffer ? 
+    (service ? getServiceBufferTime(service) : BUSINESS_HOURS.bufferTime) : 0
+  return serviceDuration + bufferTime
 }
 
 /**

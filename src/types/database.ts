@@ -36,6 +36,10 @@ export interface Database {
           cancellation_reason: string | null
           booking_group_id: string | null
           booking_type: string
+          waiver_signed: boolean
+          waiver_data: Json | null
+          waiver_signed_at: string | null
+          payment_option: string
           created_at: string
           updated_at: string
         }
@@ -59,6 +63,10 @@ export interface Database {
           created_by?: string | null
           booking_group_id?: string | null
           booking_type?: string
+          waiver_signed?: boolean
+          waiver_data?: Json | null
+          waiver_signed_at?: string | null
+          payment_option?: string
           created_at?: string
           updated_at?: string
         }
@@ -82,6 +90,10 @@ export interface Database {
           created_by?: string | null
           booking_group_id?: string | null
           booking_type?: string
+          waiver_signed?: boolean
+          waiver_data?: Json | null
+          waiver_signed_at?: string | null
+          payment_option?: string
           created_at?: string
           updated_at?: string
         }
@@ -99,6 +111,7 @@ export interface Database {
           postal_code: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
+          emergency_contact_relationship: string | null
           medical_conditions: string | null
           allergies: string | null
           skin_type: string | null
@@ -125,6 +138,7 @@ export interface Database {
           postal_code?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
           medical_conditions?: string | null
           allergies?: string | null
           skin_type?: string | null
@@ -151,6 +165,7 @@ export interface Database {
           postal_code?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
+          emergency_contact_relationship?: string | null
           medical_conditions?: string | null
           allergies?: string | null
           skin_type?: string | null
@@ -214,6 +229,10 @@ export interface Database {
           is_active: boolean
           service_capabilities: string[]
           ghl_category: string
+          buffer_time: number
+          popularity_score: number
+          is_recommended: boolean
+          is_popular: boolean
           created_at: string
           updated_at: string
         }
@@ -229,6 +248,10 @@ export interface Database {
           is_active?: boolean
           service_capabilities?: string[]
           ghl_category: string
+          buffer_time?: number
+          popularity_score?: number
+          is_recommended?: boolean
+          is_popular?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -244,6 +267,10 @@ export interface Database {
           is_active?: boolean
           service_capabilities?: string[]
           ghl_category?: string
+          buffer_time?: number
+          popularity_score?: number
+          is_recommended?: boolean
+          is_popular?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -338,6 +365,148 @@ export interface Database {
           break_start?: string | null
           break_end?: string | null
           notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      waivers: {
+        Row: {
+          id: string
+          customer_id: string
+          booking_id: string
+          service_category: string
+          service_name: string
+          signature: string
+          agreed_to_terms: boolean
+          medical_conditions: string | null
+          allergies: string | null
+          skin_conditions: string | null
+          medications: string | null
+          pregnancy_status: boolean | null
+          previous_waxing: boolean | null
+          recent_sun_exposure: boolean | null
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          waiver_content: Json | null
+          ip_address: string | null
+          user_agent: string | null
+          signed_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id: string
+          booking_id: string
+          service_category: string
+          service_name: string
+          signature: string
+          agreed_to_terms?: boolean
+          medical_conditions?: string | null
+          allergies?: string | null
+          skin_conditions?: string | null
+          medications?: string | null
+          pregnancy_status?: boolean | null
+          previous_waxing?: boolean | null
+          recent_sun_exposure?: boolean | null
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          waiver_content?: Json | null
+          ip_address?: string | null
+          user_agent?: string | null
+          signed_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string
+          booking_id?: string
+          service_category?: string
+          service_name?: string
+          signature?: string
+          agreed_to_terms?: boolean
+          medical_conditions?: string | null
+          allergies?: string | null
+          skin_conditions?: string | null
+          medications?: string | null
+          pregnancy_status?: boolean | null
+          previous_waxing?: boolean | null
+          recent_sun_exposure?: boolean | null
+          emergency_contact_name?: string
+          emergency_contact_phone?: string
+          waiver_content?: Json | null
+          ip_address?: string | null
+          user_agent?: string | null
+          signed_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      walk_ins: {
+        Row: {
+          id: string
+          customer_id: string | null
+          booking_id: string | null
+          customer_name: string
+          customer_email: string | null
+          customer_phone: string
+          service_name: string
+          service_category: string
+          scheduling_type: string
+          scheduled_date: string | null
+          scheduled_time: string | null
+          notes: string | null
+          status: string
+          checked_in_at: string | null
+          completed_at: string | null
+          ghl_webhook_sent: boolean
+          ghl_webhook_sent_at: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id?: string | null
+          booking_id?: string | null
+          customer_name: string
+          customer_email?: string | null
+          customer_phone: string
+          service_name: string
+          service_category: string
+          scheduling_type?: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          notes?: string | null
+          status?: string
+          checked_in_at?: string | null
+          completed_at?: string | null
+          ghl_webhook_sent?: boolean
+          ghl_webhook_sent_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string | null
+          booking_id?: string | null
+          customer_name?: string
+          customer_email?: string | null
+          customer_phone?: string
+          service_name?: string
+          service_category?: string
+          scheduling_type?: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          notes?: string | null
+          status?: string
+          checked_in_at?: string | null
+          completed_at?: string | null
+          ghl_webhook_sent?: boolean
+          ghl_webhook_sent_at?: string | null
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }

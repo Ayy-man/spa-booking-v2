@@ -9,6 +9,7 @@ import BookingProgressIndicator from '@/components/booking/BookingProgressIndica
 import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 import { getGHLServiceCategory } from '@/lib/staff-data'
+import { generatePaymentUrl, PaymentType } from '@/lib/payment-config'
 
 interface Service {
   name: string
@@ -72,7 +73,7 @@ export default function CustomerInfoPage() {
           {
             name: data.name,
             email: data.email,
-            phone: data.phone || '',
+            phone: data.phone,
             isNewCustomer: true
           },
           {
@@ -123,17 +124,21 @@ export default function CustomerInfoPage() {
       }
     }
 
+    // Calculate payment amount based on selection
+    const paymentAmount = data.paymentType === 'full' ? (selectedService?.price || 0) : 25
+
     // Check customer status and redirect accordingly
-    if (data.isNewCustomer) {
-      // New customer - redirect to GoHighLevel payment link with return URL
+    if (data.isNewCustomer || data.paymentType === 'full') {
+      // Redirect to payment with selected amount
       const baseUrl = window.location.origin
       const confirmationPage = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
-      const returnUrl = `${baseUrl}${confirmationPage}?payment=success`
-      const ghlPaymentUrl = `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034?return_url=${encodeURIComponent(returnUrl)}`
+      const returnUrl = `${baseUrl}${confirmationPage}?payment=success&amount=${paymentAmount}&type=${data.paymentType}`
+      const ghlPaymentUrl = generatePaymentUrl(paymentAmount, returnUrl)
       window.location.href = ghlPaymentUrl
     } else {
-      // Existing customer - go to appropriate confirmation page
-      window.location.href = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
+      // Existing customer choosing deposit - go to appropriate confirmation page  
+      const confirmationPage = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
+      window.location.href = `${confirmationPage}?payment=none&amount=0&type=none`
     }
   }
 
@@ -188,7 +193,10 @@ export default function CustomerInfoPage() {
               </div>
 
               {/* Customer Form */}
-              <CustomerForm onSubmit={handleSubmit} />
+              <CustomerForm 
+                onSubmit={handleSubmit} 
+                servicePrice={selectedService?.price || 0}
+              />
             </div>
 
 
