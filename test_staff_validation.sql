@@ -1,5 +1,5 @@
 -- Test script for staff schedule validation
--- Run this after applying the migration to verify the validation works
+-- Run this AFTER applying migration 022_fix_staff_schedule_validation.sql
 
 -- Test cases for the validation function
 -- These should return FALSE (staff not available)
@@ -31,3 +31,8 @@ SELECT 'Staff outside working hours (should be FALSE)' AS test_case,
 
 SELECT 'Invalid staff ID (should be FALSE)' AS test_case,
        validate_staff_schedule('invalid-staff-id', '2024-08-05', '10:00', '11:00') AS result;
+
+-- Test the trigger by attempting to create a booking (this should fail)
+-- WARNING: Uncomment to test, but this will fail with the expected error
+-- INSERT INTO bookings (customer_id, service_id, staff_id, room_id, appointment_date, start_time, end_time, duration, total_price, final_price)
+-- VALUES ('00000000-0000-0000-0000-000000000001', 'basic_facial', 'dddddddd-dddd-dddd-dddd-dddddddddddd', 1, '2024-08-05', '10:00', '11:00', 60, 65.00, 65.00);
