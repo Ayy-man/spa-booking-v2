@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import BookingWithWaiver from '@/components/booking/BookingWithWaiver'
+import CouplesBooking from '@/components/CouplesBooking'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import ServiceCategoryCard from '@/components/booking/ServiceCategoryCard'
 import { analytics } from '@/lib/analytics'
@@ -176,20 +176,16 @@ export default function BookingPage() {
               </button>
             </div>
             <div className="p-8">
-              <BookingWithWaiver
+              <CouplesBooking
                 selectedService={
                   serviceCategories
                     .flatMap(cat => cat.services)
                     .find(s => s.id === selectedService) || null
                 }
                 serviceCategories={serviceCategories}
-                onContinue={(bookingData, waiverData) => {
-                  // Store booking data and waiver data in localStorage
-                  const dataToStore = {
-                    bookingData,
-                    waiverData: waiverData || null
-                  }
-                  localStorage.setItem('bookingData', JSON.stringify(dataToStore))
+                onContinue={(bookingData) => {
+                  // Store booking data in localStorage (no waiver at this stage)
+                  localStorage.setItem('bookingData', JSON.stringify(bookingData))
                   // Navigate to date/time selection
                   window.location.href = '/booking/date-time'
                 }}

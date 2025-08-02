@@ -14,8 +14,15 @@ interface WaiverFormProps {
   serviceCategory: string
   serviceName: string
   customerName: string
+  customerEmail?: string
+  customerPhone?: string
   onWaiverComplete: (waiverData: WaiverData) => void
   onBack?: () => void
+  isLastWaiver?: boolean
+  waiverProgress?: {
+    current: number
+    total: number
+  }
 }
 
 interface WaiverData {
@@ -120,12 +127,16 @@ const GENERAL_TERMS = [
 export default function WaiverForm({ 
   serviceCategory, 
   serviceName, 
-  customerName, 
+  customerName,
+  customerEmail,
+  customerPhone,
   onWaiverComplete, 
-  onBack 
+  onBack,
+  isLastWaiver = true,
+  waiverProgress
 }: WaiverFormProps) {
   const [waiverData, setWaiverData] = useState<WaiverData>({
-    signature: '',
+    signature: customerName, // Pre-populate with customer name
     date: new Date().toISOString().split('T')[0],
     serviceCategory,
     serviceName,
@@ -136,7 +147,7 @@ export default function WaiverForm({
     skinConditions: '',
     medications: '',
     emergencyContactName: '',
-    emergencyContactPhone: ''
+    emergencyContactPhone: customerPhone || ''
   })
 
   const [errors, setErrors] = useState<string[]>([])
@@ -438,7 +449,7 @@ export default function WaiverForm({
               </Button>
             )}
             <Button type="submit" className="flex-1">
-              Complete Waiver & Continue
+              {isLastWaiver ? 'Complete Waiver & Continue to Payment' : 'Complete Waiver & Next'}
             </Button>
           </div>
         </form>

@@ -10,6 +10,7 @@ import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 import { getGHLServiceCategory } from '@/lib/staff-data'
 import { generatePaymentUrl, PaymentType } from '@/lib/payment-config'
+import { hasWaiverRequirements, areAllWaiversCompleted } from '@/lib/waiver-logic'
 
 interface Service {
   name: string
@@ -121,6 +122,28 @@ export default function CustomerInfoPage() {
       // For regular booking, ensure selectedService is saved
       if (selectedService) {
         localStorage.setItem('selectedService', JSON.stringify(selectedService))
+      }
+    }
+
+    // Store customer data for waiver step
+    localStorage.setItem('customerData', JSON.stringify(data))
+
+    // Get booking data to check for waiver requirements
+    const currentBookingData = bookingDataStr ? JSON.parse(bookingDataStr) : 
+      (selectedService ? { 
+        isCouplesBooking: false, 
+        primaryService: selectedService, 
+        totalPrice: selectedService.price, 
+        totalDuration: selectedService.duration 
+      } : null)
+
+    // Check if waivers are required
+    if (currentBookingData && hasWaiverRequirements(currentBookingData)) {
+      // Check if waivers are already completed
+      if (!areAllWaiversCompleted(currentBookingData)) {
+        // Redirect to waiver page
+        window.location.href = '/booking/waiver'
+        return
       }
     }
 
