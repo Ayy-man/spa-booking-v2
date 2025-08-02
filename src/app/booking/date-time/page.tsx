@@ -50,16 +50,14 @@ export default function DateTimePage() {
     setLoadingService(false)
   }, [])
 
-  // Generate next 30 days
+  // Generate next 30 days (show all days - staff filtering handled in staff selection)
   useEffect(() => {
     const dates = []
     for (let i = 0; i < 30; i++) {
       const date = addDays(new Date(), i)
-      // Skip Tuesdays and Thursdays (Tanisha's off days)
-      const dayOfWeek = date.getDay()
-      if (dayOfWeek !== 2 && dayOfWeek !== 4) { // Tuesday = 2, Thursday = 4
-        dates.push(date)
-      }
+      // Include all days - Robyn works all days, so Tue/Thu are still bookable
+      // Staff availability filtering is handled in the staff selection step
+      dates.push(date)
     }
     setAvailableDates(dates)
   }, [])
