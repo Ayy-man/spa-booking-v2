@@ -283,7 +283,7 @@ export default function WaiverForm({
                 ))}
               </ul>
               <p className="text-xs text-gray-600 mt-2">
-                Please discuss any "yes" answers with your service provider before treatment.
+                Please discuss any &quot;yes&quot; answers with your service provider before treatment.
               </p>
             </div>
           </div>

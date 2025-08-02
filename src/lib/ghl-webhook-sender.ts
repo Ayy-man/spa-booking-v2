@@ -59,7 +59,7 @@ class GHLWebhookSender {
         
         default:
           // For other statuses, use the regular booking update webhook
-          return await this.sendBookingUpdateWebhook(customer, booking, status)
+          return await this.sendBookingStatusUpdateWebhook(customer, booking, status)
       }
     } catch (error) {
       console.error('Error in conditional status webhook:', error)
@@ -175,7 +175,7 @@ class GHLWebhookSender {
     }
   }
 
-  private async sendBookingUpdateWebhook(customer: CustomerData, booking: BookingData, status: string): Promise<WebhookResponse> {
+  private async sendBookingStatusUpdateWebhook(customer: CustomerData, booking: BookingData, status: string): Promise<WebhookResponse> {
     try {
       const payload = {
         event: 'booking_status_update',
