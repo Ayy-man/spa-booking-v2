@@ -1,5 +1,6 @@
--- Fix process_couples_booking_v2 to use customer_id instead of customer_name
--- This addresses the "column customer_name does not exist" error
+-- Fix process_couples_booking_v2 parameter order to match client expectations
+-- This fixes the "Staff member is not available at the requested time" error
+-- caused by parameter mismatch between client and database function
 
 DROP FUNCTION IF EXISTS process_couples_booking_v2 CASCADE;
 
@@ -164,4 +165,4 @@ $$ LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION process_couples_booking_v2 TO authenticated, anon;
 
 -- Comment
-COMMENT ON FUNCTION process_couples_booking_v2 IS 'Creates couples bookings with proper customer_id schema compatibility';
+COMMENT ON FUNCTION process_couples_booking_v2 IS 'Creates couples bookings with corrected parameter order to match client calls';
