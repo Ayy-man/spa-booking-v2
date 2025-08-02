@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { CheckIcon } from 'lucide-react'
+import { hasWaiverRequirements } from '@/lib/waiver-logic'
 
 interface ProgressStep {
   id: string
@@ -12,7 +13,7 @@ interface ProgressStep {
   order: number
 }
 
-const steps: ProgressStep[] = [
+const baseSteps: ProgressStep[] = [
   {
     id: 'service',
     title: 'Service',
@@ -42,11 +43,18 @@ const steps: ProgressStep[] = [
     order: 4
   },
   {
+    id: 'waiver',
+    title: 'Waiver',
+    subtitle: 'Required forms',
+    path: '/booking/waiver',
+    order: 5
+  },
+  {
     id: 'confirmation',
     title: 'Confirm',
     subtitle: 'Review booking',
     path: '/booking/confirmation',
-    order: 5
+    order: 6
   }
 ]
 
@@ -62,13 +70,49 @@ export function BookingProgressIndicator({
   const pathname = usePathname()
   const [currentStep, setCurrentStep] = useState(1)
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
+  const [steps, setSteps] = useState<ProgressStep[]>(baseSteps)
 
   useEffect(() => {
+    // Check if waivers are required for current booking
+    const bookingDataStr = localStorage.getItem('bookingData')
+    const selectedServiceStr = localStorage.getItem('selectedService')
+    
+    let requiresWaiver = false
+    if (bookingDataStr) {
+      const bookingData = JSON.parse(bookingDataStr)
+      requiresWaiver = hasWaiverRequirements(bookingData)
+    } else if (selectedServiceStr) {
+      const service = JSON.parse(selectedServiceStr)
+      const bookingData = {
+        isCouplesBooking: false,
+        primaryService: service,
+        totalPrice: service.price,
+        totalDuration: service.duration
+      }
+      requiresWaiver = hasWaiverRequirements(bookingData)
+    }
+    
+    // Build steps array based on whether waivers are required
+    const dynamicSteps = [...baseSteps]
+    if (!requiresWaiver) {
+      // Remove waiver step if not required
+      const waiverIndex = dynamicSteps.findIndex(s => s.id === 'waiver')
+      if (waiverIndex > -1) {
+        dynamicSteps.splice(waiverIndex, 1)
+        // Renumber remaining steps
+        dynamicSteps.forEach((step, index) => {
+          step.order = index + 1
+        })
+      }
+    }
+    setSteps(dynamicSteps)
+    
     // Determine current step based on pathname
     const matchingStep = steps.find(step => 
       step.path === pathname || 
       (step.id === 'staff' && (pathname === '/booking/staff-couples' || pathname === '/booking/staff')) ||
-      (step.id === 'confirmation' && (pathname === '/booking/confirmation-couples' || pathname === '/booking/confirmation'))
+      (step.id === 'confirmation' && (pathname === '/booking/confirmation-couples' || pathname === '/booking/confirmation')) ||
+      (step.id === 'waiver' && pathname === '/booking/waiver')
     )
     
     if (matchingStep) {
@@ -90,8 +134,12 @@ export function BookingProgressIndicator({
       if (hasStaff && hasDateTime && hasService) completedIds.push(3)
       
       // Check if customer info is provided
-      const hasCustomerInfo = localStorage.getItem('customerInfo')
+      const hasCustomerInfo = localStorage.getItem('customerInfo') || localStorage.getItem('customerData')
       if (hasCustomerInfo && hasStaff && hasDateTime && hasService) completedIds.push(4)
+      
+      // Check if waivers are completed
+      const hasWaivers = localStorage.getItem('waiversCompleted')
+      if (hasWaivers && hasCustomerInfo && hasStaff && hasDateTime && hasService) completedIds.push(5)
       
       setCompletedSteps(completedIds)
     }

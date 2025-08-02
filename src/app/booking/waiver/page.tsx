@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -28,35 +28,69 @@ interface CustomerData {
 
 export default function WaiverPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [bookingData, setBookingData] = useState<BookingData | null>(null)
   const [customerData, setCustomerData] = useState<CustomerData | null>(null)
   const [currentWaiverIndex, setCurrentWaiverIndex] = useState(0)
   const [requiredWaivers, setRequiredWaivers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [paymentCompleted, setPaymentCompleted] = useState(false)
 
   useEffect(() => {
+    // Check if coming from payment
+    const paymentStatus = searchParams.get('payment')
+    if (paymentStatus === 'success') {
+      setPaymentCompleted(true)
+    }
+    
     // Get booking and customer data from localStorage
     const bookingDataStr = localStorage.getItem('bookingData')
     const customerDataStr = localStorage.getItem('customerData')
     const selectedDate = localStorage.getItem('selectedDate')
     const selectedTime = localStorage.getItem('selectedTime')
+    
+    // Also check for single service booking
+    const singleServiceStr = localStorage.getItem('selectedService')
+    const customerInfoStr = localStorage.getItem('customerInfo')
 
-    if (!bookingDataStr || !customerDataStr || !selectedDate || !selectedTime) {
+    // Check different data combinations
+    if ((!bookingDataStr && !singleServiceStr) || (!customerDataStr && !customerInfoStr) || !selectedDate || !selectedTime) {
       // Missing required data, redirect to start
       router.push('/booking')
       return
     }
 
-    const booking = JSON.parse(bookingDataStr)
-    const customer = JSON.parse(customerDataStr)
+    // Parse booking data - handle both couples and single bookings
+    let booking
+    if (bookingDataStr) {
+      booking = JSON.parse(bookingDataStr)
+    } else if (singleServiceStr) {
+      // Convert single service to booking format
+      const service = JSON.parse(singleServiceStr)
+      booking = {
+        isCouplesBooking: false,
+        primaryService: service,
+        totalPrice: service.price,
+        totalDuration: service.duration
+      }
+    }
+
+    // Parse customer data - handle both formats
+    let customer
+    if (customerDataStr) {
+      customer = JSON.parse(customerDataStr)
+    } else if (customerInfoStr) {
+      customer = JSON.parse(customerInfoStr)
+    }
 
     setBookingData(booking)
     setCustomerData(customer)
 
     // Check if waivers are actually required
     if (!hasWaiverRequirements(booking)) {
-      // No waivers needed, proceed to payment
-      router.push('/booking/customer-info')
+      // No waivers needed, proceed to confirmation
+      const isCouples = booking.isCouplesBooking
+      router.push(isCouples ? '/booking/confirmation-couples' : '/booking/confirmation')
       return
     }
 
@@ -75,9 +109,12 @@ export default function WaiverPage() {
   }, [router])
 
   const proceedToNextStep = () => {
-    // Store completion status and proceed to payment
+    // Store completion status and proceed to confirmation
     localStorage.setItem('waiversCompleted', 'true')
-    router.push('/booking/customer-info')
+    
+    // Determine if couples booking to use correct confirmation page
+    const isCouples = bookingData?.isCouplesBooking || false
+    router.push(isCouples ? '/booking/confirmation-couples' : '/booking/confirmation')
   }
 
   const handleWaiverComplete = (waiverData: any) => {
@@ -144,16 +181,32 @@ export default function WaiverPage() {
       <BookingProgressIndicator />
       
       <div className="container mx-auto px-6 max-w-4xl py-8">
+        {/* Payment Success Banner */}
+        {paymentCompleted && (
+          <Card className="p-4 mb-6 bg-green-50 border-green-200">
+            <div className="flex items-center justify-center space-x-3">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-green-800 font-medium">Payment completed successfully! Please complete the required waivers.</p>
+            </div>
+          </Card>
+        )}
+        
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center items-center space-x-6 mb-6">
-            <Link 
-              href="/booking/customer-info" 
-              className="btn-tertiary !w-auto px-6"
-            >
-              ← Back to Customer Info
-            </Link>
-            <span className="text-gray-300 hidden sm:block">|</span>
+            {!paymentCompleted && (
+              <>
+                <Link 
+                  href="/booking/customer-info" 
+                  className="btn-tertiary !w-auto px-6"
+                >
+                  ← Back to Customer Info
+                </Link>
+                <span className="text-gray-300 hidden sm:block">|</span>
+              </>
+            )}
             <div className="text-sm text-gray-600">
               Step {currentWaiverIndex + 1} of {requiredWaivers.length}
             </div>

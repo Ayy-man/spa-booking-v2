@@ -125,8 +125,12 @@ export default function CustomerInfoPage() {
       }
     }
 
-    // Store customer data for waiver step
-    localStorage.setItem('customerData', JSON.stringify(data))
+    // Store customer data in both formats for compatibility
+    localStorage.setItem('customerInfo', JSON.stringify(data))
+    localStorage.setItem('customerData', JSON.stringify({
+      ...data,
+      paymentType: data.paymentType || 'deposit'
+    }))
 
     // Get booking data to check for waiver requirements
     const currentBookingData = bookingDataStr ? JSON.parse(bookingDataStr) : 
@@ -154,12 +158,20 @@ export default function CustomerInfoPage() {
     if (data.isNewCustomer || data.paymentType === 'full') {
       // Redirect to payment with selected amount
       const baseUrl = window.location.origin
-      const confirmationPage = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
-      const returnUrl = `${baseUrl}${confirmationPage}?payment=success&amount=${paymentAmount}&type=${data.paymentType}`
+      
+      // If waivers are needed but not completed, return to waiver page after payment
+      let returnPage = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
+      if (currentBookingData && hasWaiverRequirements(currentBookingData) && !areAllWaiversCompleted(currentBookingData)) {
+        returnPage = '/booking/waiver'
+      }
+      
+      const returnUrl = `${baseUrl}${returnPage}?payment=success&amount=${paymentAmount}&type=${data.paymentType}`
       const ghlPaymentUrl = generatePaymentUrl(paymentAmount, returnUrl)
       window.location.href = ghlPaymentUrl
     } else {
-      // Existing customer choosing deposit - go to appropriate confirmation page  
+      // Existing customer choosing deposit - no payment needed
+      // Already checked for waivers above and redirected if needed
+      // So if we're here, go directly to confirmation
       const confirmationPage = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
       window.location.href = `${confirmationPage}?payment=none&amount=0&type=none`
     }
