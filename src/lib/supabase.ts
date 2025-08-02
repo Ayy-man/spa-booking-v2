@@ -171,7 +171,7 @@ export const supabaseClient = {
       )
       
       // Find the first available staff for the requested time
-      const suitableSlot = availableSlots.find(slot => 
+      const suitableSlot = availableSlots.find((slot: any) => 
         slot.available_time === booking.start_time && 
         slot.staff_id !== 'any'
       )
@@ -191,7 +191,7 @@ export const supabaseClient = {
           const appointmentDate = new Date(booking.appointment_date)
           const dayOfWeek = appointmentDate.getDay()
           
-          const suitableStaff = staff.find(s => 
+          const suitableStaff = staff.find((s: any) => 
             s.capabilities.includes(service.category) && 
             s.work_days.includes(dayOfWeek)
           )
