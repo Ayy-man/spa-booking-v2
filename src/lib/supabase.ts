@@ -187,7 +187,17 @@ export const supabaseClient = {
         } else {
           console.log(`Available staff:`, staff)
           console.log(`Service category: ${service.category}, Day of week: ${dayOfWeek}`)
-          throw new Error(`No staff available for ${service.category} services on this day`)
+          
+          // Ultimate fallback: use the first available staff member regardless of capability
+          // Since customer chose "any", we'll make it work with whoever is available
+          const anyActiveStaff = staff.find((s: any) => s.work_days.includes(dayOfWeek))
+          
+          if (anyActiveStaff) {
+            resolvedStaffId = anyActiveStaff.id
+            console.log(`Using fallback staff: ${resolvedStaffId} (customer chose "any available")`)
+          } else {
+            throw new Error(`No staff working on this day`)
+          }
         }
       } else {
         throw new Error('No staff members found in system')
