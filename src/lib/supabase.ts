@@ -164,46 +164,33 @@ export const supabaseClient = {
     // Resolve "any" staff to an actual available staff member
     let resolvedStaffId = booking.staff_id
     if (booking.staff_id === 'any') {
-      // Get available staff for this service and date
-      const availableSlots = await this.getAvailableTimeSlots(
-        booking.appointment_date,
-        booking.service_id
-      )
+      // Get capable staff member for this service directly from database
+      const { data: staff } = await supabase
+        .from('staff')
+        .select('id, capabilities, work_days')
+        .eq('is_active', true)
+        .neq('id', 'any')
       
-      // Find the first available staff for the requested time
-      const suitableSlot = availableSlots.find((slot: any) => 
-        slot.available_time === booking.start_time && 
-        slot.staff_id !== 'any'
-      )
-      
-      if (suitableSlot) {
-        resolvedStaffId = suitableSlot.staff_id
-      } else {
-        // Fallback: get any capable staff member for this service
-        const { data: staff } = await supabase
-          .from('staff')
-          .select('id, capabilities, work_days')
-          .eq('is_active', true)
-          .neq('id', 'any')
+      if (staff && staff.length > 0) {
+        // Find staff who can perform this service and works on this day
+        const appointmentDate = new Date(booking.appointment_date)
+        const dayOfWeek = appointmentDate.getDay()
         
-        if (staff) {
-          // Find staff who can perform this service and works on this day
-          const appointmentDate = new Date(booking.appointment_date)
-          const dayOfWeek = appointmentDate.getDay()
-          
-          const suitableStaff = staff.find((s: any) => 
-            s.capabilities.includes(service.category) && 
-            s.work_days.includes(dayOfWeek)
-          )
-          
-          if (suitableStaff) {
-            resolvedStaffId = suitableStaff.id
-          } else {
-            throw new Error('No available staff found for this service and date')
-          }
+        const suitableStaff = staff.find((s: any) => 
+          s.capabilities.includes(service.category) && 
+          s.work_days.includes(dayOfWeek)
+        )
+        
+        if (suitableStaff) {
+          resolvedStaffId = suitableStaff.id
+          console.log(`Resolved "any" staff to: ${resolvedStaffId} for ${service.category} service`)
         } else {
-          throw new Error('No staff members found in system')
+          console.log(`Available staff:`, staff)
+          console.log(`Service category: ${service.category}, Day of week: ${dayOfWeek}`)
+          throw new Error(`No staff available for ${service.category} services on this day`)
         }
+      } else {
+        throw new Error('No staff members found in system')
       }
     }
 
@@ -211,6 +198,11 @@ export const supabaseClient = {
     const startTime = new Date(`2000-01-01T${booking.start_time}:00`)
     const endTime = new Date(startTime.getTime() + service.duration * 60000)
     const endTimeStr = endTime.toTimeString().slice(0, 5)
+
+    // Validate resolved staff ID
+    if (!resolvedStaffId || resolvedStaffId === '' || resolvedStaffId === 'any') {
+      throw new Error(`Invalid staff ID resolved: ${resolvedStaffId}`)
+    }
 
     // Create booking with proper schema
     const discount = 0
