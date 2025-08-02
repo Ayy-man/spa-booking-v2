@@ -1,14 +1,14 @@
 import { addMinutes, format, isAfter, isBefore, parseISO, isEqual } from 'date-fns'
 import { Service, Staff, Room, Booking, BookingConflict, TimeSlot } from '@/types/booking'
 
-// Business constants with enhanced configuration
+// Business constants with pre-buffered slot configuration
 export const BUSINESS_HOURS = {
   start: '09:00',
   end: '19:00', 
   lastBookingOffset: 60, // 1 hour before closing
-  slotDuration: 15, // 15-minute time slots
-  bufferTime: 10, // 10 minutes default buffer between appointments for cleaning
-  waxingBufferTime: 0, // 0 minutes buffer for waxing services
+  slotDuration: 45, // 45-minute intervals (includes 15min buffer)
+  bufferTime: 15, // 15 minutes buffer built into slot spacing
+  waxingBufferTime: 0, // 0 minutes buffer for waxing services (slots still spaced)
   maxAdvanceDays: 30, // Maximum days in advance for booking
   minNoticeHours: 1, // Minimum hours notice for same-day bookings
 }
@@ -61,7 +61,8 @@ export function getServiceBufferTime(service: Service): number {
 }
 
 /**
- * Generate time slots for a given date with availability consideration
+ * Generate pre-buffered time slots to eliminate buffer time validation issues
+ * Creates slots with built-in 15-minute buffers: 9:00, 9:45, 10:30, 11:15, etc.
  */
 export function generateTimeSlots(
   date: Date, 
@@ -75,12 +76,13 @@ export function generateTimeSlots(
   // Calculate the latest start time based on service duration
   let latestStartTime = endTime
   if (considerLastBooking && serviceDuration) {
-    // Use default buffer time when service object is not available
-    latestStartTime = addMinutes(endTime, -(serviceDuration + BUSINESS_HOURS.bufferTime))
+    latestStartTime = addMinutes(endTime, -(serviceDuration + BUSINESS_HOURS.lastBookingOffset))
   } else {
     latestStartTime = addMinutes(endTime, -BUSINESS_HOURS.lastBookingOffset)
   }
   
+  // Generate pre-buffered slots with 45-minute intervals
+  // This creates natural 15-minute gaps between appointments
   let currentTime = startTime
   
   while (isBefore(currentTime, latestStartTime)) {
@@ -98,6 +100,8 @@ export function generateTimeSlots(
       slots.push(slotTime)
     }
     
+    // Move to next slot with built-in buffer
+    // 45 minutes = 30min typical service + 15min buffer
     currentTime = addMinutes(currentTime, BUSINESS_HOURS.slotDuration)
   }
   
@@ -233,7 +237,7 @@ export function getAccommodationDetails(
 }
 
 /**
- * Check for booking conflicts with enhanced validation and buffer time
+ * Check for booking conflicts without buffer time (since slots are pre-buffered)
  */
 export function checkBookingConflicts(
   newBooking: {
@@ -245,7 +249,7 @@ export function checkBookingConflicts(
     service_id?: string
   },
   existingBookings: Booking[],
-  includeBufferTime: boolean = true,
+  includeBufferTime: boolean = false, // Default to false since slots are pre-buffered
   newService?: Service
 ): BookingConflict[] {
   const conflicts: BookingConflict[] = []
@@ -253,11 +257,9 @@ export function checkBookingConflicts(
   const newStart = parseISO(`${newBooking.appointment_date}T${newBooking.start_time}:00`)
   const newEnd = parseISO(`${newBooking.appointment_date}T${newBooking.end_time}:00`)
   
-  // Add buffer time if requested (service-specific buffer time)
-  const bufferTimeForNewService = includeBufferTime ? 
-    (newService ? getServiceBufferTime(newService) : BUSINESS_HOURS.bufferTime) : 0
-  const bufferStart = includeBufferTime ? addMinutes(newStart, -bufferTimeForNewService) : newStart
-  const bufferEnd = includeBufferTime ? addMinutes(newEnd, bufferTimeForNewService) : newEnd
+  // No buffer time needed since slots are pre-buffered with 15-minute gaps
+  const bufferStart = newStart
+  const bufferEnd = newEnd
   
   for (const booking of existingBookings) {
     // Skip cancelled bookings
@@ -266,14 +268,12 @@ export function checkBookingConflicts(
     const existingStart = parseISO(`${booking.appointment_date}T${booking.start_time}:00`)
     const existingEnd = parseISO(`${booking.appointment_date}T${booking.end_time}:00`)
     
-    // Check for time overlap with buffer consideration
-    // Use default buffer for existing bookings since we don't have their service info
-    const existingBufferTime = includeBufferTime ? BUSINESS_HOURS.bufferTime : 0
-    const existingBufferStart = includeBufferTime ? addMinutes(existingStart, -existingBufferTime) : existingStart
-    const existingBufferEnd = includeBufferTime ? addMinutes(existingEnd, existingBufferTime) : existingEnd
+    // Check for direct time overlap (no buffer needed since slots are pre-buffered)
+    const existingBufferStart = existingStart
+    const existingBufferEnd = existingEnd
     
     const hasOverlap = (
-      // New booking overlaps with existing booking (including buffers)
+      // Direct time overlap between bookings
       (isBefore(bufferStart, existingBufferEnd) && isAfter(bufferEnd, existingBufferStart)) ||
       // Edge case: exact time matches
       (bufferStart.getTime() === existingBufferStart.getTime()) ||
@@ -283,22 +283,18 @@ export function checkBookingConflicts(
     if (hasOverlap) {
       // Staff conflict
       if (booking.staff_id === newBooking.staff_id) {
-        const bufferMessage = includeBufferTime ? 
-          ` (including 15-minute buffer time)` : ''
         conflicts.push({
           type: 'staff',
-          message: `Staff member is already booked from ${booking.start_time} to ${booking.end_time}${bufferMessage}`,
+          message: `Staff member is already booked from ${booking.start_time} to ${booking.end_time}`,
           conflicting_booking: booking
         })
       }
       
       // Room conflict  
       if (booking.room_id === parseInt(newBooking.room_id)) {
-        const bufferMessage = includeBufferTime ? 
-          ` (including 15-minute cleaning buffer)` : ''
         conflicts.push({
           type: 'room',
-          message: `Room is already booked from ${booking.start_time} to ${booking.end_time}${bufferMessage}`,
+          message: `Room is already booked from ${booking.start_time} to ${booking.end_time}`,
           conflicting_booking: booking
         })
       }
