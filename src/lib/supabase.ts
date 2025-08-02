@@ -161,6 +161,52 @@ export const supabaseClient = {
       customerId = newCustomer.id
     }
 
+    // Resolve "any" staff to an actual available staff member
+    let resolvedStaffId = booking.staff_id
+    if (booking.staff_id === 'any') {
+      // Get available staff for this service and date
+      const availableSlots = await this.getAvailableTimeSlots(
+        booking.appointment_date,
+        booking.service_id
+      )
+      
+      // Find the first available staff for the requested time
+      const suitableSlot = availableSlots.find(slot => 
+        slot.available_time === booking.start_time && 
+        slot.staff_id !== 'any'
+      )
+      
+      if (suitableSlot) {
+        resolvedStaffId = suitableSlot.staff_id
+      } else {
+        // Fallback: get any capable staff member for this service
+        const { data: staff } = await supabase
+          .from('staff')
+          .select('id, capabilities, work_days')
+          .eq('is_active', true)
+          .neq('id', 'any')
+        
+        if (staff) {
+          // Find staff who can perform this service and works on this day
+          const appointmentDate = new Date(booking.appointment_date)
+          const dayOfWeek = appointmentDate.getDay()
+          
+          const suitableStaff = staff.find(s => 
+            s.capabilities.includes(service.category) && 
+            s.work_days.includes(dayOfWeek)
+          )
+          
+          if (suitableStaff) {
+            resolvedStaffId = suitableStaff.id
+          } else {
+            throw new Error('No available staff found for this service and date')
+          }
+        } else {
+          throw new Error('No staff members found in system')
+        }
+      }
+    }
+
     // Calculate end time
     const startTime = new Date(`2000-01-01T${booking.start_time}:00`)
     const endTime = new Date(startTime.getTime() + service.duration * 60000)
@@ -175,7 +221,7 @@ export const supabaseClient = {
       .insert({
         customer_id: customerId,
         service_id: booking.service_id,
-        staff_id: booking.staff_id,
+        staff_id: resolvedStaffId,
         room_id: booking.room_id,
         appointment_date: booking.appointment_date,
         start_time: booking.start_time,
