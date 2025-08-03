@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         .from('bookings')
         .update({
           status: 'confirmed',
-          internal_notes: `Checked in via self-service at ${new Date().toLocaleString()}`,
+          checked_in_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', body.appointmentId)
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
           staff_name: appointment.staff.name,
           room_name: appointment.room.name,
           status: updatedAppointment.status,
-          checked_in_at: new Date().toISOString() // Return current time as check-in time
+          checked_in_at: updatedAppointment.checked_in_at
         }
       })
     }
@@ -199,9 +199,7 @@ export async function POST(request: NextRequest) {
       room_name: apt.room.name,
       customer_name: `${apt.customer.first_name} ${apt.customer.last_name}`,
       status: apt.status,
-      checked_in_at: apt.status === 'confirmed' && apt.internal_notes?.includes('Checked in via self-service') 
-        ? apt.updated_at 
-        : null
+      checked_in_at: apt.checked_in_at
     }))
 
     return NextResponse.json({
