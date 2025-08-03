@@ -207,7 +207,7 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
                   Update Status
                 </Button>
               </div>
-            ) : (
+            ) : isShowingForm ? (
               <div className="space-y-3 border border-gray-200 rounded-lg p-3 bg-gray-50">
                 <div>
                   <Label className="text-sm font-medium">Update Status</Label>
@@ -261,7 +261,7 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
                 }}
                 onCancel={() => setShowAssignmentForm(null)}
               />
-            )}
+            ) : null}
           </div>
         )}
 
