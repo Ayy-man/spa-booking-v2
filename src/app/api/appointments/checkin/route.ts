@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
   try {
     const body: CheckInRequest = await request.json()
     console.log('Check-in request received:', { 
+      searchTerm: body.searchTerm,
+      confirmationCode: body.confirmationCode,
       hasSearchTerm: !!body.searchTerm, 
       hasAppointmentId: !!body.appointmentId,
       appointmentId: body.appointmentId 
@@ -245,38 +247,96 @@ export async function POST(request: NextRequest) {
 
     // Filter appointments based on search term
     const searchTerm = body.searchTerm.toLowerCase().trim()
+    console.log('Search term:', searchTerm)
+    console.log('Total appointments found for today:', appointments.length)
+    
     let filteredAppointments = appointments
 
     if (searchTerm) {
       filteredAppointments = appointments.filter(apt => {
         const customer = apt.customer
-        if (!customer) return false
-
-        // Search by name
-        const fullName = `${customer.first_name} ${customer.last_name}`.toLowerCase()
-        if (fullName.includes(searchTerm)) return true
-
-        // Search by email
-        if (customer.email && customer.email.toLowerCase().includes(searchTerm)) return true
-
-        // Search by phone
-        if (customer.phone) {
-          const cleanSearchPhone = searchTerm.replace(/[\D]/g, '')
-          const cleanCustomerPhone = customer.phone.replace(/[\D]/g, '')
-          if (cleanCustomerPhone.includes(cleanSearchPhone)) return true
+        if (!customer) {
+          console.log('No customer data for appointment:', apt.id)
+          return false
         }
 
-        // Search by confirmation code (booking ID)
-        if (body.confirmationCode && apt.id === body.confirmationCode.trim()) return true
+        console.log('Checking appointment:', {
+          id: apt.id,
+          customerName: `${customer.first_name} ${customer.last_name}`,
+          customerEmail: customer.email,
+          customerPhone: customer.phone,
+          searchTerm: searchTerm
+        })
 
-        return false
+        let matchFound = false
+        let matchReason = ''
+
+        // Search by name (must contain the search term)
+        const fullName = `${customer.first_name || ''} ${customer.last_name || ''}`.toLowerCase().trim()
+        if (fullName && fullName.includes(searchTerm)) {
+          matchFound = true
+          matchReason = 'name'
+          console.log('Match found by name:', fullName, 'contains', searchTerm)
+        }
+
+        // Search by email (must contain the search term)
+        if (!matchFound && customer.email) {
+          const email = customer.email.toLowerCase()
+          if (email.includes(searchTerm)) {
+            matchFound = true
+            matchReason = 'email'
+            console.log('Match found by email:', email, 'contains', searchTerm)
+          }
+        }
+
+        // Search by phone (extract digits and match)
+        if (!matchFound && customer.phone && searchTerm.replace(/[\D]/g, '').length >= 3) {
+          const cleanSearchPhone = searchTerm.replace(/[\D]/g, '')
+          const cleanCustomerPhone = customer.phone.replace(/[\D]/g, '')
+          if (cleanSearchPhone && cleanCustomerPhone.includes(cleanSearchPhone)) {
+            matchFound = true
+            matchReason = 'phone'
+            console.log('Match found by phone:', customer.phone, 'contains', cleanSearchPhone)
+          }
+        }
+
+        // Search by confirmation code (booking ID) - only if confirmation code is provided
+        if (!matchFound && body.confirmationCode) {
+          const confirmationCode = body.confirmationCode.trim()
+          if (confirmationCode && apt.id === confirmationCode) {
+            matchFound = true
+            matchReason = 'confirmation_code'
+            console.log('Match found by confirmation code:', apt.id)
+          }
+        }
+
+        if (!matchFound) {
+          console.log('No match found for appointment:', apt.id)
+        } else {
+          console.log(`Match found for appointment ${apt.id} by ${matchReason}`)
+        }
+
+        return matchFound
       })
+      
+      console.log('Filtered appointments count:', filteredAppointments.length)
+      if (filteredAppointments.length > 0) {
+        console.log('Filtered appointments details:', filteredAppointments.map(apt => ({
+          id: apt.id,
+          customerName: `${apt.customer.first_name} ${apt.customer.last_name}`,
+          customerEmail: apt.customer.email,
+          customerPhone: apt.customer.phone
+        })))
+      }
+    } else {
+      console.log('No search term provided, returning all appointments')
     }
 
     if (!filteredAppointments || filteredAppointments.length === 0) {
+      console.log(`No matches found for search term: "${searchTerm}"`)
       return NextResponse.json({
         success: false,
-        message: 'No appointments found for today matching your search criteria',
+        message: `No appointments found for today matching "${body.searchTerm}"`,
         appointments: []
       })
     }
@@ -293,6 +353,8 @@ export async function POST(request: NextRequest) {
       status: apt.status,
       checked_in_at: apt.checked_in_at
     }))
+
+    console.log('Returning formatted appointments:', formattedAppointments)
 
     return NextResponse.json({
       success: true,

@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
 import { isSpecialStaffRequest } from "@/lib/booking-utils"
+import { FilterBar } from "@/components/admin/filter-bar"
 import { Clock, RefreshCw, Calendar, Users, TrendingUp, AlertCircle, Star } from "lucide-react"
 
 interface TimeSlot {
@@ -52,10 +53,12 @@ export function RoomTimeline({
 }: RoomTimelineProps) {
   const [bookings, setBookings] = useState<BookingWithRelations[]>([])
   const [rooms, setRooms] = useState<Array<{ id: number; name: string; capabilities: string[] }>>([])
+  const [staff, setStaff] = useState<Array<{ id: string; name: string }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [currentTime, setCurrentTime] = useState<Date>(new Date())
+  const [selectedStaff, setSelectedStaff] = useState<string | null>(null)
 
   // Generate time slots for the timeline
   const timeSlots = useMemo((): TimeSlot[] => {
@@ -74,8 +77,8 @@ export function RoomTimeline({
       setLoading(true)
       const today = new Date().toISOString().split('T')[0]
       
-      // Fetch today's bookings with related data and walk-in origin info
-      const { data: bookingsData, error: bookingsError } = await supabase
+      // Build the booking query with optional staff filtering
+      let bookingQuery = supabase
         .from('bookings')
         .select(`
           *,
@@ -88,6 +91,13 @@ export function RoomTimeline({
         .neq('status', 'cancelled')
         .order('start_time', { ascending: true })
 
+      // Apply staff filter if selected
+      if (selectedStaff) {
+        bookingQuery = bookingQuery.eq('staff_id', selectedStaff)
+      }
+
+      const { data: bookingsData, error: bookingsError } = await bookingQuery
+
       if (bookingsError) throw bookingsError
 
       // Fetch active rooms
@@ -99,8 +109,18 @@ export function RoomTimeline({
 
       if (roomsError) throw roomsError
 
+      // Fetch active staff for the filter
+      const { data: staffData, error: staffError } = await supabase
+        .from('staff')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name', { ascending: true })
+
+      if (staffError) throw staffError
+
       setBookings(bookingsData || [])
       setRooms(roomsData || [])
+      setStaff(staffData || [])
       setLastUpdated(new Date())
       setError('')
     } catch (err: any) {
@@ -108,7 +128,7 @@ export function RoomTimeline({
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [selectedStaff])
 
   // Update current time every minute
   useEffect(() => {
@@ -127,6 +147,15 @@ export function RoomTimeline({
       return () => clearInterval(interval)
     }
   }, [autoRefresh, refreshInterval, fetchData])
+
+  // Handle staff filter changes
+  const handleStaffFilter = useCallback((staffId: string | null) => {
+    setSelectedStaff(staffId)
+  }, [])
+
+  const handleClearFilters = useCallback(() => {
+    setSelectedStaff(null)
+  }, [])
 
   // Get booking for a specific room and time slot
   const getBookingForSlot = useCallback((roomId: number, timeString: string): BookingWithRelations | null => {
@@ -206,6 +235,11 @@ export function RoomTimeline({
             </p>
             <p className="text-sm text-gray-500">
               Last updated: {lastUpdated.toLocaleTimeString()}
+              {selectedStaff && (
+                <span className="ml-2 text-primary font-medium">
+                  • Filtered by {staff.find(s => s.id === selectedStaff)?.name || 'Selected Staff'}
+                </span>
+              )}
             </p>
           </div>
           
@@ -222,6 +256,21 @@ export function RoomTimeline({
             </Button>
           </div>
         </div>
+
+        {/* Filter Bar */}
+        <FilterBar
+          onRoomFilter={() => {}} // Room filtering not needed for timeline
+          onStaffFilter={handleStaffFilter}
+          onStatusFilter={() => {}} // Status filtering not needed for timeline
+          onClearFilters={handleClearFilters}
+          rooms={[]} // Room filtering not needed for timeline
+          staff={staff}
+          selectedRoom={null}
+          selectedStaff={selectedStaff}
+          selectedStatus={null}
+          size="sm"
+          className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20"
+        />
 
         {/* Error Display */}
         {error && (
@@ -288,6 +337,9 @@ export function RoomTimeline({
               <div className="text-right">
                 <div className="text-sm text-gray-600">
                   {bookings.length} booking{bookings.length !== 1 ? 's' : ''} today
+                  {selectedStaff && (
+                    <span className="text-primary font-medium"> (filtered)</span>
+                  )}
                 </div>
                 <div className="text-xs text-gray-500">
                   View-only mode
