@@ -193,10 +193,10 @@ export async function POST(request: NextRequest) {
           checked_in_at: updatedAppointment.checked_in_at
         }
       })
-      } catch (appointmentError) {
+      } catch (appointmentError: any) {
         console.error('Error in appointment check-in section:', appointmentError)
         return NextResponse.json(
-          { error: `Appointment check-in failed: ${appointmentError.message || 'Unknown error'}` },
+          { error: `Appointment check-in failed: ${appointmentError?.message || 'Unknown error'}` },
           { status: 500 }
         )
       }
