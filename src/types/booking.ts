@@ -7,6 +7,7 @@ export type Room = Database['public']['Tables']['rooms']['Row']
 export type Booking = Database['public']['Tables']['bookings']['Row']
 export type Customer = Database['public']['Tables']['customers']['Row']
 export type StaffSchedule = Database['public']['Tables']['staff_schedules']['Row']
+export type WalkIn = Database['public']['Tables']['walk_ins']['Row']
 
 // Insert types for creating new records
 export type ServiceInsert = Database['public']['Tables']['services']['Insert']
@@ -28,6 +29,7 @@ export interface BookingWithRelations extends Booking {
   staff: Staff & { default_room: Room | null }
   room: Room
   customer: Customer
+  walk_in_origin?: Pick<WalkIn, 'id' | 'customer_name' | 'checked_in_at'> | null
 }
 
 export interface StaffWithRoom extends Staff {
