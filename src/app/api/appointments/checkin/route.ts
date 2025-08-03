@@ -11,6 +11,11 @@ interface CheckInRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: CheckInRequest = await request.json()
+    console.log('Check-in request received:', { 
+      hasSearchTerm: !!body.searchTerm, 
+      hasAppointmentId: !!body.appointmentId,
+      appointmentId: body.appointmentId 
+    })
 
     if (!body.searchTerm && !body.appointmentId) {
       return NextResponse.json(
@@ -20,9 +25,11 @@ export async function POST(request: NextRequest) {
     }
 
     const today = new Date().toISOString().split('T')[0]
+    console.log('Processing check-in for date:', today)
 
     // If appointmentId is provided, check in that specific appointment
     if (body.appointmentId) {
+      try {
       console.log('Attempting to check in appointment ID:', body.appointmentId)
       console.log('Today\'s date:', today)
 
@@ -39,7 +46,11 @@ export async function POST(request: NextRequest) {
         .eq('id', body.appointmentId)
         .eq('appointment_date', today)
 
-      console.log('Appointment search result:', { appointments, appointmentError })
+      console.log('Appointment search result:', { 
+        appointmentsCount: appointments?.length || 0,
+        appointmentError,
+        searchCriteria: { id: body.appointmentId, date: today }
+      })
 
       if (appointmentError) {
         console.error('Appointment search error:', appointmentError)
@@ -50,8 +61,29 @@ export async function POST(request: NextRequest) {
       }
 
       if (!appointments || appointments.length === 0) {
+        // Try without date constraint to see if appointment exists at all
+        console.log('No appointments found for today, trying without date constraint...')
+        const { data: anyDateAppointments, error: anyDateError } = await supabase
+          .from('bookings')
+          .select('id, appointment_date, status')
+          .eq('id', body.appointmentId)
+
+        console.log('Appointment check without date:', { 
+          found: anyDateAppointments?.length || 0,
+          appointments: anyDateAppointments,
+          error: anyDateError 
+        })
+
+        if (anyDateAppointments && anyDateAppointments.length > 0) {
+          const apt = anyDateAppointments[0]
+          return NextResponse.json(
+            { error: `Appointment found but scheduled for ${apt.appointment_date}, not today (${today})` },
+            { status: 404 }
+          )
+        }
+
         return NextResponse.json(
-          { error: 'Appointment not found for today' },
+          { error: 'Appointment not found' },
           { status: 404 }
         )
       }
@@ -161,6 +193,13 @@ export async function POST(request: NextRequest) {
           checked_in_at: updatedAppointment.checked_in_at
         }
       })
+      } catch (appointmentError) {
+        console.error('Error in appointment check-in section:', appointmentError)
+        return NextResponse.json(
+          { error: `Appointment check-in failed: ${appointmentError.message || 'Unknown error'}` },
+          { status: 500 }
+        )
+      }
     }
 
     // Search for appointments - first get all today's bookings with customer data
