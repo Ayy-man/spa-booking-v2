@@ -115,6 +115,23 @@ export const analytics = {
       step: step,
       timestamp: new Date().toISOString()
     })
+  },
+
+  // Waiver events
+  waiverCompleted: (waiverType: string, serviceName: string) => {
+    safeTrack('waiver_completed', {
+      waiver_type: waiverType,
+      service_name: serviceName,
+      timestamp: new Date().toISOString()
+    })
+  },
+
+  waiverStarted: (waiverType: string, serviceName: string) => {
+    safeTrack('waiver_started', {
+      waiver_type: waiverType,
+      service_name: serviceName,
+      timestamp: new Date().toISOString()
+    })
   }
 }
 

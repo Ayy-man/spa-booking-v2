@@ -42,11 +42,18 @@ const steps: ProgressStep[] = [
     order: 4
   },
   {
+    id: 'waiver',
+    title: 'Waiver',
+    subtitle: 'Sign consent',
+    path: '/booking/waiver',
+    order: 5
+  },
+  {
     id: 'confirmation',
     title: 'Confirm',
     subtitle: 'Review booking',
     path: '/booking/confirmation',
-    order: 5
+    order: 6
   }
 ]
 
@@ -92,6 +99,29 @@ export function BookingProgressIndicator({
       // Check if customer info is provided
       const hasCustomerInfo = localStorage.getItem('customerInfo')
       if (hasCustomerInfo && hasStaff && hasDateTime && hasService) completedIds.push(4)
+      
+      // Check if waiver is completed (only if required)
+      const waiverCompleted = localStorage.getItem('waiverCompleted')
+      if (waiverCompleted === 'true' && hasCustomerInfo) completedIds.push(5)
+      
+      // If on confirmation page without waiver being required, skip waiver step in completion
+      if (matchingStep.id === 'confirmation' && waiverCompleted !== 'true') {
+        // Check if current service requires waiver
+        const service = hasService ? JSON.parse(hasService).name || JSON.parse(localStorage.getItem('bookingData') || '{}').primaryService?.name : null
+        if (service) {
+          // Import waiver check (async, so this is an approximation)
+          const requiresWaiverCheck = (serviceName: string): boolean => {
+            const name = serviceName.toLowerCase()
+            return name.includes('radio frequency') || name.includes('chemical peel') || name.includes('microderm') || 
+                   name.includes('wax') || name.includes('brazilian') || name.includes('bikini')
+          }
+          
+          if (!requiresWaiverCheck(service)) {
+            // Service doesn't require waiver, so mark waiver step as completed
+            completedIds.push(5)
+          }
+        }
+      }
       
       setCompletedSteps(completedIds)
     }

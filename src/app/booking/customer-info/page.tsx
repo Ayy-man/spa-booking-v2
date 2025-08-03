@@ -123,6 +123,22 @@ export default function CustomerInfoPage() {
       }
     }
 
+    // Check if service requires waiver before proceeding to payment
+    const { requiresWaiver } = await import('@/lib/waiver-content')
+    const waiverType = requiresWaiver(selectedService?.name || '')
+    
+    if (waiverType) {
+      // Service requires waiver - redirect to waiver page
+      console.log('Service requires waiver, redirecting to waiver page')
+      window.location.href = '/booking/waiver'
+      return
+    }
+
+    // No waiver required - proceed with normal flow
+    proceedToPaymentOrConfirmation(data, isCouplesBooking)
+  }
+
+  const proceedToPaymentOrConfirmation = (data: CustomerFormData, isCouplesBooking: boolean) => {
     // Check customer status and redirect accordingly
     if (data.isNewCustomer) {
       // New customer - redirect to GoHighLevel payment link with return URL
