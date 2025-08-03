@@ -107,12 +107,15 @@ export async function POST(request: NextRequest) {
       }
 
       // Update appointment status to show customer has arrived
+      console.log('Current appointment status:', appointment.status)
+      console.log('Updating appointment with ID:', body.appointmentId)
+      
       const { data: updatedAppointments, error: updateError } = await supabase
         .from('bookings')
         .update({
-          status: 'confirmed',
           checked_in_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
+          // Removed status update to avoid enum issues - just update checked_in_at timestamp
         })
         .eq('id', body.appointmentId)
         .select()
