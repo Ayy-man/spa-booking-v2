@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card } from '@/components/ui/card'
@@ -90,7 +90,8 @@ export function WaiverForm({ waiverType, serviceName, onSubmit, loading = false 
     handleSubmit,
     formState: { errors, isValid },
     setValue,
-    watch
+    watch,
+    control
   } = useForm({
     resolver: zodResolver(schema),
     mode: 'onChange'
@@ -200,10 +201,17 @@ export function WaiverForm({ waiverType, serviceName, onSubmit, loading = false 
               {section.items && isCheckboxItems(section.items) ? 
                 section.items.map((item: CheckboxItem) => (
                   <div key={item.id} className="flex items-start space-x-3">
-                    <Checkbox
-                      id={item.id}
-                      {...register(item.id)}
-                      className={cn(errors[item.id] && "border-red-500")}
+                    <Controller
+                      name={item.id}
+                      control={control}
+                      render={({ field }) => (
+                        <Checkbox
+                          id={item.id}
+                          checked={field.value || false}
+                          onCheckedChange={field.onChange}
+                          className={cn(errors[item.id] && "border-red-500")}
+                        />
+                      )}
                     />
                     <div className="flex-1">
                       <Label
