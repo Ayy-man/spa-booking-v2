@@ -71,9 +71,9 @@ export const staffMembers: StaffMember[] = [
     name: 'Leonel Sidon',
     email: 'sidonleonel@gmail.com',
     phone: '(671) 747-1882',
-    specialties: 'Body Massages and Treatments, Facial Assist (Sundays only)',
+    specialties: 'Body Massages and Treatments, Can assist with facials (Sundays only)',
     initials: 'LS',
-    capabilities: ['massages', 'treatments', 'facial_assist'],
+    capabilities: ['massages', 'treatments', 'facials'],  // Added facials capability
     work_days: [0], // Sunday only
     default_room_id: null,
     defaultRoom: undefined,
