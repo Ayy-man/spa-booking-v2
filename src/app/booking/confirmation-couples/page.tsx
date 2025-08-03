@@ -331,6 +331,29 @@ export default function CouplesConfirmationPage() {
     })
   }
 
+  const formatTimeRange = (startTime: string, duration: number) => {
+    if (!startTime || !duration) return startTime
+    
+    // Parse start time
+    const [hours, minutes] = startTime.split(':').map(Number)
+    const start = new Date()
+    start.setHours(hours, minutes, 0, 0)
+    
+    // Calculate end time
+    const end = new Date(start.getTime() + duration * 60000)
+    
+    // Format both times
+    const formatTime = (date: Date) => {
+      return date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: false 
+      })
+    }
+    
+    return `${formatTime(start)} to ${formatTime(end)}`
+  }
+
   // Show loading state while data is being loaded from localStorage
   if (isLoading) {
     return (
@@ -407,7 +430,7 @@ export default function CouplesConfirmationPage() {
                   
                   <div className="border-t border-gray-200 pt-4 space-y-1 text-sm">
                     <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
-                    <div><span className="font-medium">Time:</span> {selectedTime}</div>
+                    <div><span className="font-medium">Time:</span> {formatTimeRange(selectedTime, bookingData.primaryService.duration)}</div>
                     <div><span className="font-medium">Room:</span> Couples Room</div>
                     <div><span className="font-medium">Total Price:</span> ${bookingData.totalPrice}</div>
                     <div><span className="font-medium">Customer:</span> {customerInfo.name}</div>
@@ -417,7 +440,7 @@ export default function CouplesConfirmationPage() {
                 <div className="space-y-2 text-sm">
                   <div><span className="font-medium">Service:</span> {bookingData.primaryService.name}</div>
                   <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
-                  <div><span className="font-medium">Time:</span> {selectedTime}</div>
+                  <div><span className="font-medium">Time:</span> {formatTimeRange(selectedTime, bookingData.primaryService.duration)}</div>
                   <div><span className="font-medium">Staff:</span> {staffNameMap[selectedStaff as keyof typeof staffNameMap]}</div>
                   <div><span className="font-medium">Price:</span> ${bookingData.primaryService.price}</div>
                   <div><span className="font-medium">Customer:</span> {customerInfo.name}</div>
@@ -518,7 +541,7 @@ export default function CouplesConfirmationPage() {
               <h3 className="font-semibold text-primary-dark mb-2">Appointment</h3>
               <div className="space-y-1">
                 <p><span className="font-medium">Date:</span> {formatDate(selectedDate)}</p>
-                <p><span className="font-medium">Time:</span> {selectedTime}</p>
+                <p><span className="font-medium">Time:</span> {formatTimeRange(selectedTime, bookingData.primaryService.duration)}</p>
                 {bookingData.isCouplesBooking && (
                   <p><span className="font-medium">Room:</span> Couples Room (Room 2 or 3)</p>
                 )}

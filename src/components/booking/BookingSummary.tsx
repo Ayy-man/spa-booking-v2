@@ -90,6 +90,29 @@ export function BookingSummary({
     return staffNameMap[staffId as keyof typeof staffNameMap] || 'Staff Member'
   }
 
+  const formatTimeRange = (startTime: string, duration: number) => {
+    if (!startTime || !duration) return startTime
+    
+    // Parse start time
+    const [hours, minutes] = startTime.split(':').map(Number)
+    const start = new Date()
+    start.setHours(hours, minutes, 0, 0)
+    
+    // Calculate end time
+    const end = new Date(start.getTime() + duration * 60000)
+    
+    // Format both times
+    const formatTime = (date: Date) => {
+      return date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: false 
+      })
+    }
+    
+    return `${formatTime(start)} to ${formatTime(end)}`
+  }
+
   const handleEdit = (section: string) => {
     if (!showEditLinks) return
     
@@ -196,7 +219,12 @@ export function BookingSummary({
                   {selectedTime && (
                     <div className="flex items-center space-x-1 mt-1">
                       <ClockIcon className="w-3 h-3" />
-                      <span>{selectedTime}</span>
+                      <span>
+                        {bookingData ? 
+                          formatTimeRange(selectedTime, bookingData.primaryService.duration) : 
+                          selectedTime
+                        }
+                      </span>
                     </div>
                   )}
                 </div>

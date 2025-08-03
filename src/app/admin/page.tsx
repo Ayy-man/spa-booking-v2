@@ -5,6 +5,7 @@ import { useState } from "react"
 import { TodaysSchedule } from "@/components/admin/todays-schedule"
 import { RoomTimeline } from "@/components/admin/room-timeline"
 import { StaffSchedule } from "@/components/admin/staff-schedule"
+import { WalkInsSection } from "@/components/admin/walk-ins-section"
 import { 
   Tabs, 
   TabsList, 
@@ -15,7 +16,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-type TabValue = "schedule" | "timeline" | "staff"
+type TabValue = "schedule" | "timeline" | "staff" | "walkins"
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabValue>("schedule")
@@ -25,6 +26,11 @@ export default function AdminDashboardPage() {
       value: "schedule" as const,
       label: "Today's Schedule",
       description: "View all appointments for today"
+    },
+    {
+      value: "walkins" as const,
+      label: "Walk-Ins",
+      description: "Manage walk-in customers"
     },
     {
       value: "timeline" as const,
@@ -67,7 +73,7 @@ export default function AdminDashboardPage() {
 
       {/* Tab Navigation */}
       <Tabs className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex h-auto p-1">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex h-auto p-1">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -89,6 +95,10 @@ export default function AdminDashboardPage() {
         <div className="mt-6">
           <TabsContent value="schedule" activeValue={activeTab}>
             <TodaysSchedule displayMode="dashboard" />
+          </TabsContent>
+
+          <TabsContent value="walkins" activeValue={activeTab}>
+            <WalkInsSection />
           </TabsContent>
 
           <TabsContent value="timeline" activeValue={activeTab}>

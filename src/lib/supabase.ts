@@ -346,6 +346,96 @@ export const supabaseClient = {
 
     if (error) throw error
     return data
+  },
+
+  // Walk-ins
+  async createWalkIn(walkIn: {
+    name: string
+    phone: string
+    email?: string
+    service_id: string
+    notes?: string
+  }) {
+    const { data, error } = await supabase
+      .from('walk_ins')
+      .insert({
+        name: walkIn.name,
+        phone: walkIn.phone,
+        email: walkIn.email || null,
+        service_id: walkIn.service_id,
+        notes: walkIn.notes || null,
+        status: 'waiting',
+        created_at: new Date().toISOString()
+      })
+      .select(`
+        *,
+        service:services(name, duration, price, category)
+      `)
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getWalkIns(filters?: {
+    status?: string
+    date?: string
+  }) {
+    let query = supabase
+      .from('walk_ins')
+      .select(`
+        *,
+        service:services(name, duration, price, category)
+      `)
+      .order('created_at', { ascending: false })
+
+    if (filters?.status && filters.status !== 'all') {
+      query = query.eq('status', filters.status)
+    }
+
+    if (filters?.date) {
+      const startOfDay = `${filters.date}T00:00:00.000Z`
+      const endOfDay = `${filters.date}T23:59:59.999Z`
+      query = query.gte('created_at', startOfDay).lte('created_at', endOfDay)
+    }
+
+    const { data, error } = await query
+    if (error) throw error
+    return data
+  },
+
+  async updateWalkInStatus(id: string, status: string, notes?: string) {
+    const updateData: any = {
+      status,
+      updated_at: new Date().toISOString()
+    }
+
+    if (notes !== undefined) {
+      updateData.notes = notes
+    }
+
+    const { data, error } = await supabase
+      .from('walk_ins')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        service:services(name, duration, price, category)
+      `)
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async deleteWalkIn(id: string) {
+    const { error } = await supabase
+      .from('walk_ins')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+    return true
   }
 }
 

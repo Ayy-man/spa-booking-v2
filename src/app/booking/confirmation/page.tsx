@@ -210,6 +210,29 @@ export default function ConfirmationPage() {
     })
   }
 
+  const formatTimeRange = (startTime: string, duration: number) => {
+    if (!startTime || !duration) return startTime
+    
+    // Parse start time
+    const [hours, minutes] = startTime.split(':').map(Number)
+    const start = new Date()
+    start.setHours(hours, minutes, 0, 0)
+    
+    // Calculate end time
+    const end = new Date(start.getTime() + duration * 60000)
+    
+    // Format both times
+    const formatTime = (date: Date) => {
+      return date.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit',
+        hour12: false 
+      })
+    }
+    
+    return `${formatTime(start)} to ${formatTime(end)}`
+  }
+
 
   // Show loading state while data is being loaded from localStorage
   if (isLoading) {
@@ -290,7 +313,7 @@ export default function ConfirmationPage() {
               <div className="space-y-2 text-sm">
                 <div><span className="font-medium">Service:</span> {bookingData.service.name}</div>
                 <div><span className="font-medium">Date:</span> {formatDate(bookingData.date)}</div>
-                <div><span className="font-medium">Time:</span> {bookingData.time}</div>
+                <div><span className="font-medium">Time:</span> {formatTimeRange(bookingData.time, bookingData.service.duration)}</div>
                 <div><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap]}</div>
                 <div><span className="font-medium">Price:</span> ${bookingData.service.price}</div>
                 <div><span className="font-medium">Customer:</span> {bookingData.customer.name}</div>
@@ -368,7 +391,7 @@ export default function ConfirmationPage() {
               <h3 className="font-semibold text-primary-dark mb-2">Appointment</h3>
               <div className="space-y-1">
                 <p><span className="font-medium">Date:</span> {formatDate(bookingData.date)}</p>
-                <p><span className="font-medium">Time:</span> {bookingData.time}</p>
+                <p><span className="font-medium">Time:</span> {formatTimeRange(bookingData.time, bookingData.service.duration)}</p>
                 <p><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap]}</p>
               </div>
             </div>
