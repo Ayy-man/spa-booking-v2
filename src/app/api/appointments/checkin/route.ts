@@ -110,34 +110,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Search for appointments
-    const searchTerm = body.searchTerm.toLowerCase().trim()
-    
-    // Build search conditions - search across multiple fields simultaneously
-    const searchConditions = []
-    
-    // Always search by name (first and last)
-    searchConditions.push(`customers.first_name.ilike.%${searchTerm}%`)
-    searchConditions.push(`customers.last_name.ilike.%${searchTerm}%`)
-    
-    // If it looks like an email, also search email
-    if (searchTerm.includes('@')) {
-      searchConditions.push(`customers.email.ilike.%${searchTerm}%`)
-    }
-    
-    // If it contains digits, also search phone
-    if (/\d/.test(searchTerm)) {
-      const cleanPhone = searchTerm.replace(/[\D]/g, '')
-      if (cleanPhone.length >= 3) {
-        searchConditions.push(`customers.phone.ilike.%${cleanPhone}%`)
-      }
-    }
-    
-    // If confirmation code provided, search by booking ID
-    if (body.confirmationCode && body.confirmationCode.trim()) {
-      searchConditions.push(`id.eq.${body.confirmationCode.trim()}`)
-    }
-
+    // Search for appointments - first get all today's bookings with customer data
     const { data: appointments, error: searchError } = await supabase
       .from('bookings')
       .select(`
@@ -149,18 +122,55 @@ export async function POST(request: NextRequest) {
       `)
       .eq('appointment_date', today)
       .neq('status', 'cancelled')
-      .or(searchConditions.join(','))
       .order('start_time', { ascending: true })
 
     if (searchError) {
-      console.error('Appointment search error:', searchError)
+      console.error('Appointment fetch error:', searchError)
       return NextResponse.json(
-        { error: 'Failed to search appointments' },
+        { error: 'Failed to fetch appointments' },
         { status: 500 }
       )
     }
 
     if (!appointments || appointments.length === 0) {
+      return NextResponse.json({
+        success: false,
+        message: 'No appointments scheduled for today',
+        appointments: []
+      })
+    }
+
+    // Filter appointments based on search term
+    const searchTerm = body.searchTerm.toLowerCase().trim()
+    let filteredAppointments = appointments
+
+    if (searchTerm) {
+      filteredAppointments = appointments.filter(apt => {
+        const customer = apt.customer
+        if (!customer) return false
+
+        // Search by name
+        const fullName = `${customer.first_name} ${customer.last_name}`.toLowerCase()
+        if (fullName.includes(searchTerm)) return true
+
+        // Search by email
+        if (customer.email && customer.email.toLowerCase().includes(searchTerm)) return true
+
+        // Search by phone
+        if (customer.phone) {
+          const cleanSearchPhone = searchTerm.replace(/[\D]/g, '')
+          const cleanCustomerPhone = customer.phone.replace(/[\D]/g, '')
+          if (cleanCustomerPhone.includes(cleanSearchPhone)) return true
+        }
+
+        // Search by confirmation code (booking ID)
+        if (body.confirmationCode && apt.id === body.confirmationCode.trim()) return true
+
+        return false
+      })
+    }
+
+    if (!filteredAppointments || filteredAppointments.length === 0) {
       return NextResponse.json({
         success: false,
         message: 'No appointments found for today matching your search criteria',
@@ -169,7 +179,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Return found appointments for selection
-    const formattedAppointments = appointments.map(apt => ({
+    const formattedAppointments = filteredAppointments.map(apt => ({
       id: apt.id,
       service_name: apt.service.name,
       start_time: apt.start_time,
@@ -183,7 +193,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Found ${appointments.length} appointment${appointments.length > 1 ? 's' : ''} for today`,
+      message: `Found ${filteredAppointments.length} appointment${filteredAppointments.length > 1 ? 's' : ''} for today`,
       appointments: formattedAppointments
     })
 
