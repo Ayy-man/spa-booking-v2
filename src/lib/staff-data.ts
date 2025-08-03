@@ -9,6 +9,7 @@ export interface StaffMember {
   work_days: number[]  // 0=Sunday, 1=Monday, etc. to match database schema
   default_room_id: string | null  // Match database field name
   defaultRoom?: number  // Room number for display (computed from default_room_id)
+  service_exclusions?: string[]  // Services this staff member cannot perform
   available?: boolean
 }
 
@@ -34,45 +35,49 @@ export const staffMembers: StaffMember[] = [
     specialties: 'All Facials (except dermaplaning)',
     initials: 'SV',
     capabilities: ['facials'],
-    work_days: [1, 3, 5, 6, 0], // Mon, Wed, Fri, Sat, Sun
+    work_days: [0, 1, 2, 3, 4, 5, 6], // All 7 days
     default_room_id: '11111111-1111-1111-1111-111111111111',
-    defaultRoom: 1
+    defaultRoom: 1,
+    service_exclusions: ['derma_planing']
   },
   {
     id: 'robyn',
     name: 'Robyn Camacho',
     email: 'robyncmcho@gmail.com',
     phone: '(671) 480-7862',
-    specialties: 'Facials, Waxing, Body Treatments, Massages',
+    specialties: 'Facials, Waxing, Body Treatments, Massages (excl. RF, nano, derma)',
     initials: 'RC',
     capabilities: ['facials', 'waxing', 'treatments', 'massages'],
-    work_days: [0, 1, 2, 3, 4, 5, 6], // Full schedule (all days)
+    work_days: [0, 3, 4, 5, 6], // Sun, Wed, Thu, Fri, Sat (off Mon/Tue)
     default_room_id: '33333333-3333-3333-3333-333333333333',
-    defaultRoom: 3
+    defaultRoom: 3,
+    service_exclusions: ['radio_frequency', 'nano_microneedling', 'derma_roller', 'derma_planing']
   },
   {
     id: 'tanisha',
     name: 'Tanisha Harris',
     email: 'misstanishababyy@gmail.com',
     phone: '(671) 747-5728',
-    specialties: 'Facials and Waxing',
+    specialties: 'Facials and Waxing (excl. RF, nano, derma roller)',
     initials: 'TH',
     capabilities: ['facials', 'waxing'],
-    work_days: [1, 3, 5, 6, 0], // Mon, Wed, Fri, Sat, Sun (off Tue/Thu)
+    work_days: [0, 1, 3, 5, 6], // Sun, Mon, Wed, Fri, Sat (off Tue/Thu)
     default_room_id: '22222222-2222-2222-2222-222222222222',
-    defaultRoom: 2
+    defaultRoom: 2,
+    service_exclusions: ['radio_frequency', 'nano_microneedling', 'derma_roller']
   },
   {
     id: 'leonel',
     name: 'Leonel Sidon',
     email: 'sidonleonel@gmail.com',
     phone: '(671) 747-1882',
-    specialties: 'Body Massages and Treatments (Sundays only)',
+    specialties: 'Body Massages and Treatments, Facial Assist (Sundays only)',
     initials: 'LS',
-    capabilities: ['massages', 'treatments'],
+    capabilities: ['massages', 'treatments', 'facial_assist'],
     work_days: [0], // Sunday only
     default_room_id: null,
-    defaultRoom: undefined
+    defaultRoom: undefined,
+    service_exclusions: []
   }
 ]
 
@@ -209,9 +214,33 @@ export const getGHLServiceCategory = (serviceName: string): string => {
 }
 
 // Helper function to check if staff can perform service
-export const canStaffPerformService = (staff: StaffMember, serviceCategory: string): boolean => {
+export const canStaffPerformService = (staff: StaffMember, serviceCategory: string, serviceName?: string): boolean => {
   if (staff.id === 'any') return true
-  return staff.capabilities.includes(serviceCategory) || staff.capabilities.includes('packages')
+  
+  // Check if staff has the required capability
+  const hasCapability = staff.capabilities.includes(serviceCategory) || staff.capabilities.includes('packages')
+  if (!hasCapability) return false
+  
+  // Check service exclusions if they exist
+  if (staff.service_exclusions && staff.service_exclusions.length > 0) {
+    // Check if the specific service name is excluded
+    if (serviceName) {
+      const serviceNameLower = serviceName.toLowerCase()
+      for (const exclusion of staff.service_exclusions) {
+        if (serviceNameLower.includes(exclusion.replace('_', ' ')) || 
+            serviceNameLower.includes(exclusion.replace('_', ''))) {
+          return false
+        }
+      }
+    }
+    
+    // Check if the service category is excluded
+    if (staff.service_exclusions.includes(serviceCategory)) {
+      return false
+    }
+  }
+  
+  return true
 }
 
 // Helper function to check if staff is available on selected date
@@ -229,12 +258,12 @@ export const getAvailableStaff = (serviceName: string, selectedDate: string): St
   const serviceCategory = getServiceCategory(serviceName)
   
   return staffMembers.filter(staff => {
-    const canPerformService = canStaffPerformService(staff, serviceCategory)
+    const canPerformService = canStaffPerformService(staff, serviceCategory, serviceName)
     const availableOnDate = isStaffAvailableOnDate(staff, selectedDate)
     return canPerformService && availableOnDate
   }).map(staff => ({
     ...staff,
-    available: isStaffAvailableOnDate(staff, selectedDate) && canStaffPerformService(staff, serviceCategory)
+    available: isStaffAvailableOnDate(staff, selectedDate) && canStaffPerformService(staff, serviceCategory, serviceName)
   }))
 }
 
@@ -250,17 +279,40 @@ export const convertDatabaseStaffToStaffMember = (dbStaff: any): StaffMember => 
     capabilities: dbStaff.capabilities || [],
     work_days: dbStaff.work_days || [],
     default_room_id: dbStaff.default_room_id,
+    service_exclusions: dbStaff.service_exclusions || [],
     available: true
   }
 }
 
 // Helper function to check if a staff member from database can perform a service
-export const canDatabaseStaffPerformService = (dbStaff: any, serviceCategory: string): boolean => {
+export const canDatabaseStaffPerformService = (dbStaff: any, serviceCategory: string, serviceName?: string): boolean => {
   if (!dbStaff || !dbStaff.capabilities) return false
   if (dbStaff.id === 'any') return true
   
   // Check if staff has capability for this service category
-  return dbStaff.capabilities.includes(serviceCategory) || dbStaff.capabilities.includes('packages')
+  const hasCapability = dbStaff.capabilities.includes(serviceCategory) || dbStaff.capabilities.includes('packages')
+  if (!hasCapability) return false
+  
+  // Check service exclusions if they exist
+  if (dbStaff.service_exclusions && dbStaff.service_exclusions.length > 0) {
+    // Check if the specific service name is excluded
+    if (serviceName) {
+      const serviceNameLower = serviceName.toLowerCase()
+      for (const exclusion of dbStaff.service_exclusions) {
+        if (serviceNameLower.includes(exclusion.replace('_', ' ')) || 
+            serviceNameLower.includes(exclusion.replace('_', ''))) {
+          return false
+        }
+      }
+    }
+    
+    // Check if the service category is excluded
+    if (dbStaff.service_exclusions.includes(serviceCategory)) {
+      return false
+    }
+  }
+  
+  return true
 }
 
 // Helper function to check if database staff is available on date

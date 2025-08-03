@@ -287,6 +287,7 @@ export interface Database {
           hourly_rate: number | null
           is_active: boolean
           auth_user_id: string | null
+          service_exclusions: string[]
           created_at: string
           updated_at: string
         }
@@ -304,6 +305,7 @@ export interface Database {
           hourly_rate?: number | null
           is_active?: boolean
           auth_user_id?: string | null
+          service_exclusions?: string[]
           created_at?: string
           updated_at?: string
         }
@@ -321,6 +323,7 @@ export interface Database {
           hourly_rate?: number | null
           is_active?: boolean
           auth_user_id?: string | null
+          service_exclusions?: string[]
           created_at?: string
           updated_at?: string
         }

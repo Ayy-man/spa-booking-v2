@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { format, addDays, startOfDay, isSameDay } from 'date-fns'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
+import { getAvailableStaff } from '@/lib/staff-data'
 
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { TimeSlotSkeleton } from '@/components/ui/skeleton-loader'
@@ -50,19 +51,25 @@ export default function DateTimePage() {
     setLoadingService(false)
   }, [])
 
-  // Generate next 30 days
+  // Generate next 30 days based on staff availability
   useEffect(() => {
+    if (!selectedService) return
+    
     const dates = []
     for (let i = 0; i < 30; i++) {
       const date = addDays(new Date(), i)
-      // Skip Tuesdays and Thursdays (Tanisha's off days)
-      const dayOfWeek = date.getDay()
-      if (dayOfWeek !== 2 && dayOfWeek !== 4) { // Tuesday = 2, Thursday = 4
+      const dateString = format(date, 'yyyy-MM-dd')
+      
+      // Check if any staff are available for this service on this date
+      const availableStaff = getAvailableStaff(selectedService.name, dateString)
+      
+      // Only include dates where at least one staff member is available
+      if (availableStaff.length > 0) {
         dates.push(date)
       }
     }
     setAvailableDates(dates)
-  }, [])
+  }, [selectedService])
 
   // If no service is selected after loading, redirect to service selection
   useEffect(() => {
