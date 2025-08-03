@@ -116,10 +116,12 @@ export default function AdminDashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-medium text-gray-900 mb-1">
-              Quick Actions
+              Dashboard Navigation
             </h3>
             <p className="text-gray-600 text-sm">
-              Common administrative tasks
+              {activeTab === 'timeline' || activeTab === 'schedule' || activeTab === 'staff' 
+                ? 'Schedule and timeline views are display-only for monitoring'
+                : 'Manage walk-ins and view booking information'}
             </p>
           </div>
           <div className="flex space-x-3">

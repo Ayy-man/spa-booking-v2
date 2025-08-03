@@ -7,7 +7,6 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations } from "@/types/booking"
-import { QuickActions } from "./quick-actions"
 import { isSpecialStaffRequest } from "@/lib/booking-utils"
 
 interface BookingCardProps {
@@ -16,8 +15,6 @@ interface BookingCardProps {
   showRoom?: boolean
   showStaff?: boolean
   showDuration?: boolean
-  showActions?: boolean
-  onUpdate?: () => void
   className?: string
 }
 
@@ -27,11 +24,8 @@ export function BookingCard({
   showRoom = true, 
   showStaff = true, 
   showDuration = true,
-  showActions = false,
-  onUpdate,
   className 
 }: BookingCardProps) {
-  const [showQuickActions, setShowQuickActions] = useState(false)
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':')
     const hour = parseInt(hours, 10)
@@ -154,48 +148,13 @@ export function BookingCard({
           )}
         </div>
 
-        {/* Actions Section */}
-        {showActions && size !== 'lg' && (
-          <div className="pt-3 border-t border-gray-100">
-            {!showQuickActions ? (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowQuickActions(true)}
-                className="w-full text-xs"
-              >
-                Quick Actions
-              </Button>
-            ) : (
-              <div className="space-y-3">
-                <QuickActions 
-                  booking={booking} 
-                  onSuccess={() => {
-                    setShowQuickActions(false)
-                    if (onUpdate) onUpdate()
-                  }}
-                />
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowQuickActions(false)}
-                  className="w-full text-xs"
-                >
-                  Hide Actions
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Privacy Notice - Only for wall display */}
-        {size === 'lg' && (
-          <div className="pt-2 border-t border-gray-100">
-            <p className="text-xs text-gray-400 italic">
-              Customer details hidden for privacy
-            </p>
-          </div>
-        )}
+        {/* Display-Only Notice */}
+        <div className="pt-2 border-t border-gray-100">
+          <p className="text-xs text-gray-400 italic">
+            {size === 'lg' ? 'Customer details hidden for privacy • Display only' : 'Display only'}
+          </p>
+        </div>
       </div>
     </Card>
   )

@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
 import { BookingCard } from "./booking-card"
 import { FilterBar } from "./filter-bar"
-import { QuickActions } from "./quick-actions"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
@@ -275,27 +274,22 @@ export function TodaysSchedule({
               showRoom={true}
               showStaff={true}
               showDuration={true}
-              showActions={displayMode === "dashboard"}
-              onUpdate={fetchTodaysSchedule}
             />
           ))}
         </div>
       )}
 
-      {/* General Quick Actions for Dashboard Mode */}
-      {displayMode === "dashboard" && (
-        <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">
-              General Quick Actions
-            </h3>
-            <p className="text-sm text-gray-600">
-              Add walk-in appointments or block time slots for breaks and cleaning.
-            </p>
-            <QuickActions onSuccess={fetchTodaysSchedule} />
-          </div>
-        </Card>
-      )}
+      {/* Display-Only Notice */}
+      <Card className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200">
+        <div className="text-center">
+          <h3 className="text-sm font-medium text-gray-700 mb-1">
+            Display-Only Mode
+          </h3>
+          <p className="text-xs text-gray-500">
+            Schedule view is read-only. Use dedicated admin tools for booking management.
+          </p>
+        </div>
+      </Card>
 
       {/* Summary Stats for Monitor Mode */}
       {displayMode === "monitor" && filteredBookings.length > 0 && (
