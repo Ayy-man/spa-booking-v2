@@ -6,7 +6,7 @@ interface WalkInRequest {
   name: string
   phone: string
   email?: string
-  service: string
+  service: string  // This is the service ID
   notes?: string
 }
 
