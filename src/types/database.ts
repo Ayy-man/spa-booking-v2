@@ -40,7 +40,6 @@ export interface Database {
           waiver_data: Json | null
           waiver_signed_at: string | null
           payment_option: string
-          checked_in_at: string | null
           created_at: string
           updated_at: string
         }
@@ -68,7 +67,6 @@ export interface Database {
           waiver_data?: Json | null
           waiver_signed_at?: string | null
           payment_option?: string
-          checked_in_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -96,7 +94,6 @@ export interface Database {
           waiver_data?: Json | null
           waiver_signed_at?: string | null
           payment_option?: string
-          checked_in_at?: string | null
           created_at?: string
           updated_at?: string
         }
