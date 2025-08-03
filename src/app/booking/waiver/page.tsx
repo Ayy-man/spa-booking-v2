@@ -193,18 +193,11 @@ export default function WaiverPage() {
                 </p>
               </div>
               
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p className="text-green-800 text-sm">
                   Redirecting you to complete your booking...
                 </p>
               </div>
-              
-              <Button 
-                onClick={proceedToPayment}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Continue to Payment
-              </Button>
             </Card>
           </div>
         </div>
