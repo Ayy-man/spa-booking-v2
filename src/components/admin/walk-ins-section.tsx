@@ -64,7 +64,7 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
 
   useEffect(() => {
     fetchWalkIns()
-  }, [selectedStatus])
+  }, [selectedStatus]) // fetchWalkIns is defined inside the effect scope
 
   const handleStatusUpdate = async (id: string, newStatus: string, notes?: string) => {
     setActionLoading(id)
@@ -108,7 +108,7 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
               <UserIcon className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h4 className="font-medium text-gray-900">{walkIn.name}</h4>
+              <h4 className="font-medium text-gray-900">{walkIn.customer_name}</h4>
               <p className="text-sm text-gray-500">
                 {formatWalkInTime(walkIn.created_at)} • {getTimeSinceCreated(walkIn.created_at)}
               </p>
@@ -131,13 +131,13 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
         <div className="space-y-2 mb-4">
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <PhoneIcon className="w-4 h-4" />
-            <span>{walkIn.phone}</span>
+            <span>{walkIn.customer_phone}</span>
           </div>
           
-          {walkIn.email && (
+          {walkIn.customer_email && (
             <div className="flex items-center space-x-2 text-sm text-gray-600">
               <MailIcon className="w-4 h-4" />
-              <span>{walkIn.email}</span>
+              <span>{walkIn.customer_email}</span>
             </div>
           )}
 
@@ -146,12 +146,10 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
               Service Requested:
             </div>
             <div className="text-sm text-gray-700">
-              {walkIn.service?.name || walkIn.service_name || 'Unknown Service'}
-              {walkIn.service && (
-                <span className="text-gray-500 ml-2">
-                  ({walkIn.service.duration}min • ${walkIn.service.price})
-                </span>
-              )}
+              {walkIn.service_name}
+              <span className="text-gray-500 ml-2">
+                ({walkIn.service_category})
+              </span>
             </div>
           </div>
 

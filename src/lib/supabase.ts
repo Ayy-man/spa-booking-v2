@@ -353,24 +353,24 @@ export const supabaseClient = {
     name: string
     phone: string
     email?: string
-    service_id: string
+    service_name: string
+    service_category: string
     notes?: string
   }) {
     const { data, error } = await supabase
       .from('walk_ins')
       .insert({
-        name: walkIn.name,
-        phone: walkIn.phone,
-        email: walkIn.email || null,
-        service_id: walkIn.service_id,
+        customer_name: walkIn.name,
+        customer_phone: walkIn.phone,
+        customer_email: walkIn.email || null,
+        service_name: walkIn.service_name,
+        service_category: walkIn.service_category,
         notes: walkIn.notes || null,
         status: 'waiting',
-        created_at: new Date().toISOString()
+        scheduling_type: 'walk_in',
+        checked_in_at: new Date().toISOString()
       })
-      .select(`
-        *,
-        service:services(name, duration, price, category)
-      `)
+      .select('*')
       .single()
 
     if (error) throw error
@@ -383,10 +383,7 @@ export const supabaseClient = {
   }) {
     let query = supabase
       .from('walk_ins')
-      .select(`
-        *,
-        service:services(name, duration, price, category)
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
 
     if (filters?.status && filters.status !== 'all') {
@@ -406,22 +403,23 @@ export const supabaseClient = {
 
   async updateWalkInStatus(id: string, status: string, notes?: string) {
     const updateData: any = {
-      status,
-      updated_at: new Date().toISOString()
+      status
     }
 
     if (notes !== undefined) {
       updateData.notes = notes
     }
 
+    // Set completion timestamp if status is 'served'
+    if (status === 'served') {
+      updateData.completed_at = new Date().toISOString()
+    }
+
     const { data, error } = await supabase
       .from('walk_ins')
       .update(updateData)
       .eq('id', id)
-      .select(`
-        *,
-        service:services(name, duration, price, category)
-      `)
+      .select('*')
       .single()
 
     if (error) throw error

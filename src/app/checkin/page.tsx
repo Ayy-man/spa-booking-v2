@@ -120,7 +120,7 @@ export default function WalkInCheckinPage() {
               <h4 className="font-medium text-blue-900 mb-2">What's Next?</h4>
               <p className="text-sm text-blue-700">
                 Our staff will review your request and accommodate you as soon as possible. 
-                Please have a seat in our waiting area and we'll call you shortly.
+                Please have a seat in our waiting area and we&apos;ll call you shortly.
               </p>
             </div>
 
@@ -157,7 +157,7 @@ export default function WalkInCheckinPage() {
             Welcome to Dermal Skin Clinic
           </p>
           <p className="text-gray-500">
-            Please fill out the form below and we'll accommodate you as soon as possible.
+            Please fill out the form below and we&apos;ll accommodate you as soon as possible.
           </p>
         </div>
 

@@ -48,14 +48,15 @@ export async function POST(request: NextRequest) {
     const { data: walkIn, error: walkInError } = await supabase
       .from('walk_ins')
       .insert({
-        name: body.name,
-        phone: body.phone,
-        email: body.email || null,
-        service_id: service.id,
+        customer_name: body.name,
+        customer_phone: body.phone,
+        customer_email: body.email || null,
         service_name: service.name,
+        service_category: service.category,
         notes: body.notes || null,
         status: 'waiting',
-        created_at: new Date().toISOString()
+        scheduling_type: 'walk_in',
+        checked_in_at: new Date().toISOString()
       })
       .select()
       .single()
@@ -106,10 +107,10 @@ export async function POST(request: NextRequest) {
       success: true,
       walkIn: {
         id: walkIn.id,
-        name: walkIn.name,
-        phone: walkIn.phone,
-        email: walkIn.email,
-        service: service.name,
+        name: walkIn.customer_name,
+        phone: walkIn.customer_phone,
+        email: walkIn.customer_email,
+        service: walkIn.service_name,
         notes: walkIn.notes,
         status: walkIn.status,
         created_at: walkIn.created_at
@@ -133,10 +134,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('walk_ins')
-      .select(`
-        *,
-        service:services(name, duration, price, category)
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
 
     // Filter by status if provided

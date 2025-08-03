@@ -330,7 +330,7 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
               <h4 className="text-sm font-medium text-amber-900 mb-1">Walk-In Service</h4>
               <p className="text-xs text-amber-700">
                 Please note that walk-in appointments are subject to availability. 
-                We'll do our best to accommodate you as soon as possible.
+                We&apos;ll do our best to accommodate you as soon as possible.
               </p>
             </div>
           </div>

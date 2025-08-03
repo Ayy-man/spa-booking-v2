@@ -3,21 +3,25 @@ import { supabaseClient } from '@/lib/supabase'
 
 export interface WalkIn {
   id: string
-  name: string
-  phone: string
-  email: string | null
-  service_id: string
-  service_name: string | null
+  customer_id: string | null
+  booking_id: string | null
+  customer_name: string
+  customer_email: string | null
+  customer_phone: string
+  service_name: string
+  service_category: string
+  scheduling_type: string
+  scheduled_date: string | null
+  scheduled_time: string | null
   notes: string | null
   status: 'waiting' | 'served' | 'cancelled' | 'no_show'
+  checked_in_at: string | null
+  completed_at: string | null
+  ghl_webhook_sent: boolean
+  ghl_webhook_sent_at: string | null
+  created_by: string | null
   created_at: string
-  updated_at: string | null
-  service?: {
-    name: string
-    duration: number
-    price: number
-    category: string
-  }
+  updated_at: string
 }
 
 export interface WalkInFilters {
@@ -29,7 +33,8 @@ export interface WalkInCreateData {
   name: string
   phone: string
   email?: string
-  service_id: string
+  service_name: string
+  service_category: string
   notes?: string
 }
 
@@ -85,7 +90,7 @@ export function validateWalkInData(data: WalkInCreateData): string | null {
     return 'Phone number is required'
   }
 
-  if (!data.service_id?.trim()) {
+  if (!data.service_name?.trim()) {
     return 'Service selection is required'
   }
 
