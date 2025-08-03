@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
       const { data: updatedAppointment, error: updateError } = await supabase
         .from('bookings')
         .update({
-          status: 'confirmed', // or 'checked_in' if you prefer
-          checked_in_at: new Date().toISOString(),
+          status: 'confirmed',
+          internal_notes: `Checked in via self-service at ${new Date().toLocaleString()}`,
           updated_at: new Date().toISOString()
         })
         .eq('id', body.appointmentId)
@@ -56,39 +56,50 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (updateError) {
+        console.error('Update error:', updateError)
+        console.error('Attempted to update booking ID:', body.appointmentId)
         return NextResponse.json(
-          { error: 'Failed to check in appointment' },
+          { error: `Failed to check in appointment: ${updateError.message}` },
           { status: 500 }
         )
       }
 
       // Send "show" webhook to GHL
       try {
-        await ghlWebhookSender.sendShowNoShowWebhook(
-          appointment.id,
-          {
-            name: `${appointment.customer.first_name} ${appointment.customer.last_name}`,
-            email: appointment.customer.email || '',
-            phone: appointment.customer.phone,
-            isNewCustomer: false
-          },
-          {
-            service: appointment.service.name,
-            serviceId: appointment.service.id,
-            serviceCategory: appointment.service.category,
-            ghlCategory: appointment.service.ghl_category,
-            date: appointment.appointment_date,
-            time: appointment.start_time,
-            duration: appointment.service.duration,
-            price: appointment.service.price,
-            staff: appointment.staff.name,
-            staffId: appointment.staff.id,
-            room: `Room ${appointment.room.name}`,
-            roomId: appointment.room.id.toString()
-          },
-          'show', // Customer showed up
-          'Customer checked in via self-service'
-        )
+        if (appointment.customer && appointment.service && appointment.staff && appointment.room) {
+          await ghlWebhookSender.sendShowNoShowWebhook(
+            appointment.id,
+            {
+              name: `${appointment.customer.first_name} ${appointment.customer.last_name}`,
+              email: appointment.customer.email || '',
+              phone: appointment.customer.phone,
+              isNewCustomer: false
+            },
+            {
+              service: appointment.service.name,
+              serviceId: appointment.service.id,
+              serviceCategory: appointment.service.category,
+              ghlCategory: appointment.service.ghl_category,
+              date: appointment.appointment_date,
+              time: appointment.start_time,
+              duration: appointment.service.duration,
+              price: appointment.service.price,
+              staff: appointment.staff.name,
+              staffId: appointment.staff.id,
+              room: `Room ${appointment.room.name}`,
+              roomId: String(appointment.room.id)
+            },
+            'show', // Customer showed up
+            'Customer checked in via self-service'
+          )
+        } else {
+          console.error('Missing required data for webhook:', {
+            hasCustomer: !!appointment.customer,
+            hasService: !!appointment.service,
+            hasStaff: !!appointment.staff,
+            hasRoom: !!appointment.room
+          })
+        }
       } catch (webhookError) {
         console.error('Check-in webhook failed:', webhookError)
         // Don't fail the check-in if webhook fails
@@ -105,7 +116,7 @@ export async function POST(request: NextRequest) {
           staff_name: appointment.staff.name,
           room_name: appointment.room.name,
           status: updatedAppointment.status,
-          checked_in_at: updatedAppointment.checked_in_at
+          checked_in_at: new Date().toISOString() // Return current time as check-in time
         }
       })
     }
@@ -188,7 +199,9 @@ export async function POST(request: NextRequest) {
       room_name: apt.room.name,
       customer_name: `${apt.customer.first_name} ${apt.customer.last_name}`,
       status: apt.status,
-      checked_in_at: apt.checked_in_at
+      checked_in_at: apt.status === 'confirmed' && apt.internal_notes?.includes('Checked in via self-service') 
+        ? apt.updated_at 
+        : null
     }))
 
     return NextResponse.json({
