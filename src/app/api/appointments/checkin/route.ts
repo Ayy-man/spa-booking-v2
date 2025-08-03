@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
+
+// Create admin client for operations that need to bypass RLS
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 interface CheckInRequest {
   searchTerm: string
@@ -110,12 +117,13 @@ export async function POST(request: NextRequest) {
       console.log('Current appointment status:', appointment.status)
       console.log('Updating appointment with ID:', body.appointmentId)
       
-      const { data: updatedAppointments, error: updateError } = await supabase
+      // Use admin client to bypass RLS policies for the update operation
+      const { data: updatedAppointments, error: updateError } = await supabaseAdmin
         .from('bookings')
         .update({
           checked_in_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-          // Removed status update to avoid enum issues - just update checked_in_at timestamp
+          // Using service role key bypasses RLS policies that were blocking updates
         })
         .eq('id', body.appointmentId)
         .select()
