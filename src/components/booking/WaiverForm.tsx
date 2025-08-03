@@ -98,6 +98,15 @@ export function WaiverForm({ waiverType, serviceName, onSubmit, loading = false 
 
   const watchedValues = watch()
 
+  // Type guard functions to safely narrow union types
+  const isCheckboxItems = (items: CheckboxItem[] | InitialItem[]): items is CheckboxItem[] => {
+    return items.length > 0 && 'label' in items[0]
+  }
+
+  const isInitialItems = (items: CheckboxItem[] | InitialItem[]): items is InitialItem[] => {
+    return items.length > 0 && 'text' in items[0]
+  }
+
   const handleSignatureChange = (signatureData: string | null) => {
     const sig = signatureData || ''
     setSignature(sig)
@@ -188,30 +197,31 @@ export function WaiverForm({ waiverType, serviceName, onSubmit, loading = false 
               <h3 className="text-lg font-semibold text-gray-900">{section.title}</h3>
             )}
             <div className="space-y-3">
-              {section.items?.map((item: CheckboxItem) => (
-                <div key={item.id} className="flex items-start space-x-3">
-                  <Checkbox
-                    id={item.id}
-                    {...register(item.id)}
-                    className={cn(errors[item.id] && "border-red-500")}
-                  />
-                  <div className="flex-1">
-                    <Label
-                      htmlFor={item.id}
-                      className="text-sm leading-relaxed cursor-pointer"
-                    >
-                      {item.label}
-                      {item.required && <span className="text-red-500 ml-1">*</span>}
-                    </Label>
-                    {errors[item.id] && (
-                      <p className="text-red-600 text-xs flex items-center gap-1 mt-1">
-                        <AlertCircleIcon className="w-3 h-3" />
-                        {errors[item.id]?.message as string}
-                      </p>
-                    )}
+              {section.items && isCheckboxItems(section.items) ? 
+                section.items.map((item: CheckboxItem) => (
+                  <div key={item.id} className="flex items-start space-x-3">
+                    <Checkbox
+                      id={item.id}
+                      {...register(item.id)}
+                      className={cn(errors[item.id] && "border-red-500")}
+                    />
+                    <div className="flex-1">
+                      <Label
+                        htmlFor={item.id}
+                        className="text-sm leading-relaxed cursor-pointer"
+                      >
+                        {item.label}
+                        {item.required && <span className="text-red-500 ml-1">*</span>}
+                      </Label>
+                      {errors[item.id] && (
+                        <p className="text-red-600 text-xs flex items-center gap-1 mt-1">
+                          <AlertCircleIcon className="w-3 h-3" />
+                          {errors[item.id]?.message as string}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )) : null}
             </div>
           </div>
         )
@@ -223,40 +233,41 @@ export function WaiverForm({ waiverType, serviceName, onSubmit, loading = false 
               <h3 className="text-lg font-semibold text-gray-900">{section.title}</h3>
             )}
             <div className="space-y-4">
-              {section.items?.map((item: InitialItem, itemIndex: number) => (
-                <div key={item.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700 min-w-[20px]">
-                    {itemIndex + 1}.
-                  </span>
-                  <div className="flex-1">
-                    <p className="text-sm leading-relaxed mb-2">{item.text}</p>
-                    <div className="flex items-center space-x-2">
-                      <Label htmlFor={`initial_${item.id}`} className="text-xs text-gray-600">
-                        Initials:
-                      </Label>
-                      <Input
-                        id={`initial_${item.id}`}
-                        placeholder="XX"
-                        maxLength={3}
-                        className={cn(
-                          "w-16 text-center text-sm",
-                          errors[`initial_${item.id}`] && "border-red-500"
+              {section.items && isInitialItems(section.items) ?
+                section.items.map((item: InitialItem, itemIndex: number) => (
+                  <div key={item.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm font-medium text-gray-700 min-w-[20px]">
+                      {itemIndex + 1}.
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-sm leading-relaxed mb-2">{item.text}</p>
+                      <div className="flex items-center space-x-2">
+                        <Label htmlFor={`initial_${item.id}`} className="text-xs text-gray-600">
+                          Initials:
+                        </Label>
+                        <Input
+                          id={`initial_${item.id}`}
+                          placeholder="XX"
+                          maxLength={3}
+                          className={cn(
+                            "w-16 text-center text-sm",
+                            errors[`initial_${item.id}`] && "border-red-500"
+                          )}
+                          {...register(`initial_${item.id}`)}
+                        />
+                        {watchedValues[`initial_${item.id}`] && (
+                          <CheckCircleIcon className="w-4 h-4 text-green-600" />
                         )}
-                        {...register(`initial_${item.id}`)}
-                      />
-                      {watchedValues[`initial_${item.id}`] && (
-                        <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                      </div>
+                      {errors[`initial_${item.id}`] && (
+                        <p className="text-red-600 text-xs flex items-center gap-1 mt-1">
+                          <AlertCircleIcon className="w-3 h-3" />
+                          {errors[`initial_${item.id}`]?.message as string}
+                        </p>
                       )}
                     </div>
-                    {errors[`initial_${item.id}`] && (
-                      <p className="text-red-600 text-xs flex items-center gap-1 mt-1">
-                        <AlertCircleIcon className="w-3 h-3" />
-                        {errors[`initial_${item.id}`]?.message as string}
-                      </p>
-                    )}
                   </div>
-                </div>
-              ))}
+                )) : null}
             </div>
           </div>
         )
