@@ -144,6 +144,11 @@ export default function CheckinPage() {
     setFoundAppointments([])
   }
 
+  const handleClearSearch = () => {
+    setFoundAppointments([])
+    setAppointmentError(null)
+  }
+
   // Success screen for both appointment check-in and walk-in
   if (submitted) {
     const isAppointmentCompletion = completionType === 'appointment'
@@ -283,6 +288,7 @@ export default function CheckinPage() {
           <AppointmentCheckinForm
             onSubmit={handleAppointmentSubmit}
             onBack={() => setCurrentFlow('selector')}
+            onClearSearch={handleClearSearch}
             loading={loading}
             error={appointmentError}
             foundAppointments={foundAppointments}

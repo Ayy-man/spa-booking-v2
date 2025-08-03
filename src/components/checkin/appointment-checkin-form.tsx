@@ -24,6 +24,7 @@ export type AppointmentCheckinData = z.infer<typeof appointmentCheckinSchema>
 interface AppointmentCheckinFormProps {
   onSubmit: (data: AppointmentCheckinData) => void
   onBack: () => void
+  onClearSearch?: () => void
   loading?: boolean
   error?: string | null
   foundAppointments?: any[]
@@ -32,6 +33,7 @@ interface AppointmentCheckinFormProps {
 export function AppointmentCheckinForm({ 
   onSubmit, 
   onBack, 
+  onClearSearch,
   loading = false, 
   error = null,
   foundAppointments = []
@@ -128,7 +130,24 @@ export function AppointmentCheckinForm({
           {/* Found Appointments Display */}
           {foundAppointments.length > 0 && (
             <div className="space-y-3">
-              <h3 className="font-medium text-gray-900">Found Appointments for Today:</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="font-medium text-gray-900">Found Appointments for Today:</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Clear found appointments to show search form again
+                    if (onClearSearch) {
+                      onClearSearch()
+                    }
+                  }}
+                  className="text-gray-600"
+                >
+                  <SearchIcon className="w-4 h-4 mr-1" />
+                  Search Again
+                </Button>
+              </div>
               {foundAppointments.map((appointment, index) => (
                 <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <div className="flex justify-between items-start">
@@ -137,11 +156,17 @@ export function AppointmentCheckinForm({
                         {appointment.service_name || appointment.service?.name}
                       </div>
                       <div className="text-sm text-green-700 space-y-1">
+                        <div>Customer: {appointment.customer_name}</div>
                         <div>Time: {appointment.start_time} - {appointment.end_time}</div>
                         <div>Staff: {appointment.staff?.name || appointment.staff_name}</div>
                         <div>Room: {appointment.room?.name || appointment.room_name}</div>
                         {appointment.status && (
-                          <div>Status: <span className="capitalize">{appointment.status}</span></div>
+                          <div>Status: <span className="capitalize">{appointment.status}</span></div>  
+                        )}
+                        {appointment.checked_in_at && (
+                          <div className="text-green-600 font-medium">
+                            ✓ Already checked in at {new Date(appointment.checked_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -149,6 +174,7 @@ export function AppointmentCheckinForm({
                       type="button"
                       size="sm"
                       className="bg-green-600 text-white hover:bg-green-700"
+                      disabled={!!appointment.checked_in_at}
                       onClick={() => {
                         // This would trigger the check-in process for this specific appointment
                         onSubmit({ 
@@ -158,7 +184,7 @@ export function AppointmentCheckinForm({
                       }}
                     >
                       <CheckCircleIcon className="w-4 h-4 mr-1" />
-                      Check In
+                      {appointment.checked_in_at ? 'Checked In' : 'Check In'}
                     </Button>
                   </div>
                 </div>

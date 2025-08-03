@@ -111,7 +111,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Search for appointments
-    let query = supabase
+    const searchTerm = body.searchTerm.toLowerCase().trim()
+    
+    // Build search conditions - search across multiple fields simultaneously
+    const searchConditions = []
+    
+    // Always search by name (first and last)
+    searchConditions.push(`customers.first_name.ilike.%${searchTerm}%`)
+    searchConditions.push(`customers.last_name.ilike.%${searchTerm}%`)
+    
+    // If it looks like an email, also search email
+    if (searchTerm.includes('@')) {
+      searchConditions.push(`customers.email.ilike.%${searchTerm}%`)
+    }
+    
+    // If it contains digits, also search phone
+    if (/\d/.test(searchTerm)) {
+      const cleanPhone = searchTerm.replace(/[\D]/g, '')
+      if (cleanPhone.length >= 3) {
+        searchConditions.push(`customers.phone.ilike.%${cleanPhone}%`)
+      }
+    }
+    
+    // If confirmation code provided, search by booking ID
+    if (body.confirmationCode && body.confirmationCode.trim()) {
+      searchConditions.push(`id.eq.${body.confirmationCode.trim()}`)
+    }
+
+    const { data: appointments, error: searchError } = await supabase
       .from('bookings')
       .select(`
         *,
@@ -122,34 +149,8 @@ export async function POST(request: NextRequest) {
       `)
       .eq('appointment_date', today)
       .neq('status', 'cancelled')
-
-    // Build search conditions
-    const searchTerm = body.searchTerm.toLowerCase().trim()
-    
-    // Try to determine if it's a phone number (contains digits and common phone chars)
-    const isLikelyPhone = /[\d\-\(\)\+\s]/.test(searchTerm) && searchTerm.replace(/[\D]/g, '').length >= 7
-    
-    // Try to determine if it's an email (contains @)
-    const isLikelyEmail = searchTerm.includes('@')
-
-    if (isLikelyEmail) {
-      // Search by email
-      query = query.or(`customer.email.ilike.%${searchTerm}%`)
-    } else if (isLikelyPhone) {
-      // Search by phone - remove common formatting characters for comparison
-      const cleanPhone = searchTerm.replace(/[\D]/g, '')
-      query = query.or(`customer.phone.ilike.%${cleanPhone}%`)
-    } else {
-      // Search by name
-      query = query.or(`customer.first_name.ilike.%${searchTerm}%,customer.last_name.ilike.%${searchTerm}%`)
-    }
-
-    // If confirmation code provided, also search by booking ID
-    if (body.confirmationCode) {
-      query = query.or(`id.eq.${body.confirmationCode}`)
-    }
-
-    const { data: appointments, error: searchError } = await query.order('start_time', { ascending: true })
+      .or(searchConditions.join(','))
+      .order('start_time', { ascending: true })
 
     if (searchError) {
       console.error('Appointment search error:', searchError)
