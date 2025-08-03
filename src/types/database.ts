@@ -36,6 +36,10 @@ export interface Database {
           cancellation_reason: string | null
           booking_group_id: string | null
           booking_type: string
+          waiver_signed: boolean
+          waiver_data: Json | null
+          waiver_signed_at: string | null
+          payment_option: string
           created_at: string
           updated_at: string
         }
@@ -59,6 +63,10 @@ export interface Database {
           created_by?: string | null
           booking_group_id?: string | null
           booking_type?: string
+          waiver_signed?: boolean
+          waiver_data?: Json | null
+          waiver_signed_at?: string | null
+          payment_option?: string
           created_at?: string
           updated_at?: string
         }
@@ -82,6 +90,10 @@ export interface Database {
           created_by?: string | null
           booking_group_id?: string | null
           booking_type?: string
+          waiver_signed?: boolean
+          waiver_data?: Json | null
+          waiver_signed_at?: string | null
+          payment_option?: string
           created_at?: string
           updated_at?: string
         }
@@ -110,6 +122,7 @@ export interface Database {
           marketing_consent: boolean
           is_active: boolean
           auth_user_id: string | null
+          emergency_contact_relationship: string | null
           created_at: string
           updated_at: string
         }
@@ -136,6 +149,7 @@ export interface Database {
           marketing_consent?: boolean
           is_active?: boolean
           auth_user_id?: string | null
+          emergency_contact_relationship?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -162,6 +176,7 @@ export interface Database {
           marketing_consent?: boolean
           is_active?: boolean
           auth_user_id?: string | null
+          emergency_contact_relationship?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -214,6 +229,9 @@ export interface Database {
           is_active: boolean
           service_capabilities: string[]
           ghl_category: string
+          popularity_score: number
+          is_recommended: boolean
+          is_popular: boolean
           created_at: string
           updated_at: string
         }
@@ -229,6 +247,9 @@ export interface Database {
           is_active?: boolean
           service_capabilities?: string[]
           ghl_category: string
+          popularity_score?: number
+          is_recommended?: boolean
+          is_popular?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -244,6 +265,9 @@ export interface Database {
           is_active?: boolean
           service_capabilities?: string[]
           ghl_category?: string
+          popularity_score?: number
+          is_recommended?: boolean
+          is_popular?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -338,6 +362,265 @@ export interface Database {
           break_start?: string | null
           break_end?: string | null
           notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      admin_users: {
+        Row: {
+          id: string
+          user_id: string
+          email: string
+          role: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+          created_by: string | null
+          notes: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          email: string
+          role: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+          notes?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          email?: string
+          role?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+          notes?: string | null
+        }
+      }
+      payments: {
+        Row: {
+          id: string
+          booking_id: string
+          amount: number
+          payment_method: string
+          transaction_id: string | null
+          status: string
+          processed_at: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          booking_id: string
+          amount: number
+          payment_method: string
+          transaction_id?: string | null
+          status?: string
+          processed_at?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          booking_id?: string
+          amount?: number
+          payment_method?: string
+          transaction_id?: string | null
+          status?: string
+          processed_at?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      service_packages: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          service_ids: string[]
+          total_duration: number
+          individual_price: number
+          package_price: number
+          savings: number
+          is_couples: boolean
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          service_ids: string[]
+          total_duration: number
+          individual_price: number
+          package_price: number
+          savings?: number
+          is_couples?: boolean
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          service_ids?: string[]
+          total_duration?: number
+          individual_price?: number
+          package_price?: number
+          savings?: number
+          is_couples?: boolean
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      waivers: {
+        Row: {
+          id: string
+          customer_id: string | null
+          booking_id: string | null
+          service_category: string
+          service_name: string
+          signature: string
+          agreed_to_terms: boolean
+          medical_conditions: string | null
+          allergies: string | null
+          skin_conditions: string | null
+          medications: string | null
+          pregnancy_status: boolean | null
+          previous_waxing: boolean | null
+          recent_sun_exposure: boolean | null
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          waiver_content: Json | null
+          ip_address: string | null
+          user_agent: string | null
+          signed_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id?: string | null
+          booking_id?: string | null
+          service_category: string
+          service_name: string
+          signature: string
+          agreed_to_terms?: boolean
+          medical_conditions?: string | null
+          allergies?: string | null
+          skin_conditions?: string | null
+          medications?: string | null
+          pregnancy_status?: boolean | null
+          previous_waxing?: boolean | null
+          recent_sun_exposure?: boolean | null
+          emergency_contact_name: string
+          emergency_contact_phone: string
+          waiver_content?: Json | null
+          ip_address?: string | null
+          user_agent?: string | null
+          signed_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string | null
+          booking_id?: string | null
+          service_category?: string
+          service_name?: string
+          signature?: string
+          agreed_to_terms?: boolean
+          medical_conditions?: string | null
+          allergies?: string | null
+          skin_conditions?: string | null
+          medications?: string | null
+          pregnancy_status?: boolean | null
+          previous_waxing?: boolean | null
+          recent_sun_exposure?: boolean | null
+          emergency_contact_name?: string
+          emergency_contact_phone?: string
+          waiver_content?: Json | null
+          ip_address?: string | null
+          user_agent?: string | null
+          signed_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      walk_ins: {
+        Row: {
+          id: string
+          customer_id: string | null
+          booking_id: string | null
+          customer_name: string
+          customer_email: string | null
+          customer_phone: string
+          service_name: string
+          service_category: string
+          scheduling_type: string
+          scheduled_date: string | null
+          scheduled_time: string | null
+          notes: string | null
+          status: string
+          checked_in_at: string | null
+          completed_at: string | null
+          ghl_webhook_sent: boolean
+          ghl_webhook_sent_at: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          customer_id?: string | null
+          booking_id?: string | null
+          customer_name: string
+          customer_email?: string | null
+          customer_phone: string
+          service_name: string
+          service_category: string
+          scheduling_type?: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          notes?: string | null
+          status?: string
+          checked_in_at?: string | null
+          completed_at?: string | null
+          ghl_webhook_sent?: boolean
+          ghl_webhook_sent_at?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          customer_id?: string | null
+          booking_id?: string | null
+          customer_name?: string
+          customer_email?: string | null
+          customer_phone?: string
+          service_name?: string
+          service_category?: string
+          scheduling_type?: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
+          notes?: string | null
+          status?: string
+          checked_in_at?: string | null
+          completed_at?: string | null
+          ghl_webhook_sent?: boolean
+          ghl_webhook_sent_at?: string | null
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }
