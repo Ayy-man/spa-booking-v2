@@ -23,7 +23,11 @@ export async function POST(request: NextRequest) {
 
     // If appointmentId is provided, check in that specific appointment
     if (body.appointmentId) {
-      const { data: appointment, error: appointmentError } = await supabase
+      console.log('Attempting to check in appointment ID:', body.appointmentId)
+      console.log('Today\'s date:', today)
+
+      // First, verify the appointment exists and get its details
+      const { data: appointments, error: appointmentError } = await supabase
         .from('bookings')
         .select(`
           *,
@@ -34,17 +38,44 @@ export async function POST(request: NextRequest) {
         `)
         .eq('id', body.appointmentId)
         .eq('appointment_date', today)
-        .single()
 
-      if (appointmentError || !appointment) {
+      console.log('Appointment search result:', { appointments, appointmentError })
+
+      if (appointmentError) {
+        console.error('Appointment search error:', appointmentError)
         return NextResponse.json(
-          { error: 'Appointment not found' },
+          { error: `Failed to find appointment: ${appointmentError.message}` },
+          { status: 500 }
+        )
+      }
+
+      if (!appointments || appointments.length === 0) {
+        return NextResponse.json(
+          { error: 'Appointment not found for today' },
           { status: 404 }
         )
       }
 
+      if (appointments.length > 1) {
+        console.error('Multiple appointments found with same ID:', appointments.length)
+        return NextResponse.json(
+          { error: 'Multiple appointments found with same ID' },
+          { status: 500 }
+        )
+      }
+
+      const appointment = appointments[0]
+
+      // Check if already checked in
+      if (appointment.checked_in_at) {
+        return NextResponse.json(
+          { error: 'Appointment already checked in' },
+          { status: 400 }
+        )
+      }
+
       // Update appointment status to show customer has arrived
-      const { data: updatedAppointment, error: updateError } = await supabase
+      const { data: updatedAppointments, error: updateError } = await supabase
         .from('bookings')
         .update({
           status: 'confirmed',
@@ -53,7 +84,8 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', body.appointmentId)
         .select()
-        .single()
+
+      console.log('Update result:', { updatedAppointments, updateError })
 
       if (updateError) {
         console.error('Update error:', updateError)
@@ -63,6 +95,16 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         )
       }
+
+      if (!updatedAppointments || updatedAppointments.length === 0) {
+        console.error('No rows updated during check-in')
+        return NextResponse.json(
+          { error: 'Failed to update appointment status' },
+          { status: 500 }
+        )
+      }
+
+      const updatedAppointment = updatedAppointments[0]
 
       // Send "show" webhook to GHL
       try {
