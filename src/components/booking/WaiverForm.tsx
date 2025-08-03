@@ -40,20 +40,22 @@ function createWaiverSchema(waiverContent: WaiverContent) {
 
     if (section.type === 'checkboxes' && section.items) {
       section.items.forEach(item => {
-        if (item.required) {
-          schemaFields[item.id] = z.boolean().refine(val => val === true, {
-            message: `You must acknowledge: ${item.label}`
+        const checkboxItem = item as CheckboxItem
+        if (checkboxItem.required) {
+          schemaFields[checkboxItem.id] = z.boolean().refine(val => val === true, {
+            message: `You must acknowledge: ${checkboxItem.label}`
           })
         } else {
-          schemaFields[item.id] = z.boolean().optional()
+          schemaFields[checkboxItem.id] = z.boolean().optional()
         }
       })
     }
 
     if (section.type === 'initials' && section.items) {
       section.items.forEach(item => {
-        if (item.required) {
-          schemaFields[`initial_${item.id}`] = z.string().min(1, 'Initials required')
+        const initialItem = item as InitialItem
+        if (initialItem.required) {
+          schemaFields[`initial_${initialItem.id}`] = z.string().min(1, 'Initials required')
         }
       })
     }

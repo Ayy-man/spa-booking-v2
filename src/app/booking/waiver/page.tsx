@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { WaiverForm, WaiverFormData } from '@/components/booking/WaiverForm'
 import { requiresWaiver, WaiverType } from '@/lib/waiver-content'
@@ -75,7 +75,7 @@ export default function WaiverPage() {
     }
 
     checkWaiverRequirement()
-  }, [router])
+  }, [router, proceedToPayment])
 
   // Track page view
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function WaiverPage() {
     }
   }, [waiverType])
 
-  const proceedToPayment = () => {
+  const proceedToPayment = useCallback(() => {
     // Check if it's a couples booking to determine the correct confirmation page
     const bookingDataStr = localStorage.getItem('bookingData')
     const isCouplesBooking = bookingDataStr ? JSON.parse(bookingDataStr).isCouplesBooking : false
@@ -108,7 +108,7 @@ export default function WaiverPage() {
       // Fallback - redirect to customer info if no customer data
       router.push('/booking/customer-info')
     }
-  }
+  }, [router])
 
   const handleWaiverSubmit = async (data: WaiverFormData) => {
     setLoading(true)
