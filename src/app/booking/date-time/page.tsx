@@ -87,19 +87,29 @@ export default function DateTimePage() {
 
   const generateFallbackTimes = useCallback(() => {
     const times = []
-    for (let hour = 9; hour <= 19; hour++) {
-      const time = `${hour.toString().padStart(2, '0')}:00`
-      
-      // Check if this time allows enough duration before closing
-      const serviceDuration = selectedService?.duration || 60
-      const endTime = new Date(selectedDate!)
-      endTime.setHours(hour, 0, 0, 0)
+    const serviceDuration = selectedService?.duration || 60
+    const bufferMinutes = 15
+    
+    // Start at 9:00 AM
+    let currentTime = new Date(selectedDate!)
+    currentTime.setHours(9, 0, 0, 0)
+    
+    const closingTime = new Date(selectedDate!)
+    closingTime.setHours(19, 0, 0, 0)
+    
+    while (currentTime < closingTime) {
+      // Check if this time slot can fit before closing
+      const endTime = new Date(currentTime)
       endTime.setMinutes(endTime.getMinutes() + serviceDuration)
-      const closingTime = new Date(selectedDate!)
-      closingTime.setHours(19, 0, 0, 0)
       
       if (endTime <= closingTime) {
-        times.push(time)
+        const timeString = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`
+        times.push(timeString)
+        
+        // Move to next slot: add service duration + 15-minute buffer
+        currentTime.setMinutes(currentTime.getMinutes() + serviceDuration + bufferMinutes)
+      } else {
+        break
       }
     }
     

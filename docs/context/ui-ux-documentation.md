@@ -75,6 +75,13 @@
 - Date picker: Horizontal scroll of next 30 days
 - Time slots: Grid of available times (9 AM - 7 PM)
 - Show "No availability" for unavailable dates
+- **15-Minute Buffer Integration**: Time slots automatically spaced with service duration + 15-minute buffer
+
+**Time Slot Buffer Logic**:
+The system automatically calculates time slots with built-in 15-minute buffers:
+- **30-min services**: Slots appear as 9:00, 9:45, 10:30, 11:15 (45-minute intervals)
+- **60-min services**: Slots appear as 9:00, 10:15, 11:30, 12:45 (75-minute intervals)  
+- **90-min services**: Slots appear as 9:00, 10:45, 12:30, 14:15 (105-minute intervals)
 
 **Date Picker**:
 ```jsx
@@ -629,6 +636,83 @@ A complete overhaul of the user interface and experience has been implemented, t
 - Button vs link semantic usage
 - Landmark regions for navigation
 
+## 15-Minute Buffer Feature Implementation ✅ COMPLETED (August 3, 2025)
+
+### Overview
+The 15-minute buffer feature has been successfully integrated into the time slot selection interface, providing an enhanced booking experience with improved operational efficiency.
+
+### User Interface Changes
+
+#### Time Slot Display
+- **Automatic Spacing**: Time slots now automatically display with proper spacing based on service duration + 15-minute buffer
+- **Clear Time Gaps**: Users see realistic appointment times that account for preparation and transition periods
+- **Service-Specific Intervals**: Different services show different time slot intervals based on their duration
+- **No Manual Calculation**: System handles all buffer calculations automatically
+
+#### Visual Indicators
+- **Consistent Spacing**: Time slots maintain consistent visual spacing regardless of service type
+- **Clear Availability**: Buffer times ensure no false availability is shown
+- **Professional Presentation**: Time slots appear more professionally spaced and realistic
+
+### User Experience Benefits
+
+#### For Customers
+1. **Realistic Expectations**: Customers see actual available times without hidden conflicts
+2. **Better Planning**: Clear time slots help customers plan their day more effectively  
+3. **No Rushed Experience**: Reduced likelihood of arriving to a rushed or unprepared environment
+4. **Professional Service**: Enhanced perception of spa's attention to quality and detail
+
+#### For Staff
+1. **Adequate Preparation Time**: 15 minutes between appointments for room preparation
+2. **Reduced Stress**: Proper transition time between clients reduces workplace stress
+3. **Quality Maintenance**: Time to properly clean and prepare treatment rooms
+4. **Improved Workflow**: Smoother daily operations with built-in buffer periods
+
+### Technical Implementation
+
+#### Frontend Integration
+- **Seamless Calculation**: Buffer automatically calculated in `generateFallbackTimes()` function
+- **Database Compatibility**: Works with both Supabase and fallback time generation
+- **Real-time Updates**: Buffer considerations applied to all real-time availability checks
+- **Error Handling**: Maintains buffer even when database connections fail
+
+#### Business Logic Integration
+- **Room Preparation**: Ensures adequate time for room cleaning between appointments
+- **Staff Scheduling**: Buffer time considered in staff availability calculations
+- **Conflict Prevention**: Eliminates possibility of overlapping appointments
+- **Quality Assurance**: Maintains spa service standards with proper preparation time
+
+### Examples of Buffer Implementation
+
+#### 30-Minute Services (Basic Facial)
+- **Previous**: 9:00, 9:30, 10:00, 10:30 (back-to-back)
+- **Current**: 9:00, 9:45, 10:30, 11:15 (with 15-min buffer)
+- **Benefit**: Room cleaning and customer transition time included
+
+#### 60-Minute Services (Deep Cleansing Facial)
+- **Previous**: 9:00, 10:00, 11:00, 12:00 (back-to-back)
+- **Current**: 9:00, 10:15, 11:30, 12:45 (with 15-min buffer)
+- **Benefit**: Adequate setup time for specialized equipment
+
+#### 90-Minute Services (Hot Stone Massage)
+- **Previous**: 9:00, 10:30, 12:00, 13:30 (back-to-back)
+- **Current**: 9:00, 10:45, 12:30, 14:15 (with 15-min buffer)
+- **Benefit**: Time for stone heating/cooling and table preparation
+
+### Quality Assurance Impact
+
+#### Service Standards
+- **Consistent Quality**: Every appointment begins with a properly prepared environment
+- **Professional Image**: Customers experience a well-organized, non-rushed spa environment
+- **Staff Satisfaction**: Reduced stress leads to better service delivery
+- **Operational Efficiency**: Fewer conflicts and scheduling issues
+
+#### Customer Satisfaction
+- **Predictable Experience**: Consistent service timing and quality
+- **Reduced Waiting**: No delays caused by inadequate preparation time
+- **Enhanced Comfort**: Properly prepared rooms and relaxed staff interactions
+- **Professional Atmosphere**: Spa maintains premium service standards
+
 ## Implementation Impact
 
 ### User Experience Improvements
@@ -637,6 +721,8 @@ A complete overhaul of the user interface and experience has been implemented, t
 3. **Better Feedback**: Real-time validation and loading states
 4. **Mobile Friendly**: Touch-optimized for mobile users
 5. **Professional Feel**: Consistent design system throughout
+6. **Realistic Scheduling**: 15-minute buffers provide accurate appointment timing
+7. **Quality Assurance**: Buffer implementation enhances service delivery expectations
 
 ### Accessibility Achievements
 1. **WCAG AA Compliant**: Meets web accessibility standards

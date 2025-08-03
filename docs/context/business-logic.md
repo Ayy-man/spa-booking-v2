@@ -87,8 +87,23 @@
 ## Booking Constraints
 - Operating hours: 9 AM - 7 PM
 - Last booking: 1 hour before closing
-- Buffer time: 15 minutes between appointments
+- Buffer time: 15 minutes between appointments (IMPLEMENTED)
 - Maximum advance booking: 30 days
+
+### 15-Minute Buffer Implementation
+The system automatically adds a 15-minute buffer between all appointment slots to ensure:
+- Adequate time for room cleaning and preparation
+- Staff transition time between clients
+- Reduced scheduling conflicts and overlaps
+- Enhanced customer experience with no rushed appointments
+
+**Buffer Calculation Logic:**
+- **Time Slot Duration**: Service Duration + 15-minute buffer
+- **Next Available Slot**: Previous slot end time + 15-minute buffer
+- **Examples**:
+  - 30-min services: 9:00-9:30, 9:45-10:15, 10:30-11:00
+  - 60-min services: 9:00-10:00, 10:15-11:15, 11:30-12:30
+  - 90-min services: 9:00-10:30, 10:45-12:15, 12:30-14:00
 
 ## Service Categories
 1. **Facials** (30-120 mins)
