@@ -24,6 +24,32 @@ export default function WaiverPage() {
   const [error, setError] = useState<string>('')
   const [completed, setCompleted] = useState(false)
 
+  const proceedToPayment = useCallback(() => {
+    // Check if it's a couples booking to determine the correct confirmation page
+    const bookingDataStr = localStorage.getItem('bookingData')
+    const isCouplesBooking = bookingDataStr ? JSON.parse(bookingDataStr).isCouplesBooking : false
+    const customerInfo = localStorage.getItem('customerInfo')
+    
+    if (customerInfo) {
+      const customer = JSON.parse(customerInfo)
+      
+      if (customer.isNewCustomer) {
+        // New customer - redirect to GoHighLevel payment link
+        const baseUrl = window.location.origin
+        const confirmationPage = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
+        const returnUrl = `${baseUrl}${confirmationPage}?payment=success`
+        const ghlPaymentUrl = `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034?return_url=${encodeURIComponent(returnUrl)}`
+        window.location.href = ghlPaymentUrl
+      } else {
+        // Existing customer - go to appropriate confirmation page
+        router.push(isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation')
+      }
+    } else {
+      // Fallback - redirect to customer info if no customer data
+      router.push('/booking/customer-info')
+    }
+  }, [router])
+
   useEffect(() => {
     // Check if we should be on this page
     const checkWaiverRequirement = () => {
@@ -83,32 +109,6 @@ export default function WaiverPage() {
       analytics.pageViewed('waiver', 5)
     }
   }, [waiverType])
-
-  const proceedToPayment = useCallback(() => {
-    // Check if it's a couples booking to determine the correct confirmation page
-    const bookingDataStr = localStorage.getItem('bookingData')
-    const isCouplesBooking = bookingDataStr ? JSON.parse(bookingDataStr).isCouplesBooking : false
-    const customerInfo = localStorage.getItem('customerInfo')
-    
-    if (customerInfo) {
-      const customer = JSON.parse(customerInfo)
-      
-      if (customer.isNewCustomer) {
-        // New customer - redirect to GoHighLevel payment link
-        const baseUrl = window.location.origin
-        const confirmationPage = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
-        const returnUrl = `${baseUrl}${confirmationPage}?payment=success`
-        const ghlPaymentUrl = `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034?return_url=${encodeURIComponent(returnUrl)}`
-        window.location.href = ghlPaymentUrl
-      } else {
-        // Existing customer - go to appropriate confirmation page
-        router.push(isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation')
-      }
-    } else {
-      // Fallback - redirect to customer info if no customer data
-      router.push('/booking/customer-info')
-    }
-  }, [router])
 
   const handleWaiverSubmit = async (data: WaiverFormData) => {
     setLoading(true)
