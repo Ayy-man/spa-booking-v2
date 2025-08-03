@@ -20,8 +20,8 @@ const customerFormSchema = z.object({
     .email('Please enter a valid email address')
     .max(100, 'Email must be less than 100 characters'),
   phone: z.string()
-    .optional()
-    .refine((val) => !val || /^\+?[\d\s\-\(\)]{10,15}$/.test(val), {
+    .min(1, 'Phone number is required')
+    .refine((val) => /^\+?[\d\s\-\(\)]{10,15}$/.test(val), {
       message: 'Please enter a valid phone number'
     }),
   specialRequests: z.string()
@@ -96,7 +96,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
     }
   }
 
-  const isFormValid = isValid && formData.name && formData.email
+  const isFormValid = isValid && formData.name && formData.email && formData.phone
 
   return (
     <Card className="p-6">
@@ -179,7 +179,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
         {/* Customer Phone */}
         <div className="space-y-2">
           <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-            Phone Number <span className="text-gray-400">(Optional)</span>
+            Phone Number *
           </Label>
           <div className="relative">
             <Input
@@ -189,7 +189,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
               className={getInputClasses('phone')}
               {...register('phone')}
             />
-            {getFieldStatus('phone') === 'success' && formData.phone && (
+            {getFieldStatus('phone') === 'success' && (
               <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-success" />
             )}
             {getFieldStatus('phone') === 'error' && (
@@ -202,7 +202,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
               {errors.phone.message}
             </p>
           )}
-          {getFieldStatus('phone') === 'success' && formData.phone && (
+          {getFieldStatus('phone') === 'success' && (
             <p className="text-sm text-success mt-1 flex items-center gap-1">
               <CheckCircleIcon className="w-4 h-4" />
               Valid phone number
