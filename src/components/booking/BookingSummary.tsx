@@ -1,0 +1,284 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { EditIcon, CalendarIcon, ClockIcon, UserIcon, DollarSignIcon } from 'lucide-react'
+import { staffNameMap } from '@/lib/staff-data'
+
+interface Service {
+  name: string
+  price: number
+  duration: number
+}
+
+interface BookingData {
+  isCouplesBooking: boolean
+  primaryService: Service
+  secondaryService?: Service
+  totalPrice: number
+  totalDuration: number
+}
+
+interface BookingSummaryProps {
+  className?: string
+  showEditLinks?: boolean
+  compact?: boolean
+}
+
+export function BookingSummary({ 
+  className = '', 
+  showEditLinks = true,
+  compact = false 
+}: BookingSummaryProps) {
+  const [bookingData, setBookingData] = useState<BookingData | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string>('')
+  const [selectedTime, setSelectedTime] = useState<string>('')
+  const [selectedStaff, setSelectedStaff] = useState<string>('')
+  const [customerInfo, setCustomerInfo] = useState<any>(null)
+
+  useEffect(() => {
+    // Load all booking data from localStorage
+    const loadBookingData = () => {
+      const bookingDataStr = localStorage.getItem('bookingData')
+      const serviceDataStr = localStorage.getItem('selectedService')
+      
+      if (bookingDataStr) {
+        setBookingData(JSON.parse(bookingDataStr))
+      } else if (serviceDataStr) {
+        // Fallback for backward compatibility
+        const service = JSON.parse(serviceDataStr)
+        setBookingData({
+          isCouplesBooking: false,
+          primaryService: service,
+          totalPrice: service.price,
+          totalDuration: service.duration
+        })
+      }
+      
+      const dateData = localStorage.getItem('selectedDate')
+      const timeData = localStorage.getItem('selectedTime')
+      const staffData = localStorage.getItem('selectedStaff')
+      const customerData = localStorage.getItem('customerInfo')
+      
+      if (dateData) setSelectedDate(dateData)
+      if (timeData) setSelectedTime(timeData)
+      if (staffData) setSelectedStaff(staffData)
+      if (customerData) setCustomerInfo(JSON.parse(customerData))
+    }
+
+    loadBookingData()
+    
+    // Listen for storage changes to update in real-time
+    const handleStorageChange = () => loadBookingData()
+    window.addEventListener('storage', handleStorageChange)
+    
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      month: 'long', 
+      day: 'numeric',
+      year: 'numeric'
+    })
+  }
+
+  const getStaffName = (staffId: string) => {
+    if (staffId === 'any') return 'Any Available Staff'
+    return staffNameMap[staffId as keyof typeof staffNameMap] || 'Staff Member'
+  }
+
+  const handleEdit = (section: string) => {
+    if (!showEditLinks) return
+    
+    switch (section) {
+      case 'service':
+        window.location.href = '/booking'
+        break
+      case 'datetime':
+        window.location.href = '/booking/date-time'
+        break
+      case 'staff':
+        const bookingDataStr = localStorage.getItem('bookingData')
+        if (bookingDataStr) {
+          const parsed = JSON.parse(bookingDataStr)
+          window.location.href = parsed.isCouplesBooking ? '/booking/staff-couples' : '/booking/staff'
+        } else {
+          window.location.href = '/booking/staff'
+        }
+        break
+      case 'customer':
+        window.location.href = '/booking/customer-info'
+        break
+    }
+  }
+
+  if (!bookingData && !selectedDate && !selectedTime && !selectedStaff) {
+    return null // Don't render if no data
+  }
+
+  const containerClasses = compact 
+    ? "bg-white rounded-xl border border-primary/10 p-4 shadow-md"
+    : "card"
+
+  return (
+    <div className={`${containerClasses} ${className}`}>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-heading font-semibold text-primary">
+          Booking Summary
+        </h3>
+        {showEditLinks && (
+          <span className="text-sm text-gray-500">
+            Click to edit
+          </span>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        {/* Service Information */}
+        {bookingData && (
+          <div 
+            className={`flex items-start justify-between p-4 bg-primary/5 rounded-xl border border-primary/10 ${
+              showEditLinks ? 'cursor-pointer hover:bg-primary/10 transition-colors' : ''
+            }`}
+            onClick={() => handleEdit('service')}
+          >
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                <DollarSignIcon className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900">
+                  {bookingData.isCouplesBooking ? 'Couples Booking' : 'Service'}
+                </div>
+                {bookingData.isCouplesBooking ? (
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <div>Person 1: {bookingData.primaryService.name}</div>
+                    <div>Person 2: {bookingData.secondaryService?.name}</div>
+                    <div className="font-medium text-primary">
+                      ${bookingData.totalPrice} • {bookingData.totalDuration} minutes
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-600">
+                    <div>{bookingData.primaryService.name}</div>
+                    <div className="font-medium text-primary">
+                      ${bookingData.primaryService.price} • {bookingData.primaryService.duration} minutes
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            {showEditLinks && (
+              <EditIcon className="w-4 h-4 text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
+            )}
+          </div>
+        )}
+
+        {/* Date & Time Information */}
+        {(selectedDate || selectedTime) && (
+          <div 
+            className={`flex items-start justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 ${
+              showEditLinks ? 'cursor-pointer hover:bg-gray-100 transition-colors' : ''
+            }`}
+            onClick={() => handleEdit('datetime')}
+          >
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                <CalendarIcon className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900">Date & Time</div>
+                <div className="text-sm text-gray-600">
+                  {selectedDate && <div>{formatDate(selectedDate)}</div>}
+                  {selectedTime && (
+                    <div className="flex items-center space-x-1 mt-1">
+                      <ClockIcon className="w-3 h-3" />
+                      <span>{selectedTime}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            {showEditLinks && (
+              <EditIcon className="w-4 h-4 text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
+            )}
+          </div>
+        )}
+
+        {/* Staff Information */}
+        {selectedStaff && (
+          <div 
+            className={`flex items-start justify-between p-4 bg-green-50 rounded-xl border border-green-100 ${
+              showEditLinks ? 'cursor-pointer hover:bg-green-100 transition-colors' : ''
+            }`}
+            onClick={() => handleEdit('staff')}
+          >
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                <UserIcon className="w-4 h-4 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900">Staff Member</div>
+                <div className="text-sm text-gray-600">
+                  {getStaffName(selectedStaff)}
+                </div>
+              </div>
+            </div>
+            {showEditLinks && (
+              <EditIcon className="w-4 h-4 text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
+            )}
+          </div>
+        )}
+
+        {/* Customer Information */}
+        {customerInfo && (
+          <div 
+            className={`flex items-start justify-between p-4 bg-purple-50 rounded-xl border border-purple-100 ${
+              showEditLinks ? 'cursor-pointer hover:bg-purple-100 transition-colors' : ''
+            }`}
+            onClick={() => handleEdit('customer')}
+          >
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                <UserIcon className="w-4 h-4 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-gray-900">Customer</div>
+                <div className="text-sm text-gray-600">
+                  <div>{customerInfo.name}</div>
+                  <div>{customerInfo.email}</div>
+                  {customerInfo.phone && <div>{customerInfo.phone}</div>}
+                </div>
+              </div>
+            </div>
+            {showEditLinks && (
+              <EditIcon className="w-4 h-4 text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Total Price Display */}
+      {bookingData && (
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-semibold text-gray-900">Total</span>
+            <span className="text-2xl font-bold text-primary">
+              ${bookingData.totalPrice}
+            </span>
+          </div>
+          {bookingData.isCouplesBooking && (
+            <div className="text-sm text-gray-500 text-right mt-1">
+              for 2 people
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default BookingSummary

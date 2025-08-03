@@ -1,0 +1,337 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Shadcn/ui CSS Variables - Spa Pink Theme */
+  --background: 248 248 248; /* Light gray background from design system */
+  --foreground: 0 0 0; /* Black text for better contrast */
+  --card: 255 255 255;
+  --card-foreground: 0 0 0;
+  --popover: 255 255 255;
+  --popover-foreground: 0 0 0;
+  --primary: 195 102 120; /* Spa pink #C36678 from design system */
+  --primary-foreground: 255 255 255;
+  --secondary: 246 199 207; /* Light pink accent #F6C7CF */
+  --secondary-foreground: 0 0 0;
+  --muted: 245 245 245;
+  --muted-foreground: 115 115 115;
+  --accent: 246 199 207; /* Pink accent #F6C7CF from design system */
+  --accent-foreground: 0 0 0;
+  --destructive: 239 68 68;
+  --destructive-foreground: 255 255 255;
+  --border: 229 229 229;
+  --input: 229 229 229;
+  --ring: 195 102 120; /* Spa pink to match primary */
+  --success: 16 185 129;
+  --warning: 245 158 11;
+  --error: 239 68 68;
+  --radius: 0.5rem;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: hsl(var(--background));
+  color: var(--text-primary);
+}
+
+body {
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background)) !important;
+  overscroll-behavior: none;
+}
+
+html {
+  background-color: hsl(var(--background)) !important;
+  overscroll-behavior: none;
+}
+
+/* Custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary));
+  border-radius: 6px;
+  border: 2px solid hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--secondary-foreground));
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--primary)) hsl(var(--background));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* Custom utility classes */
+@layer components {
+  /* Typography */
+  .font-heading {
+    @apply font-[Playfair_Display,serif] font-medium;
+  }
+  
+  /* Primary CTA Button - Using spa pink theme, touch-friendly */
+  .btn-primary {
+    @apply w-full min-h-[48px] py-4 px-8 bg-primary text-white rounded-xl 
+           hover:bg-primary-dark active:bg-primary-darker transition-all duration-300 
+           font-semibold text-center flex items-center justify-center gap-3 text-lg
+           focus:outline-none focus:ring-4 focus:ring-primary/30 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl
+           transform hover:scale-[1.02] active:scale-[0.98];
+  }
+  
+  /* Secondary Button - Outline style with spa theme */
+  .btn-secondary {
+    @apply min-h-[48px] py-3 px-6 border-2 border-primary text-primary rounded-xl 
+           hover:bg-primary hover:text-white active:bg-primary-dark transition-all duration-300 
+           font-semibold text-center flex items-center justify-center gap-2 text-base
+           focus:outline-none focus:ring-4 focus:ring-primary/30 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg
+           transform hover:scale-[1.01] active:scale-[0.99];
+  }
+  
+  /* Tertiary Button - Subtle style for less important actions */
+  .btn-tertiary {
+    @apply min-h-[44px] py-2 px-4 bg-gray-100 text-gray-700 rounded-lg 
+           hover:bg-gray-200 active:bg-gray-300 transition-all duration-200 
+           font-medium text-center flex items-center justify-center gap-2 text-sm
+           focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  /* Enhanced Card component with better spacing */
+  .card {
+    @apply bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-primary/5;
+  }
+  
+  /* Interactive card variant for clickable elements */
+  .card-interactive {
+    @apply bg-white p-6 sm:p-8 rounded-2xl shadow-lg hover:shadow-2xl 
+           transition-all duration-300 border border-primary/5 
+           hover:border-primary/20 cursor-pointer
+           focus-within:ring-4 focus-within:ring-primary/30 focus-within:ring-offset-2
+           transform hover:scale-[1.01] hover:-translate-y-1;
+  }
+  
+  /* Form input field with enhanced accessibility */
+  .input-field {
+    @apply w-full min-h-[48px] px-4 py-3 border-2 border-gray-300 rounded-xl 
+           focus:ring-4 focus:ring-primary/30 focus:border-primary transition-all duration-200
+           placeholder:text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed
+           text-base font-medium bg-white;
+  }
+  
+  /* Enhanced input field states */
+  .input-field-success {
+    @apply input-field border-success focus:border-success focus:ring-success/30;
+  }
+  
+  .input-field-error {
+    @apply input-field border-error focus:border-error focus:ring-error/30;
+  }
+  
+  /* Time slot buttons - larger and more touch-friendly */
+  .time-slot-available {
+    @apply min-h-[52px] px-6 py-4 rounded-xl bg-white border-2 border-gray-300 
+           hover:bg-primary-lighter hover:border-primary transition-all duration-300
+           focus:outline-none focus:ring-4 focus:ring-primary/30 focus:ring-offset-1
+           text-center font-semibold text-gray-800 shadow-md hover:shadow-lg
+           transform hover:scale-[1.02];
+  }
+  
+  .time-slot-selected {
+    @apply min-h-[52px] px-6 py-4 rounded-xl bg-primary text-white 
+           border-2 border-primary text-center font-semibold shadow-lg
+           focus:outline-none focus:ring-4 focus:ring-primary/50 focus:ring-offset-1
+           transform scale-[1.02];
+  }
+  
+  .time-slot-unavailable {
+    @apply min-h-[52px] px-6 py-4 rounded-xl bg-gray-100 text-gray-500 
+           cursor-not-allowed text-center font-medium opacity-60 border-2 border-gray-200;
+  }
+  
+  /* Enhanced Service selection cards */
+  .service-card {
+    @apply card-interactive hover:scale-[1.02] hover:shadow-2xl p-6 sm:p-8
+           border-2 border-transparent hover:border-primary/20;
+  }
+  
+  .service-card-selected {
+    @apply service-card border-primary bg-primary/5 scale-[1.02] shadow-2xl;
+  }
+  
+  /* Enhanced Date selection buttons - larger for mobile */
+  .date-button-available {
+    @apply px-6 py-4 rounded-xl border-2 border-gray-300 bg-white 
+           transition-all duration-300 min-w-[90px] flex-shrink-0 text-gray-800 font-semibold
+           hover:bg-primary-lighter hover:border-primary shadow-md hover:shadow-lg
+           focus:outline-none focus:ring-4 focus:ring-primary/30 focus:ring-offset-1
+           transform hover:scale-[1.02];
+  }
+  
+  .date-button-selected {
+    @apply px-6 py-4 rounded-xl border-2 border-primary bg-primary 
+           text-white min-w-[90px] flex-shrink-0 font-semibold shadow-lg
+           focus:outline-none focus:ring-4 focus:ring-primary/50 focus:ring-offset-1
+           transform scale-[1.02];
+  }
+  
+  .date-button-weekend {
+    @apply bg-blue-50 border-blue-200 text-blue-700;
+  }
+  
+  /* Loading spinner with spa theme */
+  .spinner {
+    @apply w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin;
+  }
+  
+  .spinner-small {
+    @apply w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin;
+  }
+  
+  /* Enhanced message states */
+  .success-message {
+    @apply text-success bg-success/10 border-2 border-success/20 rounded-xl p-6 
+           text-center font-semibold shadow-lg;
+  }
+  
+  .error-message {
+    @apply text-error bg-error/10 border-2 border-error/20 rounded-xl p-6 
+           text-center font-semibold shadow-lg;
+  }
+  
+  .warning-message {
+    @apply text-warning bg-warning/10 border-2 border-warning/20 rounded-xl p-6 
+           text-center font-semibold shadow-lg;
+  }
+  
+  /* Progress indicator styles */
+  .progress-step {
+    @apply flex items-center justify-center w-12 h-12 rounded-full border-2 border-gray-300 
+           bg-white text-gray-500 font-semibold transition-all duration-300;
+  }
+  
+  .progress-step-active {
+    @apply progress-step border-primary bg-primary text-white shadow-lg scale-110;
+  }
+  
+  .progress-step-completed {
+    @apply progress-step border-success bg-success text-white;
+  }
+  
+  .progress-line {
+    @apply flex-1 h-0.5 bg-gray-300 transition-all duration-500;
+  }
+  
+  .progress-line-completed {
+    @apply progress-line bg-success;
+  }
+  
+  /* Black continue button for service selection */
+  .btn-continue {
+    @apply w-full min-h-[48px] py-4 px-8 bg-black text-white rounded-xl 
+           hover:bg-gray-800 active:bg-gray-900 transition-all duration-300 
+           font-semibold text-center flex items-center justify-center gap-3 text-lg
+           focus:outline-none focus:ring-4 focus:ring-gray-400 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl
+           transform hover:scale-[1.02] active:scale-[0.98] !important;
+  }
+  
+  /* Higher specificity version */
+  button.btn-continue {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+  }
+
+  /* Enhanced spacing utilities */
+  .section-spacing {
+    @apply py-12 sm:py-16;
+  }
+  
+  .content-spacing {
+    @apply space-y-8 sm:space-y-12;
+  }
+  
+  .form-spacing {
+    @apply space-y-6;
+  }
+  
+  /* Scrollbar utilities */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Animation utilities */
+@keyframes slide-in-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation-duration: 300ms;
+  animation-fill-mode: both;
+}
+
+.slide-in-from-top-2 {
+  animation-name: slide-in-from-top;
+}
+
+.slide-in-from-bottom-2 {
+  animation-name: slide-in-from-bottom;
+} 

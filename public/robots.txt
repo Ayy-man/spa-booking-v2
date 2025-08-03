@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Allow: /booking
+Allow: /booking/date-time
+Allow: /booking/staff
+Allow: /booking/customer-info
+Allow: /api/health
+
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /api/*
+Disallow: /_next/
+Disallow: /scripts/
+
+Sitemap: https://your-domain.com/sitemap.xml
