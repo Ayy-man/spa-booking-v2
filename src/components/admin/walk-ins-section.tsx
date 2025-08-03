@@ -17,7 +17,8 @@ import {
   AlertCircleIcon,
   RefreshCwIcon,
   FilterIcon,
-  EyeOffIcon
+  EyeOffIcon,
+  CalendarPlusIcon
 } from 'lucide-react'
 import { 
   walkInLogic, 
@@ -28,6 +29,7 @@ import {
   getTimeSinceCreated 
 } from '@/lib/walk-in-logic'
 import { cn } from '@/lib/utils'
+import { WalkInAssignmentForm } from './walk-in-assignment-form'
 
 interface WalkInsSectionProps {
   className?: string
@@ -41,6 +43,7 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [showUpdateForm, setShowUpdateForm] = useState<string | null>(null)
   const [updateNotes, setUpdateNotes] = useState('')
+  const [showAssignmentForm, setShowAssignmentForm] = useState<string | null>(null)
 
   const fetchWalkIns = useCallback(async () => {
     setLoading(true)
@@ -99,6 +102,7 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
     const statusConfig = getWalkInStatusConfig(walkIn.status as any)
     const isUpdating = actionLoading === walkIn.id
     const isShowingForm = showUpdateForm === walkIn.id
+    const isShowingAssignment = showAssignmentForm === walkIn.id
 
     return (
       <Card key={walkIn.id} className="p-4">
@@ -164,8 +168,18 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
         {/* Action Buttons */}
         {walkIn.status === WALK_IN_STATUSES.WAITING && (
           <div className="space-y-3">
-            {!isShowingForm ? (
+            {!isShowingForm && !isShowingAssignment ? (
               <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => setShowAssignmentForm(walkIn.id)}
+                  disabled={isUpdating}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  <CalendarPlusIcon className="w-4 h-4 mr-1" />
+                  Assign to Schedule
+                </Button>
+                
                 <Button
                   size="sm"
                   onClick={() => handleQuickAction(walkIn, 'served')}
@@ -238,6 +252,15 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
                   </Button>
                 </div>
               </div>
+            ) : isShowingAssignment ? (
+              <WalkInAssignmentForm
+                walkIn={walkIn}
+                onSuccess={() => {
+                  setShowAssignmentForm(null)
+                  fetchWalkIns() // Refresh the list
+                }}
+                onCancel={() => setShowAssignmentForm(null)}
+              />
             )}
           </div>
         )}

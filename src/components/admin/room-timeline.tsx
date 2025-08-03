@@ -74,14 +74,15 @@ export function RoomTimeline({
       setLoading(true)
       const today = new Date().toISOString().split('T')[0]
       
-      // Fetch today's bookings with related data
+      // Fetch today's bookings with related data and walk-in origin info
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
         .select(`
           *,
           service:services(*),
           staff:staff(*),
-          room:rooms(*)
+          room:rooms(*),
+          walk_in_origin:walk_ins!booking_id(id, customer_name, checked_in_at)
         `)
         .eq('appointment_date', today)
         .neq('status', 'cancelled')
@@ -400,6 +401,13 @@ export function RoomTimeline({
                                         height: `${((booking.service.duration || 60) / BUSINESS_HOURS.slotDuration) * 32}px`,
                                       }}
                                     >
+                                      {/* Walk-In Origin Indicator */}
+                                      {booking.walk_in_origin && (
+                                        <div className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                                          <Users className="h-1.5 w-1.5 text-white" fill="currentColor" />
+                                        </div>
+                                      )}
+                                      
                                       {/* Special Request Indicator */}
                                       {isSpecialStaffRequest(booking) && (
                                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full flex items-center justify-center">
@@ -436,6 +444,15 @@ export function RoomTimeline({
                                           <Star className="h-3 w-3 text-amber-500 ml-2" fill="currentColor" />
                                         )}
                                       </div>
+                                      
+                                      {/* Walk-in Origin Badge */}
+                                      {booking.walk_in_origin && (
+                                        <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                          <Users className="h-3 w-3 mr-1" />
+                                          Walk-In Customer
+                                        </div>
+                                      )}
+                                      
                                       <div className="text-sm space-y-1">
                                         <div>Staff: {booking.staff.name}
                                           {isSpecialStaffRequest(booking) && (
@@ -446,6 +463,18 @@ export function RoomTimeline({
                                         <div>Duration: {booking.service.duration} minutes</div>
                                         <div>Status: {booking.status}</div>
                                         <div>Price: ${booking.total_price}</div>
+                                        
+                                        {/* Walk-in Details */}
+                                        {booking.walk_in_origin && (
+                                          <div className="border-t border-gray-200 pt-2 mt-2">
+                                            <div className="text-blue-700 font-medium">Walk-In Details:</div>
+                                            <div>Customer: {booking.walk_in_origin.customer_name}</div>
+                                            {booking.walk_in_origin.checked_in_at && (
+                                              <div>Checked in: {new Date(booking.walk_in_origin.checked_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                            )}
+                                          </div>
+                                        )}
+                                        
                                         <div className="text-xs text-gray-500 mt-2">
                                           Display-only mode
                                         </div>
