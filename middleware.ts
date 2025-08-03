@@ -33,7 +33,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/favicon.ico') ||
     pathname.startsWith('/api') ||
     pathname === '/' ||
-    pathname.startsWith('/booking')
+    pathname.startsWith('/booking') ||
+    pathname.startsWith('/checkin')
   ) {
     return res
   }
