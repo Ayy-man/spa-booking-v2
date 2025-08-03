@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -42,7 +42,7 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
   const [showUpdateForm, setShowUpdateForm] = useState<string | null>(null)
   const [updateNotes, setUpdateNotes] = useState('')
 
-  const fetchWalkIns = async () => {
+  const fetchWalkIns = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -60,11 +60,11 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedStatus])
 
   useEffect(() => {
     fetchWalkIns()
-  }, [selectedStatus]) // fetchWalkIns is defined inside the effect scope
+  }, [fetchWalkIns])
 
   const handleStatusUpdate = async (id: string, newStatus: string, notes?: string) => {
     setActionLoading(id)

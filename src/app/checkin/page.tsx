@@ -117,7 +117,7 @@ export default function WalkInCheckinPage() {
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <h4 className="font-medium text-blue-900 mb-2">What's Next?</h4>
+              <h4 className="font-medium text-blue-900 mb-2">What&apos;s Next?</h4>
               <p className="text-sm text-blue-700">
                 Our staff will review your request and accommodate you as soon as possible. 
                 Please have a seat in our waiting area and we&apos;ll call you shortly.
