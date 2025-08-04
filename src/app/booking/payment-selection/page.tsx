@@ -123,7 +123,7 @@ export default function PaymentSelectionPage() {
               Choose Payment Option
             </h1>
             <p className="text-xl text-gray-600">
-              As an existing customer, you can pay in full or just the deposit
+              As an existing customer, you can pay in full now or pay when you arrive
             </p>
           </div>
 
@@ -193,49 +193,6 @@ export default function PaymentSelectionPage() {
               </div>
             )}
 
-            {/* Deposit Payment Option */}
-            <div 
-              className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${
-                selectedPaymentType === 'deposit' 
-                  ? 'border-primary bg-primary/5' 
-                  : 'border-gray-200 hover:border-primary/50'
-              }`}
-              onClick={() => setSelectedPaymentType('deposit')}
-            >
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <input
-                    type="radio"
-                    name="paymentType"
-                    value="deposit"
-                    checked={selectedPaymentType === 'deposit'}
-                    onChange={() => setSelectedPaymentType('deposit')}
-                    className="w-5 h-5 text-primary border-gray-300 focus:ring-primary"
-                  />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <ClockIcon className="w-6 h-6 text-primary" />
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      Pay Deposit Only
-                    </h3>
-                  </div>
-                  <p className="text-gray-600 mb-3">
-                    Pay a deposit now to secure your appointment. Pay the remaining balance at your appointment.
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-2xl font-bold text-primary">
-                        ${DEPOSIT_PAYMENT_CONFIG.price.toFixed(2)}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Balance due: ${(selectedService.price - DEPOSIT_PAYMENT_CONFIG.price).toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Pay on Location Option */}
             <div 
@@ -261,22 +218,22 @@ export default function PaymentSelectionPage() {
                   <div className="flex items-center space-x-3 mb-2">
                     <ClockIcon className="w-6 h-6 text-primary" />
                     <h3 className="text-xl font-semibold text-gray-900">
-                      Pay on Location
+                      Pay Nothing Now - Full Amount on Location
                     </h3>
                     <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
                       Most Convenient
                     </span>
                   </div>
                   <p className="text-gray-600 mb-3">
-                    Complete your booking now and pay the full amount when you arrive for your appointment.
+                    Complete your booking now with $0 online payment. Pay the full service amount when you arrive for your appointment.
                   </p>
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-2xl font-bold text-primary">
-                        ${selectedService.price.toFixed(2)}
+                        $0.00 Now
                       </div>
                       <div className="text-sm text-gray-500">
-                        Pay when you arrive
+                        Pay ${selectedService.price.toFixed(2)} when you arrive
                       </div>
                     </div>
                     <div className="flex items-center space-x-4 text-sm text-blue-700">
@@ -326,11 +283,9 @@ export default function PaymentSelectionPage() {
                 </div>
               ) : (
                 selectedPaymentType === 'location' 
-                  ? 'Complete Booking (Pay on Location)' 
+                  ? 'Complete Booking ($0 Now)' 
                   : `Continue to Payment - $${
-                      selectedPaymentType === 'full' 
-                        ? (fullPaymentLink?.price || selectedService.price).toFixed(2)
-                        : DEPOSIT_PAYMENT_CONFIG.price.toFixed(2)
+                      (fullPaymentLink?.price || selectedService.price).toFixed(2)
                     }`
               )}
             </button>
