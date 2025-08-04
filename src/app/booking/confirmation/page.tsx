@@ -47,8 +47,13 @@ export default function ConfirmationPage() {
         setPaymentType(storedPaymentType)
       }
       
-      if (customer.isNewCustomer || paymentSuccess || paymentLocation) {
+      if (customer.isNewCustomer || paymentSuccess) {
         setPaymentCompleted(true)
+      }
+      
+      // For pay on location, don't set paymentCompleted to true since no payment was made
+      if (paymentLocation) {
+        setPaymentCompleted(false)
       }
     }
     
@@ -326,20 +331,11 @@ export default function ConfirmationPage() {
             </p>
             
             {paymentCompleted && (
-              <div className={`border rounded-lg p-4 mb-6 ${
-                paymentType === 'location' 
-                  ? 'bg-blue-50 border-blue-200' 
-                  : 'bg-green-50 border-green-200'
-              }`}>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                 {paymentType === 'full' ? (
                   <p className="text-green-800 text-sm">
                     <strong>Full payment processed:</strong> Your ${bookingData.service.price} payment has been completed. 
                     No additional payment required at your appointment.
-                  </p>
-                ) : paymentType === 'location' ? (
-                  <p className="text-blue-800 text-sm">
-                    <strong>Pay on Location:</strong> Your appointment is confirmed. 
-                    Please bring ${bookingData.service.price} to pay at the spa when you arrive for your appointment.
                   </p>
                 ) : (
                   <p className="text-green-800 text-sm">
@@ -347,6 +343,15 @@ export default function ConfirmationPage() {
                     The remaining balance of ${bookingData.service.price - 30} will be due at your appointment.
                   </p>
                 )}
+              </div>
+            )}
+
+            {paymentType === 'location' && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p className="text-blue-800 text-sm">
+                  <strong>No payment required now:</strong> Your appointment is confirmed with $0 payment. 
+                  Please bring ${bookingData.service.price} to pay at the spa when you arrive for your appointment.
+                </p>
               </div>
             )}
             
