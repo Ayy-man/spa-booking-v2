@@ -15,6 +15,20 @@ export default function BookingPage() {
     analytics.pageViewed('service_selection', 1)
   }, [])
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (showCouplesOptions) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showCouplesOptions])
+
   const serviceCategories = [
     {
       name: 'Facials',
@@ -186,10 +200,10 @@ export default function BookingPage() {
 
       {/* Couples Booking Component - Fixed Position Overlay */}
       {selectedService && showCouplesOptions && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in-0 duration-300">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-2 duration-300">
-            <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center rounded-t-2xl">
-              <h2 className="text-2xl font-heading font-bold text-primary">
+        <div className="modal-overlay animate-in fade-in-0 duration-300">
+          <div className="modal-content animate-in slide-in-from-bottom-2 duration-300">
+            <div className="modal-header">
+              <h2 className="text-xl sm:text-2xl font-heading font-bold text-primary">
                 Booking Options
               </h2>
               <button
@@ -197,12 +211,12 @@ export default function BookingPage() {
                   setShowCouplesOptions(false)
                   setSelectedService('')
                 }}
-                className="text-gray-400 hover:text-gray-600 text-3xl transition-colors"
+                className="modal-close-btn"
               >
                 ×
               </button>
             </div>
-            <div className="p-8">
+            <div className="modal-body">
               <CouplesBooking
                 selectedService={
                   serviceCategories

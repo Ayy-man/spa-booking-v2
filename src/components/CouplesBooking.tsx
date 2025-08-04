@@ -122,7 +122,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
             <Label className="text-base font-medium text-primary-dark">
               Service Selection for Second Person
             </Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <button
                 onClick={() => setSameService(true)}
                 className={`p-4 rounded-lg border-2 transition-all ${
@@ -174,7 +174,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
               </select>
 
               {/* Service Grid */}
-              <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
+              <div className="max-h-48 sm:max-h-64 overflow-y-auto space-y-2 pr-2 scrollbar-hide">
                 {serviceCategories
                   .filter(cat => !selectedCategory || cat.name === selectedCategory)
                   .map((category) => (
@@ -187,7 +187,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
                           <button
                             key={service.id}
                             onClick={() => setSecondaryService(service)}
-                            className={`w-full p-3 rounded-lg border-2 transition-all text-left ${
+                            className={`w-full p-3 sm:p-4 rounded-lg border-2 transition-all text-left min-h-[56px] ${
                               secondaryService?.id === service.id
                                 ? 'border-primary bg-accent/20'
                                 : 'border-gray-200 hover:border-primary/50'
