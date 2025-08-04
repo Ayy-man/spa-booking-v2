@@ -22,7 +22,7 @@ interface CustomerInfo {
 export default function PaymentSelectionPage() {
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
-  const [selectedPaymentType, setSelectedPaymentType] = useState<'full' | 'deposit'>('full')
+  const [selectedPaymentType, setSelectedPaymentType] = useState<'full' | 'deposit' | 'location'>('full')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -52,6 +52,15 @@ export default function PaymentSelectionPage() {
     setLoading(true)
     
     try {
+      // Store payment type for confirmation page
+      localStorage.setItem('paymentType', selectedPaymentType)
+      
+      if (selectedPaymentType === 'location') {
+        // Pay on location - skip external payment and go straight to confirmation
+        window.location.href = '/booking/confirmation?payment=location'
+        return
+      }
+      
       const baseUrl = window.location.origin
       const returnUrl = `${baseUrl}/booking/confirmation?payment=success`
       
@@ -72,9 +81,6 @@ export default function PaymentSelectionPage() {
           payment_type: 'deposit'
         })
       }
-      
-      // Store payment type for confirmation page
-      localStorage.setItem('paymentType', selectedPaymentType)
       
       // Redirect to payment
       window.location.href = paymentUrl
@@ -231,6 +237,63 @@ export default function PaymentSelectionPage() {
               </div>
             </div>
 
+            {/* Pay on Location Option */}
+            <div 
+              className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${
+                selectedPaymentType === 'location' 
+                  ? 'border-primary bg-primary/5' 
+                  : 'border-gray-200 hover:border-primary/50'
+              }`}
+              onClick={() => setSelectedPaymentType('location')}
+            >
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <input
+                    type="radio"
+                    name="paymentType"
+                    value="location"
+                    checked={selectedPaymentType === 'location'}
+                    onChange={() => setSelectedPaymentType('location')}
+                    className="w-5 h-5 text-primary border-gray-300 focus:ring-primary"
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <ClockIcon className="w-6 h-6 text-primary" />
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Pay on Location
+                    </h3>
+                    <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                      Most Convenient
+                    </span>
+                  </div>
+                  <p className="text-gray-600 mb-3">
+                    Complete your booking now and pay the full amount when you arrive for your appointment.
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold text-primary">
+                        ${selectedService.price.toFixed(2)}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Pay when you arrive
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm text-blue-700">
+                      <div className="flex items-center space-x-1">
+                        <CheckCircleIcon className="w-4 h-4" />
+                        <span>Secured booking</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <CheckCircleIcon className="w-4 h-4" />
+                        <span>No online payment</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Info for services without full payment */}
             {!hasFullPayment && (
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
@@ -262,11 +325,13 @@ export default function PaymentSelectionPage() {
                   <span>Processing...</span>
                 </div>
               ) : (
-                `Continue to Payment - $${
-                  selectedPaymentType === 'full' 
-                    ? (fullPaymentLink?.price || selectedService.price).toFixed(2)
-                    : DEPOSIT_PAYMENT_CONFIG.price.toFixed(2)
-                }`
+                selectedPaymentType === 'location' 
+                  ? 'Complete Booking (Pay on Location)' 
+                  : `Continue to Payment - $${
+                      selectedPaymentType === 'full' 
+                        ? (fullPaymentLink?.price || selectedService.price).toFixed(2)
+                        : DEPOSIT_PAYMENT_CONFIG.price.toFixed(2)
+                    }`
               )}
             </button>
           </div>

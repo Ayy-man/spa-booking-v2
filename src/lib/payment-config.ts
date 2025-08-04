@@ -248,7 +248,7 @@ export function isValidPaymentUrl(url: string): boolean {
 }
 
 // Payment flow types
-export type PaymentFlow = 'full_payment' | 'deposit' | 'existing_customer_choice';
+export type PaymentFlow = 'full_payment' | 'deposit' | 'pay_on_location' | 'existing_customer_choice';
 
 /**
  * Determine payment flow based on customer type and service
@@ -264,11 +264,8 @@ export function determinePaymentFlow(
     return 'deposit'; // New customers must use deposit
   }
   
-  if (hasFullPaymentLink(serviceName)) {
-    return 'existing_customer_choice'; // Existing customers can choose
-  }
-  
-  return 'deposit'; // Fallback to deposit if no full payment available
+  // Existing customers always get choice between full payment, deposit, or pay on location
+  return 'existing_customer_choice';
 }
 
 const paymentConfig = {

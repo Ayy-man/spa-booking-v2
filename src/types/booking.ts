@@ -95,6 +95,21 @@ export type BookingStatus =
   | 'completed'
   | 'no_show'
 
+// Payment option enum
+export type PaymentOption = 
+  | 'deposit'
+  | 'full_payment'
+  | 'pay_on_location'
+
+// Payment status enum (matches database)
+export type PaymentStatus = 
+  | 'pending'
+  | 'paid'
+  | 'partial'
+  | 'refunded'
+  | 'failed'
+  | 'not_applicable'
+
 // Staff availability type enum
 export type AvailabilityType = 
   | 'unavailable'
@@ -112,6 +127,8 @@ export interface BookingFormData {
   appointment_date: string
   start_time: string
   notes?: string
+  payment_option?: PaymentOption
+  payment_status?: PaymentStatus
 }
 
 // Validation types

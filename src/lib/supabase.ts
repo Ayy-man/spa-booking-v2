@@ -91,6 +91,8 @@ export const supabaseClient = {
     appointment_date: string
     start_time: string
     notes?: string
+    payment_option?: string
+    payment_status?: string
   }) {
     // Get service details first
     const { data: service, error: serviceError } = await supabase
@@ -185,7 +187,8 @@ export const supabaseClient = {
         discount: discount,
         final_price: finalPrice,
         status: 'pending',
-        payment_status: 'pending',
+        payment_status: booking.payment_status || 'pending',
+        payment_option: booking.payment_option || 'deposit',
         notes: booking.notes,
         booking_type: 'single'
       })

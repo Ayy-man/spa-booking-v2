@@ -76,6 +76,44 @@ export default function AdminBookingsPage() {
     }
   }
 
+  const getPaymentStatusColor = (paymentStatus: string) => {
+    switch(paymentStatus) {
+      case 'paid': return 'bg-green-100 text-green-800'
+      case 'pending': return 'bg-yellow-100 text-yellow-800'
+      case 'partial': return 'bg-orange-100 text-orange-800'
+      case 'failed': return 'bg-red-100 text-red-800'
+      default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const formatPaymentInfo = (booking: any) => {
+    const paymentOption = booking.payment_option || 'deposit'
+    const paymentStatus = booking.payment_status || 'pending'
+    
+    if (paymentOption === 'pay_on_location') {
+      return {
+        main: 'Pay on Location',
+        sub: `$${booking.final_price} due`,
+        color: 'bg-blue-100 text-blue-800'
+      }
+    } else if (paymentOption === 'full_payment') {
+      return {
+        main: paymentStatus === 'paid' ? 'Paid in Full' : 'Full Payment',
+        sub: `$${booking.final_price}`,
+        color: getPaymentStatusColor(paymentStatus)
+      }
+    } else {
+      // deposit
+      const depositAmount = 30
+      const remaining = booking.final_price - depositAmount
+      return {
+        main: paymentStatus === 'paid' ? 'Deposit Paid' : 'Deposit',
+        sub: remaining > 0 ? `$${remaining} remaining` : `$${depositAmount}`,
+        color: getPaymentStatusColor(paymentStatus)
+      }
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -141,6 +179,9 @@ export default function AdminBookingsPage() {
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Payment
+                    </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Price
                   </th>
                 </tr>
@@ -176,6 +217,21 @@ export default function AdminBookingsPage() {
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(booking.status)}`}>
                         {booking.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {(() => {
+                        const paymentInfo = formatPaymentInfo(booking)
+                        return (
+                          <div>
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${paymentInfo.color}`}>
+                              {paymentInfo.main}
+                            </span>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {paymentInfo.sub}
+                            </div>
+                          </div>
+                        )
+                      })()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       ${booking.final_price}

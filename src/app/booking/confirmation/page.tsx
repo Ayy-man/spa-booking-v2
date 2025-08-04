@@ -14,7 +14,7 @@ export default function ConfirmationPage() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string>('')
   const [paymentCompleted, setPaymentCompleted] = useState(false)
-  const [paymentType, setPaymentType] = useState<'deposit' | 'full'>('deposit')
+  const [paymentType, setPaymentType] = useState<'deposit' | 'full' | 'location'>('deposit')
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -39,14 +39,15 @@ export default function ConfirmationPage() {
       // Also check URL parameters for payment success indicators
       const urlParams = new URLSearchParams(window.location.search)
       const paymentSuccess = urlParams.get('payment') === 'success'
+      const paymentLocation = urlParams.get('payment') === 'location'
       
       // Get payment type from localStorage (set in payment selection)
-      const storedPaymentType = localStorage.getItem('paymentType') as 'deposit' | 'full' | null
+      const storedPaymentType = localStorage.getItem('paymentType') as 'deposit' | 'full' | 'location' | null
       if (storedPaymentType) {
         setPaymentType(storedPaymentType)
       }
       
-      if (customer.isNewCustomer || paymentSuccess) {
+      if (customer.isNewCustomer || paymentSuccess || paymentLocation) {
         setPaymentCompleted(true)
       }
     }
@@ -83,6 +84,21 @@ export default function ConfirmationPage() {
         // Continue with default room
       }
 
+      // Determine payment option and status based on payment type
+      let paymentOption = 'deposit'
+      let paymentStatus = 'pending'
+      
+      if (paymentType === 'location') {
+        paymentOption = 'pay_on_location'
+        paymentStatus = 'pending' // Will be paid at location
+      } else if (paymentType === 'full') {
+        paymentOption = 'full_payment'
+        paymentStatus = 'paid' // Already paid online
+      } else {
+        paymentOption = 'deposit'
+        paymentStatus = 'paid' // Deposit already paid online
+      }
+
       // Create the booking in Supabase
       const bookingResult = await supabaseClient.createBooking({
         service_id: bookingData.service.id,
@@ -93,7 +109,9 @@ export default function ConfirmationPage() {
         customer_phone: bookingData.customer.phone || undefined,
         appointment_date: bookingData.date,
         start_time: bookingData.time,
-        notes: bookingData.customer.specialRequests || undefined
+        notes: bookingData.customer.specialRequests || undefined,
+        payment_option: paymentOption,
+        payment_status: paymentStatus
       })
       
 
@@ -308,11 +326,20 @@ export default function ConfirmationPage() {
             </p>
             
             {paymentCompleted && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <div className={`border rounded-lg p-4 mb-6 ${
+                paymentType === 'location' 
+                  ? 'bg-blue-50 border-blue-200' 
+                  : 'bg-green-50 border-green-200'
+              }`}>
                 {paymentType === 'full' ? (
                   <p className="text-green-800 text-sm">
                     <strong>Full payment processed:</strong> Your ${bookingData.service.price} payment has been completed. 
                     No additional payment required at your appointment.
+                  </p>
+                ) : paymentType === 'location' ? (
+                  <p className="text-blue-800 text-sm">
+                    <strong>Pay on Location:</strong> Your appointment is confirmed. 
+                    Please bring ${bookingData.service.price} to pay at the spa when you arrive for your appointment.
                   </p>
                 ) : (
                   <p className="text-green-800 text-sm">
