@@ -361,7 +361,7 @@ export default function ConfirmationPage() {
                 <div><span className="font-medium">Service:</span> {bookingData.service.name}</div>
                 <div><span className="font-medium">Date:</span> {formatDate(bookingData.date)}</div>
                 <div><span className="font-medium">Time:</span> {formatTimeRange(bookingData.time, bookingData.service.duration)}</div>
-                <div><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap]}</div>
+                <div><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap] || bookingData.staff || 'Any Available Staff'}</div>
                 <div><span className="font-medium">Price:</span> ${bookingData.service.price}</div>
                 <div><span className="font-medium">Customer:</span> {bookingData.customer.name}</div>
               </div>
@@ -443,7 +443,7 @@ export default function ConfirmationPage() {
               <div className="space-y-1">
                 <p><span className="font-medium">Date:</span> {formatDate(bookingData.date)}</p>
                 <p><span className="font-medium">Time:</span> {formatTimeRange(bookingData.time, bookingData.service.duration)}</p>
-                <p><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap]}</p>
+                <p><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap] || bookingData.staff || 'Any Available Staff'}</p>
               </div>
             </div>
 
@@ -457,15 +457,19 @@ export default function ConfirmationPage() {
                   <p><span className="font-medium">Phone:</span> {bookingData.customer.phone}</p>
                 )}
                 <p><span className="font-medium">Customer Type:</span> {bookingData.customer.isNewCustomer ? 'New Customer' : 'Returning Customer'}</p>
-                {paymentCompleted && (
-                  <p><span className="font-medium">Payment Status:</span> 
-                    {paymentType === 'full' ? (
+                <p><span className="font-medium">Payment Status:</span> 
+                  {paymentCompleted ? (
+                    paymentType === 'full' ? (
                       <span className="text-green-600 font-medium">Paid in Full (${bookingData.service.price})</span>
                     ) : (
                       <span className="text-green-600 font-medium">Deposit Paid ($30)</span>
-                    )}
-                  </p>
-                )}
+                    )
+                  ) : paymentType === 'location' ? (
+                    <span className="text-blue-600 font-medium">Pay on Location (${bookingData.service.price})</span>
+                  ) : (
+                    <span className="text-gray-600 font-medium">Pending</span>
+                  )}
+                </p>
                 {bookingData.customer.specialRequests && (
                   <p><span className="font-medium">Special Requests:</span> {bookingData.customer.specialRequests}</p>
                 )}
