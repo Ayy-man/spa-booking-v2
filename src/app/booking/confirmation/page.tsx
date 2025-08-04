@@ -14,6 +14,7 @@ export default function ConfirmationPage() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string>('')
   const [paymentCompleted, setPaymentCompleted] = useState(false)
+  const [paymentType, setPaymentType] = useState<'deposit' | 'full'>('deposit')
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -38,6 +39,12 @@ export default function ConfirmationPage() {
       // Also check URL parameters for payment success indicators
       const urlParams = new URLSearchParams(window.location.search)
       const paymentSuccess = urlParams.get('payment') === 'success'
+      
+      // Get payment type from localStorage (set in payment selection)
+      const storedPaymentType = localStorage.getItem('paymentType') as 'deposit' | 'full' | null
+      if (storedPaymentType) {
+        setPaymentType(storedPaymentType)
+      }
       
       if (customer.isNewCustomer || paymentSuccess) {
         setPaymentCompleted(true)
@@ -158,6 +165,7 @@ export default function ConfirmationPage() {
       localStorage.removeItem('selectedTime')
       localStorage.removeItem('selectedStaff')
       localStorage.removeItem('customerInfo')
+      localStorage.removeItem('paymentType')
       
     } catch (err: any) {
       
@@ -301,10 +309,17 @@ export default function ConfirmationPage() {
             
             {paymentCompleted && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                <p className="text-green-800 text-sm">
-                  <strong>Payment processed:</strong> Your $25 deposit has been applied to this booking. 
-                  The remaining balance of ${bookingData.service.price - 25} will be due at your appointment.
-                </p>
+                {paymentType === 'full' ? (
+                  <p className="text-green-800 text-sm">
+                    <strong>Full payment processed:</strong> Your ${bookingData.service.price} payment has been completed. 
+                    No additional payment required at your appointment.
+                  </p>
+                ) : (
+                  <p className="text-green-800 text-sm">
+                    <strong>Deposit processed:</strong> Your $30 deposit has been applied to this booking. 
+                    The remaining balance of ${bookingData.service.price - 30} will be due at your appointment.
+                  </p>
+                )}
               </div>
             )}
             
@@ -361,7 +376,11 @@ export default function ConfirmationPage() {
               </div>
               <div>
                 <p className="font-medium text-green-900">Payment Successful!</p>
-                <p className="text-sm text-green-700">Your $25 deposit has been processed.</p>
+                {paymentType === 'full' ? (
+                  <p className="text-sm text-green-700">Your full payment of ${bookingData.service.price} has been processed.</p>
+                ) : (
+                  <p className="text-sm text-green-700">Your $30 deposit has been processed.</p>
+                )}
               </div>
             </div>
           </div>
@@ -407,7 +426,13 @@ export default function ConfirmationPage() {
                 )}
                 <p><span className="font-medium">Customer Type:</span> {bookingData.customer.isNewCustomer ? 'New Customer' : 'Returning Customer'}</p>
                 {paymentCompleted && (
-                  <p><span className="font-medium">Deposit Status:</span> <span className="text-green-600 font-medium">Paid ($25)</span></p>
+                  <p><span className="font-medium">Payment Status:</span> 
+                    {paymentType === 'full' ? (
+                      <span className="text-green-600 font-medium">Paid in Full (${bookingData.service.price})</span>
+                    ) : (
+                      <span className="text-green-600 font-medium">Deposit Paid ($30)</span>
+                    )}
+                  </p>
                 )}
                 {bookingData.customer.specialRequests && (
                   <p><span className="font-medium">Special Requests:</span> {bookingData.customer.specialRequests}</p>

@@ -141,15 +141,22 @@ export default function CustomerInfoPage() {
   const proceedToPaymentOrConfirmation = (data: CustomerFormData, isCouplesBooking: boolean) => {
     // Check customer status and redirect accordingly
     if (data.isNewCustomer) {
-      // New customer - redirect to GoHighLevel payment link with return URL
+      // New customer - redirect to deposit payment link with return URL
       const baseUrl = window.location.origin
       const confirmationPage = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
       const returnUrl = `${baseUrl}${confirmationPage}?payment=success`
-      const ghlPaymentUrl = `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034?return_url=${encodeURIComponent(returnUrl)}`
-      window.location.href = ghlPaymentUrl
+      const depositPaymentUrl = `https://link.fastpaydirect.com/payment-link/688fd64ad6ab80e9dae7162b?return_url=${encodeURIComponent(returnUrl)}`
+      window.location.href = depositPaymentUrl
     } else {
-      // Existing customer - go to appropriate confirmation page
-      window.location.href = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
+      // Existing customer - redirect to payment selection page for full payment option
+      if (isCouplesBooking) {
+        // For couples booking, skip payment selection and go directly to confirmation
+        // (couples booking logic can be enhanced later for full payment support)
+        window.location.href = '/booking/confirmation-couples'
+      } else {
+        // Single booking - offer payment choice
+        window.location.href = '/booking/payment-selection'
+      }
     }
   }
 

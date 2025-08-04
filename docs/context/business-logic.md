@@ -160,4 +160,111 @@ The system automatically adds a 15-minute buffer between all appointment slots t
 
 6. **Special Services**
    - Basic Vajacial Cleaning + Brazilian Wax: 30 mins, $90
-   - Dermal VIP Card: 30 mins, $50/year 
+   - Dermal VIP Card: 30 mins, $50/year
+
+## Payment System Logic
+
+### Service-Specific Payment Links System (Implemented August 4, 2025)
+
+#### Payment Method Selection Rules
+1. **Existing Customers**:
+   - Can choose "Pay in Full Now" (full service price)
+   - Can choose "Pay Deposit ($30)" (traditional deposit system)
+   - Routing to payment selection page for enhanced options
+
+2. **New Customers**:
+   - Continue using established $30 deposit system
+   - No payment method selection (maintains simplicity)
+   - Direct routing to existing deposit payment process
+
+#### Service Coverage Logic
+The payment system operates with two tiers of service coverage:
+
+**Tier 1: Full Payment Links Available (16 services - 35% coverage)**
+Services with dedicated payment links for full service cost:
+- **Facials**: 8 services (Basic to Acne Vulgaris)
+- **Body Massages**: 5 services (Balinese to Hot Stone 90-minute)
+- **Body Treatments**: 3 services (Dead Sea Salt, Deep Moisturizing, Mud Mask)
+
+**Tier 2: Deposit Fallback System (30 services - 65% coverage)**
+Services automatically using $30 deposit system:
+- **Waxing Services**: 15 services (All waxing treatments)
+- **Body Treatments**: 9 additional services (Underarm Cleaning, Chemical Peel, etc.)
+- **Packages**: 3 combination services
+- **Special Services**: 3 specialty services
+
+#### Payment Selection Business Rules
+
+1. **Service Type Detection**:
+   - System checks if selected service has dedicated payment link
+   - Automatic routing based on service payment availability
+   - Transparent pricing display for both options
+
+2. **Customer Segmentation**:
+   - Existing customer detection via email/phone lookup
+   - Dynamic interface presentation based on customer status
+   - Consistent experience regardless of payment method chosen
+
+3. **Fallback Logic**:
+   - Services without payment links automatically use deposit system
+   - No disruption to booking flow for unsupported services
+   - Graceful degradation maintaining full functionality
+
+4. **Pricing Display Rules**:
+   - Full service price shown for payment link services
+   - $30 deposit option always available as alternative
+   - Clear indication of payment method selected in confirmation
+
+### Payment Configuration Management
+
+#### Configuration System Structure
+Located in `/src/lib/payment-config.ts`:
+- Centralized mapping of services to payment links
+- Type-safe configuration with TypeScript integration
+- Scalable system for easy addition of new payment links
+- Automatic fallback detection for services without links
+
+#### Admin Payment Link Management
+Located at `/src/app/admin/payment-links/page.tsx`:
+- Complete overview of all 46 services and their payment status
+- Copy-to-clipboard functionality for easy link sharing
+- Service categorization matching business service structure
+- Usage instructions and implementation guidance
+
+#### Integration Points
+1. **Database Integration**:
+   - Works seamlessly with existing Supabase booking system
+   - No changes required to existing database schema
+   - Maintains all existing booking verification and security
+
+2. **Customer Management**:
+   - Integrates with existing customer detection logic
+   - Preserves all customer information collection processes
+   - Maintains customer history and booking relationships
+
+3. **Admin Interface**:
+   - Professional dashboard integrated with admin navigation
+   - Consistent with existing admin panel design and functionality
+   - Easy access via admin dashboard navigation
+
+### Business Impact Rules
+
+#### Cash Flow Enhancement
+- **Immediate Revenue**: 35% of services can collect full payment upfront
+- **Reduced Processing**: Direct payment links eliminate external payment steps
+- **Revenue Optimization**: Full payment option increases immediate revenue capture
+
+#### Customer Experience Enhancement
+- **Payment Choice**: Existing customers gain payment method flexibility
+- **Streamlined Process**: Direct payment links reduce booking complexity
+- **Professional Interface**: Consistent spa-themed payment experience
+
+#### Operational Efficiency
+- **Staff Efficiency**: Copy-to-clipboard functionality for quick link sharing
+- **Service Coverage Visibility**: Immediate awareness of payment link availability
+- **No Disruption**: New customers continue with familiar deposit process
+
+#### Future Scalability
+- **Easy Expansion**: Simple process to add new payment links
+- **System Ready**: Infrastructure supports unlimited service payment links
+- **Configuration Driven**: All payment options managed through central configuration 

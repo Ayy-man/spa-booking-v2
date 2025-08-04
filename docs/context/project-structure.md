@@ -5,6 +5,8 @@
 dermal-booking-app/
 ├── docs/                          # Documentation
 │   ├── PRD.md                     # Project Requirements Document
+│   ├── payment-links.md           # Master payment links documentation (NEW)
+│   ├── payment-system-implementation.md # Payment system implementation summary (NEW)
 │   ├── context/                   # Context files for AI
 │   │   ├── business-logic.md      # Business rules and algorithms
 │   │   ├── staff-room-matrix.md   # Staff capabilities and room assignments
@@ -27,6 +29,7 @@ dermal-booking-app/
 │   │   │   ├── page.tsx           # Admin dashboard
 │   │   │   ├── login/             # Admin authentication
 │   │   │   ├── bookings/          # Booking management
+│   │   │   ├── payment-links/     # Payment links dashboard (NEW)
 │   │   │   └── monitor/           # System monitoring
 │   │   ├── booking/               # Booking flow pages
 │   │   │   ├── page.tsx           # Service selection
@@ -34,6 +37,7 @@ dermal-booking-app/
 │   │   │   ├── staff/             # Staff selection
 │   │   │   ├── staff-couples/     # Couples staff selection
 │   │   │   ├── customer-info/     # Customer form
+│   │   │   ├── payment-selection/ # Payment method selection (NEW)
 │   │   │   ├── confirmation/      # Booking confirmation
 │   │   │   └── confirmation-couples/ # Couples booking confirmation
 │   │   └── api/                   # API routes
@@ -81,6 +85,7 @@ dermal-booking-app/
 │   │   ├── supabase.ts            # Supabase client configuration
 │   │   ├── booking-logic.ts       # Business logic functions
 │   │   ├── admin-booking-logic.ts # Admin-specific booking logic
+│   │   ├── payment-config.ts      # Payment configuration system (NEW)
 │   │   ├── analytics.ts           # Analytics and reporting
 │   │   ├── auth.ts                # Authentication utilities
 │   │   ├── staff-data.ts          # Staff data management
@@ -134,11 +139,14 @@ dermal-booking-app/
 - **`src/app/layout.tsx`**: Root layout with navigation and styling
 - **`src/app/admin/page.tsx`**: Admin dashboard with schedule overview
 - **`src/app/admin/layout.tsx`**: Admin layout with navigation and auth
+- **`src/app/admin/payment-links/page.tsx`**: Payment links management dashboard (NEW)
+- **`src/app/booking/payment-selection/page.tsx`**: Customer payment method selection (NEW)
 - **`middleware.ts`**: Authentication and route protection middleware
 
 ### Business Logic Files
 - **`src/lib/booking-logic.ts`**: Core booking validation and processing
 - **`src/lib/admin-booking-logic.ts`**: Admin-specific booking operations
+- **`src/lib/payment-config.ts`**: Payment configuration and service mapping (NEW)
 - **`src/lib/analytics.ts`**: Business analytics and reporting
 - **`src/lib/auth.ts`**: Authentication and session management
 - **`src/lib/staff-data.ts`**: Staff data management and scheduling
@@ -246,9 +254,23 @@ STRIPE_SECRET_KEY=your_stripe_key
 4. **Type Safety**: Define types in `src/types/`
 5. **Styling**: Use Tailwind classes and custom CSS in `src/styles/`
 
-## Recent File Updates (July 31, 2025) - UI/UX Enhancement Phase
+## Recent File Updates (August 4, 2025) - Payment System Implementation Phase
 
-### New Components Created ✅
+### New Payment System Files Created ✅
+- `/docs/payment-links.md` - Master documentation of all 46 payment links with service coverage
+- `/docs/payment-system-implementation.md` - Comprehensive implementation summary and usage guide
+- `/src/lib/payment-config.ts` - Centralized payment configuration system with TypeScript integration
+- `/src/app/booking/payment-selection/page.tsx` - Customer payment method selection interface
+- `/src/app/admin/payment-links/page.tsx` - Staff payment links management dashboard
+
+### Payment System Files Enhanced ✅
+- `/src/app/booking/customer-info/page.tsx` - Enhanced with existing customer routing to payment selection
+- `/src/app/booking/confirmation/page.tsx` - Enhanced to handle full payment vs deposit display
+- `/src/app/admin/page.tsx` - Added Payment Links navigation button
+
+## Previous File Updates (July 31, 2025) - UI/UX Enhancement Phase
+
+### UI/UX Components Created ✅
 - `/src/components/booking/BookingProgressIndicator.tsx` - 5-step progress navigation system
 - `/src/components/booking/BookingSummary.tsx` - Persistent booking summary with edit capabilities
 - `/src/components/ui/skeleton-loader.tsx` - Comprehensive skeleton loading components
