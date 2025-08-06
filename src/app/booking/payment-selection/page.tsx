@@ -217,8 +217,8 @@ export default function PaymentSelectionPage() {
                     <h3 className="text-xl font-semibold text-gray-900">
                       Deposit Payment Only
                     </h3>
-                    <span className="bg-yellow-100 text-yellow-800 text-sm font-medium px-2.5 py-0.5 rounded">
-                      Secure Your Spot
+                    <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                      Most Convenient
                     </span>
                   </div>
                   <p className="text-gray-600 mb-3">
@@ -233,14 +233,14 @@ export default function PaymentSelectionPage() {
                         Pay ${(selectedService.price - DEPOSIT_PAYMENT_CONFIG.price).toFixed(2)} when you arrive
                       </div>
                     </div>
-                    <div className="flex items-center space-x-4 text-sm text-yellow-700">
+                    <div className="flex items-center space-x-4 text-sm text-blue-700">
                       <div className="flex items-center space-x-1">
                         <CheckCircleIcon className="w-4 h-4" />
-                        <span>Booking secured</span>
+                        <span>Quick & Easy</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <CheckCircleIcon className="w-4 h-4" />
-                        <span>Lower upfront cost</span>
+                        <span>Hassle-free booking</span>
                       </div>
                     </div>
                   </div>
@@ -269,34 +269,21 @@ export default function PaymentSelectionPage() {
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <ClockIcon className="w-6 h-6 text-primary" />
+                    <ClockIcon className="w-6 h-6 text-gray-400" />
                     <h3 className="text-xl font-semibold text-gray-900">
-                      Pay Nothing Now - Full Amount on Location
+                      Pay on Location
                     </h3>
-                    <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
-                      Most Convenient
-                    </span>
                   </div>
                   <p className="text-gray-600 mb-3">
-                    Complete your booking now with $0 online payment. Pay the full service amount when you arrive for your appointment.
+                    Pay the full service amount when you arrive for your appointment.
                   </p>
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-2xl font-bold text-primary">
+                      <div className="text-2xl font-bold text-gray-600">
                         $0.00 Now
                       </div>
                       <div className="text-sm text-gray-500">
                         Pay ${selectedService.price.toFixed(2)} when you arrive
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4 text-sm text-blue-700">
-                      <div className="flex items-center space-x-1">
-                        <CheckCircleIcon className="w-4 h-4" />
-                        <span>Secured booking</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <CheckCircleIcon className="w-4 h-4" />
-                        <span>No online payment</span>
                       </div>
                     </div>
                   </div>
