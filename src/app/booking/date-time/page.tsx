@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { format, addDays, startOfDay, isSameDay } from 'date-fns'
+import { format, addDays, startOfDay, isSameDay, startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import { getAvailableStaff } from '@/lib/staff-data'
 
@@ -21,6 +22,8 @@ export default function DateTimePage() {
   const [bookingData, setBookingData] = useState<any>(null)
   const [loadingTimes, setLoadingTimes] = useState<boolean>(false)
   const [loadingService, setLoadingService] = useState<boolean>(true)
+  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 })) // Week starts on Monday
+  const [weekDates, setWeekDates] = useState<Date[]>([])
 
   // Validate access and get booking data
   useEffect(() => {
@@ -54,12 +57,12 @@ export default function DateTimePage() {
     setLoadingService(false)
   }, [])
 
-  // Generate next 30 days based on staff availability
+  // Generate all available dates for reference (up to 4 weeks)
   useEffect(() => {
     if (!selectedService) return
     
     const dates = []
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 28; i++) { // 4 weeks = 28 days
       const date = addDays(new Date(), i)
       const dateString = format(date, 'yyyy-MM-dd')
       
@@ -73,6 +76,21 @@ export default function DateTimePage() {
     }
     setAvailableDates(dates)
   }, [selectedService])
+
+  // Generate week dates based on current week start
+  useEffect(() => {
+    if (!selectedService || availableDates.length === 0) return
+    
+    const weekStart = currentWeekStart
+    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
+    
+    // Filter available dates for current week
+    const currentWeekDates = availableDates.filter(date => 
+      date >= weekStart && date <= weekEnd
+    )
+    
+    setWeekDates(currentWeekDates)
+  }, [currentWeekStart, availableDates, selectedService])
 
   // Additional validation - ensure we have service data after loading
   useEffect(() => {
@@ -88,6 +106,52 @@ export default function DateTimePage() {
       analytics.pageViewed('date_time_selection', 2)
     }
   }, [loadingService])
+
+  // Navigation functions for week browsing
+  const goToPreviousWeek = () => {
+    const previousWeek = subWeeks(currentWeekStart, 1)
+    const today = startOfWeek(new Date(), { weekStartsOn: 1 })
+    
+    // Don't allow going to weeks before current week
+    if (previousWeek >= today) {
+      setCurrentWeekStart(previousWeek)
+    }
+  }
+
+  const goToNextWeek = () => {
+    const nextWeek = addWeeks(currentWeekStart, 1)
+    const maxWeek = startOfWeek(addDays(new Date(), 28), { weekStartsOn: 1 }) // 4 weeks ahead
+    
+    // Don't allow going beyond 4 weeks
+    if (nextWeek <= maxWeek) {
+      setCurrentWeekStart(nextWeek)
+    }
+  }
+
+  // Check if navigation is available
+  const canGoToPreviousWeek = () => {
+    const previousWeek = subWeeks(currentWeekStart, 1)
+    const today = startOfWeek(new Date(), { weekStartsOn: 1 })
+    return previousWeek >= today
+  }
+
+  const canGoToNextWeek = () => {
+    const nextWeek = addWeeks(currentWeekStart, 1)
+    const maxWeek = startOfWeek(addDays(new Date(), 28), { weekStartsOn: 1 })
+    return nextWeek <= maxWeek
+  }
+
+  // Format week range for display
+  const getWeekRangeText = () => {
+    const weekStart = currentWeekStart
+    const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
+    
+    if (weekStart.getMonth() === weekEnd.getMonth()) {
+      return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'd, yyyy')}`
+    } else {
+      return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d, yyyy')}`
+    }
+  }
 
   const generateFallbackTimes = useCallback(() => {
     const times = []
@@ -256,36 +320,94 @@ export default function DateTimePage() {
                 <h2 className="text-3xl font-heading font-bold text-primary mb-8">
                   Select Date
                 </h2>
-                <div className="flex space-x-3 overflow-x-auto pb-4 scrollbar-hide">
-                  {availableDates.map((date) => {
-                    const isSelected = selectedDate && isSameDay(date, selectedDate)
-                    const isWeekend = date.getDay() === 0 || date.getDay() === 6 // Sunday = 0, Saturday = 6
-                    
-                    return (
-                      <button
-                        key={date.toISOString()}
-                        onClick={() => handleDateSelect(date)}
-                        className={`${
-                          isSelected 
-                            ? 'date-button-selected' 
-                            : isWeekend 
-                              ? 'date-button-available date-button-weekend'
-                              : 'date-button-available'
-                        }`}
-                      >
-                        <div className="text-sm font-semibold">
-                          {format(date, 'EEE')}
-                        </div>
-                        <div className="text-lg font-bold">
-                          {format(date, 'd')}
-                        </div>
-                        <div className="text-xs">
-                          {format(date, 'MMM')}
-                        </div>
-                      </button>
-                    )
-                  })}
+                
+                {/* Week Navigation Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <button
+                    onClick={goToPreviousWeek}
+                    disabled={!canGoToPreviousWeek()}
+                    className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200 ${
+                      canGoToPreviousWeek()
+                        ? 'bg-primary text-white hover:bg-primary-dark hover:scale-105 active:scale-95'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                    aria-label="Previous week"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-gray-900">
+                      {getWeekRangeText()}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Week {weekDates.length > 0 ? `(${weekDates.length} days available)` : '(no dates available)'}
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={goToNextWeek}
+                    disabled={!canGoToNextWeek()}
+                    className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200 ${
+                      canGoToNextWeek()
+                        ? 'bg-primary text-white hover:bg-primary-dark hover:scale-105 active:scale-95'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                    aria-label="Next week"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
                 </div>
+                
+                {/* Week Dates Grid */}
+                {weekDates.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">📅</div>
+                    <div className="text-lg text-gray-600 mb-2">
+                      No available dates this week
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Try navigating to a different week
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                    {weekDates.map((date) => {
+                      const isSelected = selectedDate && isSameDay(date, selectedDate)
+                      const isWeekend = date.getDay() === 0 || date.getDay() === 6 // Sunday = 0, Saturday = 6
+                      const isToday = isSameDay(date, new Date())
+                      
+                      return (
+                        <button
+                          key={date.toISOString()}
+                          onClick={() => handleDateSelect(date)}
+                          className={`relative p-4 rounded-xl transition-all duration-200 min-h-[80px] flex flex-col items-center justify-center ${
+                            isSelected 
+                              ? 'bg-primary text-white shadow-lg scale-105' 
+                              : isToday
+                                ? 'bg-blue-50 border-2 border-blue-200 text-blue-800 hover:bg-blue-100'
+                                : isWeekend 
+                                  ? 'bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100'
+                                  : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-primary'
+                          }`}
+                        >
+                          {isToday && (
+                            <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+                          )}
+                          <div className={`text-sm font-semibold ${isSelected ? 'text-white' : ''}`}>
+                            {format(date, 'EEE')}
+                          </div>
+                          <div className={`text-xl font-bold ${isSelected ? 'text-white' : ''}`}>
+                            {format(date, 'd')}
+                          </div>
+                          <div className={`text-xs ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>
+                            {format(date, 'MMM')}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Time Selection */}

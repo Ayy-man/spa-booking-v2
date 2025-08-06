@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import ConfettiExplosion from 'react-confetti-explosion'
 import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
@@ -17,6 +18,7 @@ export default function ConfirmationPage() {
   const [paymentCompleted, setPaymentCompleted] = useState(false)
   const [paymentType, setPaymentType] = useState<'deposit' | 'full' | 'location'>('deposit')
   const [isLoading, setIsLoading] = useState(true)
+  const [showConfetti, setShowConfetti] = useState(false)
 
   useEffect(() => {
     // Check URL parameters for session recovery
@@ -202,6 +204,24 @@ export default function ConfirmationPage() {
       
       setIsSuccess(true)
       
+      // Trigger confetti animation with a slight delay for better UX
+      setTimeout(() => {
+        setShowConfetti(true)
+      }, 500)
+      
+      // For full payment customers, add a second burst for extra celebration
+      if (paymentType === 'full') {
+        setTimeout(() => {
+          setShowConfetti(false)
+          setTimeout(() => setShowConfetti(true), 100) // Quick reset and retrigger
+        }, 2000)
+      }
+      
+      // Auto-hide confetti after 3 seconds
+      setTimeout(() => {
+        setShowConfetti(false)
+      }, 3500)
+      
       // Clear booking flow data
       localStorage.removeItem('selectedService')
       localStorage.removeItem('selectedDate')
@@ -322,7 +342,28 @@ export default function ConfirmationPage() {
     return (
       <div className="min-h-screen bg-background py-8">
         <div className="container mx-auto px-4 max-w-2xl text-center">
-          <div className="bg-white rounded-xl shadow-md p-8">
+          <div className="bg-white rounded-xl shadow-md p-8 relative">
+            {/* Confetti Animation */}
+            {showConfetti && (
+              <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+                <ConfettiExplosion
+                  force={0.8}
+                  duration={2800}
+                  particleCount={paymentType === 'full' ? 120 : 80}
+                  width={1200}
+                  colors={[
+                    '#10B981', // Emerald (success green)
+                    '#3B82F6', // Blue  
+                    '#8B5CF6', // Purple (spa luxury)
+                    '#F59E0B', // Amber (gold accent)
+                    '#EF4444', // Rose (warm accent)
+                    '#06B6D4', // Cyan (spa blue)
+                    '#84CC16'  // Lime (fresh green)
+                  ]}
+                />
+              </div>
+            )}
+            
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
