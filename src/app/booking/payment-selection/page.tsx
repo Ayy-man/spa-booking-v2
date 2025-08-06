@@ -141,13 +141,12 @@ export default function PaymentSelectionPage() {
           <div className="space-y-4 mb-8">
             {/* Full Payment Option */}
             {hasFullPayment && fullPaymentLink && (
-              <div 
-                className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${
+              <label 
+                className={`block border-2 rounded-xl p-6 cursor-pointer transition-all ${
                   selectedPaymentType === 'full' 
                     ? 'border-primary bg-primary/5' 
                     : 'border-gray-200 hover:border-primary/50'
                 }`}
-                onClick={() => setSelectedPaymentType('full')}
               >
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
@@ -190,18 +189,72 @@ export default function PaymentSelectionPage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </label>
             )}
 
+            {/* Deposit Payment Option */}
+            <label 
+              className={`block border-2 rounded-xl p-6 cursor-pointer transition-all ${
+                selectedPaymentType === 'deposit' 
+                  ? 'border-primary bg-primary/5' 
+                  : 'border-gray-200 hover:border-primary/50'
+              }`}
+            >
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <input
+                    type="radio"
+                    name="paymentType"
+                    value="deposit"
+                    checked={selectedPaymentType === 'deposit'}
+                    onChange={() => setSelectedPaymentType('deposit')}
+                    className="w-5 h-5 text-primary border-gray-300 focus:ring-primary"
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <CreditCardIcon className="w-6 h-6 text-primary" />
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Deposit Payment Only
+                    </h3>
+                    <span className="bg-yellow-100 text-yellow-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                      Secure Your Spot
+                    </span>
+                  </div>
+                  <p className="text-gray-600 mb-3">
+                    Pay a ${DEPOSIT_PAYMENT_CONFIG.price.toFixed(2)} deposit now to secure your appointment. Pay the remaining balance when you arrive.
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-2xl font-bold text-primary">
+                        ${DEPOSIT_PAYMENT_CONFIG.price.toFixed(2)} Now
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Pay ${(selectedService.price - DEPOSIT_PAYMENT_CONFIG.price).toFixed(2)} when you arrive
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm text-yellow-700">
+                      <div className="flex items-center space-x-1">
+                        <CheckCircleIcon className="w-4 h-4" />
+                        <span>Booking secured</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <CheckCircleIcon className="w-4 h-4" />
+                        <span>Lower upfront cost</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </label>
 
             {/* Pay on Location Option */}
-            <div 
-              className={`border-2 rounded-xl p-6 cursor-pointer transition-all ${
+            <label 
+              className={`block border-2 rounded-xl p-6 cursor-pointer transition-all ${
                 selectedPaymentType === 'location' 
                   ? 'border-primary bg-primary/5' 
                   : 'border-gray-200 hover:border-primary/50'
               }`}
-              onClick={() => setSelectedPaymentType('location')}
             >
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0">
@@ -249,7 +302,7 @@ export default function PaymentSelectionPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </label>
 
             {/* Info for services without full payment */}
             {!hasFullPayment && (
@@ -284,6 +337,8 @@ export default function PaymentSelectionPage() {
               ) : (
                 selectedPaymentType === 'location' 
                   ? 'Complete Booking ($0 Now)' 
+                  : selectedPaymentType === 'deposit'
+                  ? `Continue to Payment - $${DEPOSIT_PAYMENT_CONFIG.price.toFixed(2)} Deposit`
                   : `Continue to Payment - $${
                       (fullPaymentLink?.price || selectedService.price).toFixed(2)
                     }`
