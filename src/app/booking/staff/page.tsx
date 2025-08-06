@@ -14,6 +14,8 @@ import BookingProgressIndicator from '@/components/booking/BookingProgressIndica
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { StaffCardSkeleton } from '@/components/ui/skeleton-loader'
 import { analytics } from '@/lib/analytics'
+import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
+import { validateServiceSelection } from '@/lib/booking-step-validation'
 
 type Staff = Database['public']['Tables']['staff']['Row']
 
@@ -50,37 +52,45 @@ export default function StaffPage() {
   }, [selectedService])
 
   useEffect(() => {
+    // Get data from state manager
+    const state = loadBookingState()
     
-    // Get data from localStorage
-    const bookingDataStr = localStorage.getItem('bookingData')
-    const serviceDataStr = localStorage.getItem('selectedService')
-    const dateData = localStorage.getItem('selectedDate')
-    const timeData = localStorage.getItem('selectedTime')
+    if (!state) {
+      console.log('[StaffPage] No booking state found, redirecting to service selection')
+      window.location.href = '/booking'
+      return
+    }
 
-
-    if (bookingDataStr) {
-      const parsedBookingData = JSON.parse(bookingDataStr)
-      setBookingData(parsedBookingData)
-      setSelectedService(parsedBookingData.primaryService)
-    } else if (serviceDataStr) {
+    // Set booking data
+    if (state.bookingData) {
+      setBookingData(state.bookingData)
+      setSelectedService(state.bookingData.primaryService)
+    } else if (state.selectedService) {
       // Fallback for backward compatibility
-      const parsedService = JSON.parse(serviceDataStr)
-      setSelectedService(parsedService)
-      setBookingData({
+      const service = state.selectedService
+      const fallbackBookingData = {
         isCouplesBooking: false,
-        primaryService: parsedService,
-        totalPrice: parsedService.price,
-        totalDuration: parsedService.duration
-      })
+        primaryService: service,
+        totalPrice: service.price,
+        totalDuration: service.duration
+      }
+      setBookingData(fallbackBookingData)
+      setSelectedService(service)
     }
     
-    if (dateData) setSelectedDate(dateData)
-    if (timeData) setSelectedTime(timeData)
+    // Set date and time
+    if (state.selectedDate) setSelectedDate(state.selectedDate)
+    if (state.selectedTime) setSelectedTime(state.selectedTime)
     
-    // Fetch available staff from Supabase
-    if ((bookingDataStr || serviceDataStr) && dateData && timeData) {
+    // Fetch available staff if we have all required data
+    if ((state.bookingData || state.selectedService) && state.selectedDate && state.selectedTime) {
       fetchAvailableStaff()
     } else {
+      console.log('[StaffPage] Missing required data for staff lookup')
+      // Redirect back to appropriate step
+      if (!state.selectedDate || !state.selectedTime) {
+        window.location.href = '/booking/date-time'
+      }
     }
   }, [])
 
@@ -181,7 +191,17 @@ export default function StaffPage() {
 
   const handleContinue = () => {
     if (selectedStaff) {
-      localStorage.setItem('selectedStaff', selectedStaff)
+      // Save staff selection using state manager
+      saveBookingState({ selectedStaff })
+      
+      // Track staff selection completion
+      const staffName = selectedStaff === 'any' ? 'Any Available Staff' : availableStaff.find(s => s.id === selectedStaff)?.name || 'Unknown'
+      analytics.track('staff_selected', {
+        staff_name: staffName,
+        staff_id: selectedStaff,
+        service: selectedService?.name || 'unknown'
+      })
+      
       window.location.href = '/booking/customer-info'
     }
   }
@@ -209,10 +229,18 @@ export default function StaffPage() {
               {/* Header */}
               <div className="text-center lg:text-left">
                 <Link 
-                  href="/booking/date-time" 
+                  href={validateServiceSelection().isValid ? "/booking/date-time" : "/booking"} 
                   className="btn-tertiary !w-auto px-6 mb-6 inline-flex"
+                  onClick={(e) => {
+                    const validation = validateServiceSelection()
+                    if (!validation.isValid) {
+                      e.preventDefault()
+                      console.log('[StaffPage] Cannot go back: no service selected')
+                      window.location.href = '/booking'
+                    }
+                  }}
                 >
-                  ← Back to Date & Time
+                  ← {validateServiceSelection().isValid ? 'Back to Date & Time' : 'Back to Service Selection'}
                 </Link>
                 <h1 className="text-4xl md:text-5xl font-heading text-primary mb-4">
                   Select Staff Member

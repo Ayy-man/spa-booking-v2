@@ -13,6 +13,14 @@ const safeTrack = (event: string, properties?: any) => {
 
 // Custom analytics events for the booking flow
 export const analytics = {
+  // Generic tracking method
+  track: (event: string, properties?: any) => {
+    safeTrack(event, {
+      ...properties,
+      timestamp: new Date().toISOString()
+    })
+  },
+
   // Service selection events
   serviceSelected: (serviceName: string, serviceCategory: string, price: number) => {
     safeTrack('service_selected', {

@@ -7,6 +7,7 @@ import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 import { getGHLServiceCategory } from '@/lib/staff-data'
+import { loadBookingState, recoverBookingBySessionId, clearBookingState } from '@/lib/booking-state-manager'
 
 export default function ConfirmationPage() {
   const [bookingData, setBookingData] = useState<any>(null)
@@ -18,46 +19,63 @@ export default function ConfirmationPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Get all booking data from localStorage
-    const serviceData = localStorage.getItem('selectedService')
-    const dateData = localStorage.getItem('selectedDate')
-    const timeData = localStorage.getItem('selectedTime')
-    const staffData = localStorage.getItem('selectedStaff')
-    const customerData = localStorage.getItem('customerInfo')
-
-    if (serviceData && dateData && timeData && staffData && customerData) {
-      const customer = JSON.parse(customerData)
+    // Check URL parameters for session recovery
+    const urlParams = new URLSearchParams(window.location.search)
+    const sessionId = urlParams.get('session')
+    const paymentSuccess = urlParams.get('payment') === 'success'
+    const paymentLocation = urlParams.get('payment') === 'location'
+    
+    let state = null
+    
+    // Try to recover state by session ID if provided (for payment returns)
+    if (sessionId) {
+      state = recoverBookingBySessionId(sessionId)
+      console.log('[ConfirmationPage] Recovered state by session ID:', sessionId, state)
+    } else {
+      // Try to load normal state
+      state = loadBookingState()
+    }
+    
+    if (!state) {
+      console.log('[ConfirmationPage] No booking state found, redirecting to service selection')
+      window.location.href = '/booking'
+      return
+    }
+    
+    // Validate we have all required data
+    const service = state.bookingData?.primaryService || state.selectedService
+    const customer = state.customerInfo
+    
+    if (service && state.selectedDate && state.selectedTime && state.selectedStaff && customer) {
       setBookingData({
-        service: JSON.parse(serviceData),
-        date: dateData,
-        time: timeData,
-        staff: staffData,
-        customer: customer
+        service,
+        date: state.selectedDate,
+        time: state.selectedTime,
+        staff: state.selectedStaff,
+        customer
       })
       
-      // Check if this customer was marked as new (indicating they went through payment)
-      // Also check URL parameters for payment success indicators
-      const urlParams = new URLSearchParams(window.location.search)
-      const paymentSuccess = urlParams.get('payment') === 'success'
-      const paymentLocation = urlParams.get('payment') === 'location'
-      
-      // Get payment type from localStorage (set in payment selection)
-      const storedPaymentType = localStorage.getItem('paymentType') as 'deposit' | 'full' | 'location' | null
-      if (storedPaymentType) {
-        setPaymentType(storedPaymentType)
+      // Set payment type from state
+      if (state.paymentType) {
+        setPaymentType(state.paymentType)
       }
       
+      // Determine if payment was completed
       if (customer.isNewCustomer || paymentSuccess) {
         setPaymentCompleted(true)
       }
       
-      // For pay on location, don't set paymentCompleted to true since no payment was made
-      if (paymentLocation) {
+      // For pay on location, payment is not completed yet
+      if (paymentLocation || state.paymentType === 'location') {
         setPaymentCompleted(false)
       }
+    } else {
+      console.log('[ConfirmationPage] Missing required booking data:', { service, customer, date: state.selectedDate, time: state.selectedTime, staff: state.selectedStaff })
+      // Redirect back to start if missing critical data
+      window.location.href = '/booking'
+      return
     }
     
-    // Set loading to false after attempting to load data
     setIsLoading(false)
   }, [])
 
@@ -133,7 +151,9 @@ export default function ConfirmationPage() {
         createdAt: new Date().toISOString()
       }
       
+      // Store last booking and clear current booking state
       localStorage.setItem('lastBooking', JSON.stringify(booking))
+      clearBookingState()
       
       // Track successful booking confirmation
       analytics.bookingConfirmed(

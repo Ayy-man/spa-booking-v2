@@ -5,6 +5,7 @@ import Link from 'next/link'
 import CouplesBooking from '@/components/CouplesBooking'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import { analytics } from '@/lib/analytics'
+import { saveBookingState } from '@/lib/booking-state-manager'
 
 export default function BookingPage() {
   const [selectedService, setSelectedService] = useState('')
@@ -225,8 +226,16 @@ export default function BookingPage() {
                 }
                 serviceCategories={serviceCategories}
                 onContinue={(bookingData) => {
-                  // Store booking data in localStorage
-                  localStorage.setItem('bookingData', JSON.stringify(bookingData))
+                  // Store booking data using state manager
+                  saveBookingState({ bookingData })
+                  
+                  // Track couples booking selection
+                  analytics.track('couples_booking_selected', {
+                    primary_service: bookingData.primaryService.name,
+                    secondary_service: bookingData.secondaryService?.name,
+                    total_price: bookingData.totalPrice
+                  })
+                  
                   // Navigate to date/time selection
                   window.location.href = '/booking/date-time'
                 }}

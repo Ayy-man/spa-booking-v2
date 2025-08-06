@@ -9,6 +9,8 @@ import { getAvailableStaff } from '@/lib/staff-data'
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { TimeSlotSkeleton } from '@/components/ui/skeleton-loader'
 import { analytics } from '@/lib/analytics'
+import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
+import { validateAndRedirect } from '@/lib/booking-step-validation'
 
 export default function DateTimePage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -20,34 +22,35 @@ export default function DateTimePage() {
   const [loadingTimes, setLoadingTimes] = useState<boolean>(false)
   const [loadingService, setLoadingService] = useState<boolean>(true)
 
-  // Get booking data from localStorage
+  // Validate access and get booking data
   useEffect(() => {
-    const bookingDataStr = localStorage.getItem('bookingData')
-    const serviceDataStr = localStorage.getItem('selectedService')
-    
-    if (bookingDataStr) {
-      try {
-        const parsedBookingData = JSON.parse(bookingDataStr)
-        setBookingData(parsedBookingData)
-        setSelectedService(parsedBookingData.primaryService)
-      } catch (error) {
-        localStorage.removeItem('bookingData')
-      }
-    } else if (serviceDataStr) {
-      // Fallback to old format for backward compatibility
-      try {
-        const parsedService = JSON.parse(serviceDataStr)
-        setSelectedService(parsedService)
-        setBookingData({
-          isCouplesBooking: false,
-          primaryService: parsedService,
-          totalPrice: parsedService.price,
-          totalDuration: parsedService.duration
-        })
-      } catch (error) {
-        localStorage.removeItem('selectedService')
-      }
+    // Validate that user has selected a service (Step 1)
+    if (!validateAndRedirect(2)) {
+      return // Will redirect if validation fails
     }
+    
+    const state = loadBookingState()
+    
+    // We know state exists because validation passed
+    if (state?.bookingData) {
+      setBookingData(state.bookingData)
+      setSelectedService(state.bookingData.primaryService)
+    } else if (state?.selectedService) {
+      // Convert individual service to booking data format
+      const service = state.selectedService
+      const bookingData = {
+        isCouplesBooking: false,
+        primaryService: service,
+        totalPrice: service.price,
+        totalDuration: service.duration
+      }
+      setBookingData(bookingData)
+      setSelectedService(service)
+      
+      // Save the structured data for consistency
+      saveBookingState({ bookingData })
+    }
+    
     setLoadingService(false)
   }, [])
 
@@ -71,9 +74,10 @@ export default function DateTimePage() {
     setAvailableDates(dates)
   }, [selectedService])
 
-  // If no service is selected after loading, redirect to service selection
+  // Additional validation - ensure we have service data after loading
   useEffect(() => {
     if (!loadingService && !selectedService) {
+      console.log('[DateTimePage] Service data missing after load, redirecting to service selection')
       window.location.href = '/booking'
     }
   }, [selectedService, loadingService])
@@ -184,18 +188,23 @@ export default function DateTimePage() {
 
   const handleContinue = () => {
     if (selectedDate && selectedTime) {
-      // Store in localStorage or state management
-      localStorage.setItem('selectedDate', selectedDate.toISOString())
-      localStorage.setItem('selectedTime', selectedTime)
+      // Store date and time using state manager
+      saveBookingState({
+        selectedDate: selectedDate.toISOString(),
+        selectedTime: selectedTime
+      })
+      
+      // Track date/time selection
+      analytics.track('date_time_selected', {
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        time: selectedTime,
+        service: selectedService?.name || 'unknown'
+      })
       
       // Check if it's a couples booking
-      const bookingDataStr = localStorage.getItem('bookingData')
-      if (bookingDataStr) {
-        const bookingData = JSON.parse(bookingDataStr)
-        if (bookingData.isCouplesBooking) {
-          window.location.href = '/booking/staff-couples'
-          return
-        }
+      if (bookingData?.isCouplesBooking) {
+        window.location.href = '/booking/staff-couples'
+        return
       }
       
       // Navigate to regular staff selection

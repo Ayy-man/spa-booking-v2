@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { EditIcon, CalendarIcon, ClockIcon, UserIcon, DollarSignIcon } from 'lucide-react'
 import { staffNameMap } from '@/lib/staff-data'
+import { validateServiceSelection, validateDateTimeSelection, validateStaffSelection } from '@/lib/booking-step-validation'
 
 interface Service {
   name: string
@@ -121,19 +122,40 @@ export function BookingSummary({
         window.location.href = '/booking'
         break
       case 'datetime':
-        window.location.href = '/booking/date-time'
+        // Only allow date/time edit if service is selected
+        const serviceValidation = validateServiceSelection()
+        if (serviceValidation.isValid) {
+          window.location.href = '/booking/date-time'
+        } else {
+          console.log('[BookingSummary] Cannot edit date/time: no service selected')
+          window.location.href = '/booking'
+        }
         break
       case 'staff':
-        const bookingDataStr = localStorage.getItem('bookingData')
-        if (bookingDataStr) {
-          const parsed = JSON.parse(bookingDataStr)
-          window.location.href = parsed.isCouplesBooking ? '/booking/staff-couples' : '/booking/staff'
-        } else {
-          window.location.href = '/booking/staff'
+        // Only allow staff edit if date/time is selected
+        const dateTimeValidation = validateDateTimeSelection()
+        if (dateTimeValidation.isValid) {
+          const bookingDataStr = localStorage.getItem('bookingData')
+          if (bookingDataStr) {
+            const parsed = JSON.parse(bookingDataStr)
+            window.location.href = parsed.isCouplesBooking ? '/booking/staff-couples' : '/booking/staff'
+          } else {
+            window.location.href = '/booking/staff'
+          }
+        } else if (dateTimeValidation.redirectTo) {
+          console.log('[BookingSummary] Cannot edit staff: prerequisites not met')
+          window.location.href = dateTimeValidation.redirectTo
         }
         break
       case 'customer':
-        window.location.href = '/booking/customer-info'
+        // Only allow customer edit if staff is selected
+        const staffValidation = validateStaffSelection()
+        if (staffValidation.isValid) {
+          window.location.href = '/booking/customer-info'
+        } else if (staffValidation.redirectTo) {
+          console.log('[BookingSummary] Cannot edit customer info: prerequisites not met')
+          window.location.href = staffValidation.redirectTo
+        }
         break
     }
   }
@@ -231,7 +253,15 @@ export function BookingSummary({
               </div>
             </div>
             {showEditLinks && (
-              <EditIcon className="w-4 h-4 text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
+              <div title={!validateServiceSelection().isValid ? 'Please select a service first' : 'Edit date & time'}>
+                <EditIcon 
+                  className={`w-4 h-4 flex-shrink-0 transition-colors ${
+                    validateServiceSelection().isValid
+                      ? 'text-gray-400 hover:text-primary cursor-pointer'
+                      : 'text-gray-300 cursor-not-allowed'
+                  }`}
+                />
+              </div>
             )}
           </div>
         )}
@@ -256,7 +286,15 @@ export function BookingSummary({
               </div>
             </div>
             {showEditLinks && (
-              <EditIcon className="w-4 h-4 text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
+              <div title={!validateDateTimeSelection().isValid ? 'Please complete previous steps first' : 'Edit staff'}>
+                <EditIcon 
+                  className={`w-4 h-4 flex-shrink-0 transition-colors ${
+                    validateDateTimeSelection().isValid
+                      ? 'text-gray-400 hover:text-primary cursor-pointer'
+                      : 'text-gray-300 cursor-not-allowed'
+                  }`}
+                />
+              </div>
             )}
           </div>
         )}
@@ -283,7 +321,15 @@ export function BookingSummary({
               </div>
             </div>
             {showEditLinks && (
-              <EditIcon className="w-4 h-4 text-gray-400 hover:text-primary transition-colors flex-shrink-0" />
+              <div title={!validateStaffSelection().isValid ? 'Please complete previous steps first' : 'Edit customer info'}>
+                <EditIcon 
+                  className={`w-4 h-4 flex-shrink-0 transition-colors ${
+                    validateStaffSelection().isValid
+                      ? 'text-gray-400 hover:text-primary cursor-pointer'
+                      : 'text-gray-300 cursor-not-allowed'
+                  }`}
+                />
+              </div>
             )}
           </div>
         )}

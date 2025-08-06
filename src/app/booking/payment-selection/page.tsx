@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { CreditCard as CreditCardIcon, Clock as ClockIcon, CheckCircle as CheckCircleIcon, Info as InformationCircleIcon } from 'lucide-react'
 import { getPaymentLink, hasFullPaymentLink, generatePaymentUrl, DEPOSIT_PAYMENT_CONFIG } from '@/lib/payment-config'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
+import { loadBookingState, saveBookingState, getBookingSessionId } from '@/lib/booking-state-manager'
 
 interface Service {
   name: string
@@ -26,23 +27,35 @@ export default function PaymentSelectionPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    // Get data from localStorage
-    const serviceData = localStorage.getItem('selectedService')
-    const customerData = localStorage.getItem('customerInfo')
+    // Get data from state manager
+    const state = loadBookingState()
     
-    if (serviceData) {
-      setSelectedService(JSON.parse(serviceData))
+    if (!state) {
+      console.log('[PaymentSelectionPage] No booking state found, redirecting to service selection')
+      window.location.href = '/booking'
+      return
     }
     
-    if (customerData) {
-      const customer = JSON.parse(customerData)
-      setCustomerInfo(customer)
+    // Get service data
+    if (state.bookingData?.primaryService) {
+      setSelectedService(state.bookingData.primaryService)
+    } else if (state.selectedService) {
+      setSelectedService(state.selectedService)
+    }
+    
+    // Get customer data
+    if (state.customerInfo) {
+      setCustomerInfo(state.customerInfo)
       
       // Redirect new customers back to customer info page
-      if (customer.isNewCustomer) {
+      if (state.customerInfo.isNewCustomer) {
         window.location.href = '/booking/customer-info'
         return
       }
+    } else {
+      console.log('[PaymentSelectionPage] No customer info found, redirecting to customer info')
+      window.location.href = '/booking/customer-info'
+      return
     }
   }, [])
 
@@ -52,8 +65,8 @@ export default function PaymentSelectionPage() {
     setLoading(true)
     
     try {
-      // Store payment type for confirmation page
-      localStorage.setItem('paymentType', selectedPaymentType)
+      // Store payment type using state manager
+      saveBookingState({ paymentType: selectedPaymentType })
       
       if (selectedPaymentType === 'location') {
         // Pay on location - skip external payment and go straight to confirmation
@@ -62,7 +75,8 @@ export default function PaymentSelectionPage() {
       }
       
       const baseUrl = window.location.origin
-      const returnUrl = `${baseUrl}/booking/confirmation?payment=success`
+      const sessionId = getBookingSessionId()
+      const returnUrl = `${baseUrl}/booking/confirmation?payment=success&session=${sessionId}`
       
       let paymentUrl: string
       

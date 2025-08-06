@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { supabaseClient } from '@/lib/supabase'
 import { Database } from '@/types/database'
 import { getServiceCategory, canDatabaseStaffPerformService, isDatabaseStaffAvailableOnDate } from '@/lib/staff-data'
+import { validateServiceSelection } from '@/lib/booking-step-validation'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -255,8 +256,19 @@ export default function CouplesStaffPage() {
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/booking/date-time" className="text-primary hover:text-primary-dark transition-colors">
-            ← Back to Date & Time
+          <Link 
+            href={validateServiceSelection().isValid ? "/booking/date-time" : "/booking"} 
+            className="text-primary hover:text-primary-dark transition-colors"
+            onClick={(e) => {
+              const validation = validateServiceSelection()
+              if (!validation.isValid) {
+                e.preventDefault()
+                console.log('[StaffCouplesPage] Cannot go back: no service selected')
+                window.location.href = '/booking'
+              }
+            }}
+          >
+            ← {validateServiceSelection().isValid ? 'Back to Date & Time' : 'Back to Service Selection'}
           </Link>
           <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
             Select Staff Members

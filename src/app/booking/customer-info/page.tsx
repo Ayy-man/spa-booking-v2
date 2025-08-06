@@ -9,6 +9,7 @@ import BookingProgressIndicator from '@/components/booking/BookingProgressIndica
 import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 import { getGHLServiceCategory } from '@/lib/staff-data'
+import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
 
 interface Service {
   name: string
@@ -23,27 +24,34 @@ export default function CustomerInfoPage() {
   const [selectedStaff, setSelectedStaff] = useState<string>('')
 
   useEffect(() => {
-    // Get data from localStorage - check both single and couples booking formats
-    const serviceData = localStorage.getItem('selectedService')
-    const bookingDataStr = localStorage.getItem('bookingData')
-    const dateData = localStorage.getItem('selectedDate')
-    const timeData = localStorage.getItem('selectedTime')
-    const staffData = localStorage.getItem('selectedStaff')
+    // Get data from state manager
+    const state = loadBookingState()
+    
+    if (!state) {
+      console.log('[CustomerInfoPage] No booking state found, redirecting to service selection')
+      window.location.href = '/booking'
+      return
+    }
 
     // Handle couples booking data structure
-    if (bookingDataStr) {
-      const bookingData = JSON.parse(bookingDataStr)
-      if (bookingData.primaryService) {
-        setSelectedService(bookingData.primaryService)
-      }
-    } else if (serviceData) {
+    if (state.bookingData?.primaryService) {
+      setSelectedService(state.bookingData.primaryService)
+    } else if (state.selectedService) {
       // Handle regular booking data structure
-      setSelectedService(JSON.parse(serviceData))
+      setSelectedService(state.selectedService)
     }
     
-    if (dateData) setSelectedDate(dateData)
-    if (timeData) setSelectedTime(timeData)
-    if (staffData) setSelectedStaff(staffData)
+    // Set other booking data
+    if (state.selectedDate) setSelectedDate(state.selectedDate)
+    if (state.selectedTime) setSelectedTime(state.selectedTime)
+    if (state.selectedStaff) setSelectedStaff(state.selectedStaff)
+    
+    // Validate we have all required data for this step
+    if (!state.selectedDate || !state.selectedTime || !state.selectedStaff) {
+      console.log('[CustomerInfoPage] Missing required booking data, redirecting to staff selection')
+      window.location.href = '/booking/staff'
+      return
+    }
   }, [])
 
   // Track page view
@@ -60,8 +68,16 @@ export default function CustomerInfoPage() {
       analytics.paymentInitiated(true, selectedService.price)
     }
     
-    // Store customer info
-    localStorage.setItem('customerInfo', JSON.stringify(data))
+    // Store customer info using state manager
+    saveBookingState({ 
+      customerInfo: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        isNewCustomer: data.isNewCustomer,
+        specialRequests: data.specialRequests
+      }
+    })
     
     // Send new customer webhook to GHL if it's a new customer
     if (data.isNewCustomer && selectedService) {
@@ -97,30 +113,24 @@ export default function CustomerInfoPage() {
       }
     }
     
-    // Check if it's a couples booking
-    const bookingDataStr = localStorage.getItem('bookingData')
-    const isCouplesBooking = bookingDataStr ? JSON.parse(bookingDataStr).isCouplesBooking : false
+    // Check if it's a couples booking and determine redirect
+    const currentState = loadBookingState()
+    const isCouplesBooking = currentState?.bookingData?.isCouplesBooking || false
     
     // Ensure proper data structure before redirecting
-    if (isCouplesBooking) {
-      // For couples booking, ensure bookingData is properly structured with all necessary info
-      const existingBookingData = bookingDataStr ? JSON.parse(bookingDataStr) : null
-      if (existingBookingData && selectedService) {
-        // Update bookingData with current service info to ensure consistency
-        const updatedBookingData = {
-          ...existingBookingData,
-          primaryService: selectedService,
-          // Ensure secondary service exists (same as primary if not different)
-          secondaryService: existingBookingData.secondaryService || selectedService,
-          totalPrice: existingBookingData.totalPrice || (selectedService.price * (existingBookingData.secondaryService ? 2 : 1))
-        }
-        localStorage.setItem('bookingData', JSON.stringify(updatedBookingData))
+    if (isCouplesBooking && currentState?.bookingData && selectedService) {
+      // For couples booking, ensure bookingData is properly updated
+      const updatedBookingData = {
+        ...currentState.bookingData,
+        primaryService: selectedService,
+        // Ensure secondary service exists (same as primary if not different)
+        secondaryService: currentState.bookingData.secondaryService || selectedService,
+        totalPrice: currentState.bookingData.totalPrice || (selectedService.price * (currentState.bookingData.secondaryService ? 2 : 1))
       }
-    } else {
+      saveBookingState({ bookingData: updatedBookingData })
+    } else if (selectedService) {
       // For regular booking, ensure selectedService is saved
-      if (selectedService) {
-        localStorage.setItem('selectedService', JSON.stringify(selectedService))
-      }
+      saveBookingState({ selectedService })
     }
 
     // Check if service requires waiver before proceeding to payment
