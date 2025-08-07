@@ -5,8 +5,9 @@
 DROP TRIGGER IF EXISTS check_booking_conflicts_trigger ON bookings;
 DROP TRIGGER IF EXISTS validate_booking_trigger ON bookings;
 
--- Drop existing conflict checking function
+-- Drop existing functions
 DROP FUNCTION IF EXISTS check_booking_conflicts();
+DROP FUNCTION IF EXISTS validate_booking_time();
 
 -- Recreate the conflict checking function with 15-minute buffer
 CREATE OR REPLACE FUNCTION check_booking_conflicts()
@@ -21,7 +22,7 @@ BEGIN
     WHERE room_id = NEW.room_id 
     AND appointment_date = NEW.appointment_date 
     AND status != 'cancelled'
-    AND id != COALESCE(NEW.id, '00000000-0000-0000-0000-000000000000'::uuid)
+    AND (NEW.id IS NULL OR id != NEW.id)
     AND (
         -- Check if new booking overlaps with existing bookings INCLUDING buffer time
         -- New booking starts before existing ends (with buffer) AND new booking ends after existing starts
@@ -41,7 +42,7 @@ BEGIN
     WHERE staff_id = NEW.staff_id 
     AND appointment_date = NEW.appointment_date 
     AND status != 'cancelled'
-    AND id != COALESCE(NEW.id, '00000000-0000-0000-0000-000000000000'::uuid)
+    AND (NEW.id IS NULL OR id != NEW.id)
     AND (
         -- Check if new booking overlaps with existing bookings INCLUDING buffer time
         (NEW.start_time < (end_time + buffer_time) AND NEW.end_time > start_time)
@@ -59,6 +60,36 @@ $$ LANGUAGE plpgsql;
 
 -- Update the comment to reflect buffer time
 COMMENT ON FUNCTION check_booking_conflicts() IS 'Prevents double-booking of staff and rooms with 15-minute buffer between appointments';
+
+-- Create the validate_booking_time function
+CREATE OR REPLACE FUNCTION validate_booking_time()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Check if booking is within business hours (9 AM - 7 PM)
+    IF NEW.start_time < '09:00'::time OR NEW.end_time > '19:00'::time THEN
+        RAISE EXCEPTION 'Bookings must be between 9 AM and 7 PM';
+    END IF;
+    
+    -- Check if booking date is not in the past
+    IF NEW.appointment_date < CURRENT_DATE THEN
+        RAISE EXCEPTION 'Cannot book appointments in the past';
+    END IF;
+    
+    -- Check if booking date is not more than 30 days in advance
+    IF NEW.appointment_date > CURRENT_DATE + INTERVAL '30 days' THEN
+        RAISE EXCEPTION 'Cannot book more than 30 days in advance';
+    END IF;
+    
+    -- Check if end time is after start time
+    IF NEW.end_time <= NEW.start_time THEN
+        RAISE EXCEPTION 'End time must be after start time';
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION validate_booking_time() IS 'Validates booking time constraints (business hours, date range)';
 
 -- Create a helper function to check availability before booking
 CREATE OR REPLACE FUNCTION is_time_slot_available(
@@ -80,7 +111,7 @@ BEGIN
         WHERE (room_id = p_room_id OR staff_id = p_staff_id)
         AND appointment_date = p_appointment_date 
         AND status != 'cancelled'
-        AND id != COALESCE(p_exclude_booking_id, '00000000-0000-0000-0000-000000000000'::uuid)
+        AND (p_exclude_booking_id IS NULL OR id != p_exclude_booking_id)
         AND (
             (p_start_time < (end_time + buffer_time) AND p_end_time > start_time)
             OR
@@ -109,27 +140,19 @@ $$ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION calculate_end_time_with_buffer IS 'Calculates the end time of a service based on start time and duration';
 
--- Create a view to show available time slots for a given date and service
-CREATE OR REPLACE VIEW available_time_slots AS
-SELECT DISTINCT
-    generate_series(
-        '09:00'::TIME,
-        '18:00'::TIME,  -- Last appointment start time (closes at 19:00)
-        '15 minutes'::INTERVAL
-    ) AS time_slot,
-    NULL::DATE AS appointment_date,
-    NULL::TEXT AS service_id,
-    NULL::INTEGER AS room_id,
-    NULL::TEXT AS staff_id;
-
-COMMENT ON VIEW available_time_slots IS 'Template view for generating available time slots - use with WHERE conditions';
+-- Remove problematic view - causing SQL syntax errors
 
 -- Add index to improve performance of conflict checking
 CREATE INDEX IF NOT EXISTS idx_bookings_conflicts 
 ON bookings (room_id, staff_id, appointment_date, start_time, end_time) 
 WHERE status != 'cancelled';
 
--- Add constraint to ensure duration matches the time difference
+-- Update existing bookings to ensure end_time is calculated correctly
+UPDATE bookings 
+SET end_time = start_time + (duration || ' minutes')::INTERVAL
+WHERE end_time != start_time + (duration || ' minutes')::INTERVAL;
+
+-- Add constraint to ensure duration matches the time difference (after fixing data)
 ALTER TABLE bookings 
 DROP CONSTRAINT IF EXISTS check_duration_matches_times;
 
@@ -138,11 +161,6 @@ ADD CONSTRAINT check_duration_matches_times
 CHECK (
     EXTRACT(EPOCH FROM (end_time - start_time)) / 60 = duration
 );
-
--- Update existing bookings to ensure end_time is calculated correctly
-UPDATE bookings 
-SET end_time = start_time + (duration || ' minutes')::INTERVAL
-WHERE end_time != start_time + (duration || ' minutes')::INTERVAL;
 
 -- Recreate the triggers
 CREATE TRIGGER validate_booking_trigger
