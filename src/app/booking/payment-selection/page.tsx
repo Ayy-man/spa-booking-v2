@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { CreditCard as CreditCardIcon, Clock as ClockIcon, CheckCircle as CheckCircleIcon, Info as InformationCircleIcon } from 'lucide-react'
-import { getPaymentLink, hasFullPaymentLink, generatePaymentUrl, DEPOSIT_PAYMENT_CONFIG } from '@/lib/payment-config'
+import { getPaymentLink, hasFullPaymentLink, generatePaymentUrl, DEPOSIT_PAYMENT_CONFIG, FULL_PAYMENT_LINKS } from '@/lib/payment-config'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import { loadBookingState, saveBookingState, getBookingSessionId } from '@/lib/booking-state-manager'
 
@@ -23,7 +23,7 @@ interface CustomerInfo {
 export default function PaymentSelectionPage() {
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
-  const [selectedPaymentType, setSelectedPaymentType] = useState<'full' | 'deposit' | 'location'>('full')
+  const [selectedPaymentType, setSelectedPaymentType] = useState<'full' | 'deposit' | 'location'>('location')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -81,14 +81,22 @@ export default function PaymentSelectionPage() {
       let paymentUrl: string
       
       if (selectedPaymentType === 'full') {
+        // For existing customers, always use full payment link
         const paymentLink = getPaymentLink(selectedService.name)
-        paymentUrl = generatePaymentUrl(paymentLink.paymentUrl, returnUrl, {
+        // If no specific full payment link exists, use the one with matching price or default
+        const actualPaymentUrl = paymentLink.type === 'full_payment' 
+          ? paymentLink.paymentUrl 
+          : FULL_PAYMENT_LINKS['basic-facial']?.paymentUrl || paymentLink.paymentUrl
+          
+        paymentUrl = generatePaymentUrl(actualPaymentUrl, returnUrl, {
           service_name: selectedService.name,
           customer_email: customerInfo.email,
-          payment_type: 'full'
+          payment_type: 'full',
+          amount: selectedService.price.toString()
         })
       } else {
-        // Use deposit payment
+        // This should not happen for existing customers anymore
+        // But keeping as fallback
         paymentUrl = generatePaymentUrl(DEPOSIT_PAYMENT_CONFIG.paymentUrl, returnUrl, {
           service_name: selectedService.name,
           customer_email: customerInfo.email,
@@ -137,7 +145,7 @@ export default function PaymentSelectionPage() {
               Choose Payment Option
             </h1>
             <p className="text-xl text-gray-600">
-              As an existing customer, you can pay in full now or pay when you arrive
+              As an existing customer, you can pay in full online or pay when you arrive
             </p>
           </div>
 
@@ -151,65 +159,12 @@ export default function PaymentSelectionPage() {
             </div>
           </div>
 
-          {/* Payment Options */}
+          {/* Payment Options for Existing Customers */}
           <div className="space-y-4 mb-8">
-            {/* Full Payment Option */}
-            {hasFullPayment && fullPaymentLink && (
-              <label 
-                className={`block border-2 rounded-xl p-6 cursor-pointer transition-all ${
-                  selectedPaymentType === 'full' 
-                    ? 'border-primary bg-primary/5' 
-                    : 'border-gray-200 hover:border-primary/50'
-                }`}
-              >
-                <div className="flex items-start space-x-4">
-                  <div className="flex-shrink-0">
-                    <input
-                      type="radio"
-                      name="paymentType"
-                      value="full"
-                      checked={selectedPaymentType === 'full'}
-                      onChange={() => setSelectedPaymentType('full')}
-                      className="w-5 h-5 text-primary border-gray-300 focus:ring-primary"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <CreditCardIcon className="w-6 h-6 text-primary" />
-                      <h3 className="text-xl font-semibold text-gray-900">
-                        Pay in Full Now
-                      </h3>
-                      <span className="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded">
-                        Recommended
-                      </span>
-                    </div>
-                    <p className="text-gray-600 mb-3">
-                      Pay the complete service amount now and your appointment is fully secured.
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold text-primary">
-                        ${fullPaymentLink.price.toFixed(2)}
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm text-green-700">
-                        <div className="flex items-center space-x-1">
-                          <CheckCircleIcon className="w-4 h-4" />
-                          <span>No balance due</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <CheckCircleIcon className="w-4 h-4" />
-                          <span>Guaranteed booking</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </label>
-            )}
-
-            {/* Deposit Payment Option */}
+            {/* Full Payment Option - Always show for existing customers */}
             <label 
               className={`block border-2 rounded-xl p-6 cursor-pointer transition-all ${
-                selectedPaymentType === 'deposit' 
+                selectedPaymentType === 'full' 
                   ? 'border-primary bg-primary/5' 
                   : 'border-gray-200 hover:border-primary/50'
               }`}
@@ -219,9 +174,9 @@ export default function PaymentSelectionPage() {
                   <input
                     type="radio"
                     name="paymentType"
-                    value="deposit"
-                    checked={selectedPaymentType === 'deposit'}
-                    onChange={() => setSelectedPaymentType('deposit')}
+                    value="full"
+                    checked={selectedPaymentType === 'full'}
+                    onChange={() => setSelectedPaymentType('full')}
                     className="w-5 h-5 text-primary border-gray-300 focus:ring-primary"
                   />
                 </div>
@@ -229,32 +184,27 @@ export default function PaymentSelectionPage() {
                   <div className="flex items-center space-x-3 mb-2">
                     <CreditCardIcon className="w-6 h-6 text-primary" />
                     <h3 className="text-xl font-semibold text-gray-900">
-                      Deposit Payment Only
+                      Pay in Full Now (${selectedService.price.toFixed(2)})
                     </h3>
-                    <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
-                      Most Convenient
+                    <span className="bg-green-100 text-green-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                      Recommended
                     </span>
                   </div>
                   <p className="text-gray-600 mb-3">
-                    Pay a ${DEPOSIT_PAYMENT_CONFIG.price.toFixed(2)} deposit now to secure your appointment. Pay the remaining balance when you arrive.
+                    Pay the complete service amount now online. Your appointment is fully secured with no balance due.
                   </p>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-2xl font-bold text-primary">
-                        ${DEPOSIT_PAYMENT_CONFIG.price.toFixed(2)} Now
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Pay ${(selectedService.price - DEPOSIT_PAYMENT_CONFIG.price).toFixed(2)} when you arrive
-                      </div>
+                    <div className="text-2xl font-bold text-primary">
+                      ${selectedService.price.toFixed(2)}
                     </div>
-                    <div className="flex items-center space-x-4 text-sm text-blue-700">
+                    <div className="flex items-center space-x-4 text-sm text-green-700">
                       <div className="flex items-center space-x-1">
                         <CheckCircleIcon className="w-4 h-4" />
-                        <span>Quick & Easy</span>
+                        <span>Secure online payment</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <CheckCircleIcon className="w-4 h-4" />
-                        <span>Hassle-free booking</span>
+                        <span>No balance due</span>
                       </div>
                     </div>
                   </div>
@@ -285,11 +235,11 @@ export default function PaymentSelectionPage() {
                   <div className="flex items-center space-x-3 mb-2">
                     <ClockIcon className="w-6 h-6 text-gray-400" />
                     <h3 className="text-xl font-semibold text-gray-900">
-                      Pay on Location
+                      Pay on Location (${selectedService.price.toFixed(2)})
                     </h3>
                   </div>
                   <p className="text-gray-600 mb-3">
-                    Pay the full service amount when you arrive for your appointment.
+                    Pay nothing now. Full payment of ${selectedService.price.toFixed(2)} will be collected when you arrive at the spa.
                   </p>
                   <div className="flex items-center justify-between">
                     <div>
@@ -297,30 +247,23 @@ export default function PaymentSelectionPage() {
                         $0.00 Now
                       </div>
                       <div className="text-sm text-gray-500">
-                        Pay ${selectedService.price.toFixed(2)} when you arrive
+                        Pay ${selectedService.price.toFixed(2)} at the spa
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <div className="flex items-center space-x-1">
+                        <CheckCircleIcon className="w-4 h-4" />
+                        <span>No advance payment</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <CheckCircleIcon className="w-4 h-4" />
+                        <span>Flexible payment</span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </label>
-
-            {/* Info for services without full payment */}
-            {!hasFullPayment && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex items-start space-x-3">
-                  <InformationCircleIcon className="w-5 h-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-medium text-blue-800">
-                      Deposit Payment Only
-                    </h4>
-                    <p className="text-sm text-blue-700 mt-1">
-                      This service currently only supports deposit payment. You can pay the remaining balance at your appointment.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Continue Button */}
@@ -338,11 +281,7 @@ export default function PaymentSelectionPage() {
               ) : (
                 selectedPaymentType === 'location' 
                   ? 'Complete Booking ($0 Now)' 
-                  : selectedPaymentType === 'deposit'
-                  ? `Continue to Payment - $${DEPOSIT_PAYMENT_CONFIG.price.toFixed(2)} Deposit`
-                  : `Continue to Payment - $${
-                      (fullPaymentLink?.price || selectedService.price).toFixed(2)
-                    }`
+                  : `Continue to Payment - $${selectedService.price.toFixed(2)}`
               )}
             </button>
           </div>
