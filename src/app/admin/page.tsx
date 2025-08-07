@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { simpleAuth } from "@/lib/simple-auth"
 import { TodaysSchedule } from "@/components/admin/todays-schedule"
 import { RoomTimeline } from "@/components/admin/room-timeline"
 import { StaffSchedule } from "@/components/admin/staff-schedule"
@@ -20,6 +21,21 @@ type TabValue = "schedule" | "timeline" | "staff" | "walkins"
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabValue>("schedule")
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(true)
+
+  useEffect(() => {
+    // Check authentication
+    const authenticated = simpleAuth.isAuthenticated()
+    setIsAuthenticated(authenticated)
+    
+    if (!authenticated) {
+      // Redirect to login if not authenticated
+      window.location.href = '/admin/login'
+    }
+    
+    setLoading(false)
+  }, [])
 
   const tabs = [
     {
@@ -43,6 +59,19 @@ export default function AdminDashboardPage() {
       description: "Staff availability and assignments"
     }
   ]
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2 text-gray-600">Verifying authentication...</span>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return null // Will redirect to login
+  }
 
   return (
     <div className="space-y-6">

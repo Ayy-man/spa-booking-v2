@@ -1,9 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export async function middleware(request: NextRequest) {
   const res = NextResponse.next()
@@ -46,45 +42,37 @@ export async function middleware(request: NextRequest) {
       return res
     }
 
-    // Allow admin access in development mode
-    if (process.env.NODE_ENV === 'development') {
-      return res
-    }
-
+    // Check for simple auth session in cookies
     try {
-      // Check for authentication token in cookies
-      const token = request.cookies.get('sb-access-token')?.value || 
-                    request.cookies.get('supabase-auth-token')?.value ||
-                    request.headers.get('authorization')?.replace('Bearer ', '')
-
-      if (!token) {
-        return NextResponse.redirect(new URL('/admin/login', request.url))
-      }
-
-      // Create Supabase client for token verification
-      const supabase = createClient(supabaseUrl, supabaseAnonKey)
+      const cookieHeader = request.headers.get('cookie') || ''
+      const sessionCookie = cookieHeader
+        .split(';')
+        .find(cookie => cookie.trim().startsWith('spa-admin-session='))
       
-      // Verify the token and get user
-      const { data: { user }, error: userError } = await supabase.auth.getUser(token)
-      
-      if (userError || !user) {
+      if (!sessionCookie) {
         return NextResponse.redirect(new URL('/admin/login', request.url))
       }
 
-      // Check if user has admin privileges
-      const { data: adminUser, error: adminError } = await supabase
-        .from('admin_users')
-        .select('id, role')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single()
-
-      if (adminError || !adminUser || (adminUser.role !== 'admin' && adminUser.role !== 'staff')) {
+      // Extract and validate session data
+      const sessionData = sessionCookie.split('=')[1]
+      if (!sessionData) {
         return NextResponse.redirect(new URL('/admin/login', request.url))
       }
 
-      // User is authenticated and authorized
-      return res
+      try {
+        const session = JSON.parse(decodeURIComponent(sessionData))
+        
+        // Check if session is expired
+        if (!session.expiresAt || Date.now() > session.expiresAt) {
+          return NextResponse.redirect(new URL('/admin/login', request.url))
+        }
+
+        // Session is valid, allow access
+        return res
+      } catch (parseError) {
+        // Invalid session data
+        return NextResponse.redirect(new URL('/admin/login', request.url))
+      }
     } catch (error) {
       console.error('Middleware auth error:', error)
       return NextResponse.redirect(new URL('/admin/login', request.url))

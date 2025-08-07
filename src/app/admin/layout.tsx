@@ -1,8 +1,29 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { simpleAuth } from '@/lib/simple-auth'
+
 interface AdminLayoutProps {
   children: React.ReactNode
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
+  const [sessionInfo, setSessionInfo] = useState<any>(null)
+
+  useEffect(() => {
+    // Get session info for display
+    const info = simpleAuth.getSessionInfo()
+    setSessionInfo(info)
+  }, [])
+
+  const handleLogout = () => {
+    // Clear session and cookie
+    simpleAuth.clearSession()
+    document.cookie = 'spa-admin-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    
+    // Redirect to login
+    window.location.href = '/admin/login'
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
@@ -32,6 +53,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               >
                 📅 Booking System
               </a>
+              <div className="flex items-center space-x-3 border-l border-gray-300 pl-4">
+                {sessionInfo && (
+                  <span className="text-xs text-gray-500">
+                    Logged in as {sessionInfo.email}
+                  </span>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-red-600 hover:text-red-700 transition-colors font-medium"
+                >
+                  🚪 Logout
+                </button>
+              </div>
             </div>
           </div>
         </div>

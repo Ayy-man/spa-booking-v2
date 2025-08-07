@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { auth } from '@/lib/auth'
+import { simpleAuth } from '@/lib/simple-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,33 +16,23 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  const [isSignUp, setIsSignUp] = useState(false)
   
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') || '/admin/bookings'
+  const redirectTo = searchParams.get('redirectTo') || '/admin'
   const errorParam = searchParams.get('error')
 
   useEffect(() => {
     // Check if user is already authenticated
-    const checkAuth = async () => {
-      try {
-        const isValid = await auth.validateAdminSession()
-        if (isValid) {
-          router.push(redirectTo)
-        }
-      } catch (error) {
-        // User not authenticated, stay on login page
-      }
+    if (simpleAuth.isAuthenticated()) {
+      router.push(redirectTo)
     }
-
-    checkAuth()
 
     // Show error messages from URL params
     if (errorParam === 'unauthorized') {
-      setError('Access denied. Admin privileges required.')
-    } else if (errorParam === 'server_error') {
-      setError('Server error. Please try again.')
+      setError('Access denied. Please log in to continue.')
+    } else if (errorParam === 'session_expired') {
+      setError('Your session has expired. Please log in again.')
     }
   }, [router, redirectTo, errorParam])
 
@@ -53,24 +43,24 @@ export default function AdminLoginPage() {
     setMessage('')
 
     try {
-      if (isSignUp) {
-        await auth.signUp(email, password)
-        setMessage('Account created! Please check your email to verify, then try signing in.')
-        // Reset form and switch to sign in mode
-        setEmail('')
-        setPassword('')
-        setIsSignUp(false)
-      } else {
-        await auth.signIn(email, password)
+      const result = simpleAuth.login(email, password)
+      
+      if (result.success && result.session) {
+        // Store session in cookie for middleware
+        const sessionData = encodeURIComponent(JSON.stringify(result.session))
+        document.cookie = `spa-admin-session=${sessionData}; path=/; max-age=${24 * 60 * 60}` // 24 hours
+        
         setMessage('Login successful! Redirecting...')
         
         // Small delay to show success message
         setTimeout(() => {
           router.push(redirectTo)
         }, 1000)
+      } else {
+        setError(result.error || 'Login failed. Please try again.')
       }
     } catch (error: any) {
-      setError(error.message || `${isSignUp ? 'Sign up' : 'Login'} failed. Please try again.`)
+      setError(error.message || 'Login failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -89,23 +79,20 @@ export default function AdminLoginPage() {
             ← Return to Main Website
           </a>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            {isSignUp ? 'Create Admin Account' : 'Admin Login'}
+            Admin Login
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            {isSignUp ? 'Create a new admin account' : 'Sign in to access the admin panel'}
+            Sign in to access the admin panel
           </p>
         </div>
 
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-xl text-center">
-              {isSignUp ? 'Create Account' : 'Welcome Back'}
+              Welcome Back
             </CardTitle>
             <CardDescription className="text-center">
-              {isSignUp 
-                ? 'Enter your details to create an admin account'
-                : 'Enter your credentials to access the admin dashboard'
-              }
+              Enter your credentials to access the admin dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -132,7 +119,7 @@ export default function AdminLoginPage() {
                     autoComplete="email"
                     required
                     className="mt-1"
-                    placeholder="admin@example.com"
+                    placeholder="admin@spa.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}
@@ -165,38 +152,21 @@ export default function AdminLoginPage() {
                   {loading ? (
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      {isSignUp ? 'Creating account...' : 'Signing in...'}
+                      Signing in...
                     </div>
                   ) : (
-                    isSignUp ? 'Create Account' : 'Sign in'
+                    'Sign in'
                   )}
                 </Button>
               </div>
 
-              <div className="text-sm text-gray-600 text-center space-y-2">
+              <div className="text-sm text-gray-600 text-center">
                 <p>
-                  {isSignUp ? 'Already have an account?' : 'Need to create an account first?'}
-                  {' '}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsSignUp(!isSignUp)
-                      setError('')
-                      setMessage('')
-                    }}
-                    className="text-primary hover:text-primary-dark cursor-pointer underline"
-                  >
-                    {isSignUp ? 'Sign in here' : 'Create account'}
-                  </button>
+                  Use your admin credentials to access the admin panel.
                 </p>
-                {!isSignUp && (
-                  <p>
-                    Forgot your password?{' '}
-                    <span className="text-primary hover:text-primary-dark cursor-pointer">
-                      Contact your administrator
-                    </span>
-                  </p>
-                )}
+                <p className="mt-2 text-xs">
+                  For access issues, contact your administrator.
+                </p>
               </div>
             </form>
           </CardContent>
