@@ -6,6 +6,7 @@
  * booking state management, and payment URL generation.
  */
 
+import React from 'react'
 import '@testing-library/jest-dom'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { act } from 'react-dom/test-utils'
