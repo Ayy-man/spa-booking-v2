@@ -99,10 +99,22 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
 
       {/* Couples Booking Toggle */}
       <div className="mb-6">
-        <div className="flex items-center justify-between p-4 border-2 border-gray-200 rounded-lg hover:border-primary/50 transition-colors">
+        <div className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${
+          isCouplesBooking 
+            ? 'border-primary bg-primary/10 shadow-md' 
+            : 'border-gray-400 bg-white hover:border-primary/70 hover:bg-primary/5 hover:shadow-sm'
+        }`}
+        onClick={() => setIsCouplesBooking(!isCouplesBooking)}>
           <Label htmlFor="couples-toggle" className="cursor-pointer flex-1">
-            <span className="text-lg font-medium text-primary-dark">Book as a couple</span>
-            <p className="text-sm text-gray-600 mt-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg font-medium text-primary-dark">Book as a couple</span>
+              {!isCouplesBooking && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                  Available
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-600">
               Enjoy your spa experience together
             </p>
           </Label>
@@ -110,6 +122,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
             id="couples-toggle"
             checked={isCouplesBooking}
             onCheckedChange={setIsCouplesBooking}
+            className="couples-toggle"
           />
         </div>
       </div>

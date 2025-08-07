@@ -325,6 +325,28 @@ a {
            transition-colors min-w-[44px] min-h-[44px] 
            flex items-center justify-center;
   }
+
+  /* Enhanced Couples Toggle Switch */
+  .couples-toggle[data-state=unchecked] {
+    @apply bg-gray-600 border-gray-600 shadow-md;
+  }
+  
+  .couples-toggle[data-state=unchecked]:hover {
+    @apply bg-gray-700 border-gray-700;
+  }
+  
+  .couples-toggle[data-state=checked] {
+    @apply bg-primary border-primary shadow-md;
+  }
+  
+  .couples-toggle[data-state=checked]:hover {
+    @apply bg-primary/90 border-primary/90;
+  }
+  
+  /* Enhanced thumb visibility */
+  .couples-toggle .thumb {
+    @apply bg-white shadow-lg border border-white;
+  }
 }
 
 /* Animation utilities */
