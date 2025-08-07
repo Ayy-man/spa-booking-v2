@@ -1,0 +1,162 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { supabaseClient } from '@/lib/supabase'
+import { bookingRequestSchema } from '@/lib/validation/booking-schemas'
+import { bookingRateLimiter, withRateLimit } from '@/lib/security/rate-limiter'
+import { withAPILogging, logSecurityEvent, SecurityEvent } from '@/lib/monitoring/api-logger'
+import { handleError, Errors, asyncHandler } from '@/lib/error-handler'
+
+/**
+ * Secured test booking endpoint with full security measures
+ * This demonstrates how all API routes should be secured
+ */
+export const POST = withAPILogging(
+  asyncHandler(async (req: NextRequest) => {
+    // 1. Apply rate limiting
+    const rateLimitResponse = await withRateLimit(req, bookingRateLimiter)
+    if (rateLimitResponse) {
+      logSecurityEvent(req, SecurityEvent.RATE_LIMIT_EXCEEDED)
+      return rateLimitResponse
+    }
+    
+    // 2. Parse and validate request body
+    let validatedData
+    try {
+      const body = await req.json()
+      
+      // For test endpoint, create a complete booking request
+      const bookingRequest = {
+        customer: {
+          name: body.customer_name || 'Test Customer',
+          email: body.customer_email || 'test@example.com',
+          phone: body.customer_phone || '555-1234',
+          isNewCustomer: body.isNewCustomer ?? true
+        },
+        service: {
+          serviceId: body.service_id || 'basic_facial',
+          serviceName: body.service_name || 'Basic Facial',
+          price: body.price || 65,
+          duration: body.duration || 60
+        },
+        dateTime: {
+          date: body.appointment_date || new Date().toISOString().split('T')[0],
+          time: body.start_time || '14:00'
+        },
+        staff: {
+          staffId: body.staff_id || 'robyn_camacho',
+          staffName: body.staff_name || 'Robyn Camacho',
+          roomId: body.room_id || 1
+        },
+        payment: {
+          paymentType: body.payment_type || 'location',
+          amount: body.payment_amount || 0
+        },
+        notes: body.notes || 'Test booking created via secured API'
+      }
+      
+      validatedData = bookingRequestSchema.parse(bookingRequest)
+    } catch (error) {
+      // Input validation failed
+      if (error instanceof Error && error.message.includes('<')) {
+        // Potential XSS attempt
+        logSecurityEvent(req, SecurityEvent.XSS_ATTEMPT, { error: error.message })
+      }
+      throw error // Will be handled by error handler
+    }
+    
+    // 3. Additional security checks
+    // Check for SQL injection patterns
+    const suspiciousPatterns = [
+      /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE)\b)/i,
+      /(--|\/\*|\*\/|xp_|sp_|0x)/i,
+      /(<script|javascript:|onerror=|onclick=)/i
+    ]
+    
+    const allValues = JSON.stringify(validatedData)
+    for (const pattern of suspiciousPatterns) {
+      if (pattern.test(allValues)) {
+        logSecurityEvent(req, SecurityEvent.SQL_INJECTION_ATTEMPT, {
+          pattern: pattern.toString(),
+          data: allValues.substring(0, 100)
+        })
+        throw Errors.badRequest('Invalid input detected')
+      }
+    }
+    
+    // 4. Create booking with validated data
+    const testBooking = {
+      service_id: validatedData.service.serviceId,
+      staff_id: validatedData.staff.staffId,
+      room_id: validatedData.staff.roomId,
+      customer_name: validatedData.customer.name,
+      customer_email: validatedData.customer.email,
+      customer_phone: validatedData.customer.phone || undefined,
+      appointment_date: validatedData.dateTime.date,
+      start_time: validatedData.dateTime.time,
+      notes: validatedData.notes,
+      payment_option: validatedData.payment.paymentType
+    }
+    
+    const result = await supabaseClient.createBooking(testBooking)
+    
+    // 5. Return sanitized response
+    return NextResponse.json({
+      success: true,
+      bookingId: result.booking_id,
+      message: 'Test booking created successfully'
+    }, {
+      headers: {
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin'
+      }
+    })
+  })
+)
+
+/**
+ * GET endpoint with security
+ */
+export const GET = withAPILogging(
+  asyncHandler(async (req: NextRequest) => {
+    // Apply rate limiting
+    const rateLimitResponse = await withRateLimit(req, bookingRateLimiter)
+    if (rateLimitResponse) {
+      return rateLimitResponse
+    }
+    
+    // Return test data format
+    return NextResponse.json({
+      message: 'Use POST to create a test booking',
+      schema: {
+        customer_name: 'string (2-100 chars, letters only)',
+        customer_email: 'string (valid email)',
+        customer_phone: 'string (optional, phone format)',
+        service_id: 'string (UUID)',
+        staff_id: 'string',
+        room_id: 'number (positive integer)',
+        appointment_date: 'string (YYYY-MM-DD)',
+        start_time: 'string (HH:MM)',
+        payment_type: 'full | deposit | location',
+        notes: 'string (optional, max 1000 chars)'
+      },
+      example: {
+        customer_name: 'Test Customer',
+        customer_email: 'test@example.com',
+        customer_phone: '555-123-4567',
+        service_id: 'basic_facial',
+        staff_id: 'robyn_camacho',
+        room_id: 1,
+        appointment_date: new Date().toISOString().split('T')[0],
+        start_time: '14:00',
+        payment_type: 'location',
+        notes: 'Test booking'
+      }
+    }, {
+      headers: {
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff'
+      }
+    })
+  })
+)
