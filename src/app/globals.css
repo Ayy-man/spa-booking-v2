@@ -446,16 +446,23 @@ a {
     display: none;
   }
   
-  /* Modal specific utilities */
+  /* Modal specific utilities - Enhanced with glassmorphism */
   .modal-overlay {
-    @apply fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center 
+    @apply fixed inset-0 z-[60] flex items-center justify-center 
            p-3 sm:p-4 md:p-6 overflow-y-auto;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: modal-overlay-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .modal-content {
-    @apply bg-white rounded-2xl shadow-2xl w-full 
+    @apply bg-white rounded-2xl w-full 
            max-w-[95vw] sm:max-w-[90vw] md:max-w-3xl lg:max-w-4xl 
            max-h-[95vh] sm:max-h-[90vh] overflow-y-auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 
+                0 25px 50px -12px rgba(195, 102, 120, 0.15);
+    animation: modal-content-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
   }
   
   .modal-header {
@@ -471,6 +478,31 @@ a {
     @apply text-gray-400 hover:text-gray-600 text-2xl sm:text-3xl 
            transition-colors min-w-[44px] min-h-[44px] 
            flex items-center justify-center;
+  }
+
+  /* Modal Animation Keyframes */
+  @keyframes modal-overlay-in {
+    from {
+      opacity: 0;
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+    }
+    to {
+      opacity: 1;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+  }
+
+  @keyframes modal-content-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
   }
 
   /* Enhanced Couples Toggle Switch */
@@ -716,10 +748,10 @@ a {
     transform: translateX(-100%);
   }
 
-  /* Staggered Entrance Animation for Time Slots */
+  /* Staggered Entrance Animation for Time Slots - Fixed for visibility */
   .time-slot-entrance {
-    opacity: 0;
-    transform: translateY(10px) scale(0.95);
+    opacity: 1; /* Changed from 0 to 1 - time slots visible by default */
+    transform: translateY(0) scale(1); /* Changed to normal position */
     animation: time-slot-entrance 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
@@ -738,10 +770,10 @@ a {
     }
   }
   
-  /* Calendar Date Button Animation Classes */
+  /* Calendar Date Button Animation Classes - Fixed for visibility */
   .calendar-date-entrance {
     animation: calendar-date-entrance 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    opacity: 0;
+    opacity: 1; /* Changed from 0 to 1 - dates visible by default */
   }
   
   .calendar-date-selected-animation {
@@ -1891,10 +1923,10 @@ a {
   }
 }
 
-/* Enhanced Service Card Animation Classes */
+/* Enhanced Service Card Animation Classes - Fixed for visibility */
 .service-card-stagger {
   animation: stagger-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
+  opacity: 1; /* Changed from 0 to 1 - service cards visible by default */
 }
 
 .category-reveal-animation {
@@ -1964,12 +1996,12 @@ a {
 
 .service-card-skeleton {
   animation: fade-in-up 0.6s ease-out forwards;
-  opacity: 0;
+  opacity: 1; /* Fixed for visibility */
 }
 
 .staff-card-skeleton {
   animation: fade-in-up 0.6s ease-out forwards;
-  opacity: 0;
+  opacity: 1; /* Fixed for visibility */
 }
 
 .time-slot-skeleton {
@@ -2086,14 +2118,26 @@ a {
   animation: spa-skeleton-shimmer 2.5s ease-in-out infinite;
 }
 
-/* Scroll-triggered Animation Classes */
+/* Scroll-triggered Animation Classes - Fixed for visibility */
 .reveal-on-scroll {
-  opacity: 0;
-  transform: translateY(30px);
+  opacity: 1; /* Changed from 0 to 1 - content visible by default */
+  transform: translateY(0); /* Changed from 30px to 0 - no initial offset */
   transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Animation enhancement - not required for visibility */
 .reveal-on-scroll.animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Optional enhancement animation for when intersection observer works */
+.reveal-on-scroll.will-animate {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.reveal-on-scroll.will-animate.animate {
   opacity: 1;
   transform: translateY(0);
 }

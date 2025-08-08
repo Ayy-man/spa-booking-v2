@@ -23,7 +23,20 @@ export default function BookingPage() {
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 800)
-    return () => clearTimeout(timer)
+
+    // Fallback to ensure all content is visible after loading
+    const visibilityFallback = setTimeout(() => {
+      const allCards = document.querySelectorAll('.service-card-enhanced')
+      allCards.forEach((card, index) => {
+        ;(card as HTMLElement).style.opacity = '1'
+        setVisibleCards(prev => new Set(prev).add((card as HTMLElement).dataset.serviceId || ''))
+      })
+    }, 1000)
+
+    return () => {
+      clearTimeout(timer)
+      clearTimeout(visibilityFallback)
+    }
   }, [])
 
   // Prevent body scroll when modal is open
@@ -346,8 +359,8 @@ export default function BookingPage() {
 
       {/* Couples Booking Component - Fixed Position Overlay */}
       {selectedService && showCouplesOptions && (
-        <div className="modal-overlay animate-in fade-in-0 duration-300">
-          <div className="modal-content animate-in slide-in-from-bottom-2 duration-300">
+        <div className="modal-overlay">
+          <div className="modal-content">
             <div className="modal-header">
               <h2 className="text-xl sm:text-2xl font-heading font-bold text-primary">
                 Booking Options
