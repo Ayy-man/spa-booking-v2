@@ -251,8 +251,18 @@ export default function AdminBookingsPage() {
                                      transition-colors duration-200">{booking.start_time} - {booking.end_time}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 group-hover:text-primary-dark
-                                     transition-colors duration-200">{booking.staff?.name}</div>
+                      <div className="flex items-center space-x-2">
+                        <div className="text-sm text-gray-900 group-hover:text-primary-dark
+                                       transition-colors duration-200">
+                          {booking.staff?.name}
+                        </div>
+                        {booking.staff?.id === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' && (
+                          <span className="px-2 py-1 text-xs font-semibold bg-amber-100 text-amber-800 rounded-full
+                                         animate-pulse border border-amber-300">
+                            Needs Assignment
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 group-hover:text-primary-dark

@@ -462,7 +462,14 @@ export default function ConfirmationPage() {
               <div className="space-y-1">
                 <p><span className="font-medium">Date:</span> {formatDate(bookingData.date)}</p>
                 <p><span className="font-medium">Time:</span> {formatTimeRange(bookingData.time, bookingData.service.duration)}</p>
-                <p><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap] || bookingData.staff || 'Any Available Staff'}</p>
+                <p>
+                  <span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap] || bookingData.staff || 'Any Available Staff'}
+                  {(bookingData.staff === 'any' || bookingData.staff === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa') && (
+                    <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                      Staff will be assigned
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
 
@@ -496,6 +503,26 @@ export default function ConfirmationPage() {
             </div>
           </div>
         </div>
+
+        {/* Special note for "any staff" bookings */}
+        {(bookingData?.staff === 'any' || bookingData?.staff === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa') && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mr-3 mt-0.5">
+                <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium text-blue-900 mb-1">Staff Assignment</p>
+                <p className="text-sm text-blue-800">
+                  You selected "Any Available Staff" - our team will assign the best qualified staff member for your service. 
+                  You'll receive confirmation with your assigned staff member details.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (

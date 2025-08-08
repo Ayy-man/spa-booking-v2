@@ -12,7 +12,7 @@ export function isSpecialStaffRequest(booking: any): boolean {
   if (!booking || booking.staff_id === undefined || booking.staff_id === null || booking.staff_id === '') {
     return false
   }
-  return booking.staff_id !== 'any-available' && booking.staff_id !== 'any'
+  return booking.staff_id !== 'any-available' && booking.staff_id !== 'any' && booking.staff_id !== 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 }
 
 /**
