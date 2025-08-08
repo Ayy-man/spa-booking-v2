@@ -516,8 +516,8 @@ export default function ConfirmationPage() {
               <div>
                 <p className="font-medium text-blue-900 mb-1">Staff Assignment</p>
                 <p className="text-sm text-blue-800">
-                  You selected "Any Available Staff" - our team will assign the best qualified staff member for your service. 
-                  You'll receive confirmation with your assigned staff member details.
+                  You selected &quot;Any Available Staff&quot; - our team will assign the best qualified staff member for your service. 
+                  You&apos;ll receive confirmation with your assigned staff member details.
                 </p>
               </div>
             </div>
