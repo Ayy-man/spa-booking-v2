@@ -3,7 +3,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-interface RadioProps extends Omit<React.ComponentProps<"input">, "type"> {
+interface RadioProps extends Omit<React.ComponentProps<"input">, "type" | "size"> {
   checked?: boolean
   onCheckedChange?: (checked: boolean) => void
   label?: string

@@ -43,7 +43,7 @@ export {
   useStaggeredSkeleton,
   useSkeletonCrossfade,
   useSkeletonWithData
-} from '../hooks/use-skeleton-loading'
+} from '../../hooks/use-skeleton-loading'
 
 // Example components
 export { default as SkeletonShowcase } from '../examples/skeleton-showcase'
@@ -141,11 +141,9 @@ export { default as SkeletonIntegrationExample } from '../examples/skeleton-inte
 
 export type SkeletonVariant = 'default' | 'primary' | 'secondary' | 'success'
 
-export interface SkeletonProps {
-  className?: string
+export type SkeletonProps = React.HTMLAttributes<HTMLDivElement> & {
   variant?: SkeletonVariant
   animate?: boolean
-  'aria-label'?: string
 }
 
 export interface SkeletonLoadingState {

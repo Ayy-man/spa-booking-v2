@@ -2,28 +2,30 @@
 
 import { cn } from '@/lib/utils'
 
-interface SkeletonProps {
-  className?: string
-}
+type SkeletonProps = React.HTMLAttributes<HTMLDivElement>
 
-export function Skeleton({ className }: SkeletonProps) {
+export function Skeleton({ className, ...props }: SkeletonProps) {
   return (
     <div
       className={cn(
         'skeleton-shimmer rounded-xl bg-gray-200',
         className
       )}
+      {...props}
     />
   )
 }
 
 // Enhanced Service Card Skeleton with elegant spa-like animations
-export function ServiceCardSkeleton({ className }: SkeletonProps) {
+export function ServiceCardSkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn(
-      'service-card-skeleton bg-white p-6 rounded-xl shadow-md border border-primary/5 space-y-4 relative overflow-hidden',
-      className
-    )}>
+    <div
+      className={cn(
+        'service-card-skeleton bg-white p-6 rounded-xl shadow-md border border-primary/5 space-y-4 relative overflow-hidden',
+        className
+      )}
+      {...props}
+    >
       {/* Animated shimmer overlay */}
       <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       
@@ -49,9 +51,9 @@ export function ServiceCardSkeleton({ className }: SkeletonProps) {
 }
 
 // Enhanced Time Slot Skeleton with wave animation
-export function TimeSlotSkeleton({ className, count = 8 }: SkeletonProps & { count?: number }) {
+export function TimeSlotSkeleton({ className, count = 8, ...props }: SkeletonProps & { count?: number }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" {...props}>
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
@@ -75,12 +77,15 @@ export function TimeSlotSkeleton({ className, count = 8 }: SkeletonProps & { cou
 }
 
 // Enhanced Staff Card Skeleton with elegant profile animation
-export function StaffCardSkeleton({ className }: SkeletonProps) {
+export function StaffCardSkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn(
-      'staff-card-skeleton card bg-white p-6 rounded-xl shadow-md border border-primary/5 relative overflow-hidden',
-      className
-    )}>
+    <div
+      className={cn(
+        'staff-card-skeleton card bg-white p-6 rounded-xl shadow-md border border-primary/5 relative overflow-hidden',
+        className
+      )}
+      {...props}
+    >
       {/* Shimmer overlay */}
       <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent" />
       
@@ -117,12 +122,12 @@ export function StaffCardSkeleton({ className }: SkeletonProps) {
 }
 
 // Enhanced Calendar/Date Selection Skeleton
-export function CalendarSkeleton({ className }: SkeletonProps) {
+export function CalendarSkeleton({ className, ...props }: SkeletonProps) {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   const daysInMonth = Array.from({ length: 35 }, (_, i) => i + 1)
   
   return (
-    <div className={cn('calendar-skeleton bg-white p-6 rounded-xl shadow-md border border-primary/5 space-y-4', className)}>
+    <div className={cn('calendar-skeleton bg-white p-6 rounded-xl shadow-md border border-primary/5 space-y-4', className)} {...props}>
       {/* Calendar header */}
       <div className="flex justify-between items-center">
         <Skeleton className="h-8 w-8 rounded-lg bg-gray-200" />
@@ -161,9 +166,9 @@ export function CalendarSkeleton({ className }: SkeletonProps) {
 }
 
 // Date Button Skeleton for horizontal date picker
-export function DateButtonSkeleton({ className, count = 7 }: SkeletonProps & { count?: number }) {
+export function DateButtonSkeleton({ className, count = 7, ...props }: SkeletonProps & { count?: number }) {
   return (
-    <div className="flex space-x-3 overflow-x-hidden">
+    <div className="flex space-x-3 overflow-x-hidden" {...props}>
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
@@ -186,9 +191,9 @@ export function DateButtonSkeleton({ className, count = 7 }: SkeletonProps & { c
 }
 
 // Enhanced Form Field Skeleton with floating label style
-export function FormFieldSkeleton({ className }: SkeletonProps) {
+export function FormFieldSkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn('form-field-skeleton space-y-2 relative', className)}>
+    <div className={cn('form-field-skeleton space-y-2 relative', className)} {...props}>
       {/* Label */}
       <Skeleton className="h-4 w-24 bg-gradient-to-r from-gray-200 to-gray-300" />
       
@@ -202,9 +207,9 @@ export function FormFieldSkeleton({ className }: SkeletonProps) {
 }
 
 // Multi-field form skeleton
-export function FormSkeleton({ className, fieldCount = 4 }: SkeletonProps & { fieldCount?: number }) {
+export function FormSkeleton({ className, fieldCount = 4, ...props }: SkeletonProps & { fieldCount?: number }) {
   return (
-    <div className={cn('form-skeleton space-y-6 bg-white p-6 rounded-xl shadow-md border border-primary/5', className)}>
+    <div className={cn('form-skeleton space-y-6 bg-white p-6 rounded-xl shadow-md border border-primary/5', className)} {...props}>
       {Array.from({ length: fieldCount }).map((_, i) => (
         <FormFieldSkeleton
           key={i}
@@ -224,12 +229,15 @@ export function FormSkeleton({ className, fieldCount = 4 }: SkeletonProps & { fi
 }
 
 // Enhanced Booking Summary Skeleton with elegant design
-export function BookingSummarySkeleton({ className }: SkeletonProps) {
+export function BookingSummarySkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn(
-      'booking-summary-skeleton card space-y-4 bg-white p-6 rounded-xl shadow-lg border border-primary/10 relative overflow-hidden',
-      className
-    )}>
+    <div
+      className={cn(
+        'booking-summary-skeleton card space-y-4 bg-white p-6 rounded-xl shadow-lg border border-primary/10 relative overflow-hidden',
+        className
+      )}
+      {...props}
+    >
       {/* Shimmer overlay */}
       <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/15 to-transparent" />
       
@@ -318,12 +326,15 @@ export function PageLoadingSkeleton() {
 // Admin Panel Skeleton Components
 
 // Booking Table Skeleton for admin dashboard
-export function BookingTableSkeleton({ className }: SkeletonProps) {
+export function BookingTableSkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn(
-      'booking-table-skeleton bg-white rounded-xl shadow-lg border border-primary/5 overflow-hidden',
-      className
-    )}>
+    <div
+      className={cn(
+        'booking-table-skeleton bg-white rounded-xl shadow-lg border border-primary/5 overflow-hidden',
+        className
+      )}
+      {...props}
+    >
       {/* Table header */}
       <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
         <div className="flex justify-between items-center">
@@ -373,9 +384,9 @@ export function BookingTableSkeleton({ className }: SkeletonProps) {
 }
 
 // Dashboard Widget Skeleton
-export function DashboardSkeleton({ className }: SkeletonProps) {
+export function DashboardSkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn('dashboard-skeleton space-y-6', className)}>
+    <div className={cn('dashboard-skeleton space-y-6', className)} {...props}>
       {/* Stats cards row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -481,12 +492,15 @@ export function DashboardSkeleton({ className }: SkeletonProps) {
 }
 
 // Payment Processing Skeleton
-export function PaymentSkeleton({ className }: SkeletonProps) {
+export function PaymentSkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn(
-      'payment-skeleton bg-white p-6 rounded-xl shadow-lg border border-primary/10 space-y-6 relative overflow-hidden',
-      className
-    )}>
+    <div
+      className={cn(
+        'payment-skeleton bg-white p-6 rounded-xl shadow-lg border border-primary/10 space-y-6 relative overflow-hidden',
+        className
+      )}
+      {...props}
+    >
       {/* Security shimmer */}
       <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-primary/5 to-transparent" />
       
@@ -542,12 +556,15 @@ export function PaymentSkeleton({ className }: SkeletonProps) {
 }
 
 // Walk-in Assignment Skeleton
-export function WalkInSkeleton({ className }: SkeletonProps) {
+export function WalkInSkeleton({ className, ...props }: SkeletonProps) {
   return (
-    <div className={cn(
-      'walk-in-skeleton bg-white p-6 rounded-xl shadow-md border border-primary/5 space-y-4 relative overflow-hidden',
-      className
-    )}>
+    <div
+      className={cn(
+        'walk-in-skeleton bg-white p-6 rounded-xl shadow-md border border-primary/5 space-y-4 relative overflow-hidden',
+        className
+      )}
+      {...props}
+    >
       <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       
       {/* Walk-in header */}

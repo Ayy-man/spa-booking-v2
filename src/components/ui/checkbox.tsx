@@ -4,7 +4,7 @@ import * as React from "react"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-interface CheckboxProps extends Omit<React.ComponentProps<"input">, "type"> {
+interface CheckboxProps extends Omit<React.ComponentProps<"input">, "type" | "size"> {
   checked?: boolean
   onCheckedChange?: (checked: boolean) => void
   label?: string

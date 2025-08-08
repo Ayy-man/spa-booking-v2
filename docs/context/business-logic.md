@@ -215,7 +215,7 @@ Services automatically using $30 deposit system:
    - $30 deposit option always available as alternative
    - Clear indication of payment method selected in confirmation
 
-### Payment Configuration Management
+### Payment Configuration Management (Database Integration)
 
 #### Configuration System Structure
 Located in `/src/lib/payment-config.ts`:
@@ -223,6 +223,8 @@ Located in `/src/lib/payment-config.ts`:
 - Type-safe configuration with TypeScript integration
 - Scalable system for easy addition of new payment links
 - Automatic fallback detection for services without links
+- Integrates with booking.payment_option database field
+- Supports booking_payment_summary view for admin reporting
 
 #### Admin Payment Link Management
 Located at `/src/app/admin/payment-links/page.tsx`:
