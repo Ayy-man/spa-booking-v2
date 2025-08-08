@@ -261,7 +261,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
         <button
           onClick={handleContinue}
           disabled={isCouplesBooking && !secondaryService}
-          className="btn-continue disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-continue-premium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue to Date & Time Selection
         </button>

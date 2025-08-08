@@ -320,7 +320,7 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
     return null
   }
 
-  // Render quick action buttons for booking
+  // Render quick action buttons for booking with micro-interactions
   const renderBookingActions = () => {
     if (!booking) return null
 
@@ -333,9 +333,21 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
           <Button
             size="sm"
             onClick={() => setActiveAction("complete")}
-            className="bg-green-600 text-white hover:bg-green-700"
+            className="bg-green-600 text-white hover:bg-green-700 
+                     transition-all duration-300 ease-out
+                     hover:shadow-lg hover:shadow-green-200/40 hover:-translate-y-0.5
+                     active:translate-y-0 active:shadow-sm
+                     group relative overflow-hidden"
           >
-            Mark Complete
+            <span className="relative z-10 flex items-center gap-1">
+              <svg className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" 
+                   fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Mark Complete
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-700 
+                           opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           </Button>
         )}
         {canMarkNoShow && (
@@ -343,32 +355,68 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
             size="sm"
             variant="outline"
             onClick={() => setActiveAction("no_show")}
-            className="border-orange-300 text-orange-600 hover:bg-orange-50"
+            className="border-orange-300 text-orange-600 hover:bg-orange-50 
+                     transition-all duration-300 ease-out
+                     hover:shadow-lg hover:shadow-orange-200/40 hover:-translate-y-0.5
+                     hover:border-orange-400
+                     active:translate-y-0 active:shadow-sm
+                     group relative overflow-hidden"
           >
-            No Show
+            <span className="relative z-10 flex items-center gap-1">
+              <svg className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" 
+                   fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+              No Show
+            </span>
           </Button>
         )}
       </div>
     )
   }
 
-  // Render general quick actions
+  // Render general quick actions with enhanced micro-interactions
   const renderGeneralActions = () => (
     <div className="flex flex-wrap gap-3">
       <Button
         size="lg"
         onClick={() => setActiveAction("walk_in")}
-        className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 text-base font-medium"
+        className="bg-blue-600 text-white hover:bg-blue-700 px-6 py-3 text-base font-medium
+                 transition-all duration-300 ease-out
+                 hover:shadow-lg hover:shadow-blue-200/40 hover:-translate-y-0.5
+                 hover:scale-105 active:scale-95 active:translate-y-0
+                 group relative overflow-hidden"
       >
-        Add Walk-in
+        <span className="relative z-10 flex items-center gap-2">
+          <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" 
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Add Walk-in
+        </span>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 
+                       opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       </Button>
       <Button
         size="lg"
         variant="outline"
         onClick={() => setActiveAction("block_time")}
-        className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 text-base font-medium"
+        className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 text-base font-medium
+                 transition-all duration-300 ease-out
+                 hover:shadow-lg hover:shadow-gray-200/40 hover:-translate-y-0.5
+                 hover:scale-105 hover:border-gray-400 hover:bg-gray-100
+                 active:scale-95 active:translate-y-0
+                 group relative"
       >
-        Block Time
+        <span className="relative z-10 flex items-center gap-2">
+          <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" 
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Block Time
+        </span>
       </Button>
     </div>
   )
@@ -378,30 +426,58 @@ export function QuickActions({ booking, onSuccess, className }: QuickActionsProp
     switch (activeAction) {
       case "complete":
         return (
-          <Card className="p-4 border-green-200 bg-green-50">
-            <h3 className="font-medium text-green-800 mb-3">Mark as Completed</h3>
+          <Card className="p-4 border-green-200 bg-green-50 
+                         animate-in slide-in-from-top-4 fade-in duration-300
+                         shadow-lg shadow-green-100/50">
+            <h3 className="font-medium text-green-800 mb-3 flex items-center gap-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              Mark as Completed
+            </h3>
             <div className="space-y-3">
               <div>
-                <Label htmlFor="completion-notes">Completion Notes (optional)</Label>
+                <Label htmlFor="completion-notes" className="text-green-700 font-medium">
+                  Completion Notes (optional)
+                </Label>
                 <Input
                   id="completion-notes"
                   value={completionNotes}
                   onChange={(e) => setCompletionNotes(e.target.value)}
                   placeholder="Any notes about the service..."
+                  className="border-green-200 focus:border-green-400 focus:ring-green-200"
                 />
               </div>
               <div className="flex space-x-2">
                 <Button
                   onClick={() => handleAction("complete")}
                   disabled={loading}
-                  className="bg-green-600 text-white hover:bg-green-700"
+                  className="bg-green-600 text-white hover:bg-green-700 
+                           transition-all duration-200 ease-out
+                           hover:shadow-lg hover:shadow-green-200/40
+                           disabled:opacity-60 disabled:cursor-not-allowed
+                           group"
                 >
-                  {loading ? "Processing..." : "Confirm Complete"}
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Processing...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4 transition-transform group-hover:scale-110" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Confirm Complete
+                    </span>
+                  )}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setActiveAction(null)}
                   disabled={loading}
+                  className="border-green-300 text-green-700 hover:bg-green-100 
+                           transition-all duration-200 ease-out"
                 >
                   Cancel
                 </Button>

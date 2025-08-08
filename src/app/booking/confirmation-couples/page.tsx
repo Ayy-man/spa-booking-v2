@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { SuccessConfetti } from '@/components/ui/success-confetti'
+import { CouplesBookingConfirmationCard } from '@/components/ui/success-confirmation-card'
+import { useToast, showSuccessToast } from '@/components/ui/toast-notification'
 import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
@@ -42,6 +45,9 @@ export default function CouplesConfirmationPage() {
   const [error, setError] = useState<string>('')
   const [bookingResults, setBookingResults] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [showSuccessCard, setShowSuccessCard] = useState(false)
+  const { showToast } = useToast()
 
   useEffect(() => {
     // Get all booking data from localStorage
@@ -272,6 +278,27 @@ export default function CouplesConfirmationPage() {
       
       setIsSuccess(true)
       
+      // Show success toast notification
+      showSuccessToast(showToast)('Couples booking confirmed successfully!', {
+        title: 'Success!',
+        duration: 4000
+      })
+      
+      // Trigger confetti animation
+      setTimeout(() => {
+        setShowConfetti(true)
+      }, 500)
+      
+      // Show success card animation
+      setTimeout(() => {
+        setShowSuccessCard(true)
+      }, 800)
+      
+      // Auto-hide confetti after 3 seconds
+      setTimeout(() => {
+        setShowConfetti(false)
+      }, 3500)
+      
       // Clear booking flow data
       localStorage.removeItem('bookingData')
       localStorage.removeItem('selectedService')
@@ -390,72 +417,48 @@ export default function CouplesConfirmationPage() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-background py-8">
-        <div className="container mx-auto px-4 max-w-2xl text-center">
-          <div className="bg-white rounded-xl shadow-md p-8">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            
-            <h1 className="text-3xl font-heading text-primary-dark mb-4">
-              {bookingData.isCouplesBooking ? 'Couples Booking Confirmed!' : 'Booking Confirmed!'}
-            </h1>
-            
-            <p className="text-gray-600 mb-6">
-              Your appointment{bookingData.isCouplesBooking ? 's have' : ' has'} been successfully booked. 
-              You will receive a confirmation email shortly.
-            </p>
-            
-            <div className="bg-accent rounded-lg p-6 mb-8 text-left">
-              <h2 className="font-semibold text-primary-dark mb-4">Booking Details</h2>
-              
-              {bookingData.isCouplesBooking ? (
-                <div className="space-y-4">
-                  <div className="border-b border-gray-200 pb-4">
-                    <h3 className="font-medium text-primary mb-2">Person 1</h3>
-                    <div className="space-y-1 text-sm">
-                      <div><span className="font-medium">Service:</span> {bookingData.primaryService.name}</div>
-                      <div><span className="font-medium">Staff:</span> {staffNameMap[selectedStaff as keyof typeof staffNameMap]}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="pb-4">
-                    <h3 className="font-medium text-primary mb-2">Person 2</h3>
-                    <div className="space-y-1 text-sm">
-                      <div><span className="font-medium">Service:</span> {bookingData.secondaryService?.name || bookingData.primaryService.name}</div>
-                      <div><span className="font-medium">Staff:</span> {staffNameMap[(secondaryStaff || selectedStaff) as keyof typeof staffNameMap]}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="border-t border-gray-200 pt-4 space-y-1 text-sm">
-                    <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
-                    <div><span className="font-medium">Time:</span> {formatTimeRange(selectedTime, bookingData.primaryService.duration)}</div>
-                    <div><span className="font-medium">Room:</span> Couples Room</div>
-                    <div><span className="font-medium">Total Price:</span> ${bookingData.totalPrice}</div>
-                    <div><span className="font-medium">Customer:</span> {customerInfo.name}</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2 text-sm">
-                  <div><span className="font-medium">Service:</span> {bookingData.primaryService.name}</div>
-                  <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
-                  <div><span className="font-medium">Time:</span> {formatTimeRange(selectedTime, bookingData.primaryService.duration)}</div>
-                  <div><span className="font-medium">Staff:</span> {staffNameMap[selectedStaff as keyof typeof staffNameMap]}</div>
-                  <div><span className="font-medium">Price:</span> ${bookingData.primaryService.price}</div>
-                  <div><span className="font-medium">Customer:</span> {customerInfo.name}</div>
-                </div>
-              )}
-            </div>
-            
-            <div className="space-y-4">
-              <Link href="/" className="btn-primary block">
-                Return to Home
-              </Link>
-              <Link href="/booking" className="btn-secondary block">
-                Book Another Appointment
-              </Link>
-            </div>
+        {/* Enhanced Confetti Animation */}
+        <SuccessConfetti
+          isActive={showConfetti}
+          duration={3500}
+          particleCount={150} // More particles for couples celebration
+          colors={[
+            '#10B981', // Success green
+            '#C36678', // Spa primary
+            '#F6C7CF', // Spa accent
+            '#3B82F6', // Blue
+            '#8B5CF6', // Purple
+            '#F59E0B', // Amber
+            '#EF4444', // Rose
+            '#06B6D4', // Cyan
+            '#84CC16'  // Lime
+          ]}
+          shapes={['circle', 'square', 'heart', 'star']}
+        />
+        
+        <div className="container mx-auto px-4 max-w-2xl">
+          <CouplesBookingConfirmationCard
+            bookingData={{
+              primaryService: bookingData.primaryService.name,
+              secondaryService: bookingData.secondaryService?.name || bookingData.primaryService.name,
+              date: formatDate(selectedDate),
+              time: formatTimeRange(selectedTime, bookingData.primaryService.duration),
+              primaryStaff: staffNameMap[selectedStaff as keyof typeof staffNameMap],
+              secondaryStaff: staffNameMap[(secondaryStaff || selectedStaff) as keyof typeof staffNameMap],
+              totalPrice: bookingData.totalPrice,
+              customerName: customerInfo.name
+            }}
+            showAnimation={showSuccessCard}
+            className="mb-8"
+          />
+          
+          <div className="text-center space-y-4">
+            <Link href="/" className="btn-primary block animate-gentle-bounce">
+              Return to Home
+            </Link>
+            <Link href="/booking" className="btn-secondary block">
+              Book Another Appointment
+            </Link>
           </div>
         </div>
       </div>

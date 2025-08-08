@@ -1,10 +1,9 @@
 'use client'
 
 import * as React from "react"
-import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-interface CheckboxProps extends Omit<React.ComponentProps<"input">, "type"> {
+interface RadioProps extends Omit<React.ComponentProps<"input">, "type"> {
   checked?: boolean
   onCheckedChange?: (checked: boolean) => void
   label?: string
@@ -12,9 +11,11 @@ interface CheckboxProps extends Omit<React.ComponentProps<"input">, "type"> {
   showAnimations?: boolean
   size?: 'sm' | 'md' | 'lg'
   variant?: 'default' | 'success' | 'error'
+  name?: string
+  value?: string
 }
 
-const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
+const Radio = React.forwardRef<HTMLInputElement, RadioProps>(
   ({ 
     className, 
     checked = false, 
@@ -26,11 +27,13 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
     size = 'md',
     variant = 'default',
     disabled,
+    name,
+    value,
     ...props 
   }, ref) => {
     const [isAnimating, setIsAnimating] = React.useState(false)
     const [prevChecked, setPrevChecked] = React.useState(checked)
-    const checkboxId = React.useId()
+    const radioId = React.useId()
 
     // Handle check animation
     React.useEffect(() => {
@@ -57,33 +60,45 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       }
     }
 
-    const getCheckIconSize = () => {
+    const getDotSize = () => {
       switch (size) {
         case 'sm':
-          return 'w-2.5 h-2.5'
+          return 'w-1.5 h-1.5'
         case 'lg':
-          return 'w-4 h-4'
-        default:
           return 'w-3 h-3'
+        default:
+          return 'w-2 h-2'
       }
     }
 
     const getVariantClasses = () => {
       if (error || variant === 'error') {
         return checked 
-          ? 'bg-red-500 border-red-500 text-white'
+          ? 'border-red-500'
           : 'border-red-400 hover:border-red-500'
       }
       
       if (variant === 'success') {
         return checked 
-          ? 'bg-green-500 border-green-500 text-white'
+          ? 'border-green-500'
           : 'border-green-400 hover:border-green-500'
       }
       
       return checked 
-        ? 'bg-primary border-primary text-white'
+        ? 'border-primary'
         : 'border-gray-300 hover:border-primary'
+    }
+
+    const getDotColor = () => {
+      if (error || variant === 'error') {
+        return 'bg-red-500'
+      }
+      
+      if (variant === 'success') {
+        return 'bg-green-500'
+      }
+      
+      return 'bg-primary'
     }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,16 +108,16 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault()
-      if (!disabled) {
-        onCheckedChange?.(!checked)
+      if (!disabled && !checked) {
+        onCheckedChange?.(true)
       }
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault()
-        if (!disabled) {
-          onCheckedChange?.(!checked)
+        if (!disabled && !checked) {
+          onCheckedChange?.(true)
         }
       }
     }
@@ -111,20 +126,22 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       <div className="relative inline-flex items-start gap-3">
         <div className="flex items-center">
           <input
-            type="checkbox"
-            id={checkboxId}
+            type="radio"
+            id={radioId}
             className="sr-only"
             ref={ref}
             checked={checked}
             onChange={handleInputChange}
             disabled={disabled}
+            name={name}
+            value={value}
             {...props}
           />
           
           <div
             className={cn(
               // Base styling
-              "relative inline-flex items-center justify-center rounded-sm border-2 bg-white",
+              "relative inline-flex items-center justify-center rounded-full border-2 bg-white",
               "cursor-pointer transition-all duration-200 ease-out",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20",
               "focus-visible:ring-offset-2",
@@ -146,19 +163,19 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             onClick={handleClick}
             onKeyDown={handleKeyDown}
             tabIndex={disabled ? -1 : 0}
-            role="checkbox"
+            role="radio"
             aria-checked={checked}
-            aria-labelledby={label ? `${checkboxId}-label` : undefined}
-            aria-describedby={error ? `${checkboxId}-error` : undefined}
+            aria-labelledby={label ? `${radioId}-label` : undefined}
+            aria-describedby={error ? `${radioId}-error` : undefined}
           >
             {checked && (
-              <Check 
+              <div 
                 className={cn(
-                  "text-current transition-all duration-200 ease-out",
-                  getCheckIconSize(),
-                  showAnimations && isAnimating && "animate-checkbox-check"
-                )} 
-                strokeWidth={3} 
+                  "rounded-full transition-all duration-200 ease-out",
+                  getDotSize(),
+                  getDotColor(),
+                  showAnimations && isAnimating && "animate-radio-check"
+                )}
               />
             )}
           </div>
@@ -167,8 +184,8 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         {/* Label */}
         {label && (
           <label
-            id={`${checkboxId}-label`}
-            htmlFor={checkboxId}
+            id={`${radioId}-label`}
+            htmlFor={radioId}
             className={cn(
               "text-sm font-medium cursor-pointer select-none transition-colors duration-200",
               error ? "text-red-700" : "text-gray-700",
@@ -182,7 +199,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         {/* Error message */}
         {error && (
           <div
-            id={`${checkboxId}-error`}
+            id={`${radioId}-error`}
             className={cn(
               "absolute top-full left-0 mt-1 w-full",
               showAnimations ? "animate-fade-slide-in" : ""
@@ -201,6 +218,77 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   }
 )
 
-Checkbox.displayName = "Checkbox"
+Radio.displayName = "Radio"
 
-export { Checkbox, type CheckboxProps }
+// RadioGroup component for managing a group of radio buttons
+interface RadioGroupProps {
+  value?: string
+  onValueChange?: (value: string) => void
+  children: React.ReactNode
+  className?: string
+  error?: string
+  showAnimations?: boolean
+  size?: 'sm' | 'md' | 'lg'
+  variant?: 'default' | 'success' | 'error'
+  name: string
+}
+
+const RadioGroup: React.FC<RadioGroupProps> = ({
+  value,
+  onValueChange,
+  children,
+  className,
+  error,
+  showAnimations = true,
+  size = 'md',
+  variant = 'default',
+  name
+}) => {
+  const handleRadioChange = (radioValue: string) => {
+    onValueChange?.(radioValue)
+  }
+
+  return (
+    <div className={cn("space-y-3", className)} role="radiogroup">
+      {React.Children.map(children, (child) => {
+        if (React.isValidElement<RadioProps>(child) && child.type === Radio) {
+          return React.cloneElement(child, {
+            checked: value === child.props.value,
+            onCheckedChange: (checked: boolean) => {
+              if (checked && child.props.value) {
+                handleRadioChange(child.props.value)
+              }
+            },
+            error: error,
+            showAnimations,
+            size,
+            variant: error ? 'error' : variant,
+            name
+          })
+        }
+        return child
+      })}
+      
+      {/* Group error message */}
+      {error && (
+        <div
+          className={cn(
+            "mt-2",
+            showAnimations ? "animate-fade-slide-in" : ""
+          )}
+        >
+          <div className="error-message text-sm">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+RadioGroup.displayName = "RadioGroup"
+
+export { Radio, RadioGroup, type RadioProps }

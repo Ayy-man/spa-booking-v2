@@ -183,6 +183,37 @@ a {
            cursor-not-allowed text-center font-medium opacity-60 border-2 border-gray-200;
   }
   
+  /* Premium Time Slot Effects */
+  .time-slot-premium {
+    @apply relative overflow-hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, box-shadow;
+  }
+  
+  .time-slot-premium:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(195, 102, 120, 0.2);
+  }
+  
+  .time-slot-premium:active {
+    transform: translateY(-1px) scale(1.01);
+    transition-duration: 0.1s;
+  }
+  
+  .time-slot-premium::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(195, 102, 120, 0.1), rgba(195, 102, 120, 0));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+  }
+  
+  .time-slot-premium:hover::before {
+    opacity: 1;
+  }
+  
   /* Enhanced Service selection cards */
   .service-card {
     @apply card-interactive hover:scale-[1.02] hover:shadow-2xl p-6 sm:p-8
@@ -213,6 +244,70 @@ a {
     @apply bg-blue-50 border-blue-200 text-blue-700;
   }
   
+  /* Premium Calendar Date Button Effects */
+  .calendar-date-button {
+    @apply relative overflow-hidden cursor-pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, box-shadow, border-color;
+  }
+  
+  .calendar-date-button:hover {
+    transform: translateY(-4px) scale(1.05);
+  }
+  
+  .calendar-date-button:active {
+    transform: translateY(-2px) scale(1.02);
+    transition-duration: 0.1s;
+  }
+  
+  .calendar-date-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  
+  .calendar-date-button:hover::before {
+    opacity: 1;
+  }
+  
+  /* Calendar Navigation Arrow Effects */
+  .calendar-nav-arrow {
+    @apply relative overflow-hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, box-shadow;
+  }
+  
+  .calendar-nav-arrow:hover {
+    transform: scale(1.1);
+  }
+  
+  .calendar-nav-arrow:active {
+    transform: scale(0.95);
+    transition-duration: 0.1s;
+  }
+  
+  .calendar-nav-arrow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+  }
+  
+  .calendar-nav-arrow:hover::after {
+    opacity: 1;
+  }
+  
   /* Loading spinner with spa theme */
   .spinner {
     @apply w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin;
@@ -238,26 +333,51 @@ a {
            text-center font-semibold shadow-lg;
   }
   
-  /* Progress indicator styles */
+  /* Enhanced Progress indicator styles with animations */
   .progress-step {
     @apply flex items-center justify-center w-12 h-12 rounded-full border-2 border-gray-300 
-           bg-white text-gray-500 font-semibold transition-all duration-300;
+           bg-white text-gray-500 font-semibold transition-all duration-300 relative overflow-hidden;
   }
   
   .progress-step-active {
-    @apply progress-step border-primary bg-primary text-white shadow-lg scale-110;
+    @apply progress-step border-primary bg-primary text-white shadow-lg scale-110 animate-pulse-current;
   }
   
   .progress-step-completed {
-    @apply progress-step border-success bg-success text-white;
+    @apply progress-step border-success bg-success text-white shadow-md;
+  }
+  
+  .progress-step-celebrating {
+    @apply progress-step border-success bg-success text-white shadow-xl scale-125;
+    animation: step-celebration 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .progress-step-upcoming {
+    @apply progress-step;
   }
   
   .progress-line {
-    @apply flex-1 h-0.5 bg-gray-300 transition-all duration-500;
+    @apply h-1 bg-gray-300 rounded-full relative overflow-hidden;
   }
   
   .progress-line-completed {
-    @apply progress-line bg-success;
+    @apply h-1 bg-gradient-to-r from-success to-green-400 rounded-full relative overflow-hidden;
+    animation: progress-line-fill 0.6s ease-out;
+  }
+  
+  .progress-line-completed::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: progress-shimmer 2s ease-in-out infinite;
+  }
+  
+  .progress-line-pending {
+    @apply h-1 bg-gray-300 rounded-full;
   }
   
   /* Black continue button for service selection */
@@ -274,6 +394,33 @@ a {
   button.btn-continue {
     background-color: #000000 !important;
     color: #ffffff !important;
+  }
+
+  /* Floating Label Input Animations */
+  .floating-input {
+    @apply min-h-[60px] transition-all duration-200 ease-out;
+  }
+
+  /* Enhanced focus glow for spa aesthetic */
+  .floating-input:focus {
+    box-shadow: 0 0 0 4px rgba(195, 102, 120, 0.12), 
+                0 4px 12px rgba(195, 102, 120, 0.15),
+                0 0 20px rgba(195, 102, 120, 0.08);
+    transform: translateY(-1px);
+  }
+
+  /* Success state glow */
+  .floating-input.success-state:focus {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12), 
+                0 4px 12px rgba(16, 185, 129, 0.15),
+                0 0 20px rgba(16, 185, 129, 0.08);
+  }
+
+  /* Error state glow */
+  .floating-input.error-state:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12), 
+                0 4px 12px rgba(239, 68, 68, 0.15),
+                0 0 20px rgba(239, 68, 68, 0.08);
   }
 
   /* Enhanced spacing utilities */
@@ -347,6 +494,651 @@ a {
   .couples-toggle .thumb {
     @apply bg-white shadow-lg border border-white;
   }
+
+  /* Premium Button Utilities with Ripple Effects */
+  .btn-ripple {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-ripple::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+    pointer-events: none;
+  }
+
+  .btn-ripple:active::before {
+    width: 300px;
+    height: 300px;
+    animation: ripple 0.6s ease-out;
+  }
+
+  /* Enhanced Primary Button with Premium Effects */
+  .btn-primary-premium {
+    @apply btn-primary btn-ripple relative
+           hover:shadow-2xl hover:shadow-primary/25
+           focus:shadow-2xl focus:shadow-primary/25
+           active:shadow-inner
+           transition-all duration-300 ease-out;
+  }
+
+  .btn-primary-premium:hover {
+    animation: gentle-glow 2s ease-in-out infinite;
+    transform: translateY(-1px) scale(1.02);
+  }
+
+  .btn-primary-premium:active {
+    animation: press-down 0.2s ease-out;
+  }
+
+  /* Loading State for Buttons */
+  .btn-loading {
+    @apply pointer-events-none relative;
+  }
+
+  .btn-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  .btn-loading > * {
+    @apply opacity-0;
+  }
+
+  /* Success State for Buttons */
+  .btn-success {
+    @apply bg-green-600 text-white shadow-lg;
+    animation: gentle-glow 1s ease-out;
+  }
+
+  .btn-success:hover {
+    @apply bg-green-700;
+  }
+
+  /* Checkmark Success Animation */
+  .checkmark-success {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    stroke-width: 2;
+    stroke: #22c55e;
+    stroke-miterlimit: 10;
+    animation: checkmark-circle 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+  }
+
+  .checkmark-success path {
+    stroke-dasharray: 20;
+    stroke-dashoffset: 20;
+    animation: checkmark 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+  }
+
+  /* Enhanced Secondary Button */
+  .btn-secondary-premium {
+    @apply btn-secondary btn-ripple relative
+           hover:shadow-lg hover:shadow-primary/20
+           focus:shadow-lg focus:shadow-primary/20
+           transition-all duration-300 ease-out;
+  }
+
+  .btn-secondary-premium:hover {
+    transform: translateY(-1px) scale(1.01);
+  }
+
+  .btn-secondary-premium:active {
+    animation: press-down 0.2s ease-out;
+  }
+
+  /* Enhanced Continue Button */
+  .btn-continue-premium {
+    @apply btn-continue btn-ripple relative
+           hover:shadow-2xl hover:shadow-gray-400/30
+           focus:shadow-2xl focus:shadow-gray-400/30
+           transition-all duration-300 ease-out;
+  }
+
+  .btn-continue-premium:hover {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .btn-continue-premium:active {
+    animation: press-down 0.2s ease-out;
+  }
+
+  /* Enhanced Time Slot Premium Effects */
+  .time-slot-available-premium {
+    @apply time-slot-available btn-ripple time-slot-premium
+           hover:shadow-lg hover:shadow-primary/20
+           active:shadow-inner
+           transition-all duration-300 ease-out
+           relative overflow-hidden;
+    will-change: transform, box-shadow, border-color;
+  }
+
+  .time-slot-available-premium:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(195, 102, 120, 0.25), 0 0 0 2px rgba(195, 102, 120, 0.1);
+    border-color: rgba(195, 102, 120, 0.4);
+    animation: time-slot-hover-glow 0.3s ease-out;
+  }
+
+  .time-slot-available-premium:active {
+    transform: translateY(-1px) scale(0.98);
+    animation: time-slot-press-feedback 0.15s ease-out;
+  }
+
+  .time-slot-available-premium::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(195, 102, 120, 0.08), rgba(195, 102, 120, 0.02));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+  }
+
+  .time-slot-available-premium:hover::before {
+    opacity: 1;
+  }
+
+  .time-slot-selected-premium {
+    @apply time-slot-selected time-slot-premium
+           shadow-2xl shadow-primary/30
+           relative overflow-hidden;
+    animation: time-slot-selection-expand 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+               gentle-glow 3s ease-in-out infinite 0.5s;
+  }
+
+  .time-slot-selected-premium::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+    border-radius: inherit;
+    animation: selection-ripple-pulse 2s ease-in-out infinite;
+  }
+
+  /* Unavailable Time Slot Styling */
+  .time-slot-unavailable-premium {
+    @apply time-slot-unavailable
+           relative overflow-hidden
+           cursor-not-allowed;
+    background: linear-gradient(135deg, #f3f4f6 25%, transparent 25%),
+                linear-gradient(-135deg, #f3f4f6 25%, transparent 25%);
+    background-size: 8px 8px;
+    background-position: 0 0, 4px 4px;
+  }
+
+  .time-slot-unavailable-premium::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(107, 114, 128, 0.1);
+    border-radius: inherit;
+    animation: unavailable-fade 2s ease-in-out infinite;
+  }
+
+  /* Loading Time Slot Skeleton with Enhanced Animation */
+  .time-slot-loading-premium {
+    @apply relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-100 to-gray-200
+           border border-gray-200/50;
+    animation: time-slot-skeleton-pulse 1.5s ease-in-out infinite;
+  }
+
+  .time-slot-loading-premium::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.6), 
+      transparent);
+    animation: time-slot-shimmer 2s ease-in-out infinite;
+    transform: translateX(-100%);
+  }
+
+  /* Staggered Entrance Animation for Time Slots */
+  .time-slot-entrance {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    animation: time-slot-entrance 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* Mobile Touch Feedback Enhancements */
+  @media (hover: none) and (pointer: coarse) {
+    .time-slot-available-premium:hover {
+      animation: none;
+      transform: none;
+      box-shadow: 0 4px 6px rgba(195, 102, 120, 0.15);
+    }
+    
+    .time-slot-available-premium:active {
+      transform: scale(0.95);
+      background-color: rgba(195, 102, 120, 0.05);
+      animation: mobile-press-feedback 0.2s ease-out;
+    }
+  }
+  
+  /* Calendar Date Button Animation Classes */
+  .calendar-date-entrance {
+    animation: calendar-date-entrance 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    opacity: 0;
+  }
+  
+  .calendar-date-selected-animation {
+    animation: calendar-selection-bounce 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .calendar-date-today-pulse {
+    animation: calendar-today-pulse 2s ease-in-out infinite;
+  }
+  
+  .calendar-date-weekend-glow {
+    animation: calendar-weekend-glow 3s ease-in-out infinite;
+  }
+
+  /* Service Card Premium Effects */
+  .service-card-premium {
+    @apply service-card btn-ripple
+           hover:shadow-2xl hover:shadow-primary/20
+           transition-all duration-300 ease-out;
+  }
+
+  .service-card-premium:hover {
+    transform: translateY(-4px) scale(1.02);
+    animation: gentle-glow 2s ease-in-out infinite;
+  }
+
+  .service-card-premium:active {
+    animation: press-down 0.2s ease-out;
+  }
+
+  .service-card-selected-premium {
+    @apply service-card-selected
+           shadow-2xl shadow-primary/30;
+    animation: gentle-glow 2s ease-in-out infinite;
+  }
+
+  /* Accessibility - Respect prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    .btn-ripple::before,
+    .btn-ripple:active::before {
+      animation: none;
+      transition: none;
+    }
+
+    .btn-primary-premium:hover,
+    .btn-secondary-premium:hover,
+    .btn-continue-premium:hover,
+    .time-slot-available-premium:hover,
+    .service-card-premium:hover,
+    .service-card-premium-enhanced:hover {
+      animation: none;
+      transform: none;
+    }
+
+    .btn-primary-premium:active,
+    .btn-secondary-premium:active,
+    .btn-continue-premium:active,
+    .time-slot-available-premium:active,
+    .service-card-premium:active,
+    .service-card-premium-enhanced:active {
+      animation: none;
+    }
+
+    .time-slot-selected-premium,
+    .service-card-selected-premium,
+    .service-card-selected-premium-enhanced {
+      animation: none;
+    }
+
+    /* Disable enhanced time slot animations for reduced motion */
+    .time-slot-available-premium:hover,
+    .time-slot-available-premium:active,
+    .time-slot-selected-premium,
+    .time-slot-unavailable-premium,
+    .time-slot-loading-premium,
+    .time-slot-entrance {
+      animation: none !important;
+      transform: none !important;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .time-slot-available-premium::before,
+    .time-slot-selected-premium::after,
+    .time-slot-unavailable-premium::before,
+    .time-slot-loading-premium::before {
+      animation: none !important;
+    }
+
+    /* Keep essential visual feedback without motion */
+    .time-slot-available-premium:hover {
+      box-shadow: 0 4px 8px rgba(195, 102, 120, 0.15);
+      border-color: rgba(195, 102, 120, 0.3);
+    }
+
+    .time-slot-selected-premium {
+      box-shadow: 0 4px 12px rgba(195, 102, 120, 0.25);
+    }
+
+    /* Disable all new stagger animations for reduced motion */
+    .service-card-stagger,
+    .category-reveal-animation,
+    .reveal-on-scroll,
+    .calendar-date-entrance,
+    .calendar-date-selected-animation,
+    .calendar-date-today-pulse,
+    .calendar-date-weekend-glow {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+    
+    .calendar-date-button,
+    .calendar-nav-arrow,
+    .time-slot-premium {
+      transition: none !important;
+      transform: none !important;
+    }
+    
+    .calendar-date-button:hover,
+    .calendar-nav-arrow:hover,
+    .time-slot-premium:hover {
+      transform: none !important;
+      animation: none !important;
+    }
+
+    .skeleton-card,
+    .skeleton-title,
+    .skeleton-text,
+    .skeleton-shimmer,
+    .service-card-skeleton,
+    .staff-card-skeleton,
+    .time-slot-skeleton,
+    .date-button-skeleton,
+    .form-field-skeleton,
+    .booking-summary-skeleton,
+    .booking-table-skeleton,
+    .dashboard-skeleton,
+    .calendar-skeleton,
+    .payment-skeleton,
+    .walk-in-skeleton {
+      animation: none !important;
+      background: #f3f4f6 !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    .animate-shimmer,
+    .animate-pulse-wave,
+    .animate-fade-in-up,
+    .animate-skeleton-glow {
+      animation: none !important;
+      background: #f3f4f6 !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    .skeleton-primary,
+    .skeleton-secondary,
+    .skeleton-success {
+      animation: none !important;
+      background: #f3f4f6 !important;
+    }
+
+    /* Keep only essential transitions for reduced motion users */
+    .service-card-premium-enhanced {
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .service-card-premium-enhanced:hover .service-price,
+    .service-card-premium-enhanced:hover .service-duration {
+      animation: none;
+    }
+
+    .checkmark-success,
+    .checkmark-success path {
+      animation: none;
+    }
+
+    /* Disable floating input animations for reduced motion */
+    .floating-input,
+    .floating-textarea {
+      transition: none !important;
+      transform: none !important;
+    }
+
+    .floating-input:focus,
+    .floating-textarea:focus {
+      transform: none !important;
+    }
+
+    .floating-input label,
+    .floating-textarea label {
+      transition: none !important;
+      transform: none !important;
+    }
+  }
+
+  /* Utility classes for premium interactions */
+  .premium-hover-lift {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .premium-hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  .premium-press-down:active {
+    animation: press-down 0.2s ease-out;
+  }
+
+  /* Validation Animation Utilities */
+  .animate-shake-error {
+    animation: shake-error 0.5s ease-in-out;
+  }
+
+  .animate-success-pulse {
+    animation: success-pulse 1s ease-out;
+  }
+
+  .animate-error-pulse {
+    animation: error-pulse 1s ease-out;
+  }
+
+  .animate-typing-pulse {
+    animation: typing-pulse 2s ease-in-out infinite;
+  }
+
+  .animate-fade-slide-in {
+    animation: fade-slide-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-fade-slide-out {
+    animation: fade-slide-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .animate-checkbox-check {
+    animation: checkbox-check 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-radio-check {
+    animation: radio-check 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .animate-bounce-in {
+    animation: bounce-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Enhanced Input States with Smooth Transitions */
+  .input-validation-state {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .input-typing {
+    @apply animate-typing-pulse;
+  }
+
+  .input-success {
+    @apply border-green-400 focus:border-green-500 focus:ring-green-500/20;
+  }
+
+  .input-success:focus {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.12), 
+                0 4px 12px rgba(16, 185, 129, 0.15),
+                0 0 20px rgba(16, 185, 129, 0.08);
+  }
+
+  .input-error {
+    @apply border-red-400 focus:border-red-500 focus:ring-red-500/20;
+  }
+
+  .input-error:focus {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12), 
+                0 4px 12px rgba(239, 68, 68, 0.15),
+                0 0 20px rgba(239, 68, 68, 0.08);
+  }
+
+  /* Error Message Styling */
+  .error-message-container {
+    @apply mt-2 overflow-hidden;
+  }
+
+  .error-message {
+    @apply text-sm text-red-600 flex items-start gap-2 py-1;
+  }
+
+  .error-message svg {
+    @apply flex-shrink-0 mt-0.5;
+  }
+
+  /* Success Message Styling */
+  .success-message-container {
+    @apply mt-2 overflow-hidden;
+  }
+
+  .success-message {
+    @apply text-sm text-green-600 flex items-start gap-2 py-1;
+  }
+
+  .success-message svg {
+    @apply flex-shrink-0 mt-0.5;
+  }
+
+  /* Checkbox/Radio Enhanced Styling */
+  .checkbox-enhanced {
+    @apply relative inline-flex items-center justify-center w-5 h-5 rounded-sm border-2 
+           border-gray-300 bg-white transition-all duration-200 ease-out cursor-pointer
+           hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .checkbox-enhanced.checked {
+    @apply bg-primary border-primary;
+  }
+
+  .checkbox-enhanced .check-icon {
+    @apply absolute inset-0 flex items-center justify-center;
+  }
+
+  .radio-enhanced {
+    @apply relative inline-flex items-center justify-center w-5 h-5 rounded-full border-2 
+           border-gray-300 bg-white transition-all duration-200 ease-out cursor-pointer
+           hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .radio-enhanced.checked {
+    @apply bg-white border-primary;
+  }
+
+  .radio-enhanced .radio-dot {
+    @apply w-2 h-2 rounded-full bg-primary transition-all duration-200 ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .premium-hover-lift:hover {
+      transform: none;
+    }
+    
+    .premium-press-down:active {
+      animation: none;
+    }
+
+    /* Disable validation animations for reduced motion */
+    .animate-shake-error,
+    .animate-success-pulse,
+    .animate-error-pulse,
+    .animate-typing-pulse,
+    .animate-fade-slide-in,
+    .animate-fade-slide-out,
+    .animate-checkbox-check,
+    .animate-radio-check,
+    .animate-bounce-in {
+      animation: none;
+    }
+
+    .input-validation-state,
+    .checkbox-enhanced,
+    .radio-enhanced {
+      transition: none !important;
+    }
+
+    /* Disable progress indicator animations for reduced motion */
+    .progress-step-celebrating,
+    .progress-step-active,
+    .animate-pulse-current,
+    .animate-checkmark-draw,
+    .animate-progress-shimmer,
+    .animate-step-celebration,
+    .animate-celebration-particles {
+      animation: none !important;
+    }
+
+    .progress-line-completed,
+    .progress-line-completed::after {
+      animation: none !important;
+    }
+
+    /* Disable page transition animations for reduced motion */
+    .page-transition-enter,
+    .page-transition-enter-active,
+    .page-transition-exit,
+    .page-transition-exit-active,
+    .page-transition-back-enter,
+    .page-transition-back-enter-active,
+    .page-transition-back-exit,
+    .page-transition-back-exit-active,
+    .page-transition-fade-enter,
+    .page-transition-fade-enter-active,
+    .page-transition-fade-exit,
+    .page-transition-fade-exit-active {
+      animation: none !important;
+      transition: none !important;
+      transform: none !important;
+      opacity: 1 !important;
+    }
+  }
 }
 
 /* Animation utilities */
@@ -372,6 +1164,574 @@ a {
   }
 }
 
+/* Validation Animation Keyframes */
+@keyframes shake-error {
+  0%, 20%, 40%, 60%, 80%, 100% {
+    transform: translateX(0);
+  }
+  10% {
+    transform: translateX(-3px);
+  }
+  30% {
+    transform: translateX(3px);
+  }
+  50% {
+    transform: translateX(-2px);
+  }
+  70% {
+    transform: translateX(2px);
+  }
+  90% {
+    transform: translateX(-1px);
+  }
+}
+
+@keyframes success-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes error-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes typing-pulse {
+  0%, 100% {
+    border-color: rgb(209, 213, 219);
+  }
+  50% {
+    border-color: rgb(195, 102, 120);
+  }
+}
+
+@keyframes fade-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+    max-height: 0;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 100px;
+  }
+}
+
+@keyframes fade-slide-out {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 100px;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+    max-height: 0;
+  }
+}
+
+@keyframes checkbox-check {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(45deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) rotate(45deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(45deg);
+  }
+}
+
+@keyframes radio-check {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Premium Ripple Effect Animation */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Success Checkmark Animation */
+@keyframes checkmark {
+  0% {
+    stroke-dashoffset: 20px;
+  }
+  100% {
+    stroke-dashoffset: 0px;
+  }
+}
+
+@keyframes checkmark-circle {
+  0% {
+    stroke-dashoffset: 166px;
+  }
+  100% {
+    stroke-dashoffset: 0px;
+  }
+}
+
+/* Loading Pulse Animation */
+@keyframes loading-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Gentle Glow Animation */
+@keyframes gentle-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(195, 102, 120, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(195, 102, 120, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(195, 102, 120, 0);
+  }
+}
+
+/* Press Down Animation */
+@keyframes press-down {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Premium Calendar Animation Keyframes */
+@keyframes calendar-date-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-2px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes calendar-selection-bounce {
+  0% {
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(0.95);
+  }
+  40% {
+    transform: scale(1.1);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  80% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes calendar-today-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2);
+  }
+}
+
+@keyframes calendar-weekend-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+  }
+}
+
+@keyframes time-slot-selection-expand {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 2px 4px rgba(195, 102, 120, 0.1);
+  }
+  50% {
+    transform: scale(0.98);
+    box-shadow: 0 0 0 4px rgba(195, 102, 120, 0.2);
+  }
+  100% {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(195, 102, 120, 0.3);
+  }
+}
+
+@keyframes time-slot-hover-glow {
+  0% {
+    box-shadow: 0 2px 4px rgba(195, 102, 120, 0.1);
+  }
+  100% {
+    box-shadow: 0 8px 25px rgba(195, 102, 120, 0.25), 0 0 0 2px rgba(195, 102, 120, 0.1);
+  }
+}
+
+/* Enhanced Time Slot Animation Keyframes */
+@keyframes time-slot-press-feedback {
+  0% {
+    transform: translateY(-2px) scale(1.05);
+  }
+  50% {
+    transform: translateY(-1px) scale(0.98);
+    box-shadow: 0 2px 8px rgba(195, 102, 120, 0.3);
+  }
+  100% {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(195, 102, 120, 0.2);
+  }
+}
+
+@keyframes selection-ripple-pulse {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+}
+
+@keyframes unavailable-fade {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.1;
+  }
+}
+
+@keyframes time-slot-skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes time-slot-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes time-slot-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-2px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mobile-press-feedback {
+  0% {
+    transform: scale(1);
+    background-color: transparent;
+  }
+  50% {
+    transform: scale(0.95);
+    background-color: rgba(195, 102, 120, 0.05);
+  }
+  100% {
+    transform: scale(0.98);
+    background-color: rgba(195, 102, 120, 0.02);
+  }
+}
+
+@keyframes time-slot-grid-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Spinner Animation for Loading States */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Progress Indicator Animations */
+@keyframes step-celebration {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  25% {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 12px rgba(16, 185, 129, 0.2);
+  }
+  75% {
+    transform: scale(1.25);
+    box-shadow: 0 0 0 16px rgba(16, 185, 129, 0.1);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes progress-line-fill {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes progress-shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes animate-pulse-current {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(195, 102, 120, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(195, 102, 120, 0.3);
+  }
+}
+
+@keyframes animate-checkmark-draw {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(-45deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes animate-progress-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Celebration Particle Animations */
+@keyframes particle-explosion-0 {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-80%, -80%) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-explosion-1 {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(30%, -80%) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-explosion-2 {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(80%, -30%) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-explosion-3 {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(80%, 30%) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-explosion-4 {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-30%, 80%) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes particle-explosion-5 {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-80%, 30%) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Page Transition Loading Spinner */
+@keyframes page-loading-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Floating particle animations for loading */
+@keyframes float-particle-0 {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateY(0px) rotate(0deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-20px) rotate(180deg);
+    opacity: 1;
+  }
+}
+
+@keyframes float-particle-1 {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateX(-15px) translateY(10px) rotate(0deg);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(-50%, -50%) translateX(-15px) translateY(-15px) rotate(180deg);
+    opacity: 0.8;
+  }
+}
+
+@keyframes float-particle-2 {
+  0%, 100% {
+    transform: translate(-50%, -50%) translateX(15px) translateY(10px) rotate(0deg);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-50%, -50%) translateX(15px) translateY(-15px) rotate(180deg);
+    opacity: 0.9;
+  }
+}
+
 .animate-in {
   animation-duration: 300ms;
   animation-fill-mode: both;
@@ -383,4 +1743,732 @@ a {
 
 .slide-in-from-bottom-2 {
   animation-name: slide-in-from-bottom;
+}
+
+/* Premium Staggered Animation Keyframes for Service Selection */
+@keyframes stagger-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes category-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 1000px;
+  }
+}
+
+@keyframes premium-lift {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  100% {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(195, 102, 120, 0.05);
+  }
+}
+
+@keyframes selection-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(195, 102, 120, 0.7);
+    border-color: rgba(195, 102, 120, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(195, 102, 120, 0.2);
+    border-color: rgba(195, 102, 120, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(195, 102, 120, 0);
+    border-color: rgba(195, 102, 120, 1);
+  }
+}
+
+@keyframes price-highlight {
+  0% {
+    color: rgb(195, 102, 120);
+    transform: scale(1);
+  }
+  50% {
+    color: rgb(170, 59, 80);
+    transform: scale(1.05);
+  }
+  100% {
+    color: rgb(195, 102, 120);
+    transform: scale(1);
+  }
+}
+
+@keyframes duration-badge-glow {
+  0%, 100% {
+    background-color: rgb(243, 244, 246);
+    box-shadow: none;
+  }
+  50% {
+    background-color: rgb(246, 199, 207);
+    box-shadow: 0 0 0 2px rgba(195, 102, 120, 0.2);
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+/* Enhanced Skeleton Shimmer Animations for Spa Booking System */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Enhanced shimmer for skeleton loading */
+@keyframes skeleton-shimmer-premium {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse-wave {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes skeleton-glow {
+  0%, 100% {
+    background-color: rgb(243, 244, 246);
+  }
+  50% {
+    background-color: rgb(229, 231, 235);
+  }
+}
+
+@keyframes spa-skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Enhanced Service Card Animation Classes */
+.service-card-stagger {
+  animation: stagger-fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+.category-reveal-animation {
+  animation: category-reveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+.service-card-premium-enhanced {
+  @apply service-card-premium relative overflow-hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
+}
+
+.service-card-premium-enhanced:hover {
+  animation: premium-lift 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.service-card-premium-enhanced:hover .service-price {
+  animation: price-highlight 0.4s ease-in-out;
+}
+
+.service-card-premium-enhanced:hover .service-duration {
+  animation: duration-badge-glow 0.4s ease-in-out;
+}
+
+.service-card-selected-premium-enhanced {
+  @apply service-card-selected-premium;
+  animation: selection-pulse 1s ease-out;
+  border: 2px solid rgba(195, 102, 120, 1);
+}
+
+/* Enhanced Skeleton Loading States for Spa Booking System */
+.skeleton-card {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 2s ease-in-out infinite;
+  border-radius: 16px;
+  height: 200px;
+  margin-bottom: 24px;
+}
+
+.skeleton-title {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 2s ease-in-out infinite;
+  height: 24px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  width: 70%;
+}
+
+.skeleton-text {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 2s ease-in-out infinite;
+  height: 16px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+/* Elegant Skeleton Components with Spa Theme */
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 400% 100%;
+  animation: spa-skeleton-shimmer 2.5s ease-in-out infinite;
+}
+
+.service-card-skeleton {
+  animation: fade-in-up 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.staff-card-skeleton {
+  animation: fade-in-up 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.time-slot-skeleton {
+  animation: pulse-wave 1.5s ease-in-out infinite;
+}
+
+.date-button-skeleton {
+  animation: pulse-wave 1.8s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+.date-button-skeleton::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.4), 
+    transparent);
+  animation: skeleton-shimmer-premium 1.5s ease-in-out infinite;
+}
+
+.form-field-skeleton {
+  animation: fade-in-up 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.booking-summary-skeleton {
+  animation: fade-in-up 0.7s ease-out forwards;
+  opacity: 0;
+}
+
+.booking-table-skeleton {
+  animation: fade-in-up 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.dashboard-skeleton {
+  animation: fade-in-up 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.calendar-skeleton {
+  animation: fade-in-up 0.7s ease-out forwards;
+  opacity: 0;
+}
+
+.payment-skeleton {
+  animation: fade-in-up 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.walk-in-skeleton {
+  animation: fade-in-up 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+/* Shimmer Animation Utility Classes */
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Radial gradient utility for ripple effects */
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-from), var(--tw-gradient-to));
+}
+
+.animate-pulse-wave {
+  animation: pulse-wave 2s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.animate-skeleton-glow {
+  animation: skeleton-glow 2s ease-in-out infinite;
+}
+
+/* Staggered Animation Classes */
+.skeleton-stagger-1 { animation-delay: 100ms; }
+.skeleton-stagger-2 { animation-delay: 200ms; }
+.skeleton-stagger-3 { animation-delay: 300ms; }
+.skeleton-stagger-4 { animation-delay: 400ms; }
+.skeleton-stagger-5 { animation-delay: 500ms; }
+
+/* Enhanced Skeleton Variants */
+.skeleton-primary {
+  background: linear-gradient(90deg, 
+    rgba(195, 102, 120, 0.1) 25%, 
+    rgba(195, 102, 120, 0.2) 50%, 
+    rgba(195, 102, 120, 0.1) 75%);
+  background-size: 400% 100%;
+  animation: spa-skeleton-shimmer 2.5s ease-in-out infinite;
+}
+
+.skeleton-secondary {
+  background: linear-gradient(90deg, 
+    rgba(246, 199, 207, 0.3) 25%, 
+    rgba(246, 199, 207, 0.5) 50%, 
+    rgba(246, 199, 207, 0.3) 75%);
+  background-size: 400% 100%;
+  animation: spa-skeleton-shimmer 2.5s ease-in-out infinite;
+}
+
+.skeleton-success {
+  background: linear-gradient(90deg, 
+    rgba(16, 185, 129, 0.1) 25%, 
+    rgba(16, 185, 129, 0.2) 50%, 
+    rgba(16, 185, 129, 0.1) 75%);
+  background-size: 400% 100%;
+  animation: spa-skeleton-shimmer 2.5s ease-in-out infinite;
+}
+
+/* Scroll-triggered Animation Classes */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-on-scroll.animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Enhanced Focus States for Accessibility */
+.service-card-premium-enhanced:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(195, 102, 120, 0.3), 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: selection-pulse 1s ease-out;
+}
+
+/* Mobile-Optimized Touch States */
+@media (hover: none) and (pointer: coarse) {
+  .service-card-premium-enhanced:hover {
+    animation: none;
+    transform: none;
+  }
+  
+  .service-card-premium-enhanced:active {
+    animation: press-down 0.2s ease-out;
+    transform: scale(0.98);
+  }
+}
+
+/* Page Transition Animation Classes */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateX(-100%);
+  transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-transition-back-enter {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.page-transition-back-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-transition-back-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.page-transition-back-exit-active {
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-transition-fade-enter {
+  opacity: 0;
+  transform: translateY(20px) scale(0.98);
+}
+
+.page-transition-fade-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-transition-fade-exit {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.page-transition-fade-exit-active {
+  opacity: 0;
+  transform: translateY(-20px) scale(0.98);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Toast Notification Animation Classes */
+.slide-in-from-top-right {
+  animation: slide-in-top-right 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-out-to-top-right {
+  animation: slide-out-top-right 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-in-from-top-left {
+  animation: slide-in-top-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-out-to-top-left {
+  animation: slide-out-top-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-in-from-top {
+  animation: slide-in-top 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-out-to-top {
+  animation: slide-out-top 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-in-from-bottom-right {
+  animation: slide-in-bottom-right 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-out-to-bottom-right {
+  animation: slide-out-bottom-right 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-in-from-bottom-left {
+  animation: slide-in-bottom-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-out-to-bottom-left {
+  animation: slide-out-bottom-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-in-from-bottom {
+  animation: slide-in-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.slide-out-to-bottom {
+  animation: slide-out-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Success Bounce Animation for Confirmation Cards */
+.animate-success-bounce {
+  animation: success-bounce 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-gentle-bounce {
+  animation: gentle-bounce 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-celebration-scale {
+  animation: celebration-scale 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Toast Notification Animation Keyframes */
+@keyframes slide-in-top-right {
+  0% {
+    opacity: 0;
+    transform: translateX(100%) translateY(-50px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-out-top-right {
+  0% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%) translateY(-50px) scale(0.9);
+  }
+}
+
+@keyframes slide-in-top-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%) translateY(-50px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-out-top-left {
+  0% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100%) translateY(-50px) scale(0.9);
+  }
+}
+
+@keyframes slide-in-top {
+  0% {
+    opacity: 0;
+    transform: translateY(-100px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-out-top {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px) scale(0.9);
+  }
+}
+
+@keyframes slide-in-bottom-right {
+  0% {
+    opacity: 0;
+    transform: translateX(100%) translateY(50px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-out-bottom-right {
+  0% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100%) translateY(50px) scale(0.9);
+  }
+}
+
+@keyframes slide-in-bottom-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%) translateY(50px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-out-bottom-left {
+  0% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-100%) translateY(50px) scale(0.9);
+  }
+}
+
+@keyframes slide-in-bottom {
+  0% {
+    opacity: 0;
+    transform: translateY(100px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-out-bottom {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100px) scale(0.9);
+  }
+}
+
+@keyframes toast-progress {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+/* Success Bounce Animation Keyframes */
+@keyframes success-bounce {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  75% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes gentle-bounce {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  20% {
+    transform: scale(1.02) translateY(-2px);
+  }
+  40% {
+    transform: scale(0.98) translateY(1px);
+  }
+  60% {
+    transform: scale(1.01) translateY(-1px);
+  }
+  80% {
+    transform: scale(0.99) translateY(0px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes celebration-scale {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
 } 
+
+/* Additional accessibility support for success animations */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable success celebration animations */
+  .animate-success-bounce,
+  .animate-gentle-bounce,
+  .animate-celebration-scale {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  /* Disable toast slide animations */
+  .slide-in-from-top-right,
+  .slide-out-to-top-right,
+  .slide-in-from-top-left,
+  .slide-out-to-top-left,
+  .slide-in-from-top,
+  .slide-out-to-top,
+  .slide-in-from-bottom-right,
+  .slide-out-to-bottom-right,
+  .slide-in-from-bottom-left,
+  .slide-out-to-bottom-left,
+  .slide-in-from-bottom,
+  .slide-out-to-bottom {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}

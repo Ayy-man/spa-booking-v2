@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import ConfettiExplosion from 'react-confetti-explosion'
+import { SuccessConfetti } from '@/components/ui/success-confetti'
+import { BookingConfirmationCard } from '@/components/ui/success-confirmation-card'
+import { useToast, showSuccessToast } from '@/components/ui/toast-notification'
 import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
@@ -19,6 +21,8 @@ export default function ConfirmationPage() {
   const [paymentType, setPaymentType] = useState<'deposit' | 'full' | 'location'>('deposit')
   const [isLoading, setIsLoading] = useState(true)
   const [showConfetti, setShowConfetti] = useState(false)
+  const [showSuccessCard, setShowSuccessCard] = useState(false)
+  const { showToast } = useToast()
 
   useEffect(() => {
     // Check URL parameters for session recovery
@@ -204,18 +208,21 @@ export default function ConfirmationPage() {
       
       setIsSuccess(true)
       
+      // Show success toast notification
+      showSuccessToast(showToast)('Booking confirmed successfully!', {
+        title: 'Success!',
+        duration: 4000
+      })
+      
       // Trigger confetti animation with a slight delay for better UX
       setTimeout(() => {
         setShowConfetti(true)
       }, 500)
       
-      // For full payment customers, add a second burst for extra celebration
-      if (paymentType === 'full') {
-        setTimeout(() => {
-          setShowConfetti(false)
-          setTimeout(() => setShowConfetti(true), 100) // Quick reset and retrigger
-        }, 2000)
-      }
+      // Show success card animation
+      setTimeout(() => {
+        setShowSuccessCard(true)
+      }, 800)
       
       // Auto-hide confetti after 3 seconds
       setTimeout(() => {
@@ -339,103 +346,54 @@ export default function ConfirmationPage() {
   }
 
   if (isSuccess) {
+    const getPaymentStatus = () => {
+      if (paymentType === 'full') return 'paid'
+      if (paymentType === 'location') return 'pending'
+      return 'deposit'
+    }
+    
     return (
       <div className="min-h-screen bg-background py-8">
-        <div className="container mx-auto px-4 max-w-2xl text-center">
-          <div className="bg-white rounded-xl shadow-md p-8 relative">
-            {/* Confetti Animation */}
-            {showConfetti && (
-              <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
-                <ConfettiExplosion
-                  force={0.8}
-                  duration={2800}
-                  particleCount={paymentType === 'full' ? 120 : 80}
-                  width={1200}
-                  colors={[
-                    '#10B981', // Emerald (success green)
-                    '#3B82F6', // Blue  
-                    '#8B5CF6', // Purple (spa luxury)
-                    '#F59E0B', // Amber (gold accent)
-                    '#EF4444', // Rose (warm accent)
-                    '#06B6D4', // Cyan (spa blue)
-                    '#84CC16'  // Lime (fresh green)
-                  ]}
-                />
-              </div>
-            )}
-            
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            
-            <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mb-6">
-              <div className="flex">
-                <div className="ml-3">
-                  <p className="text-sm font-medium">
-                    ✅ BOOKING CONFIRMED
-                  </p>
-                  <p className="text-sm">
-                    Your appointment has been successfully scheduled.
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <h1 className="text-3xl font-heading text-primary-dark mb-4">
-              Booking Confirmed!
-            </h1>
-            
-            <p className="text-gray-600 mb-4">
-              Your appointment has been successfully booked. You will receive a confirmation email shortly.
-            </p>
-            
-            {paymentCompleted && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                {paymentType === 'full' ? (
-                  <p className="text-green-800 text-sm">
-                    <strong>Full payment processed:</strong> Your ${bookingData.service.price} payment has been completed. 
-                    No additional payment required at your appointment.
-                  </p>
-                ) : (
-                  <p className="text-green-800 text-sm">
-                    <strong>Deposit processed:</strong> Your $30 deposit has been applied to this booking. 
-                    The remaining balance of ${bookingData.service.price - 30} will be due at your appointment.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {paymentType === 'location' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <p className="text-blue-800 text-sm">
-                  <strong>No payment required now:</strong> Your appointment is confirmed with $0 payment. 
-                  Please bring ${bookingData.service.price} to pay at the spa when you arrive for your appointment.
-                </p>
-              </div>
-            )}
-            
-            <div className="bg-accent rounded-lg p-6 mb-8 text-left">
-              <h2 className="font-semibold text-primary-dark mb-4">Booking Details</h2>
-              <div className="space-y-2 text-sm">
-                <div><span className="font-medium">Service:</span> {bookingData.service.name}</div>
-                <div><span className="font-medium">Date:</span> {formatDate(bookingData.date)}</div>
-                <div><span className="font-medium">Time:</span> {formatTimeRange(bookingData.time, bookingData.service.duration)}</div>
-                <div><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap] || bookingData.staff || 'Any Available Staff'}</div>
-                <div><span className="font-medium">Price:</span> ${bookingData.service.price}</div>
-                <div><span className="font-medium">Customer:</span> {bookingData.customer.name}</div>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <Link href="/" className="btn-primary block">
-                Return to Home
-              </Link>
-              <Link href="/booking" className="btn-secondary block">
-                Book Another Appointment
-              </Link>
-            </div>
+        {/* Enhanced Confetti Animation */}
+        <SuccessConfetti
+          isActive={showConfetti}
+          duration={3000}
+          particleCount={paymentType === 'full' ? 120 : 80}
+          colors={[
+            '#10B981', // Success green
+            '#C36678', // Spa primary
+            '#F6C7CF', // Spa accent
+            '#3B82F6', // Blue
+            '#8B5CF6', // Purple
+            '#F59E0B', // Amber
+            '#EF4444', // Rose
+            '#06B6D4'  // Cyan
+          ]}
+          shapes={['circle', 'square', 'heart', 'star']}
+        />
+        
+        <div className="container mx-auto px-4 max-w-2xl">
+          <BookingConfirmationCard
+            bookingData={{
+              serviceName: bookingData.service.name,
+              date: formatDate(bookingData.date),
+              time: formatTimeRange(bookingData.time, bookingData.service.duration),
+              staff: staffNameMap[bookingData.staff as keyof typeof staffNameMap] || bookingData.staff || 'Any Available Staff',
+              price: bookingData.service.price,
+              customerName: bookingData.customer.name
+            }}
+            paymentStatus={getPaymentStatus()}
+            showAnimation={showSuccessCard}
+            className="mb-8"
+          />
+          
+          <div className="text-center space-y-4">
+            <Link href="/" className="btn-primary block animate-gentle-bounce">
+              Return to Home
+            </Link>
+            <Link href="/booking" className="btn-secondary block">
+              Book Another Appointment
+            </Link>
           </div>
         </div>
       </div>

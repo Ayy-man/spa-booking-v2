@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { ToastProvider } from '@/components/ui/toast-notification'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,12 +21,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-[#F8F8F8]`}>
-        <div className="min-h-screen">
-          {children}
-        </div>
-        {/* Analytics and Speed Insights with error handling */}
-        <Analytics />
-        <SpeedInsights />
+        <ToastProvider position="top-right" maxToasts={5}>
+          <div className="min-h-screen">
+            {children}
+          </div>
+          {/* Analytics and Speed Insights with error handling */}
+          <Analytics />
+          <SpeedInsights />
+        </ToastProvider>
       </body>
     </html>
   )

@@ -6,10 +6,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { FloatingInput } from '@/components/ui/floating-input'
+import { FloatingTextarea } from '@/components/ui/floating-textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CheckCircleIcon, AlertCircleIcon } from 'lucide-react'
+import { AlertCircleIcon } from 'lucide-react'
 import { ButtonLoading } from '@/components/ui/loading-spinner'
 
 const walkInFormSchema = z.object({
@@ -148,106 +149,39 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
 
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         {/* Customer Name */}
-        <div className="space-y-2">
-          <Label htmlFor="name" className="text-sm font-medium text-gray-700">
-            Full Name *
-          </Label>
-          <div className="relative">
-            <Input
-              id="name"
-              type="text"
-              placeholder="Enter your full name"
-              className={getInputClasses('name')}
-              {...register('name')}
-            />
-            {getFieldStatus('name') === 'success' && (
-              <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-success" />
-            )}
-            {getFieldStatus('name') === 'error' && (
-              <AlertCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-error" />
-            )}
-          </div>
-          {errors.name && (
-            <p className="text-sm text-error mt-1 flex items-center gap-1">
-              <AlertCircleIcon className="w-4 h-4" />
-              {errors.name.message}
-            </p>
-          )}
-          {getFieldStatus('name') === 'success' && (
-            <p className="text-sm text-success mt-1 flex items-center gap-1">
-              <CheckCircleIcon className="w-4 h-4" />
-              Looks good!
-            </p>
-          )}
-        </div>
+        <FloatingInput
+          label="Full Name"
+          type="text"
+          placeholder="Enter your full name"
+          isRequired={true}
+          success={getFieldStatus('name') === 'success'}
+          error={errors.name?.message}
+          value={formData.name}
+          {...register('name')}
+        />
 
         {/* Phone Number */}
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
-            Phone Number *
-          </Label>
-          <div className="relative">
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="Enter your phone number"
-              className={getInputClasses('phone')}
-              {...register('phone')}
-            />
-            {getFieldStatus('phone') === 'success' && (
-              <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-success" />
-            )}
-            {getFieldStatus('phone') === 'error' && (
-              <AlertCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-error" />
-            )}
-          </div>
-          {errors.phone && (
-            <p className="text-sm text-error mt-1 flex items-center gap-1">
-              <AlertCircleIcon className="w-4 h-4" />
-              {errors.phone.message}
-            </p>
-          )}
-          {getFieldStatus('phone') === 'success' && (
-            <p className="text-sm text-success mt-1 flex items-center gap-1">
-              <CheckCircleIcon className="w-4 h-4" />
-              Valid phone number
-            </p>
-          )}
-        </div>
+        <FloatingInput
+          label="Phone Number"
+          type="tel"
+          placeholder="Enter your phone number"
+          isRequired={true}
+          success={getFieldStatus('phone') === 'success'}
+          error={errors.phone?.message}
+          value={formData.phone}
+          {...register('phone')}
+        />
 
         {/* Email */}
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-            Email Address <span className="text-gray-400">(Optional)</span>
-          </Label>
-          <div className="relative">
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email address"
-              className={getInputClasses('email')}
-              {...register('email')}
-            />
-            {getFieldStatus('email') === 'success' && (
-              <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-success" />
-            )}
-            {getFieldStatus('email') === 'error' && (
-              <AlertCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-error" />
-            )}
-          </div>
-          {errors.email && (
-            <p className="text-sm text-error mt-1 flex items-center gap-1">
-              <AlertCircleIcon className="w-4 h-4" />
-              {errors.email.message}
-            </p>
-          )}
-          {getFieldStatus('email') === 'success' && (
-            <p className="text-sm text-success mt-1 flex items-center gap-1">
-              <CheckCircleIcon className="w-4 h-4" />
-              Valid email address
-            </p>
-          )}
-        </div>
+        <FloatingInput
+          label="Email Address (Optional)"
+          type="email"
+          placeholder="Enter your email address"
+          success={getFieldStatus('email') === 'success'}
+          error={errors.email?.message}
+          value={formData.email}
+          {...register('email')}
+        />
 
         {/* Service Selection */}
         <div className="space-y-2">
@@ -292,33 +226,15 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
         </div>
 
         {/* Notes */}
-        <div className="space-y-2">
-          <Label htmlFor="notes" className="text-sm font-medium text-gray-700">
-            Additional Notes <span className="text-gray-400">(Optional)</span>
-          </Label>
-          <textarea
-            id="notes"
-            rows={4}
-            placeholder="Any specific requests, preferences, or information we should know..."
-            className={`
-              w-full px-3 py-2 border rounded-lg resize-none transition-all duration-200
-              focus:outline-none focus:ring-2 bg-white text-black placeholder-gray-500
-              ${errors.notes 
-                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/20' 
-                : 'border-gray-300 focus:border-black focus:ring-black/20'
-              }
-            `}
-            {...register('notes')}
-          />
-          {errors.notes && (
-            <p className="text-sm text-red-600 mt-1">
-              {errors.notes.message}
-            </p>
-          )}
-          <p className="text-xs text-gray-500">
-            Maximum 500 characters
-          </p>
-        </div>
+        <FloatingTextarea
+          label="Additional Notes (Optional)"
+          placeholder="Any specific requests, preferences, or information we should know..."
+          rows={3}
+          maxLength={500}
+          error={errors.notes?.message}
+          value={formData.notes}
+          {...register('notes')}
+        />
 
         {/* Info Notice */}
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
