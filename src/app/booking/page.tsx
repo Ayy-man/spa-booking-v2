@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import CouplesBooking from '@/components/CouplesBooking'
-import BookingPageWrapper, { useBookingNavigation } from '@/components/booking/BookingPageWrapper'
+import { BookingPageWrapper, useBookingNavigation } from '@/components/booking/BookingPageWrapper'
 import { analytics } from '@/lib/analytics'
 import { saveBookingState } from '@/lib/booking-state-manager'
 
@@ -343,7 +343,6 @@ export default function BookingPage() {
             )}
           </div>
         </div>
-      </div>
 
       {/* Couples Booking Component - Fixed Position Overlay */}
       {selectedService && showCouplesOptions && (

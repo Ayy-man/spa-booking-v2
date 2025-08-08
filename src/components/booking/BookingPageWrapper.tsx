@@ -235,8 +235,6 @@ export function BookingPageWrapper({
   )
 }
 
-export default BookingPageWrapper
-
 // Navigation helper hook for use in booking pages
 export const useBookingNavigation = () => {
   const [isNavigating, setIsNavigating] = useState(false)

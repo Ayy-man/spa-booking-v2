@@ -155,7 +155,7 @@ export function TodaysSchedule({
       <div className="flex justify-between items-center">
         <div>
           <h1 className={cn("font-bold text-gray-900", getHeaderSize())}>
-            {viewDate === 'today' ? "Today's Schedule" : "Tomorrow's Schedule"}
+            {viewDate === 'today' ? "Today&apos;s Schedule" : "Tomorrow&apos;s Schedule"}
           </h1>
           <p className={cn(
             "text-gray-600",
@@ -414,7 +414,7 @@ export function TodaysSchedule({
           {/* Progress bar indicator */}
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-              <span>Today's Progress</span>
+              <span>Today&apos;s Progress</span>
               <span className="font-medium">
                 {Math.round((filteredBookings.filter(b => b.status === 'completed').length / filteredBookings.length) * 100)}% Complete
               </span>
