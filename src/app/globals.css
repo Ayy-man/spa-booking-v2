@@ -136,13 +136,13 @@ a {
     @apply bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-primary/5;
   }
   
-  /* Interactive card variant for clickable elements */
+  /* Interactive card variant for clickable elements - Fixed hover conflicts */
   .card-interactive {
     @apply bg-white p-6 sm:p-8 rounded-2xl shadow-lg hover:shadow-2xl 
            transition-all duration-300 border border-primary/5 
            hover:border-primary/20 cursor-pointer
-           focus-within:ring-4 focus-within:ring-primary/30 focus-within:ring-offset-2
-           transform hover:scale-[1.01] hover:-translate-y-1;
+           focus-within:ring-4 focus-within:ring-primary/30 focus-within:ring-offset-2;
+    /* Removed transform hover:scale-[1.01] hover:-translate-y-1 to prevent conflicts with premium animations */
   }
   
   /* Form input field with enhanced accessibility */
@@ -214,10 +214,11 @@ a {
     opacity: 1;
   }
   
-  /* Enhanced Service selection cards */
+  /* Enhanced Service selection cards - Fixed hover conflicts */
   .service-card {
-    @apply card-interactive hover:scale-[1.02] hover:shadow-2xl p-6 sm:p-8
+    @apply card-interactive hover:shadow-2xl p-6 sm:p-8
            border-2 border-transparent hover:border-primary/20;
+    /* Removed hover:scale-[1.02] to prevent conflicts with premium animations */
   }
   
   .service-card-selected {
@@ -333,27 +334,30 @@ a {
            text-center font-semibold shadow-lg;
   }
   
-  /* Enhanced Progress indicator styles with animations */
+  /* Enhanced Progress indicator styles with animations - Improved sizing & colors */
   .progress-step {
-    @apply flex items-center justify-center w-12 h-12 rounded-full border-2 border-gray-300 
-           bg-white text-gray-500 font-semibold transition-all duration-300 relative overflow-hidden;
+    @apply flex items-center justify-center w-12 h-12 rounded-full border-2 border-gray-200 
+           bg-white text-gray-400 font-bold transition-all duration-300 relative overflow-hidden
+           sm:w-14 sm:h-14 md:w-16 md:h-16 text-xs sm:text-sm;
   }
   
   .progress-step-active {
-    @apply progress-step border-primary bg-primary text-white shadow-lg scale-110 animate-pulse-current;
+    @apply progress-step border-primary bg-primary text-white shadow-lg shadow-primary/25 
+           scale-110 ring-4 ring-primary/20;
   }
   
   .progress-step-completed {
-    @apply progress-step border-success bg-success text-white shadow-md;
+    @apply progress-step border-green-500 bg-green-500 text-white shadow-lg shadow-green-500/25;
   }
   
   .progress-step-celebrating {
-    @apply progress-step border-success bg-success text-white shadow-xl scale-125;
+    @apply progress-step border-green-500 bg-green-500 text-white shadow-xl shadow-green-500/40 
+           scale-125 ring-4 ring-green-500/30;
     animation: step-celebration 1s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .progress-step-upcoming {
-    @apply progress-step;
+    @apply progress-step hover:border-gray-300 hover:bg-gray-50;
   }
   
   .progress-line {
@@ -796,8 +800,9 @@ a {
   }
 
   .service-card-premium:hover {
-    transform: translateY(-4px) scale(1.02);
-    animation: gentle-glow 2s ease-in-out infinite;
+    /* Basic hover - will be overridden by premium-enhanced for service cards */
+    transform: translateY(-2px);
+    /* Removed conflicting gentle-glow animation */
   }
 
   .service-card-premium:active {
@@ -1936,21 +1941,19 @@ a {
 
 .service-card-premium-enhanced {
   @apply service-card-premium relative overflow-hidden;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, box-shadow;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Removed will-change to improve performance */
 }
 
 .service-card-premium-enhanced:hover {
-  animation: premium-lift 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  /* Single smooth transform instead of complex animations */
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+              0 10px 10px -5px rgba(0, 0, 0, 0.04),
+              0 0 0 1px rgba(195, 102, 120, 0.05);
 }
 
-.service-card-premium-enhanced:hover .service-price {
-  animation: price-highlight 0.4s ease-in-out;
-}
-
-.service-card-premium-enhanced:hover .service-duration {
-  animation: duration-badge-glow 0.4s ease-in-out;
-}
+/* Removed conflicting price and duration animations */
 
 .service-card-selected-premium-enhanced {
   @apply service-card-selected-premium;

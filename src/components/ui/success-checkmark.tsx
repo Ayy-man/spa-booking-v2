@@ -165,16 +165,16 @@ export function StepCheckmark({
 }) {
   return (
     <div className={`relative ${className}`}>
-      {/* Step number background */}
+      {/* Step number background - Responsive sizing */}
       <div 
         className={`
-          w-12 h-12 rounded-full border-2 
+          w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full border-2 
           flex items-center justify-center
-          font-semibold text-sm
+          font-bold text-xs sm:text-sm
           transition-all duration-500 ease-out
           ${isCompleted 
-            ? 'bg-green-500 border-green-500 text-white scale-110 shadow-lg shadow-green-500/25' 
-            : 'bg-white border-gray-300 text-gray-500'
+            ? 'bg-green-500 border-green-500 text-white scale-110 shadow-lg shadow-green-500/25 ring-4 ring-green-500/20' 
+            : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300 hover:bg-gray-50'
           }
         `}
       >
