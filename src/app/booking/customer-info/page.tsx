@@ -47,9 +47,9 @@ export default function CustomerInfoPage() {
     if (state.selectedStaff) setSelectedStaff(state.selectedStaff)
     
     // Validate we have all required data for this step
-    if (!state.selectedDate || !state.selectedTime || !state.selectedStaff) {
+    if (!state.selectedDate || !state.selectedTime || !state.selectedStaff || (state.bookingData?.isCouplesBooking && !state.secondaryStaff)) {
       console.log('[CustomerInfoPage] Missing required booking data, redirecting to staff selection')
-      window.location.href = '/booking/staff'
+      window.location.href = state.bookingData?.isCouplesBooking ? '/booking/staff-couples' : '/booking/staff'
       return
     }
   }, [])
@@ -207,7 +207,7 @@ export default function CustomerInfoPage() {
               {/* Header */}
               <div className="text-center lg:text-left mb-8">
                 <Link 
-                  href="/booking/staff" 
+                  href={ (loadBookingState()?.bookingData?.isCouplesBooking ? '/booking/staff-couples' : '/booking/staff') as any } 
                   className="btn-tertiary !w-auto px-6 mb-6 inline-flex"
                 >
                   ← Back to Staff Selection

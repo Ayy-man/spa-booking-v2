@@ -6,6 +6,7 @@ import { supabaseClient } from '@/lib/supabase'
 import { Database } from '@/types/database'
 import { getServiceCategory, canDatabaseStaffPerformService, isDatabaseStaffAvailableOnDate } from '@/lib/staff-data'
 import { validateServiceSelection } from '@/lib/booking-step-validation'
+import { saveBookingState } from '@/lib/booking-state-manager'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -169,10 +170,11 @@ export default function CouplesStaffPage() {
       return
     }
 
-    localStorage.setItem('selectedStaff', primaryStaff)
-    if (bookingData?.isCouplesBooking) {
-      localStorage.setItem('secondaryStaff', secondaryStaff)
-    }
+    // Persist selections using centralized state manager to avoid stale state
+    saveBookingState({
+      selectedStaff: primaryStaff,
+      secondaryStaff: bookingData?.isCouplesBooking ? secondaryStaff : undefined
+    })
     
     window.location.href = '/booking/customer-info'
   }
@@ -254,6 +256,19 @@ export default function CouplesStaffPage() {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4 max-w-4xl">
+        {/* Floating scroll cue for couples selection (first half of screen) */}
+        {bookingData?.isCouplesBooking && (
+          <div className="fixed left-1/2 -translate-x-1/2 top-[40vh] z-30 pointer-events-none select-none">
+            <div className="flex flex-col items-center text-primary">
+              <div className="bg-primary/10 text-primary rounded-full p-2 shadow-md animate-bounce">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </div>
+              <span className="mt-1 text-xs text-primary/80">Scroll</span>
+            </div>
+          </div>
+        )}
         {/* Header */}
         <div className="text-center mb-8">
           <Link 
