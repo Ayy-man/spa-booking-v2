@@ -39,6 +39,7 @@ export default function CouplesStaffPage() {
   const [secondaryServiceStaff, setSecondaryServiceStaff] = useState<Staff[]>([])
   const [loadingStaff, setLoadingStaff] = useState<boolean>(true)
   const [staffMap, setStaffMap] = useState<Record<string, string>>({})
+  const [showScrollIcon, setShowScrollIcon] = useState<boolean>(true)
 
   // Remove duplicate function - using imported one from staff-data.ts
 
@@ -55,6 +56,15 @@ export default function CouplesStaffPage() {
     
     if (dateData) setSelectedDate(dateData)
     if (timeData) setSelectedTime(timeData)
+  }, [])
+
+  // Auto-hide scroll icon after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowScrollIcon(false)
+    }, 5000)
+
+    return () => clearTimeout(timer)
   }, [])
 
   // Separate useEffect to fetch staff when all data is available
@@ -256,9 +266,9 @@ export default function CouplesStaffPage() {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4 max-w-4xl">
-        {/* Floating scroll cue for couples selection (first half of screen) */}
-        {bookingData?.isCouplesBooking && (
-          <div className="fixed left-1/2 -translate-x-1/2 top-[40vh] z-30 pointer-events-none select-none">
+        {/* Floating scroll cue for couples selection (right side) */}
+        {bookingData?.isCouplesBooking && showScrollIcon && (
+          <div className="fixed right-6 top-[40vh] z-30 pointer-events-none select-none transition-opacity duration-500">
             <div className="flex flex-col items-center text-primary">
               <div className="bg-primary/10 text-primary rounded-full p-2 shadow-md animate-bounce">
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
