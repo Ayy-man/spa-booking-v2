@@ -16,6 +16,22 @@ export default function BookingPage() {
   const observerRef = useRef<IntersectionObserver | null>(null)
   const { navigateWithTransition, isNavigating } = useBookingNavigation()
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (showCouplesOptions) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)'
+    } else {
+      document.body.style.overflow = 'unset'
+      document.body.style.paddingRight = '0px'
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset'
+      document.body.style.paddingRight = '0px'
+    }
+  }, [showCouplesOptions])
+
   // Track page view and initialize loading
   useEffect(() => {
     analytics.pageViewed('service_selection', 1)
