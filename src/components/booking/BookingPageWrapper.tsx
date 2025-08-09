@@ -100,6 +100,15 @@ export function BookingPageWrapper({
     // Wait for exit animation to complete
     await new Promise(resolve => setTimeout(resolve, 300))
 
+    // Reset scroll before navigation to avoid persisting deep scroll on next page
+    try {
+      window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+    } catch {
+      window.scrollTo(0, 0)
+    }
+    document.body.scrollTop = 0
+    document.documentElement.scrollTop = 0
+
     // Navigate to new page
     if (href.startsWith('http') || href.startsWith('/')) {
       window.location.href = href

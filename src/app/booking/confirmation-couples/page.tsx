@@ -49,6 +49,19 @@ export default function CouplesConfirmationPage() {
   const [showSuccessCard, setShowSuccessCard] = useState(false)
   const { showToast } = useToast()
 
+  // Ensure page starts at the top of the viewport on mount
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      try {
+        window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+      } catch {
+        window.scrollTo(0, 0)
+      }
+      document.body.scrollTop = 0
+      document.documentElement.scrollTop = 0
+    })
+  }, [])
+
   useEffect(() => {
     // Get all booking data from localStorage
     const bookingDataStr = localStorage.getItem('bookingData')

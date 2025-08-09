@@ -24,6 +24,21 @@ export default function ConfirmationPage() {
   const [showSuccessCard, setShowSuccessCard] = useState(false)
   const { showToast } = useToast()
 
+  // Ensure page starts at the top of the viewport on mount
+  useEffect(() => {
+    // Use rAF to run after paint for reliability on mobile browsers
+    requestAnimationFrame(() => {
+      try {
+        window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+      } catch {
+        // Fallbacks for older browsers
+        window.scrollTo(0, 0)
+      }
+      document.body.scrollTop = 0
+      document.documentElement.scrollTop = 0
+    })
+  }, [])
+
   useEffect(() => {
     // Check URL parameters for session recovery
     const urlParams = new URLSearchParams(window.location.search)
