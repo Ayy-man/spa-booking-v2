@@ -297,7 +297,7 @@ export function CouplesBookingConfirmationCard({
     {
       icon: <User className="w-5 h-5" />,
       label: 'Staff',
-      value: `${bookingData.primaryStaff} & ${bookingData.secondaryStaff}`
+      value: `${bookingData.primaryStaff || 'Any Available Staff'} & ${bookingData.secondaryStaff || 'Any Available Staff'}`
     },
     {
       icon: <DollarSign className="w-5 h-5" />,

@@ -443,8 +443,8 @@ export default function CouplesConfirmationPage() {
               secondaryService: bookingData.secondaryService?.name || bookingData.primaryService.name,
               date: formatDate(selectedDate),
               time: formatTimeRange(selectedTime, bookingData.primaryService.duration),
-              primaryStaff: staffNameMap[selectedStaff as keyof typeof staffNameMap],
-              secondaryStaff: staffNameMap[(secondaryStaff || selectedStaff) as keyof typeof staffNameMap],
+              primaryStaff: selectedStaff === 'any' ? 'Any Available Staff' : (staffNameMap[selectedStaff as keyof typeof staffNameMap] || 'Any Available Staff'),
+              secondaryStaff: (secondaryStaff === 'any' || !secondaryStaff) ? 'Any Available Staff' : (staffNameMap[secondaryStaff as keyof typeof staffNameMap] || 'Any Available Staff'),
               totalPrice: bookingData.totalPrice,
               customerName: customerInfo.name
             }}
