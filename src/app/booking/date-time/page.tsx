@@ -313,26 +313,13 @@ export default function DateTimePage() {
   }
 
   const handleTimeSelect = (time: string) => {
-    // Add enhanced selection animation feedback
+    // Simplify feedback to avoid delayed wobble
     const timeButton = document.querySelector(`[data-time="${time}"]`) as HTMLElement
     if (timeButton) {
-      // Create ripple effect
-      const ripple = document.createElement('div')
-      ripple.className = 'absolute inset-0 bg-white/30 rounded-xl animate-pulse pointer-events-none'
-      ripple.style.animation = 'selection-ripple-pulse 0.6s ease-out'
-      timeButton.appendChild(ripple)
-      setTimeout(() => timeButton.removeChild(ripple), 600)
-      
-      // Selection bounce animation
-      timeButton.style.transform = 'scale(0.95)'
-      setTimeout(() => {
-        timeButton.style.transform = 'scale(1.05)'
-        setTimeout(() => {
-          timeButton.style.transform = ''
-        }, 200)
-      }, 100)
+      timeButton.classList.add('ring-4', 'ring-primary/30')
+      setTimeout(() => timeButton.classList.remove('ring-4', 'ring-primary/30'), 200)
     }
-    
+
     setSelectedTime(time)
     
     // Enhanced announcement to screen readers with context

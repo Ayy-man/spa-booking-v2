@@ -163,13 +163,12 @@ a {
   }
   
   /* Time slot buttons - larger and more touch-friendly */
-  .time-slot-available {
-    @apply min-h-[52px] px-6 py-4 rounded-xl bg-white border-2 border-gray-300 
-           hover:bg-primary-lighter hover:border-primary transition-all duration-300
-           focus:outline-none focus:ring-4 focus:ring-primary/30 focus:ring-offset-1
-           text-center font-semibold text-gray-800 shadow-md hover:shadow-lg
-           transform hover:scale-[1.02];
-  }
+.time-slot-available {
+  @apply min-h-[52px] px-6 py-4 rounded-xl bg-white border-2 border-gray-300 
+         hover:bg-primary-lighter hover:border-primary transition-colors duration-150
+         focus:outline-none focus:ring-4 focus:ring-primary/30 focus:ring-offset-1
+         text-center font-semibold text-gray-800 shadow-md hover:shadow-lg;
+}
   
   .time-slot-selected {
     @apply min-h-[52px] px-6 py-4 rounded-xl bg-primary text-white 
@@ -184,16 +183,14 @@ a {
   }
   
   /* Premium Time Slot Effects */
-  .time-slot-premium {
-    @apply relative overflow-hidden;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform, box-shadow;
-  }
+.time-slot-premium {
+  @apply relative overflow-hidden;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
   
-  .time-slot-premium:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(195, 102, 120, 0.2);
-  }
+.time-slot-premium:hover {
+  box-shadow: 0 8px 20px rgba(195, 102, 120, 0.18);
+}
   
   .time-slot-premium:active {
     transform: translateY(-1px) scale(1.01);
@@ -452,37 +449,14 @@ a {
   
   /* Modal specific utilities - Enhanced with glassmorphism */
   .modal-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    z-index: 9999 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 1rem;
-    background: rgba(15, 23, 42, 0.9);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    animation: modal-overlay-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow-y: auto;
-    overflow-x: hidden;
+    @apply fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center 
+           p-3 sm:p-4 md:p-6 overflow-y-auto;
   }
   
   .modal-content {
-    position: relative !important;
-    background: white;
-    border-radius: 1rem;
-    width: 100%;
-    max-width: min(95vw, 600px);
-    max-height: min(85vh, 600px);
-    overflow-y: auto;
-    overflow-x: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 
-                0 25px 50px -12px rgba(195, 102, 120, 0.15);
-    animation: modal-content-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
-    margin: auto;
+    @apply bg-white rounded-2xl shadow-2xl w-full 
+           max-w-[95vw] sm:max-w-[90vw] md:max-w-3xl lg:max-w-4xl 
+           max-h-[95vh] sm:max-h-[90vh] overflow-y-auto;
   }
   
   .modal-header {
@@ -677,26 +651,22 @@ a {
   }
 
   /* Enhanced Time Slot Premium Effects */
-  .time-slot-available-premium {
-    @apply time-slot-available btn-ripple time-slot-premium
-           hover:shadow-lg hover:shadow-primary/20
-           active:shadow-inner
-           transition-all duration-300 ease-out
-           relative overflow-hidden;
-    will-change: transform, box-shadow, border-color;
-  }
+.time-slot-available-premium {
+  @apply time-slot-available btn-ripple time-slot-premium
+         hover:shadow-lg hover:shadow-primary/20
+         active:shadow-inner
+         transition-colors duration-150 ease-out
+         relative overflow-hidden;
+}
 
-  .time-slot-available-premium:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(195, 102, 120, 0.25), 0 0 0 2px rgba(195, 102, 120, 0.1);
-    border-color: rgba(195, 102, 120, 0.4);
-    animation: time-slot-hover-glow 0.3s ease-out;
-  }
+.time-slot-available-premium:hover {
+  box-shadow: 0 8px 22px rgba(195, 102, 120, 0.22), 0 0 0 2px rgba(195, 102, 120, 0.08);
+  border-color: rgba(195, 102, 120, 0.4);
+}
 
-  .time-slot-available-premium:active {
-    transform: translateY(-1px) scale(0.98);
-    animation: time-slot-press-feedback 0.15s ease-out;
-  }
+.time-slot-available-premium:active {
+  transform: none;
+}
 
   .time-slot-available-premium::before {
     content: '';
@@ -712,13 +682,12 @@ a {
     opacity: 1;
   }
 
-  .time-slot-selected-premium {
-    @apply time-slot-selected time-slot-premium
-           shadow-2xl shadow-primary/30
-           relative overflow-hidden;
-    animation: time-slot-selection-expand 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
-               gentle-glow 3s ease-in-out infinite 0.5s;
-  }
+.time-slot-selected-premium {
+  @apply time-slot-selected time-slot-premium
+         shadow-2xl shadow-primary/30
+         relative overflow-hidden;
+  animation: time-slot-selection-expand 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
   .time-slot-selected-premium::after {
     content: '';
