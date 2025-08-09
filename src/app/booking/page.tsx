@@ -373,12 +373,12 @@ export default function BookingPage() {
           </div>
         </div>
 
-      {/* Simple Booking Options - No Modal Overlay */}
+      {/* Large Booking Options Popup */}
       {selectedService && showCouplesOptions && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[80vh] overflow-y-auto">
-            <div className="p-6 border-b flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-900">
+        <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-[90vw] max-w-4xl min-h-[60vh] max-h-[90vh] overflow-y-auto">
+            <div className="p-8 border-b flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">
                 Booking Options
               </h2>
               <button
@@ -386,13 +386,13 @@ export default function BookingPage() {
                   setShowCouplesOptions(false)
                   setSelectedService('')
                 }}
-                className="text-gray-400 hover:text-gray-600 text-2xl w-8 h-8 flex items-center justify-center"
+                className="text-gray-400 hover:text-gray-600 text-3xl w-10 h-10 flex items-center justify-center"
                 disabled={isNavigating}
               >
                 ×
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-8">
               <CouplesBooking
                 selectedService={
                   serviceCategories
