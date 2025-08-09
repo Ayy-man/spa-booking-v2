@@ -19,7 +19,7 @@ module.exports = {
           DEFAULT: '#F6C7CF', // Light pink accent
           dark: '#E8B3C0', // Medium pink
         },
-        background: '#F8F8F8', // Light gray background from design system
+        background: '#FAFAFA', // Cool gray background - no yellow tint
         surface: '#FFFFFF',
         accent: '#F6C7CF', // Pink accent from design system
         'text-primary': '#000000', // Black text from design system

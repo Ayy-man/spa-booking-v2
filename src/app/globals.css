@@ -7,7 +7,7 @@
 
 :root {
   /* Shadcn/ui CSS Variables - Spa Pink Theme */
-  --background: 248 248 248; /* Light gray background from design system */
+  --background: 250 250 250; /* Cool gray background - no yellow tint */
   --foreground: 0 0 0; /* Black text for better contrast */
   --card: 255 255 255;
   --card-foreground: 0 0 0;

@@ -20,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-[#F8F8F8]`}>
+      <body className={`${inter.className} bg-[#FAFAFA]`}>
         <ToastProvider position="top-right" maxToasts={5}>
           <div className="min-h-screen">
             {children}
