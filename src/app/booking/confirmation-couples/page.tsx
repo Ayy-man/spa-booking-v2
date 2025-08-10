@@ -9,6 +9,7 @@ import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
+import { resolveStaffForCouplesBooking } from '@/lib/booking-utils'
 
 interface Service {
   id?: string
@@ -109,7 +110,7 @@ export default function CouplesConfirmationPage() {
       }
 
       if (bookingData.isCouplesBooking) {
-        // Handle couples booking
+        // Handle couples booking with pre-validation
         const secondaryServiceData = bookingData.secondaryService 
           ? services.find(s => s.name.toLowerCase() === bookingData.secondaryService!.name.toLowerCase())
           : primaryServiceData // Same service for both
@@ -118,12 +119,37 @@ export default function CouplesConfirmationPage() {
           throw new Error('Secondary service not found in database')
         }
 
-        // Use process_couples_booking function
+        // Pre-booking validation: Resolve staff assignments
+        const staffResolution = await resolveStaffForCouplesBooking(
+          selectedStaff,
+          secondaryStaff || selectedStaff,
+          bookingData.primaryService.name,
+          bookingData.secondaryService?.name || bookingData.primaryService.name,
+          selectedDate,
+          selectedTime,
+          bookingData.primaryService.duration,
+          bookingData.secondaryService?.duration || bookingData.primaryService.duration
+        )
+
+        if (!staffResolution.isValid) {
+          throw new Error(staffResolution.error || 'Staff assignment validation failed')
+        }
+
+        // Use the resolved staff IDs instead of the original selections
+        const resolvedPrimaryStaffId = staffResolution.primaryStaff.id
+        const resolvedSecondaryStaffId = staffResolution.secondaryStaff.id
+
+        // Validate that we have different staff members (if required)
+        if (resolvedPrimaryStaffId === resolvedSecondaryStaffId) {
+          throw new Error(`Cannot book the same staff member (${staffResolution.primaryStaff.name}) for both people. Please select different staff or different time slots.`)
+        }
+
+        // Use process_couples_booking function with resolved staff
         const couplesResult = await supabaseClient.processCouplesBooking({
           primary_service_id: primaryServiceData.id,
           secondary_service_id: secondaryServiceData.id,
-          primary_staff_id: selectedStaff,
-          secondary_staff_id: secondaryStaff || selectedStaff,
+          primary_staff_id: resolvedPrimaryStaffId,
+          secondary_staff_id: resolvedSecondaryStaffId,
           customer_name: customerInfo.name,
           customer_email: customerInfo.email,
           customer_phone: customerInfo.phone,
@@ -182,8 +208,8 @@ export default function CouplesConfirmationPage() {
               time: selectedTime,
               duration: bookingData.primaryService.duration,
               price: bookingData.primaryService.price,
-              staff: (staffNameMap as any)[selectedStaff] || selectedStaff,
-              staffId: selectedStaff,
+              staff: staffResolution.primaryStaff.name,
+              staffId: resolvedPrimaryStaffId,
               room: `Room ${processedResults[0].room_id || '11111111-1111-1111-1111-111111111111'}`,
               roomId: (processedResults[0].room_id || 1).toString()
             }
@@ -207,8 +233,8 @@ export default function CouplesConfirmationPage() {
                 time: selectedTime,
                 duration: bookingData.secondaryService.duration,
                 price: bookingData.secondaryService.price,
-                staff: (staffNameMap as any)[secondaryStaff || selectedStaff] || secondaryStaff || selectedStaff,
-                staffId: secondaryStaff || selectedStaff,
+                staff: staffResolution.secondaryStaff.name,
+                staffId: resolvedSecondaryStaffId,
                 room: `Room ${processedResults[1].room_id || 2}`,
                 roomId: (processedResults[1].room_id || 2).toString()
               }
@@ -331,14 +357,39 @@ export default function CouplesConfirmationPage() {
       )
       
       let errorMessage = 'Failed to confirm booking. '
-      if (err.message?.includes('staff_not_available')) {
-        errorMessage = 'One or more staff members are not available at this time. Please go back and select different staff.'
-      } else if (err.message?.includes('no_couples_room')) {
-        errorMessage = 'No couples rooms are available at this time. Please select a different time.'
-      } else if (err.message?.includes('duplicate')) {
-        errorMessage = 'A booking already exists for this time slot.'
+      
+      // Enhanced error message mapping for specific scenarios
+      const errorText = err.message || ''
+      
+      if (errorText.includes('staff_not_available') || errorText.includes('is already booked')) {
+        errorMessage = 'One or more staff members are not available at this time. Please go back and select different staff or a different time slot.'
+      } else if (errorText.includes('no_couples_room') || errorText.includes('No couples rooms available')) {
+        errorMessage = 'No couples rooms (Room 2 or Room 3) are available at this time. Please select a different time slot.'
+      } else if (errorText.includes('Cannot book the same staff member')) {
+        errorMessage = errorText + ' Please select different staff members or different time slots.'
+      } else if (errorText.includes('must be resolved to actual staff member')) {
+        errorMessage = 'There was an issue with staff assignment. Please go back and reselect your preferred staff members.'
+      } else if (errorText.includes('cannot perform') || errorText.includes('not available who can perform')) {
+        errorMessage = errorText + ' Please go back and select different staff members who can perform these services.'
+      } else if (errorText.includes('does not work on')) {
+        errorMessage = errorText + ' Please select a different date or different staff members.'
+      } else if (errorText.includes('Selected room does not have capacity')) {
+        errorMessage = 'The selected room cannot accommodate couples booking. Please try a different time slot.'
+      } else if (errorText.includes('violates check constraint') || errorText.includes('check_duration_matches_times')) {
+        errorMessage = 'There was a scheduling conflict with the service durations. Please try booking again or contact support.'
+      } else if (errorText.includes('duplicate')) {
+        errorMessage = 'A booking already exists for this time slot. Please select a different time.'
+      } else if (errorText.includes('service not found')) {
+        errorMessage = 'One of the selected services is no longer available. Please go back and reselect your services.'
+      } else if (errorText.includes('Primary service not found') || errorText.includes('Secondary service not found')) {
+        errorMessage = 'Selected service is no longer available. Please go back and reselect your services.'
       } else {
-        errorMessage += err.message || 'Please try again.'
+        // Default error with the original message if it's user-friendly, otherwise generic
+        if (errorText.length > 0 && errorText.length < 200 && !errorText.includes('undefined') && !errorText.includes('null')) {
+          errorMessage = errorText
+        } else {
+          errorMessage = 'Unable to confirm your booking at this time. Please try again or contact us for assistance.'
+        }
       }
       
       setError(errorMessage)

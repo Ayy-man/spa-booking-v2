@@ -1,6 +1,11 @@
 // Utility functions for booking logic
 // These utilities can be used by both client and server components
 
+import { supabase } from '@/lib/supabase'
+import { COUPLES_ROOM_CONFIG, STAFF_ASSIGNMENT_CONFIG } from '@/lib/business-config'
+import { staffNameMap, canDatabaseStaffPerformService, isDatabaseStaffAvailableOnDate, getServiceCategory } from '@/lib/staff-data'
+import { addMinutes, parseISO, format } from 'date-fns'
+
 /**
  * Utility function for checking if a booking is a special staff request
  * @param booking - The booking object to check
@@ -123,4 +128,499 @@ export function getBookingStatusColor(status: string): string {
   }
   
   return statusColors[status] || 'bg-gray-100 text-gray-800'
+}
+
+// ==================== STAFF RESOLUTION FUNCTIONS ====================
+
+/**
+ * Interface for staff resolution result
+ */
+interface StaffResolutionResult {
+  id: string
+  name: string
+  isResolved: boolean
+  originalId: string
+  error?: string
+}
+
+/**
+ * Resolve "any" staff selection to actual available staff member
+ * @param staffId - Selected staff ID (could be "any" or specific staff)
+ * @param serviceName - Name of the service to be performed
+ * @param appointmentDate - Date of appointment (YYYY-MM-DD format)
+ * @param startTime - Start time (HH:MM format)
+ * @param duration - Service duration in minutes
+ * @returns StaffResolutionResult with resolved staff or error
+ */
+export async function resolveStaffForBooking(
+  staffId: string,
+  serviceName: string,
+  appointmentDate: string,
+  startTime: string,
+  duration: number
+): Promise<StaffResolutionResult> {
+  // If not "any" staff, validate the specific staff
+  if (staffId !== STAFF_ASSIGNMENT_CONFIG.anyStaffAlias && 
+      staffId !== STAFF_ASSIGNMENT_CONFIG.anyStaffId) {
+    
+    // Validate specific staff can perform service and is available
+    try {
+      const { data: specificStaff, error } = await supabase
+        .from('staff')
+        .select('*')
+        .eq('id', staffId)
+        .eq('is_active', true)
+        .single()
+
+      if (error || !specificStaff) {
+        return {
+          id: staffId,
+          name: staffNameMap[staffId as keyof typeof staffNameMap] || staffId,
+          isResolved: false,
+          originalId: staffId,
+          error: 'Selected staff member not found or inactive'
+        }
+      }
+
+      const serviceCategory = getServiceCategory(serviceName)
+      const canPerformService = canDatabaseStaffPerformService(specificStaff, serviceCategory, serviceName)
+      const availableOnDate = isDatabaseStaffAvailableOnDate(specificStaff, appointmentDate)
+
+      if (!canPerformService) {
+        return {
+          id: staffId,
+          name: specificStaff.name,
+          isResolved: false,
+          originalId: staffId,
+          error: `${specificStaff.name} cannot perform ${serviceName} services`
+        }
+      }
+
+      if (!availableOnDate) {
+        return {
+          id: staffId,
+          name: specificStaff.name,
+          isResolved: false,
+          originalId: staffId,
+          error: `${specificStaff.name} is not available on ${appointmentDate}`
+        }
+      }
+
+      // Check time availability (existing bookings conflict)
+      const isAvailable = await checkStaffTimeAvailability(staffId, appointmentDate, startTime, duration)
+      if (!isAvailable.available) {
+        return {
+          id: staffId,
+          name: specificStaff.name,
+          isResolved: false,
+          originalId: staffId,
+          error: `${specificStaff.name} is already booked during this time`
+        }
+      }
+
+      return {
+        id: staffId,
+        name: specificStaff.name,
+        isResolved: true,
+        originalId: staffId
+      }
+    } catch (error: any) {
+      return {
+        id: staffId,
+        name: staffNameMap[staffId as keyof typeof staffNameMap] || staffId,
+        isResolved: false,
+        originalId: staffId,
+        error: `Error validating staff: ${error.message}`
+      }
+    }
+  }
+
+  // Resolve "any" staff to actual available staff
+  try {
+    const { data: allStaff, error: staffError } = await supabase
+      .from('staff')
+      .select('*')
+      .eq('is_active', true)
+      .neq('id', STAFF_ASSIGNMENT_CONFIG.anyStaffId) // Exclude the "any" placeholder
+
+    if (staffError || !allStaff) {
+      return {
+        id: STAFF_ASSIGNMENT_CONFIG.anyStaffAlias,
+        name: 'Any Available Staff',
+        isResolved: false,
+        originalId: staffId,
+        error: 'Unable to fetch staff list'
+      }
+    }
+
+    const serviceCategory = getServiceCategory(serviceName)
+    
+    // Filter staff that can perform this service and are available on this date
+    const qualifiedStaff = allStaff.filter(staff => {
+      const canPerform = canDatabaseStaffPerformService(staff, serviceCategory, serviceName)
+      const availableOnDate = isDatabaseStaffAvailableOnDate(staff, appointmentDate)
+      return canPerform && availableOnDate
+    })
+
+    if (qualifiedStaff.length === 0) {
+      return {
+        id: STAFF_ASSIGNMENT_CONFIG.anyStaffAlias,
+        name: 'Any Available Staff',
+        isResolved: false,
+        originalId: staffId,
+        error: `No staff members available who can perform ${serviceName} on ${appointmentDate}`
+      }
+    }
+
+    // Check each qualified staff for time availability
+    for (const staff of qualifiedStaff) {
+      const timeAvailability = await checkStaffTimeAvailability(staff.id, appointmentDate, startTime, duration)
+      if (timeAvailability.available) {
+        return {
+          id: staff.id,
+          name: staff.name,
+          isResolved: true,
+          originalId: staffId
+        }
+      }
+    }
+
+    return {
+      id: STAFF_ASSIGNMENT_CONFIG.anyStaffAlias,
+      name: 'Any Available Staff',
+      isResolved: false,
+      originalId: staffId,
+      error: `All qualified staff members are booked during ${startTime} on ${appointmentDate}`
+    }
+  } catch (error: any) {
+    return {
+      id: STAFF_ASSIGNMENT_CONFIG.anyStaffAlias,
+      name: 'Any Available Staff',
+      isResolved: false,
+      originalId: staffId,
+      error: `Error resolving staff: ${error.message}`
+    }
+  }
+}
+
+/**
+ * Check if a staff member is available at a specific time
+ * @param staffId - Staff member ID
+ * @param appointmentDate - Date of appointment
+ * @param startTime - Start time
+ * @param duration - Duration in minutes
+ * @returns Promise with availability result
+ */
+export async function checkStaffTimeAvailability(
+  staffId: string,
+  appointmentDate: string,
+  startTime: string,
+  duration: number
+): Promise<{ available: boolean; conflictingBooking?: any }> {
+  try {
+    const endTime = calculateEndTimeFromDuration(startTime, duration)
+    
+    // Get existing bookings for this staff on this date
+    const { data: existingBookings, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('staff_id', staffId)
+      .eq('appointment_date', appointmentDate)
+      .neq('status', 'cancelled')
+
+    if (error) {
+      return { available: false }
+    }
+
+    if (!existingBookings || existingBookings.length === 0) {
+      return { available: true }
+    }
+
+    // Check for time conflicts (including buffer time)
+    const requestedStart = parseISO(`${appointmentDate}T${startTime}:00`)
+    const requestedEnd = parseISO(`${appointmentDate}T${endTime}:00`)
+    
+    // Add buffer time (15 minutes before and after)
+    const bufferStart = addMinutes(requestedStart, -COUPLES_ROOM_CONFIG.bufferTimeMinutes)
+    const bufferEnd = addMinutes(requestedEnd, COUPLES_ROOM_CONFIG.bufferTimeMinutes)
+
+    for (const booking of existingBookings) {
+      const bookingStart = parseISO(`${booking.appointment_date}T${booking.start_time}:00`)
+      const bookingEnd = parseISO(`${booking.appointment_date}T${booking.end_time}:00`)
+      
+      // Add buffer to existing booking as well
+      const bookingBufferStart = addMinutes(bookingStart, -COUPLES_ROOM_CONFIG.bufferTimeMinutes)
+      const bookingBufferEnd = addMinutes(bookingEnd, COUPLES_ROOM_CONFIG.bufferTimeMinutes)
+
+      // Check for overlap
+      if (bufferStart < bookingBufferEnd && bufferEnd > bookingBufferStart) {
+        return { 
+          available: false, 
+          conflictingBooking: booking 
+        }
+      }
+    }
+
+    return { available: true }
+  } catch (error) {
+    return { available: false }
+  }
+}
+
+/**
+ * Resolve staff for couples booking, ensuring different staff members
+ * @param primaryStaffId - Primary person's staff selection
+ * @param secondaryStaffId - Secondary person's staff selection
+ * @param primaryServiceName - Primary person's service
+ * @param secondaryServiceName - Secondary person's service
+ * @param appointmentDate - Date of appointment
+ * @param startTime - Start time
+ * @param primaryDuration - Primary service duration
+ * @param secondaryDuration - Secondary service duration
+ * @returns Promise with both staff resolutions
+ */
+export async function resolveStaffForCouplesBooking(
+  primaryStaffId: string,
+  secondaryStaffId: string,
+  primaryServiceName: string,
+  secondaryServiceName: string,
+  appointmentDate: string,
+  startTime: string,
+  primaryDuration: number,
+  secondaryDuration: number
+): Promise<{
+  primaryStaff: StaffResolutionResult
+  secondaryStaff: StaffResolutionResult
+  isValid: boolean
+  error?: string
+}> {
+  // Resolve both staff selections
+  const [primaryResolution, secondaryResolution] = await Promise.all([
+    resolveStaffForBooking(primaryStaffId, primaryServiceName, appointmentDate, startTime, primaryDuration),
+    resolveStaffForBooking(secondaryStaffId, secondaryServiceName, appointmentDate, startTime, secondaryDuration)
+  ])
+
+  // Check if both resolutions were successful
+  if (!primaryResolution.isResolved) {
+    return {
+      primaryStaff: primaryResolution,
+      secondaryStaff: secondaryResolution,
+      isValid: false,
+      error: `Primary staff issue: ${primaryResolution.error}`
+    }
+  }
+
+  if (!secondaryResolution.isResolved) {
+    return {
+      primaryStaff: primaryResolution,
+      secondaryStaff: secondaryResolution,
+      isValid: false,
+      error: `Secondary staff issue: ${secondaryResolution.error}`
+    }
+  }
+
+  // Check if different staff members were resolved
+  if (STAFF_ASSIGNMENT_CONFIG.requireDifferentStaffForCouples && 
+      primaryResolution.id === secondaryResolution.id) {
+    return {
+      primaryStaff: primaryResolution,
+      secondaryStaff: secondaryResolution,
+      isValid: false,
+      error: `Cannot book the same staff member (${primaryResolution.name}) for both people. Please select different staff or choose different time slots.`
+    }
+  }
+
+  return {
+    primaryStaff: primaryResolution,
+    secondaryStaff: secondaryResolution,
+    isValid: true
+  }
+}
+
+// ==================== DURATION CALCULATION FUNCTIONS ====================
+
+/**
+ * Calculate end time from start time and duration
+ * @param startTime - Start time in HH:MM format
+ * @param duration - Duration in minutes
+ * @returns End time in HH:MM format
+ */
+export function calculateEndTimeFromDuration(startTime: string, duration: number): string {
+  try {
+    const today = new Date()
+    const startDateTime = parseISO(`${format(today, 'yyyy-MM-dd')}T${startTime}:00`)
+    const endDateTime = addMinutes(startDateTime, duration)
+    return format(endDateTime, 'HH:mm')
+  } catch (error) {
+    return startTime
+  }
+}
+
+/**
+ * Calculate individual booking times for couples booking
+ * @param startTime - Shared start time
+ * @param primaryDuration - Primary person's service duration
+ * @param secondaryDuration - Secondary person's service duration
+ * @returns Individual booking time calculations
+ */
+export function calculateIndividualBookingTimes(
+  startTime: string,
+  primaryDuration: number,
+  secondaryDuration: number
+): {
+  primary: { startTime: string; endTime: string; duration: number }
+  secondary: { startTime: string; endTime: string; duration: number }
+} {
+  const primaryEndTime = calculateEndTimeFromDuration(startTime, primaryDuration)
+  const secondaryEndTime = calculateEndTimeFromDuration(startTime, secondaryDuration)
+
+  return {
+    primary: {
+      startTime,
+      endTime: primaryEndTime,
+      duration: primaryDuration
+    },
+    secondary: {
+      startTime,
+      endTime: secondaryEndTime,
+      duration: secondaryDuration
+    }
+  }
+}
+
+// ==================== ROOM ASSIGNMENT FUNCTIONS ====================
+
+/**
+ * Get optimal room for couples booking based on configured preferences
+ * @param appointmentDate - Date of appointment
+ * @param startTime - Start time
+ * @param maxDuration - Maximum duration of both services
+ * @returns Promise with room assignment result
+ */
+export async function getOptimalCouplesRoom(
+  appointmentDate: string,
+  startTime: string,
+  maxDuration: number
+): Promise<{
+  roomId: number | null
+  roomName: string | null
+  reason: string
+  isValid: boolean
+}> {
+  try {
+    const endTime = calculateEndTimeFromDuration(startTime, maxDuration)
+    
+    // Get all active rooms with couples capacity
+    const { data: rooms, error: roomsError } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('is_active', true)
+      .gte('capacity', COUPLES_ROOM_CONFIG.minimumCapacity)
+      .in('id', COUPLES_ROOM_CONFIG.preferredCouplesRoomIds)
+      .order('id', { ascending: true })
+
+    if (roomsError || !rooms) {
+      return {
+        roomId: null,
+        roomName: null,
+        reason: 'Unable to fetch room information',
+        isValid: false
+      }
+    }
+
+    // Check each preferred room in order
+    for (const roomId of COUPLES_ROOM_CONFIG.preferredCouplesRoomIds) {
+      const room = rooms.find(r => r.id === roomId)
+      if (!room) continue
+
+      // Check if room is available at this time
+      const isAvailable = await checkRoomTimeAvailability(roomId, appointmentDate, startTime, maxDuration)
+      if (isAvailable.available) {
+        return {
+          roomId: room.id,
+          roomName: room.name,
+          reason: `Assigned to ${room.name} (preferred couples room)`,
+          isValid: true
+        }
+      }
+    }
+
+    return {
+      roomId: null,
+      roomName: null,
+      reason: `No couples rooms available at ${startTime} on ${appointmentDate}. Please select a different time.`,
+      isValid: false
+    }
+  } catch (error: any) {
+    return {
+      roomId: null,
+      roomName: null,
+      reason: `Error assigning couples room: ${error.message}`,
+      isValid: false
+    }
+  }
+}
+
+/**
+ * Check if a room is available at a specific time
+ * @param roomId - Room ID
+ * @param appointmentDate - Date of appointment
+ * @param startTime - Start time
+ * @param duration - Duration in minutes
+ * @returns Promise with availability result
+ */
+export async function checkRoomTimeAvailability(
+  roomId: number,
+  appointmentDate: string,
+  startTime: string,
+  duration: number
+): Promise<{ available: boolean; conflictingBooking?: any }> {
+  try {
+    const endTime = calculateEndTimeFromDuration(startTime, duration)
+    
+    // Get existing bookings for this room on this date
+    const { data: existingBookings, error } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('room_id', roomId)
+      .eq('appointment_date', appointmentDate)
+      .neq('status', 'cancelled')
+
+    if (error) {
+      return { available: false }
+    }
+
+    if (!existingBookings || existingBookings.length === 0) {
+      return { available: true }
+    }
+
+    // Check for time conflicts (including buffer time)
+    const requestedStart = parseISO(`${appointmentDate}T${startTime}:00`)
+    const requestedEnd = parseISO(`${appointmentDate}T${endTime}:00`)
+    
+    // Add buffer time
+    const bufferStart = addMinutes(requestedStart, -COUPLES_ROOM_CONFIG.bufferTimeMinutes)
+    const bufferEnd = addMinutes(requestedEnd, COUPLES_ROOM_CONFIG.bufferTimeMinutes)
+
+    for (const booking of existingBookings) {
+      const bookingStart = parseISO(`${booking.appointment_date}T${booking.start_time}:00`)
+      const bookingEnd = parseISO(`${booking.appointment_date}T${booking.end_time}:00`)
+      
+      // Add buffer to existing booking
+      const bookingBufferStart = addMinutes(bookingStart, -COUPLES_ROOM_CONFIG.bufferTimeMinutes)
+      const bookingBufferEnd = addMinutes(bookingEnd, COUPLES_ROOM_CONFIG.bufferTimeMinutes)
+
+      // Check for overlap
+      if (bufferStart < bookingBufferEnd && bufferEnd > bookingBufferStart) {
+        return { 
+          available: false, 
+          conflictingBooking: booking 
+        }
+      }
+    }
+
+    return { available: true }
+  } catch (error) {
+    return { available: false }
+  }
 }

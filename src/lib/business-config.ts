@@ -37,3 +37,19 @@ export const PAYMENT_CONFIG = {
   paymentMethods: ['online_payment', 'on_arrival'],
   currency: 'USD'
 } as const
+
+// Couples booking configuration
+export const COUPLES_ROOM_CONFIG = {
+  preferredCouplesRoomIds: [3, 2], // Room 3 preferred, Room 2 fallback
+  minimumCapacity: 2,
+  allowFallbackToSingleRooms: false, // Strict couples room requirement
+  bufferTimeMinutes: 15 // Buffer time between appointments
+} as const
+
+// Staff assignment configuration
+export const STAFF_ASSIGNMENT_CONFIG = {
+  anyStaffId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  anyStaffAlias: 'any',
+  requireDifferentStaffForCouples: true,
+  maxStaffResolutionAttempts: 3
+} as const
