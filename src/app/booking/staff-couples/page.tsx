@@ -51,6 +51,25 @@ export default function CouplesStaffPage() {
 
     if (bookingDataStr) {
       const parsedBookingData = JSON.parse(bookingDataStr)
+      
+      // CRITICAL FIX: Check if this is actually a couples booking
+      console.log('[CouplesStaffPage] Checking booking data:', parsedBookingData)
+      
+      if (parsedBookingData.isCouplesBooking !== true) {
+        console.error('[CouplesStaffPage] ERROR: Single booking incorrectly routed to couples staff page!')
+        console.log('[CouplesStaffPage] Redirecting to single staff page...')
+        window.location.href = '/booking/staff'
+        return
+      }
+      
+      // Double check - couples booking should have secondary service
+      if (!parsedBookingData.secondaryService) {
+        console.error('[CouplesStaffPage] ERROR: Couples booking without secondary service!')
+        console.log('[CouplesStaffPage] Redirecting to single staff page...')
+        window.location.href = '/booking/staff'
+        return
+      }
+      
       setBookingData(parsedBookingData)
     }
     

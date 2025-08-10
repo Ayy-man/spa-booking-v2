@@ -128,7 +128,10 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
             ? 'border-primary bg-primary/10 shadow-md' 
             : 'border-gray-300 bg-white hover:border-primary/50 hover:bg-gray-50'
         }`}
-        onClick={() => setIsCouplesBooking(false)}>
+        onClick={() => {
+          console.log('[CouplesBooking] Single booking selected')
+          setIsCouplesBooking(false)
+        }}>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg font-medium text-primary-dark">Single Booking</span>
@@ -159,7 +162,10 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
             ? 'border-primary bg-primary/10 shadow-md' 
             : 'border-gray-300 bg-white hover:border-primary/50 hover:bg-gray-50'
         }`}
-        onClick={() => setIsCouplesBooking(true)}>
+        onClick={() => {
+          console.log('[CouplesBooking] Couples booking selected')
+          setIsCouplesBooking(true)
+        }}>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg font-medium text-primary-dark">Couples Booking</span>
