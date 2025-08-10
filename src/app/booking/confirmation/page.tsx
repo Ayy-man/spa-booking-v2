@@ -18,7 +18,7 @@ export default function ConfirmationPage() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState<string>('')
   const [paymentCompleted, setPaymentCompleted] = useState(false)
-  const [paymentType, setPaymentType] = useState<'deposit' | 'full' | 'location'>('deposit')
+  const [paymentType, setPaymentType] = useState<'deposit' | 'location'>('deposit')
   const [isLoading, setIsLoading] = useState(true)
   const [showConfetti, setShowConfetti] = useState(false)
   const [showSuccessCard, setShowSuccessCard] = useState(false)
@@ -76,9 +76,9 @@ export default function ConfirmationPage() {
         customer
       })
       
-      // Set payment type from state
+      // Set payment type from state (map legacy 'full' to 'deposit')
       if (state.paymentType) {
-        setPaymentType(state.paymentType)
+        setPaymentType(state.paymentType === 'location' ? 'location' : 'deposit')
       }
       
       // Determine if payment was completed
@@ -135,9 +135,6 @@ export default function ConfirmationPage() {
       if (paymentType === 'location') {
         paymentOption = 'pay_on_location'
         paymentStatus = 'pending' // Will be paid at location
-      } else if (paymentType === 'full') {
-        paymentOption = 'full_payment'
-        paymentStatus = 'paid' // Already paid online
       } else {
         paymentOption = 'deposit'
         paymentStatus = 'paid' // Deposit already paid online
@@ -362,7 +359,6 @@ export default function ConfirmationPage() {
 
   if (isSuccess) {
     const getPaymentStatus = () => {
-      if (paymentType === 'full') return 'paid'
       if (paymentType === 'location') return 'pending'
       return 'deposit'
     }
@@ -373,7 +369,7 @@ export default function ConfirmationPage() {
         <SuccessConfetti
           isActive={showConfetti}
           duration={3000}
-          particleCount={paymentType === 'full' ? 120 : 80}
+          particleCount={80}
           colors={[
             '#10B981', // Success green
             '#C36678', // Spa primary
@@ -442,11 +438,7 @@ export default function ConfirmationPage() {
               </div>
               <div>
                 <p className="font-medium text-green-900">Payment Successful!</p>
-                {paymentType === 'full' ? (
-                  <p className="text-sm text-green-700">Your full payment of ${bookingData.service.price} has been processed.</p>
-                ) : (
-                  <p className="text-sm text-green-700">Your $30 deposit has been processed.</p>
-                )}
+                <p className="text-sm text-green-700">Your $30 deposit has been processed.</p>
               </div>
             </div>
           </div>
@@ -500,11 +492,7 @@ export default function ConfirmationPage() {
                 <p><span className="font-medium">Customer Type:</span> {bookingData.customer.isNewCustomer ? 'New Customer' : 'Returning Customer'}</p>
                 <p><span className="font-medium">Payment Status:</span> 
                   {paymentCompleted ? (
-                    paymentType === 'full' ? (
-                      <span className="text-green-600 font-medium">Paid in Full (${bookingData.service.price})</span>
-                    ) : (
-                      <span className="text-green-600 font-medium">Deposit Paid ($30)</span>
-                    )
+                    <span className="text-green-600 font-medium">Deposit Paid ($30)</span>
                   ) : paymentType === 'location' ? (
                     <span className="text-blue-600 font-medium">Pay on Location (${bookingData.service.price})</span>
                   ) : (

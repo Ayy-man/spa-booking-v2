@@ -87,12 +87,24 @@ export function determinePaymentFlow(
   return 'deposit';
 }
 
+/**
+ * Backwards-compatible export for legacy admin payment links page.
+ * The app previously supported service-specific full payment links.
+ * We now use a single deposit link for all services, but some code
+ * paths may still import `getAllFullPaymentServices`. Export a
+ * no-op list to keep builds green without changing admin UI logic.
+ */
+export function getAllFullPaymentServices(): PaymentLink[] {
+  return [];
+}
+
 const paymentConfig = {
   DEPOSIT_PAYMENT_CONFIG,
   getPaymentLink,
   generatePaymentUrl,
   isValidPaymentUrl,
-  determinePaymentFlow
+  determinePaymentFlow,
+  getAllFullPaymentServices
 };
 
 export default paymentConfig;

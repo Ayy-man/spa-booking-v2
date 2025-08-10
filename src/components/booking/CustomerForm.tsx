@@ -161,8 +161,8 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
                 This is my first visit to Dermal Skin Clinic
               </Label>
               <p className="text-xs text-gray-600 mt-1">
-                New customers require a $25 deposit to secure their booking. 
-                Existing customers can book without a deposit.
+                New customers require a $30 deposit to secure their booking. 
+                Existing customers can choose to pay a deposit or pay on location.
               </p>
             </div>
           </div>
