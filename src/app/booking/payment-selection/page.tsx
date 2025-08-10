@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { CreditCard as CreditCardIcon, Clock as ClockIcon, CheckCircle as CheckCircleIcon, Info as InformationCircleIcon } from 'lucide-react'
-import { getPaymentLink, hasFullPaymentLink, generatePaymentUrl, DEPOSIT_PAYMENT_CONFIG, FULL_PAYMENT_LINKS } from '@/lib/payment-config'
+import { getPaymentLink, generatePaymentUrl, DEPOSIT_PAYMENT_CONFIG } from '@/lib/payment-config'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import { loadBookingState, saveBookingState, getBookingSessionId } from '@/lib/booking-state-manager'
 
@@ -23,7 +23,7 @@ interface CustomerInfo {
 export default function PaymentSelectionPage() {
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
-  const [selectedPaymentType, setSelectedPaymentType] = useState<'full' | 'deposit' | 'location'>('location')
+  const [selectedPaymentType, setSelectedPaymentType] = useState<'deposit' | 'location'>('deposit')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -78,31 +78,12 @@ export default function PaymentSelectionPage() {
       const sessionId = getBookingSessionId()
       const returnUrl = `${baseUrl}/booking/confirmation?payment=success&session=${sessionId}`
       
-      let paymentUrl: string
-      
-      if (selectedPaymentType === 'full') {
-        // For existing customers, always use full payment link
-        const paymentLink = getPaymentLink(selectedService.name)
-        // If no specific full payment link exists, use the one with matching price or default
-        const actualPaymentUrl = paymentLink.type === 'full_payment' 
-          ? paymentLink.paymentUrl 
-          : FULL_PAYMENT_LINKS['basic-facial']?.paymentUrl || paymentLink.paymentUrl
-          
-        paymentUrl = generatePaymentUrl(actualPaymentUrl, returnUrl, {
-          service_name: selectedService.name,
-          customer_email: customerInfo.email,
-          payment_type: 'full',
-          amount: selectedService.price.toString()
-        })
-      } else {
-        // This should not happen for existing customers anymore
-        // But keeping as fallback
-        paymentUrl = generatePaymentUrl(DEPOSIT_PAYMENT_CONFIG.paymentUrl, returnUrl, {
-          service_name: selectedService.name,
-          customer_email: customerInfo.email,
-          payment_type: 'deposit'
-        })
-      }
+      // Always use deposit payment
+      const paymentUrl = generatePaymentUrl(DEPOSIT_PAYMENT_CONFIG.paymentUrl, returnUrl, {
+        service_name: selectedService.name,
+        customer_email: customerInfo.email,
+        payment_type: 'deposit'
+      })
       
       // Redirect to payment
       window.location.href = paymentUrl
@@ -124,8 +105,7 @@ export default function PaymentSelectionPage() {
     )
   }
 
-  const hasFullPayment = hasFullPaymentLink(selectedService.name)
-  const fullPaymentLink = hasFullPayment ? getPaymentLink(selectedService.name) : null
+  // Always use deposit payment
 
   return (
     <>
@@ -145,7 +125,7 @@ export default function PaymentSelectionPage() {
               Choose Payment Option
             </h1>
             <p className="text-xl text-gray-600">
-              As an existing customer, you can pay in full online or pay when you arrive
+              Choose how you would like to handle payment for your appointment
             </p>
           </div>
 
