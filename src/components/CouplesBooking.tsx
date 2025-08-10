@@ -30,10 +30,23 @@ interface BookingData {
 }
 
 export default function CouplesBooking({ selectedService, serviceCategories, onContinue }: CouplesBookingProps) {
+  // Start with false - user must explicitly opt-in to couples booking
   const [isCouplesBooking, setIsCouplesBooking] = useState(false)
   const [sameService, setSameService] = useState(true)
   const [secondaryService, setSecondaryService] = useState<Service | null>(null)
   const [selectedCategory, setSelectedCategory] = useState('')
+
+  // Log initialization
+  useEffect(() => {
+    console.log('[CouplesBooking] Component initialized:', {
+      serviceName: selectedService?.name,
+      initialIsCouplesBooking: isCouplesBooking,
+      localStorage: {
+        bookingData: localStorage.getItem('bookingData'),
+        selectedService: localStorage.getItem('selectedService')
+      }
+    })
+  }, [])
 
   // Reset secondary service when couples booking is toggled off
   useEffect(() => {
@@ -69,6 +82,14 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
       totalDuration
     }
     
+    console.log('[CouplesBooking] Continue clicked with:', {
+      isCouplesBooking,
+      serviceName: selectedService.name,
+      secondaryService: secondaryService?.name,
+      totalPrice,
+      totalDuration
+    })
+    
     // Track couples booking if enabled
     if (isCouplesBooking && secondaryService) {
       analytics.couplesBookingStarted(
@@ -97,33 +118,70 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
         </div>
       </div>
 
-      {/* Couples Booking Toggle */}
+      {/* Booking Type Selection - Default to Single */}
       <div className="mb-6">
-        <div className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${
-          isCouplesBooking 
+        <h3 className="font-medium text-primary-dark mb-3">Booking Type</h3>
+        
+        {/* Single Booking Option - Default Selected */}
+        <div className={`mb-3 flex items-center justify-between p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${
+          !isCouplesBooking 
             ? 'border-primary bg-primary/10 shadow-md' 
-            : 'border-gray-400 bg-white hover:border-primary/70 hover:bg-primary/5 hover:shadow-sm'
+            : 'border-gray-300 bg-white hover:border-primary/50 hover:bg-gray-50'
         }`}
-        onClick={() => setIsCouplesBooking(!isCouplesBooking)}>
-          <Label htmlFor="couples-toggle" className="cursor-pointer flex-1">
+        onClick={() => setIsCouplesBooking(false)}>
+          <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg font-medium text-primary-dark">Book as a couple</span>
+              <span className="text-lg font-medium text-primary-dark">Single Booking</span>
               {!isCouplesBooking && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                  Available
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                  Selected
                 </span>
               )}
             </div>
             <p className="text-sm text-gray-600">
-              Enjoy your spa experience together
+              Book this service for yourself
             </p>
-          </Label>
-          <Switch
-            id="couples-toggle"
-            checked={isCouplesBooking}
-            onCheckedChange={setIsCouplesBooking}
-            className="couples-toggle"
-          />
+          </div>
+          <div className={`w-5 h-5 rounded-full border-2 ${
+            !isCouplesBooking ? 'bg-primary border-primary' : 'border-gray-400'
+          }`}>
+            {!isCouplesBooking && (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Couples Booking Option */}
+        <div className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${
+          isCouplesBooking 
+            ? 'border-primary bg-primary/10 shadow-md' 
+            : 'border-gray-300 bg-white hover:border-primary/50 hover:bg-gray-50'
+        }`}
+        onClick={() => setIsCouplesBooking(true)}>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg font-medium text-primary-dark">Couples Booking</span>
+              {isCouplesBooking && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                  Selected
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-600">
+              Enjoy your spa experience together with a partner
+            </p>
+          </div>
+          <div className={`w-5 h-5 rounded-full border-2 ${
+            isCouplesBooking ? 'bg-primary border-primary' : 'border-gray-400'
+          }`}>
+            {isCouplesBooking && (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

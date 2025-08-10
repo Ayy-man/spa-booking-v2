@@ -115,7 +115,8 @@ export default function CustomerInfoPage() {
     
     // Check if it's a couples booking and determine redirect
     const currentState = loadBookingState()
-    const isCouplesBooking = currentState?.bookingData?.isCouplesBooking || false
+    // Explicitly check for couples booking flag - default to false if not set
+    const isCouplesBooking = currentState?.bookingData?.isCouplesBooking === true
     
     // Ensure proper data structure before redirecting
     if (isCouplesBooking && currentState?.bookingData && selectedService) {
@@ -149,6 +150,12 @@ export default function CustomerInfoPage() {
   }
 
   const proceedToPaymentOrConfirmation = (data: CustomerFormData, isCouplesBooking: boolean) => {
+    console.log('[CustomerInfo] Proceeding to payment/confirmation:', {
+      isNewCustomer: data.isNewCustomer,
+      isCouplesBooking: isCouplesBooking,
+      bookingData: loadBookingState()?.bookingData
+    })
+    
     // Check customer status and redirect accordingly
     if (data.isNewCustomer) {
       // New customer - redirect to deposit payment link with return URL
@@ -156,14 +163,17 @@ export default function CustomerInfoPage() {
       const confirmationPage = isCouplesBooking ? '/booking/confirmation-couples' : '/booking/confirmation'
       const returnUrl = `${baseUrl}${confirmationPage}?payment=success`
       const depositPaymentUrl = `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034?return_url=${encodeURIComponent(returnUrl)}`
+      console.log('[CustomerInfo] New customer - redirecting to deposit payment')
       window.location.href = depositPaymentUrl
     } else {
       // Existing customer - redirect to payment selection page for deposit or pay-on-location choice
       if (isCouplesBooking) {
         // For couples booking, skip payment selection and go directly to confirmation
+        console.log('[CustomerInfo] Existing customer couples booking - going to couples confirmation')
         window.location.href = '/booking/confirmation-couples'
       } else {
         // Single booking - offer payment choice between deposit and pay-on-location
+        console.log('[CustomerInfo] Existing customer single booking - going to payment selection')
         window.location.href = '/booking/payment-selection'
       }
     }
