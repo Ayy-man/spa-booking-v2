@@ -247,6 +247,8 @@ a {
     @apply relative overflow-hidden cursor-pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform, box-shadow, border-color;
+    opacity: 1 !important; /* Ensure date buttons are always visible */
+    visibility: visible !important; /* Force visibility */
   }
   
   .calendar-date-button:hover {
@@ -762,7 +764,8 @@ a {
   /* Calendar Date Button Animation Classes - Fixed for visibility */
   .calendar-date-entrance {
     animation: calendar-date-entrance 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    opacity: 1; /* Changed from 0 to 1 - dates visible by default */
+    opacity: 1 !important; /* Force visibility - dates always visible */
+    transform: translateY(0) scale(1) !important; /* Force normal position */
   }
   
   .calendar-date-selected-animation {
@@ -1161,6 +1164,19 @@ a {
       opacity: 1 !important;
     }
   }
+  
+  /* Date Cards Visibility Fix - Ensure date selection cards are always visible */
+  [data-date] {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+  }
+  
+  /* Week dates grid visibility fix */
+  .grid[class*="grid-cols"] button[data-date] {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
 }
 
 /* Animation utilities */
@@ -1385,11 +1401,11 @@ a {
 /* Premium Calendar Animation Keyframes */
 @keyframes calendar-date-entrance {
   0% {
-    opacity: 0;
-    transform: translateY(10px) scale(0.9);
+    opacity: 1; /* Start visible */
+    transform: translateY(0) scale(1); /* Start in normal position */
   }
   50% {
-    opacity: 0.8;
+    opacity: 1;
     transform: translateY(-2px) scale(1.05);
   }
   100% {
