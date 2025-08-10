@@ -155,7 +155,8 @@ export default function CouplesConfirmationPage() {
           customer_phone: customerInfo.phone,
           appointment_date: selectedDate,
           start_time: selectedTime,
-          notes: customerInfo.specialRequests
+          notes: customerInfo.specialRequests,
+          payment_option: 'deposit'  // Default to deposit for couples bookings
         })
 
         

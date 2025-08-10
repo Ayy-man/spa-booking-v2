@@ -311,6 +311,7 @@ export const supabaseClient = {
     appointment_date: string
     start_time: string
     notes?: string
+    payment_option?: string
   }) {
     const { data, error } = await supabase.rpc('process_couples_booking_v3', {
       p_primary_service_id: booking.primary_service_id,
@@ -322,7 +323,8 @@ export const supabaseClient = {
       p_customer_phone: booking.customer_phone,
       p_booking_date: booking.appointment_date,
       p_start_time: booking.start_time,
-      p_special_requests: booking.notes
+      p_special_requests: booking.notes,
+      p_payment_option: booking.payment_option || 'deposit'
     })
 
     if (error) {
