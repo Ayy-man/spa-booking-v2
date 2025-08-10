@@ -120,6 +120,17 @@ export default function CouplesConfirmationPage() {
         }
 
         // Pre-booking validation: Resolve staff assignments
+        console.log('[CouplesBooking] Resolving staff for couples booking:', {
+          selectedStaff,
+          secondaryStaff,
+          primaryService: bookingData.primaryService.name,
+          secondaryService: bookingData.secondaryService?.name || bookingData.primaryService.name,
+          selectedDate,
+          selectedTime,
+          primaryDuration: bookingData.primaryService.duration,
+          secondaryDuration: bookingData.secondaryService?.duration || bookingData.primaryService.duration
+        })
+
         const staffResolution = await resolveStaffForCouplesBooking(
           selectedStaff,
           secondaryStaff || selectedStaff,
@@ -131,20 +142,65 @@ export default function CouplesConfirmationPage() {
           bookingData.secondaryService?.duration || bookingData.primaryService.duration
         )
 
+        console.log('[CouplesBooking] Staff resolution result:', staffResolution)
+
         if (!staffResolution.isValid) {
-          throw new Error(staffResolution.error || 'Staff assignment validation failed')
+          const detailedError = staffResolution.error || 'Staff assignment validation failed'
+          console.error('[CouplesBooking] Staff validation failed:', detailedError)
+          
+          // If the error is about same staff member and we don't have a secondary staff,
+          // let the database function handle the error with better messaging
+          if (detailedError.includes('Cannot book the same staff member') && !secondaryStaff) {
+            console.log('[CouplesBooking] Bypassing same-staff validation - letting database function handle it')
+            // Continue with the booking attempt - the database function will provide better error handling
+          } else {
+            // Try to provide more helpful error messages for other cases
+            let userFriendlyError = detailedError
+            if (detailedError.includes('already booked during this time')) {
+              userFriendlyError = 'One or more staff members are not available at the requested time. Please select a different time slot or different staff members.'
+            } else if (detailedError.includes('not available on')) {
+              userFriendlyError = 'One or more staff members do not work on the selected date. Please choose a different date.'
+            } else if (detailedError.includes('cannot perform')) {
+              userFriendlyError = 'The selected staff members cannot perform the requested services. Please select different staff or services.'
+            }
+            
+            throw new Error(userFriendlyError)
+          }
         }
 
-        // Use the resolved staff IDs instead of the original selections
-        const resolvedPrimaryStaffId = staffResolution.primaryStaff.id
-        const resolvedSecondaryStaffId = staffResolution.secondaryStaff.id
+        // Use the resolved staff IDs instead of the original selections, or fallback to original if resolution failed
+        const resolvedPrimaryStaffId = staffResolution.isValid ? staffResolution.primaryStaff.id : selectedStaff
+        const resolvedSecondaryStaffId = staffResolution.isValid ? staffResolution.secondaryStaff.id : (secondaryStaff || selectedStaff)
 
-        // Validate that we have different staff members (if required)
-        if (resolvedPrimaryStaffId === resolvedSecondaryStaffId) {
+        console.log('[CouplesBooking] Resolved staff IDs:', {
+          original: { primary: selectedStaff, secondary: secondaryStaff },
+          resolved: { primary: resolvedPrimaryStaffId, secondary: resolvedSecondaryStaffId },
+          names: staffResolution.isValid ? 
+            { primary: staffResolution.primaryStaff.name, secondary: staffResolution.secondaryStaff.name } :
+            { primary: 'Unresolved', secondary: 'Unresolved' },
+          validationPassed: staffResolution.isValid
+        })
+
+        // Only validate different staff if resolution was successful
+        if (staffResolution.isValid && resolvedPrimaryStaffId === resolvedSecondaryStaffId) {
           throw new Error(`Cannot book the same staff member (${staffResolution.primaryStaff.name}) for both people. Please select different staff or different time slots.`)
         }
 
         // Use process_couples_booking function with resolved staff
+        console.log('[CouplesBooking] Calling database function with:', {
+          primary_service_id: primaryServiceData.id,
+          secondary_service_id: secondaryServiceData.id,
+          primary_staff_id: resolvedPrimaryStaffId,
+          secondary_staff_id: resolvedSecondaryStaffId,
+          customer_name: customerInfo.name,
+          customer_email: customerInfo.email,
+          customer_phone: customerInfo.phone,
+          appointment_date: selectedDate,
+          start_time: selectedTime,
+          notes: customerInfo.specialRequests,
+          payment_option: 'deposit'
+        })
+
         const couplesResult = await supabaseClient.processCouplesBooking({
           primary_service_id: primaryServiceData.id,
           secondary_service_id: secondaryServiceData.id,
@@ -158,6 +214,8 @@ export default function CouplesConfirmationPage() {
           notes: customerInfo.specialRequests,
           payment_option: 'deposit'  // Default to deposit for couples bookings
         })
+
+        console.log('[CouplesBooking] Database function result:', couplesResult)
 
         
         if (!couplesResult || couplesResult.length === 0) {

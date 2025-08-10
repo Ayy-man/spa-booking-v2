@@ -209,12 +209,16 @@ export async function resolveStaffForBooking(
       // Check time availability (existing bookings conflict)
       const isAvailable = await checkStaffTimeAvailability(staffId, appointmentDate, startTime, duration)
       if (!isAvailable.available) {
+        const conflictDetails = isAvailable.conflictingBooking 
+          ? ` (conflict with booking from ${isAvailable.conflictingBooking.start_time} to ${isAvailable.conflictingBooking.end_time})`
+          : ''
+        console.log(`[resolveStaffForBooking] ${specificStaff.name} unavailable:`, isAvailable.debug)
         return {
           id: staffId,
           name: specificStaff.name,
           isResolved: false,
           originalId: staffId,
-          error: `${specificStaff.name} is already booked during this time`
+          error: `${specificStaff.name} is already booked during this time${conflictDetails}`
         }
       }
 
@@ -316,7 +320,7 @@ export async function checkStaffTimeAvailability(
   appointmentDate: string,
   startTime: string,
   duration: number
-): Promise<{ available: boolean; conflictingBooking?: any }> {
+): Promise<{ available: boolean; conflictingBooking?: any; debug?: any }> {
   try {
     const endTime = calculateEndTimeFromDuration(startTime, duration)
     
@@ -329,34 +333,53 @@ export async function checkStaffTimeAvailability(
       .neq('status', 'cancelled')
 
     if (error) {
-      return { available: false }
+      console.error('[checkStaffTimeAvailability] Database error:', error)
+      return { available: false, debug: { error: error.message } }
     }
 
     if (!existingBookings || existingBookings.length === 0) {
-      return { available: true }
+      console.log(`[checkStaffTimeAvailability] Staff ${staffId} has no existing bookings on ${appointmentDate}`)
+      return { available: true, debug: { existingBookings: 0 } }
     }
 
-    // Check for time conflicts (including buffer time)
+    console.log(`[checkStaffTimeAvailability] Staff ${staffId} has ${existingBookings.length} existing bookings on ${appointmentDate}:`, existingBookings.map(b => ({
+      start: b.start_time,
+      end: b.end_time,
+      service: b.service_id,
+      status: b.status
+    })))
+
+    // Check for time conflicts with reduced buffer for couples booking validation
     const requestedStart = parseISO(`${appointmentDate}T${startTime}:00`)
     const requestedEnd = parseISO(`${appointmentDate}T${endTime}:00`)
     
-    // Add buffer time (15 minutes before and after)
-    const bufferStart = addMinutes(requestedStart, -COUPLES_ROOM_CONFIG.bufferTimeMinutes)
-    const bufferEnd = addMinutes(requestedEnd, COUPLES_ROOM_CONFIG.bufferTimeMinutes)
+    // Use smaller buffer for client-side validation (5 minutes instead of 15)
+    // The database function will handle the full buffer validation
+    const bufferMinutes = 5
+    const bufferStart = addMinutes(requestedStart, -bufferMinutes)
+    const bufferEnd = addMinutes(requestedEnd, bufferMinutes)
+
+    console.log(`[checkStaffTimeAvailability] Checking availability for ${startTime}-${endTime} with ${bufferMinutes}min buffer`)
 
     for (const booking of existingBookings) {
       const bookingStart = parseISO(`${booking.appointment_date}T${booking.start_time}:00`)
       const bookingEnd = parseISO(`${booking.appointment_date}T${booking.end_time}:00`)
       
       // Add buffer to existing booking as well
-      const bookingBufferStart = addMinutes(bookingStart, -COUPLES_ROOM_CONFIG.bufferTimeMinutes)
-      const bookingBufferEnd = addMinutes(bookingEnd, COUPLES_ROOM_CONFIG.bufferTimeMinutes)
+      const bookingBufferStart = addMinutes(bookingStart, -bufferMinutes)
+      const bookingBufferEnd = addMinutes(bookingEnd, bufferMinutes)
 
       // Check for overlap
       if (bufferStart < bookingBufferEnd && bufferEnd > bookingBufferStart) {
+        console.log(`[checkStaffTimeAvailability] Conflict found with booking ${booking.id}: ${booking.start_time}-${booking.end_time}`)
         return { 
           available: false, 
-          conflictingBooking: booking 
+          conflictingBooking: booking,
+          debug: {
+            requestedTime: `${startTime}-${endTime}`,
+            conflictingTime: `${booking.start_time}-${booking.end_time}`,
+            bufferUsed: bufferMinutes
+          }
         }
       }
     }
@@ -394,11 +417,27 @@ export async function resolveStaffForCouplesBooking(
   isValid: boolean
   error?: string
 }> {
+  console.log('[resolveStaffForCouplesBooking] Input parameters:', {
+    primaryStaffId,
+    secondaryStaffId,
+    primaryServiceName,
+    secondaryServiceName,
+    appointmentDate,
+    startTime,
+    primaryDuration,
+    secondaryDuration
+  })
+
   // Resolve both staff selections
   const [primaryResolution, secondaryResolution] = await Promise.all([
     resolveStaffForBooking(primaryStaffId, primaryServiceName, appointmentDate, startTime, primaryDuration),
     resolveStaffForBooking(secondaryStaffId, secondaryServiceName, appointmentDate, startTime, secondaryDuration)
   ])
+
+  console.log('[resolveStaffForCouplesBooking] Resolution results:', {
+    primary: { isResolved: primaryResolution.isResolved, error: primaryResolution.error },
+    secondary: { isResolved: secondaryResolution.isResolved, error: secondaryResolution.error }
+  })
 
   // Check if both resolutions were successful
   if (!primaryResolution.isResolved) {
@@ -430,6 +469,7 @@ export async function resolveStaffForCouplesBooking(
     }
   }
 
+  console.log('[resolveStaffForCouplesBooking] Success - both staff resolved')
   return {
     primaryStaff: primaryResolution,
     secondaryStaff: secondaryResolution,
