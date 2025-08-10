@@ -74,6 +74,15 @@ export default function CouplesConfirmationPage() {
 
     if (bookingDataStr) {
       const parsedBookingData = JSON.parse(bookingDataStr)
+      
+      // SAFEGUARD: Check if this is actually a couples booking
+      if (parsedBookingData.isCouplesBooking !== true) {
+        console.log('[CouplesConfirmation] ERROR: Single booking incorrectly routed to couples confirmation!', parsedBookingData)
+        console.log('[CouplesConfirmation] Redirecting to single confirmation page...')
+        window.location.href = '/booking/confirmation'
+        return
+      }
+      
       setBookingData(parsedBookingData)
     }
     

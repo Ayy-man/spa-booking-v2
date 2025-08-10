@@ -115,8 +115,24 @@ export default function CustomerInfoPage() {
     
     // Check if it's a couples booking and determine redirect
     const currentState = loadBookingState()
-    // Explicitly check for couples booking flag - default to false if not set
-    const isCouplesBooking = currentState?.bookingData?.isCouplesBooking === true
+    
+    // STRICT CHECK: Only treat as couples booking if explicitly set to true
+    // AND there's a secondary service (for couples bookings)
+    const rawIsCouplesBooking = currentState?.bookingData?.isCouplesBooking
+    const hasSecondaryService = currentState?.bookingData?.secondaryService
+    const isCouplesBooking = (rawIsCouplesBooking === true) && (hasSecondaryService != null)
+    
+    // DEBUG: Log the booking state to identify the issue
+    console.log('[CustomerInfo] DEBUGGING BOOKING STATE:', {
+      currentState,
+      bookingData: currentState?.bookingData,
+      rawIsCouplesBooking,
+      hasSecondaryService: !!hasSecondaryService,
+      isCouplesBookingFinal: isCouplesBooking,
+      selectedService: selectedService?.name,
+      localStorage_bookingData: localStorage.getItem('bookingData'),
+      decision: isCouplesBooking ? 'COUPLES BOOKING' : 'SINGLE BOOKING'
+    })
     
     // Ensure proper data structure before redirecting
     if (isCouplesBooking && currentState?.bookingData && selectedService) {
