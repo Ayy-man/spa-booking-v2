@@ -127,7 +127,7 @@ export default function BookingValidator({
       constraints.push('Leonel works Sundays only')
     }
     
-    if (staff.name === 'Selma Villaver' || staff.name === 'Tanisha Harris') {
+    if (staff.name === 'Tanisha Harris') {
       constraints.push(`${staff.name} is off on Tuesdays and Thursdays`)
     }
     
