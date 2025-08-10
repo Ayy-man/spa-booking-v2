@@ -143,6 +143,7 @@ export function TodaysSchedule({
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4 mx-auto"></div>
+          {/* eslint-disable-next-line react/no-unescaped-entities */}
           <p className="text-gray-600">Loading today's schedule...</p>
         </div>
       </div>
@@ -414,6 +415,7 @@ export function TodaysSchedule({
           {/* Progress bar indicator */}
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+              {/* eslint-disable-next-line react/no-unescaped-entities */}
               <span>Today's Progress</span>
               <span className="font-medium">
                 {Math.round((filteredBookings.filter(b => b.status === 'completed').length / filteredBookings.length) * 100)}% Complete
