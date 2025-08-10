@@ -69,6 +69,8 @@ export default function DateTimePage() {
     if (!selectedService) return
     
     const dates = []
+    console.log(`[DateTimePage] Checking availability for service: ${selectedService.name}`)
+    
     for (let i = 0; i < 28; i++) { // 4 weeks = 28 days
       const date = addDays(new Date(), i)
       const dateString = format(date, 'yyyy-MM-dd')
@@ -76,11 +78,18 @@ export default function DateTimePage() {
       // Check if any staff are available for this service on this date
       const availableStaff = getAvailableStaff(selectedService.name, dateString)
       
+      // Debug logging for first 7 days
+      if (i < 7) {
+        console.log(`[DateTimePage] ${dateString} (${format(date, 'EEEE')}): ${availableStaff.length} staff available`, availableStaff.map(s => s.name))
+      }
+      
       // Only include dates where at least one staff member is available
       if (availableStaff.length > 0) {
         dates.push(date)
       }
     }
+    
+    console.log(`[DateTimePage] Total available dates found: ${dates.length}`)
     setAvailableDates(dates)
   }, [selectedService])
 
@@ -91,11 +100,15 @@ export default function DateTimePage() {
     const weekStart = currentWeekStart
     const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 })
     
+    console.log(`[DateTimePage] Filtering week: ${format(weekStart, 'yyyy-MM-dd')} to ${format(weekEnd, 'yyyy-MM-dd')}`)
+    console.log(`[DateTimePage] Available dates:`, availableDates.map(d => format(d, 'yyyy-MM-dd')))
+    
     // Filter available dates for current week
     const currentWeekDates = availableDates.filter(date => 
       date >= weekStart && date <= weekEnd
     )
     
+    console.log(`[DateTimePage] Current week dates:`, currentWeekDates.map(d => format(d, 'yyyy-MM-dd')))
     setWeekDates(currentWeekDates)
   }, [currentWeekStart, availableDates, selectedService])
 
