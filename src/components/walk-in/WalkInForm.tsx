@@ -33,6 +33,7 @@ const walkInFormSchema = z.object({
   notes: z.string()
     .max(500, 'Notes must be less than 500 characters')
     .optional()
+    .or(z.literal(''))
 })
 
 export type WalkInFormData = z.infer<typeof walkInFormSchema>
