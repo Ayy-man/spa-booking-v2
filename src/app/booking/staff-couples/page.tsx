@@ -116,7 +116,7 @@ export default function CouplesStaffPage() {
       const primaryServiceCapableStaff = allStaff.filter(staff => {
         if (!staff.is_active || staff.id === 'any') return false
         
-        const hasCapability = canDatabaseStaffPerformService(staff, primaryServiceCategory)
+        const hasCapability = canDatabaseStaffPerformService(staff, primaryServiceCategory, bookingData.primaryService.name)
         const worksOnDay = isDatabaseStaffAvailableOnDate(staff, selectedDate)
         
         
@@ -131,7 +131,7 @@ export default function CouplesStaffPage() {
         secondaryServiceCapableStaff = allStaff.filter(staff => {
           if (!staff.is_active || staff.id === 'any') return false
           
-          const hasCapability = canDatabaseStaffPerformService(staff, secondaryServiceCategory)
+          const hasCapability = canDatabaseStaffPerformService(staff, secondaryServiceCategory, bookingData.secondaryService?.name)
           const worksOnDay = isDatabaseStaffAvailableOnDate(staff, selectedDate)
           
           

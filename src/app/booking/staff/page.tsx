@@ -142,7 +142,7 @@ export default function StaffPage() {
         const capableStaff = allStaff.filter(staff => {
           return staff.is_active && 
                  staff.id !== 'any' &&
-                 canDatabaseStaffPerformService(staff, matchingService.category)
+                 canDatabaseStaffPerformService(staff, matchingService.category, matchingService.name)
         })
         setAvailableStaff(capableStaff)
         return
@@ -155,7 +155,7 @@ export default function StaffPage() {
       const availableStaffForDay = allStaff.filter(staff => {
         if (!staff.is_active || staff.id === 'any') return false
         
-        const hasCapability = canDatabaseStaffPerformService(staff, matchingService.category)
+        const hasCapability = canDatabaseStaffPerformService(staff, matchingService.category, matchingService.name)
         const worksOnDay = isDatabaseStaffAvailableOnDate(staff, dateData)
         
         
