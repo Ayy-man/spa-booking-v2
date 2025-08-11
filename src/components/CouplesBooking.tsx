@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { analytics } from '@/lib/analytics'
 
@@ -105,7 +104,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
             : 'border-gray-400 bg-white hover:border-primary/70 hover:bg-primary/5 hover:shadow-sm'
         }`}
         onClick={() => setIsCouplesBooking(!isCouplesBooking)}>
-          <Label htmlFor="couples-toggle" className="cursor-pointer flex-1">
+          <div className="cursor-pointer flex-1">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg font-medium text-primary-dark">Book as a couple</span>
               {!isCouplesBooking && (
@@ -117,7 +116,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
             <p className="text-sm text-gray-600">
               Enjoy your spa experience together
             </p>
-          </Label>
+          </div>
           <Switch
             id="couples-toggle"
             checked={isCouplesBooking}
