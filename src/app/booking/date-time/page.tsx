@@ -10,8 +10,7 @@ import { getAvailableStaff } from '@/lib/staff-data'
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { TimeSlotSkeleton } from '@/components/ui/skeleton-loader'
 import { analytics } from '@/lib/analytics'
-import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
-import { validateAndRedirect } from '@/lib/booking-step-validation'
+import { useBookingState } from '@/lib/booking-state-v2'
 
 export default function DateTimePage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -32,33 +31,36 @@ export default function DateTimePage() {
   const timeSlotGridRef = useRef<HTMLDivElement>(null)
   const { navigateWithTransition, isNavigating } = useBookingNavigation()
 
+  // Use the new booking state manager
+  const bookingState = useBookingState()
+
   // Validate access and get booking data
   useEffect(() => {
-    // Validate that user has selected a service (Step 1)
-    if (!validateAndRedirect(2)) {
-      return // Will redirect if validation fails
+    // Check if user has selected a service
+    const validation = bookingState.canProceedTo('date-time')
+    if (!validation.isValid) {
+      console.error('[DateTimePage] Invalid state:', validation.errors)
+      window.location.href = '/booking'
+      return
     }
     
-    const state = loadBookingState()
+    const state = bookingState.state
     
-    // We know state exists because validation passed
-    if (state?.bookingData) {
-      setBookingData(state.bookingData)
-      setSelectedService(state.bookingData.primaryService)
-    } else if (state?.selectedService) {
-      // Convert individual service to booking data format
-      const service = state.selectedService
+    // Set up the booking data for this page
+    if (state.service) {
+      setSelectedService(state.service)
+      
+      // Create booking data for compatibility with existing code
       const bookingData = {
-        isCouplesBooking: false,
-        primaryService: service,
-        totalPrice: service.price,
-        totalDuration: service.duration
+        isCouplesBooking: state.bookingType === 'couples',
+        primaryService: state.service,
+        secondaryService: state.secondaryService,
+        totalPrice: (state.service?.price || 0) + (state.secondaryService?.price || 0),
+        totalDuration: state.bookingType === 'couples' 
+          ? Math.max(state.service?.duration || 0, state.secondaryService?.duration || 0)
+          : (state.service?.duration || 0)
       }
       setBookingData(bookingData)
-      setSelectedService(service)
-      
-      // Save the structured data for consistency
-      saveBookingState({ bookingData })
     }
     
     setLoadingService(false)
@@ -418,11 +420,11 @@ export default function DateTimePage() {
 
   const handleContinue = async () => {
     if (selectedDate && selectedTime && !isNavigating) {
-      // Store date and time using state manager
-      saveBookingState({
-        selectedDate: selectedDate.toISOString(),
-        selectedTime: selectedTime
-      })
+      // Store date and time using new state manager
+      bookingState.setDateTime(
+        format(selectedDate, 'yyyy-MM-dd'),
+        selectedTime
+      )
       
       // Track date/time selection
       analytics.track('date_time_selected', {
@@ -431,9 +433,9 @@ export default function DateTimePage() {
         service: selectedService?.name || 'unknown'
       })
       
-      // Check if it's a couples booking and navigate with smooth transition
-      const targetPath = bookingData?.isCouplesBooking ? '/booking/staff-couples' : '/booking/staff'
-      await navigateWithTransition(targetPath, 'forward')
+      // Navigate to the appropriate staff page based on booking type
+      const nextPage = bookingState.getNextPage('/booking/date-time')
+      await navigateWithTransition(nextPage, 'forward')
     }
   }
 

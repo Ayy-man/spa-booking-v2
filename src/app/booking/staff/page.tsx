@@ -14,8 +14,7 @@ import BookingProgressIndicator from '@/components/booking/BookingProgressIndica
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { StaffCardSkeleton } from '@/components/ui/skeleton-loader'
 import { analytics } from '@/lib/analytics'
-import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
-import { validateServiceSelection } from '@/lib/booking-step-validation'
+import { useBookingState, type Staff as BookingStaff } from '@/lib/booking-state-v2'
 
 type Staff = Database['public']['Tables']['staff']['Row']
 
@@ -41,6 +40,9 @@ export default function StaffPage() {
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [availableStaff, setAvailableStaff] = useState<Staff[]>([])
   const [loadingStaff, setLoadingStaff] = useState<boolean>(true)
+  
+  // Use the new booking state manager
+  const bookingState = useBookingState()
 
   // Remove duplicate function - using imported one from staff-data.ts
 
@@ -52,43 +54,45 @@ export default function StaffPage() {
   }, [selectedService])
 
   useEffect(() => {
-    // Get data from state manager
-    const state = loadBookingState()
+    // Validate and redirect if this is a couples booking
+    const state = bookingState.state
+    if (state.bookingType === 'couples') {
+      console.log('[StaffPage] Couples booking detected, redirecting to couples staff page')
+      window.location.href = '/booking/staff-couples'
+      return
+    }
     
-    if (!state) {
-      console.log('[StaffPage] No booking state found, redirecting to service selection')
+    // Validate that we can proceed to staff selection
+    const validation = bookingState.canProceedTo('staff')
+    if (!validation.isValid) {
+      console.error('[StaffPage] Invalid state:', validation.errors)
       window.location.href = '/booking'
       return
     }
 
-    // Set booking data
-    if (state.bookingData) {
-      setBookingData(state.bookingData)
-      setSelectedService(state.bookingData.primaryService)
-    } else if (state.selectedService) {
-      // Fallback for backward compatibility
-      const service = state.selectedService
-      const fallbackBookingData = {
+    // Set booking data from new state manager
+    if (state.service) {
+      setSelectedService(state.service)
+      const bookingData: BookingData = {
         isCouplesBooking: false,
-        primaryService: service,
-        totalPrice: service.price,
-        totalDuration: service.duration
+        primaryService: state.service,
+        totalPrice: state.service.price,
+        totalDuration: state.service.duration
       }
-      setBookingData(fallbackBookingData)
-      setSelectedService(service)
+      setBookingData(bookingData)
     }
     
-    // Set date and time
-    if (state.selectedDate) setSelectedDate(state.selectedDate)
-    if (state.selectedTime) setSelectedTime(state.selectedTime)
+    // Set date and time from new state manager
+    if (state.date) setSelectedDate(state.date)
+    if (state.time) setSelectedTime(state.time)
     
     // Fetch available staff if we have all required data
-    if ((state.bookingData || state.selectedService) && state.selectedDate && state.selectedTime) {
+    if (state.service && state.date && state.time) {
       fetchAvailableStaff()
     } else {
       console.log('[StaffPage] Missing required data for staff lookup')
-      // Redirect back to appropriate step
-      if (!state.selectedDate || !state.selectedTime) {
+      // Redirect back to date-time selection
+      if (!state.date || !state.time) {
         window.location.href = '/booking/date-time'
       }
     }
@@ -191,18 +195,29 @@ export default function StaffPage() {
 
   const handleContinue = () => {
     if (selectedStaff) {
-      // Save staff selection using state manager
-      saveBookingState({ selectedStaff })
+      // Save staff selection using new state manager
+      const staffMember = selectedStaff === 'any' 
+        ? { id: 'any', name: 'Any Available Staff' }
+        : availableStaff.find(s => s.id === selectedStaff)
       
-      // Track staff selection completion
-      const staffName = selectedStaff === 'any' ? 'Any Available Staff' : availableStaff.find(s => s.id === selectedStaff)?.name || 'Unknown'
-      analytics.track('staff_selected', {
-        staff_name: staffName,
-        staff_id: selectedStaff,
-        service: selectedService?.name || 'unknown'
-      })
-      
-      window.location.href = '/booking/customer-info'
+      if (staffMember) {
+        const bookingStaff: BookingStaff = {
+          id: staffMember.id,
+          name: staffMember.name || 'Unknown'
+        }
+        bookingState.setStaff(bookingStaff)
+        
+        // Track staff selection completion
+        analytics.track('staff_selected', {
+          staff_name: bookingStaff.name,
+          staff_id: bookingStaff.id,
+          service: selectedService?.name || 'unknown'
+        })
+        
+        // Navigate to next page
+        const nextPage = bookingState.getNextPage('/booking/staff')
+        window.location.href = nextPage
+      }
     }
   }
 
@@ -229,18 +244,10 @@ export default function StaffPage() {
               {/* Header */}
               <div className="text-center lg:text-left">
                 <Link 
-                  href={validateServiceSelection().isValid ? "/booking/date-time" : "/booking"} 
+                  href="/booking/date-time"
                   className="btn-tertiary !w-auto px-6 mb-6 inline-flex"
-                  onClick={(e) => {
-                    const validation = validateServiceSelection()
-                    if (!validation.isValid) {
-                      e.preventDefault()
-                      console.log('[StaffPage] Cannot go back: no service selected')
-                      window.location.href = '/booking'
-                    }
-                  }}
                 >
-                  ← {validateServiceSelection().isValid ? 'Back to Date & Time' : 'Back to Service Selection'}
+                  ← Back to Date & Time
                 </Link>
                 <h1 className="text-4xl md:text-5xl font-heading text-primary mb-4">
                   Select Staff Member

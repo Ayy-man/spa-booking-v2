@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { supabaseClient } from '@/lib/supabase'
 import { Database } from '@/types/database'
 import { getServiceCategory, canDatabaseStaffPerformService, isDatabaseStaffAvailableOnDate } from '@/lib/staff-data'
-import { validateServiceSelection } from '@/lib/booking-step-validation'
-import { saveBookingState } from '@/lib/booking-state-manager'
+import { useBookingState, type Staff as BookingStaff } from '@/lib/booking-state-v2'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -40,41 +39,51 @@ export default function CouplesStaffPage() {
   const [loadingStaff, setLoadingStaff] = useState<boolean>(true)
   const [staffMap, setStaffMap] = useState<Record<string, string>>({})
   const [showScrollIcon, setShowScrollIcon] = useState<boolean>(true)
+  
+  // Use the new booking state manager
+  const bookingState = useBookingState()
 
   // Remove duplicate function - using imported one from staff-data.ts
 
   useEffect(() => {
-    // Get data from localStorage
-    const bookingDataStr = localStorage.getItem('bookingData')
-    const dateData = localStorage.getItem('selectedDate')
-    const timeData = localStorage.getItem('selectedTime')
-
-    if (bookingDataStr) {
-      const parsedBookingData = JSON.parse(bookingDataStr)
-      
-      // CRITICAL FIX: Check if this is actually a couples booking
-      console.log('[CouplesStaffPage] Checking booking data:', parsedBookingData)
-      
-      if (parsedBookingData.isCouplesBooking !== true) {
-        console.error('[CouplesStaffPage] ERROR: Single booking incorrectly routed to couples staff page!')
-        console.log('[CouplesStaffPage] Redirecting to single staff page...')
-        window.location.href = '/booking/staff'
-        return
-      }
-      
-      // Double check - couples booking should have secondary service
-      if (!parsedBookingData.secondaryService) {
-        console.error('[CouplesStaffPage] ERROR: Couples booking without secondary service!')
-        console.log('[CouplesStaffPage] Redirecting to single staff page...')
-        window.location.href = '/booking/staff'
-        return
-      }
-      
-      setBookingData(parsedBookingData)
+    // Validate this is a couples booking
+    const state = bookingState.state
+    
+    if (state.bookingType !== 'couples') {
+      console.error('[CouplesStaffPage] ERROR: Single booking incorrectly routed to couples staff page!')
+      console.log('[CouplesStaffPage] Redirecting to single staff page...')
+      window.location.href = '/booking/staff'
+      return
     }
     
-    if (dateData) setSelectedDate(dateData)
-    if (timeData) setSelectedTime(timeData)
+    // Validate that we can proceed to staff selection
+    const validation = bookingState.canProceedTo('staff-couples')
+    if (!validation.isValid) {
+      console.error('[CouplesStaffPage] Invalid state:', validation.errors)
+      window.location.href = '/booking'
+      return
+    }
+    
+    // Double check - couples booking should have secondary service
+    if (!state.secondaryService) {
+      console.error('[CouplesStaffPage] ERROR: Couples booking without secondary service!')
+      console.log('[CouplesStaffPage] Redirecting to booking page...')
+      window.location.href = '/booking'
+      return
+    }
+    
+    // Set booking data from new state manager
+    const bookingData: BookingData = {
+      isCouplesBooking: true,
+      primaryService: state.service!,
+      secondaryService: state.secondaryService,
+      totalPrice: (state.service?.price || 0) + (state.secondaryService?.price || 0),
+      totalDuration: Math.max(state.service?.duration || 0, state.secondaryService?.duration || 0)
+    }
+    setBookingData(bookingData)
+    
+    if (state.date) setSelectedDate(state.date)
+    if (state.time) setSelectedTime(state.time)
   }, [])
 
   // Auto-hide scroll icon after 5 seconds
@@ -189,23 +198,37 @@ export default function CouplesStaffPage() {
   }, [bookingData, selectedDate, selectedTime, fetchAvailableStaff])
 
   const handleContinue = () => {
-    if (bookingData?.isCouplesBooking && (!primaryStaff || !secondaryStaff)) {
+    if (!primaryStaff || !secondaryStaff) {
       alert('Please select staff for both people')
       return
     }
-    
-    if (!bookingData?.isCouplesBooking && !primaryStaff) {
-      alert('Please select a staff member')
-      return
-    }
 
-    // Persist selections using centralized state manager to avoid stale state
-    saveBookingState({
-      selectedStaff: primaryStaff,
-      secondaryStaff: bookingData?.isCouplesBooking ? secondaryStaff : undefined
-    })
+    // Save staff selections using new state manager
+    const primaryStaffMember = primaryStaff === 'any' 
+      ? { id: 'any', name: 'Any Available Staff' }
+      : availableStaff.find(s => s.id === primaryStaff)
     
-    window.location.href = '/booking/customer-info'
+    const secondaryStaffMember = secondaryStaff === 'any'
+      ? { id: 'any', name: 'Any Available Staff' }
+      : availableStaff.find(s => s.id === secondaryStaff)
+    
+    if (primaryStaffMember && secondaryStaffMember) {
+      const primaryBookingStaff: BookingStaff = {
+        id: primaryStaffMember.id,
+        name: primaryStaffMember.name || 'Unknown'
+      }
+      const secondaryBookingStaff: BookingStaff = {
+        id: secondaryStaffMember.id,
+        name: secondaryStaffMember.name || 'Unknown'
+      }
+      
+      bookingState.setStaff(primaryBookingStaff)
+      bookingState.setSecondaryStaff(secondaryBookingStaff)
+      
+      // Navigate to next page
+      const nextPage = bookingState.getNextPage('/booking/staff-couples')
+      window.location.href = nextPage
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -301,18 +324,10 @@ export default function CouplesStaffPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link 
-            href={validateServiceSelection().isValid ? "/booking/date-time" : "/booking"} 
+            href="/booking/date-time"
             className="text-primary hover:text-primary-dark transition-colors"
-            onClick={(e) => {
-              const validation = validateServiceSelection()
-              if (!validation.isValid) {
-                e.preventDefault()
-                console.log('[StaffCouplesPage] Cannot go back: no service selected')
-                window.location.href = '/booking'
-              }
-            }}
           >
-            ← {validateServiceSelection().isValid ? 'Back to Date & Time' : 'Back to Service Selection'}
+            ← Back to Date & Time
           </Link>
           <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
             Select Staff Members

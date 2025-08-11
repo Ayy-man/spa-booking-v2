@@ -40,6 +40,9 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
   const [sameService, setSameService] = useState(true)
   const [secondaryService, setSecondaryService] = useState<Service | null>(null)
   const [selectedCategory, setSelectedCategory] = useState('')
+  
+  // Use the new booking state manager - must be called before any conditional returns
+  const bookingState = useBookingState()
 
   // Log initialization
   useEffect(() => {
@@ -51,7 +54,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
         selectedService: localStorage.getItem('selectedService')
       }
     })
-  }, [])
+  }, [selectedService?.name, isCouplesBooking])
 
   // Reset secondary service when couples booking is toggled off
   useEffect(() => {
@@ -77,9 +80,6 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
   const totalDuration = isCouplesBooking && secondaryService
     ? Math.max(selectedService.duration, secondaryService.duration)
     : selectedService.duration
-
-  // Use the new booking state manager
-  const bookingState = useBookingState()
 
   const handleContinue = () => {
     // Set booking type

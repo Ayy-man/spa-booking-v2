@@ -5,14 +5,18 @@ import Link from 'next/link'
 import CouplesBooking from '@/components/CouplesBooking'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import { analytics } from '@/lib/analytics'
+import { useBookingState } from '@/lib/booking-state-v2'
 
 export default function BookingPage() {
   const [selectedService, setSelectedService] = useState('')
   const [showCouplesOptions, setShowCouplesOptions] = useState(false)
+  const bookingState = useBookingState()
 
-  // Track page view
+  // Track page view and reset state on page load
   useEffect(() => {
     analytics.pageViewed('service_selection', 1)
+    // Clear any existing booking state when starting fresh
+    bookingState.reset()
   }, [])
 
   const serviceCategories = [
@@ -212,10 +216,10 @@ export default function BookingPage() {
                 }
                 serviceCategories={serviceCategories}
                 onContinue={(bookingData) => {
-                  // Store booking data in localStorage
-                  localStorage.setItem('bookingData', JSON.stringify(bookingData))
-                  // Navigate to date/time selection
-                  window.location.href = '/booking/date-time'
+                  // The new state manager handles storage automatically
+                  // Navigate to the next page based on booking type
+                  const nextPage = bookingState.getNextPage('/booking')
+                  window.location.href = nextPage
                 }}
               />
             </div>

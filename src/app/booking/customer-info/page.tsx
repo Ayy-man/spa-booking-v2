@@ -9,7 +9,7 @@ import BookingProgressIndicator from '@/components/booking/BookingProgressIndica
 import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 import { getGHLServiceCategory } from '@/lib/staff-data'
-import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
+import { useBookingState, type CustomerInfo } from '@/lib/booking-state-v2'
 
 interface Service {
   name: string
@@ -22,36 +22,34 @@ export default function CustomerInfoPage() {
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [selectedStaff, setSelectedStaff] = useState<string>('')
+  
+  // Use the new booking state manager
+  const bookingState = useBookingState()
 
   useEffect(() => {
-    // Get data from state manager
-    const state = loadBookingState()
-    
-    if (!state) {
-      console.log('[CustomerInfoPage] No booking state found, redirecting to service selection')
-      window.location.href = '/booking'
+    // Validate that we can proceed to customer info
+    const validation = bookingState.canProceedTo('customer-info')
+    if (!validation.isValid) {
+      console.error('[CustomerInfoPage] Invalid state:', validation.errors)
+      // Redirect based on what's missing
+      const state = bookingState.state
+      if (!state.service) {
+        window.location.href = '/booking'
+      } else if (!state.date || !state.time) {
+        window.location.href = '/booking/date-time'
+      } else if (!state.staff || (state.bookingType === 'couples' && !state.secondaryStaff)) {
+        window.location.href = state.bookingType === 'couples' ? '/booking/staff-couples' : '/booking/staff'
+      }
       return
     }
-
-    // Handle couples booking data structure
-    if (state.bookingData?.primaryService) {
-      setSelectedService(state.bookingData.primaryService)
-    } else if (state.selectedService) {
-      // Handle regular booking data structure
-      setSelectedService(state.selectedService)
-    }
     
-    // Set other booking data
-    if (state.selectedDate) setSelectedDate(state.selectedDate)
-    if (state.selectedTime) setSelectedTime(state.selectedTime)
-    if (state.selectedStaff) setSelectedStaff(state.selectedStaff)
+    const state = bookingState.state
     
-    // Validate we have all required data for this step
-    if (!state.selectedDate || !state.selectedTime || !state.selectedStaff || (state.bookingData?.isCouplesBooking && !state.secondaryStaff)) {
-      console.log('[CustomerInfoPage] Missing required booking data, redirecting to staff selection')
-      window.location.href = state.bookingData?.isCouplesBooking ? '/booking/staff-couples' : '/booking/staff'
-      return
-    }
+    // Set data for display
+    if (state.service) setSelectedService(state.service)
+    if (state.date) setSelectedDate(state.date)
+    if (state.time) setSelectedTime(state.time)
+    if (state.staff) setSelectedStaff(state.staff.id)
   }, [])
 
   // Track page view
@@ -68,16 +66,15 @@ export default function CustomerInfoPage() {
       analytics.paymentInitiated(true, selectedService.price)
     }
     
-    // Store customer info using state manager
-    saveBookingState({ 
-      customerInfo: {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        isNewCustomer: data.isNewCustomer,
-        specialRequests: data.specialRequests
-      }
-    })
+    // Store customer info using new state manager
+    const customerInfo: CustomerInfo = {
+      name: data.name,
+      email: data.email,
+      phone: data.phone || '',
+      notes: data.specialRequests,
+      isNewCustomer: data.isNewCustomer
+    }
+    bookingState.setCustomer(customerInfo)
     
     // Send new customer webhook to GHL if it's a new customer
     if (data.isNewCustomer && selectedService) {
@@ -113,42 +110,16 @@ export default function CustomerInfoPage() {
       }
     }
     
-    // Check if it's a couples booking and determine redirect
-    const currentState = loadBookingState()
+    // Check if it's a couples booking using the new state manager
+    const isCouplesBooking = bookingState.state.bookingType === 'couples'
     
-    // STRICT CHECK: Only treat as couples booking if explicitly set to true
-    // AND there's a secondary service (for couples bookings)
-    const rawIsCouplesBooking = currentState?.bookingData?.isCouplesBooking
-    const hasSecondaryService = currentState?.bookingData?.secondaryService
-    const isCouplesBooking = (rawIsCouplesBooking === true) && (hasSecondaryService != null)
-    
-    // DEBUG: Log the booking state to identify the issue
-    console.log('[CustomerInfo] DEBUGGING BOOKING STATE:', {
-      currentState,
-      bookingData: currentState?.bookingData,
-      rawIsCouplesBooking,
-      hasSecondaryService: !!hasSecondaryService,
-      isCouplesBookingFinal: isCouplesBooking,
-      selectedService: selectedService?.name,
-      localStorage_bookingData: localStorage.getItem('bookingData'),
+    // DEBUG: Log the booking state
+    console.log('[CustomerInfo] Booking State:', {
+      bookingType: bookingState.state.bookingType,
+      service: bookingState.state.service?.name,
+      secondaryService: bookingState.state.secondaryService?.name,
       decision: isCouplesBooking ? 'COUPLES BOOKING' : 'SINGLE BOOKING'
     })
-    
-    // Ensure proper data structure before redirecting
-    if (isCouplesBooking && currentState?.bookingData && selectedService) {
-      // For couples booking, ensure bookingData is properly updated
-      const updatedBookingData = {
-        ...currentState.bookingData,
-        primaryService: selectedService,
-        // Ensure secondary service exists (same as primary if not different)
-        secondaryService: currentState.bookingData.secondaryService || selectedService,
-        totalPrice: currentState.bookingData.totalPrice || (selectedService.price * (currentState.bookingData.secondaryService ? 2 : 1))
-      }
-      saveBookingState({ bookingData: updatedBookingData })
-    } else if (selectedService) {
-      // For regular booking, ensure selectedService is saved
-      saveBookingState({ selectedService })
-    }
 
     // Check if service requires waiver before proceeding to payment
     const { requiresWaiver } = await import('@/lib/waiver-content')
@@ -169,7 +140,7 @@ export default function CustomerInfoPage() {
     console.log('[CustomerInfo] Proceeding to payment/confirmation:', {
       isNewCustomer: data.isNewCustomer,
       isCouplesBooking: isCouplesBooking,
-      bookingData: loadBookingState()?.bookingData
+      bookingType: bookingState.state.bookingType
     })
     
     // Check customer status and redirect accordingly
@@ -183,15 +154,10 @@ export default function CustomerInfoPage() {
       window.location.href = depositPaymentUrl
     } else {
       // Existing customer - redirect to payment selection page for deposit or pay-on-location choice
-      if (isCouplesBooking) {
-        // For couples booking, skip payment selection and go directly to confirmation
-        console.log('[CustomerInfo] Existing customer couples booking - going to couples confirmation')
-        window.location.href = '/booking/confirmation-couples'
-      } else {
-        // Single booking - offer payment choice between deposit and pay-on-location
-        console.log('[CustomerInfo] Existing customer single booking - going to payment selection')
-        window.location.href = '/booking/payment-selection'
-      }
+      // Navigate to the next page based on booking type and customer status
+      const nextPage = bookingState.getNextPage('/booking/customer-info')
+      console.log(`[CustomerInfo] Navigating to: ${nextPage}`)
+      window.location.href = nextPage
     }
   }
 
@@ -232,7 +198,7 @@ export default function CustomerInfoPage() {
               {/* Header */}
               <div className="text-center lg:text-left mb-8">
                 <Link 
-                  href={ (loadBookingState()?.bookingData?.isCouplesBooking ? '/booking/staff-couples' : '/booking/staff') as any } 
+                  href={ (bookingState.state.bookingType === 'couples' ? '/booking/staff-couples' : '/booking/staff') as any } 
                   className="btn-tertiary !w-auto px-6 mb-6 inline-flex"
                 >
                   ← Back to Staff Selection
