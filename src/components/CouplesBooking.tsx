@@ -4,12 +4,17 @@ import { useState, useEffect } from 'react'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { analytics } from '@/lib/analytics'
+import { useBookingState, type Service as BookingService } from '@/lib/booking-state-v2'
 
-interface Service {
+// Use the Service type from booking-state-v2
+type Service = {
   id: string
   name: string
   duration: number
   price: number
+  category?: string
+  description?: string
+  requires_room_3?: boolean
 }
 
 interface CouplesBookingProps {
@@ -73,7 +78,51 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
     ? Math.max(selectedService.duration, secondaryService.duration)
     : selectedService.duration
 
+  // Use the new booking state manager
+  const bookingState = useBookingState()
+
   const handleContinue = () => {
+    // Set booking type
+    bookingState.setBookingType(isCouplesBooking ? 'couples' : 'single')
+    
+    // Set primary service
+    const primaryServiceWithCategory: BookingService = {
+      ...selectedService,
+      category: serviceCategories.find(cat => 
+        cat.services.some(s => s.id === selectedService.id)
+      )?.name || ''
+    }
+    bookingState.setService(primaryServiceWithCategory)
+    
+    // Set secondary service for couples
+    if (isCouplesBooking && secondaryService) {
+      const secondaryServiceWithCategory: BookingService = {
+        ...secondaryService,
+        category: serviceCategories.find(cat => 
+          cat.services.some(s => s.id === secondaryService.id)
+        )?.name || ''
+      }
+      bookingState.setSecondaryService(secondaryServiceWithCategory)
+      
+      // Track couples booking
+      analytics.couplesBookingStarted(
+        selectedService.name,
+        secondaryService.name,
+        totalPrice
+      )
+    } else {
+      bookingState.setSecondaryService(null)
+    }
+    
+    console.log('[CouplesBooking] State saved:', {
+      bookingType: isCouplesBooking ? 'couples' : 'single',
+      serviceName: selectedService.name,
+      secondaryService: secondaryService?.name,
+      totalPrice,
+      totalDuration
+    })
+    
+    // Still call onContinue for compatibility
     const bookingData: BookingData = {
       isCouplesBooking,
       primaryService: selectedService,
@@ -81,24 +130,6 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
       totalPrice,
       totalDuration
     }
-    
-    console.log('[CouplesBooking] Continue clicked with:', {
-      isCouplesBooking,
-      serviceName: selectedService.name,
-      secondaryService: secondaryService?.name,
-      totalPrice,
-      totalDuration
-    })
-    
-    // Track couples booking if enabled
-    if (isCouplesBooking && secondaryService) {
-      analytics.couplesBookingStarted(
-        selectedService.name,
-        secondaryService.name,
-        totalPrice
-      )
-    }
-    
     onContinue(bookingData)
   }
 
