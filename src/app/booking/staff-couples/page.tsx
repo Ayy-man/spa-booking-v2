@@ -6,6 +6,7 @@ import { supabaseClient } from '@/lib/supabase'
 import { Database } from '@/types/database'
 import { getServiceCategory, canDatabaseStaffPerformService, isDatabaseStaffAvailableOnDate } from '@/lib/staff-data'
 import { validateServiceSelection } from '@/lib/booking-step-validation'
+import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -42,18 +43,15 @@ export default function CouplesStaffPage() {
   // Remove duplicate function - using imported one from staff-data.ts
 
   useEffect(() => {
-    // Get data from localStorage
-    const bookingDataStr = localStorage.getItem('bookingData')
-    const dateData = localStorage.getItem('selectedDate')
-    const timeData = localStorage.getItem('selectedTime')
-
-    if (bookingDataStr) {
-      const parsedBookingData = JSON.parse(bookingDataStr)
-      setBookingData(parsedBookingData)
+    // Get data from state manager
+    const state = loadBookingState()
+    
+    if (state?.bookingData) {
+      setBookingData(state.bookingData)
     }
     
-    if (dateData) setSelectedDate(dateData)
-    if (timeData) setSelectedTime(timeData)
+    if (state?.selectedDate) setSelectedDate(state.selectedDate)
+    if (state?.selectedTime) setSelectedTime(state.selectedTime)
   }, [])
 
   // Separate useEffect to fetch staff when all data is available
@@ -169,10 +167,11 @@ export default function CouplesStaffPage() {
       return
     }
 
-    localStorage.setItem('selectedStaff', primaryStaff)
-    if (bookingData?.isCouplesBooking) {
-      localStorage.setItem('secondaryStaff', secondaryStaff)
-    }
+    // Save using state manager to ensure customer-info page can access the data
+    saveBookingState({
+      selectedStaff: primaryStaff,
+      ...(bookingData?.isCouplesBooking && { secondaryStaff: secondaryStaff })
+    })
     
     window.location.href = '/booking/customer-info'
   }

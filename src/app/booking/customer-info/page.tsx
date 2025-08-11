@@ -49,7 +49,12 @@ export default function CustomerInfoPage() {
     // Validate we have all required data for this step
     if (!state.selectedDate || !state.selectedTime || !state.selectedStaff) {
       console.log('[CustomerInfoPage] Missing required booking data, redirecting to staff selection')
-      window.location.href = '/booking/staff'
+      // Check if it's a couples booking to redirect to the appropriate staff selection page
+      if (state.bookingData?.isCouplesBooking) {
+        window.location.href = '/booking/staff-couples'
+      } else {
+        window.location.href = '/booking/staff'
+      }
       return
     }
   }, [])
