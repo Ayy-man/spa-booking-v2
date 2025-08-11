@@ -88,7 +88,7 @@ export default function StaffPage() {
     
     // Fetch available staff if we have all required data
     if (state.service && state.date && state.time) {
-      fetchAvailableStaff()
+      fetchAvailableStaff(state.service, state.date, state.time)
     } else {
       console.log('[StaffPage] Missing required data for staff lookup')
       // Redirect back to date-time selection
@@ -98,65 +98,41 @@ export default function StaffPage() {
     }
   }, [])
 
-  const fetchAvailableStaff = async () => {
+  const fetchAvailableStaff = async (service: any, date: string, time: string) => {
+    if (!service || !date || !time) {
+      console.error('[StaffPage] fetchAvailableStaff called without required parameters')
+      setLoadingStaff(false)
+      return
+    }
+
     setLoadingStaff(true)
     try {
       // Get the service from Supabase to get the correct ID
       const services = await supabaseClient.getServices()
       
-      // Get service data directly from localStorage to avoid race conditions
-      const bookingDataStr = localStorage.getItem('bookingData')
-      const serviceDataStr = localStorage.getItem('selectedService')
-      
-      let selectedServiceData = null
-      
-      if (bookingDataStr) {
-        const parsedBookingData = JSON.parse(bookingDataStr)
-        selectedServiceData = parsedBookingData.primaryService
-      } else if (serviceDataStr) {
-        selectedServiceData = JSON.parse(serviceDataStr)
-      }
-      
-      
       const matchingService = services.find(s => 
-        s.name.toLowerCase() === selectedServiceData?.name.toLowerCase()
+        s.name.toLowerCase() === service.name.toLowerCase()
       )
       
       if (!matchingService) {
-        // Fallback: show all active staff for now
-        const allStaff = await supabaseClient.getStaff()
-        const activeStaff = allStaff.filter(staff => staff.is_active && staff.id !== 'any')
-        setAvailableStaff(activeStaff)
+        console.error('[StaffPage] No matching service found in database:', service.name)
+        setAvailableStaff([])
         return
       }
       
       
-      // Simplified logic: Get all staff and filter by capability and availability
+      // Get all staff and filter by capability and availability
       const allStaff = await supabaseClient.getStaff()
       
-      const dateData = localStorage.getItem('selectedDate')
-      const timeData = localStorage.getItem('selectedTime')
-      
-      if (!dateData || !timeData) {
-        // If no date/time, show all capable staff using proper capability checking
-        const capableStaff = allStaff.filter(staff => {
-          return staff.is_active && 
-                 staff.id !== 'any' &&
-                 canDatabaseStaffPerformService(staff, matchingService.category, matchingService.name)
-        })
-        setAvailableStaff(capableStaff)
-        return
-      }
-      
-      const date = new Date(dateData)
-      const dayOfWeek = date.getDay() // 0 = Sunday, 1 = Monday, etc.
+      const appointmentDate = new Date(date)
+      const dayOfWeek = appointmentDate.getDay() // 0 = Sunday, 1 = Monday, etc.
       
       // Filter staff by capability and work day availability using proper functions
       const availableStaffForDay = allStaff.filter(staff => {
         if (!staff.is_active || staff.id === 'any') return false
         
         const hasCapability = canDatabaseStaffPerformService(staff, matchingService.category, matchingService.name)
-        const worksOnDay = isDatabaseStaffAvailableOnDate(staff, dateData)
+        const worksOnDay = isDatabaseStaffAvailableOnDate(staff, date)
         
         
         return hasCapability && worksOnDay
