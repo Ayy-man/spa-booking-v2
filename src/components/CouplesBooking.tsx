@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { analytics } from '@/lib/analytics'
 
 interface Service {
