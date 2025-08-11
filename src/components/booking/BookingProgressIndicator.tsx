@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { CheckIcon } from 'lucide-react'
-import { StepCheckmark, ProgressLine } from '@/components/ui/success-checkmark'
 
 interface ProgressStep {
   id: string
@@ -61,20 +60,15 @@ const steps: ProgressStep[] = [
 interface BookingProgressIndicatorProps {
   className?: string
   allowNavigation?: boolean
-  showCelebration?: boolean
 }
 
 export function BookingProgressIndicator({ 
   className = '', 
-  allowNavigation = true,
-  showCelebration = false
+  allowNavigation = true 
 }: BookingProgressIndicatorProps) {
   const pathname = usePathname()
   const [currentStep, setCurrentStep] = useState(1)
   const [completedSteps, setCompletedSteps] = useState<number[]>([])
-  const [previousSteps, setPreviousSteps] = useState<number[]>([])
-  const [animatingSteps, setAnimatingSteps] = useState<number[]>([])
-  const progressRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     // Determine current step based on pathname
@@ -129,18 +123,9 @@ export function BookingProgressIndicator({
         }
       }
       
-      // Detect newly completed steps for celebration
-      const newlyCompleted = completedIds.filter(id => !previousSteps.includes(id))
-      
-      if (newlyCompleted.length > 0 && showCelebration) {
-        setAnimatingSteps(newlyCompleted)
-        setTimeout(() => setAnimatingSteps([]), 1000) // Clear animation after 1 second
-      }
-      
-      setPreviousSteps(completedSteps)
       setCompletedSteps(completedIds)
     }
-  }, [pathname, completedSteps, previousSteps, showCelebration])
+  }, [pathname])
 
   const handleStepClick = (step: ProgressStep) => {
     if (!allowNavigation) return
@@ -174,79 +159,56 @@ export function BookingProgressIndicator({
   }
 
   const getStepStatus = (step: ProgressStep) => {
-    if (completedSteps.includes(step.order)) {
-      if (animatingSteps.includes(step.order)) return 'celebrating'
-      return 'completed'
-    }
+    if (completedSteps.includes(step.order)) return 'completed'
     if (step.order === currentStep) return 'current'
     return 'upcoming'
   }
 
   const getStepClasses = (step: ProgressStep) => {
     const status = getStepStatus(step)
-    const baseClasses = 'progress-step transition-all duration-300 ease-out'
+    const baseClasses = 'progress-step'
     
     switch (status) {
-      case 'celebrating':
-        return `${baseClasses} progress-step-celebrating animate-step-celebration`
       case 'completed':
         return `${baseClasses} progress-step-completed ${allowNavigation ? 'cursor-pointer hover:scale-105' : ''}`
       case 'current':
-        return `${baseClasses} progress-step-active animate-pulse-current`
+        return `${baseClasses} progress-step-active`
       default:
-        return `${baseClasses} progress-step-upcoming ${allowNavigation && completedSteps.includes(step.order - 1) ? 'cursor-pointer hover:scale-105 hover:border-primary/50' : ''}`
+        return `${baseClasses} ${allowNavigation && completedSteps.includes(step.order - 1) ? 'cursor-pointer hover:scale-105 hover:border-primary/50' : ''}`
     }
   }
 
   const getLineClasses = (stepOrder: number) => {
-    const baseClasses = 'progress-line transition-all duration-500 ease-out'
-    return completedSteps.includes(stepOrder) 
-      ? `${baseClasses} progress-line-completed` 
-      : `${baseClasses} progress-line-pending`
-  }
-
-  const getProgressPercentage = () => {
-    const totalSteps = steps.length
-    const progress = currentStep / totalSteps
-    return Math.min(progress * 100, 100)
+    return completedSteps.includes(stepOrder) ? 'progress-line-completed' : 'progress-line'
   }
 
   return (
     <div className={`w-full bg-white border-b border-gray-100 shadow-sm ${className}`}>
       <div className="container mx-auto px-4 py-6">
-        {/* Animated Progress Bar - Mobile/Tablet */}
-        <div className="sm:hidden mb-6">
-          <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div 
-              className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-primary-dark rounded-full transition-all duration-700 ease-out"
-              style={{ width: `${getProgressPercentage()}%` }}
-            />
-            <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-progress-shimmer rounded-full" />
-          </div>
-        </div>
-
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           {steps.map((step, index) => (
             <div key={step.id} className="flex items-center flex-1">
               {/* Step Circle */}
               <div className="flex flex-col items-center">
-                <div 
-                  onClick={() => allowNavigation && handleStepClick(step)}
-                  className={allowNavigation ? 'cursor-pointer' : ''}
+                <button
+                  onClick={() => handleStepClick(step)}
+                  className={getStepClasses(step)}
+                  disabled={!allowNavigation}
+                  aria-label={`Step ${step.order}: ${step.title}`}
                 >
-                  <StepCheckmark
-                    isCompleted={completedSteps.includes(step.order)}
-                    stepNumber={step.order}
-                    className={getStepClasses(step)}
-                  />
-                </div>
+                  {completedSteps.includes(step.order) ? (
+                    <CheckIcon className="w-6 h-6" />
+                  ) : (
+                    <span className="text-sm font-bold">{step.order}</span>
+                  )}
+                </button>
                 
                 {/* Step Labels - Hidden on mobile, shown on larger screens */}
                 <div className="hidden sm:flex flex-col items-center mt-3">
-                  <span className={`text-sm font-semibold transition-colors duration-300 ${
+                  <span className={`text-sm font-semibold ${
                     getStepStatus(step) === 'current' 
                       ? 'text-primary' 
-                      : getStepStatus(step) === 'completed' || getStepStatus(step) === 'celebrating'
+                      : getStepStatus(step) === 'completed'
                       ? 'text-success'
                       : 'text-gray-500'
                   }`}>
@@ -260,12 +222,7 @@ export function BookingProgressIndicator({
               
               {/* Progress Line - Don't show after last step */}
               {index < steps.length - 1 && (
-                <div className="mx-4 hidden sm:block relative">
-                  <ProgressLine 
-                    isCompleted={completedSteps.includes(step.order)}
-                    className="w-16 h-1"
-                  />
-                </div>
+                <div className={`mx-4 ${getLineClasses(step.order)} hidden sm:block`} />
               )}
             </div>
           ))}

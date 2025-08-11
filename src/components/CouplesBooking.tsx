@@ -4,17 +4,12 @@ import { useState, useEffect } from 'react'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { analytics } from '@/lib/analytics'
-import { useBookingState, type Service as BookingService } from '@/lib/booking-state-v2'
 
-// Use the Service type from booking-state-v2
-type Service = {
+interface Service {
   id: string
   name: string
   duration: number
   price: number
-  category?: string
-  description?: string
-  requires_room_3?: boolean
 }
 
 interface CouplesBookingProps {
@@ -35,26 +30,10 @@ interface BookingData {
 }
 
 export default function CouplesBooking({ selectedService, serviceCategories, onContinue }: CouplesBookingProps) {
-  // Start with false - user must explicitly opt-in to couples booking
   const [isCouplesBooking, setIsCouplesBooking] = useState(false)
   const [sameService, setSameService] = useState(true)
   const [secondaryService, setSecondaryService] = useState<Service | null>(null)
   const [selectedCategory, setSelectedCategory] = useState('')
-  
-  // Use the new booking state manager - must be called before any conditional returns
-  const bookingState = useBookingState()
-
-  // Log initialization
-  useEffect(() => {
-    console.log('[CouplesBooking] Component initialized:', {
-      serviceName: selectedService?.name,
-      initialIsCouplesBooking: isCouplesBooking,
-      localStorage: {
-        bookingData: localStorage.getItem('bookingData'),
-        selectedService: localStorage.getItem('selectedService')
-      }
-    })
-  }, [selectedService?.name, isCouplesBooking])
 
   // Reset secondary service when couples booking is toggled off
   useEffect(() => {
@@ -82,47 +61,6 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
     : selectedService.duration
 
   const handleContinue = () => {
-    // Set booking type
-    bookingState.setBookingType(isCouplesBooking ? 'couples' : 'single')
-    
-    // Set primary service
-    const primaryServiceWithCategory: BookingService = {
-      ...selectedService,
-      category: serviceCategories.find(cat => 
-        cat.services.some(s => s.id === selectedService.id)
-      )?.name || ''
-    }
-    bookingState.setService(primaryServiceWithCategory)
-    
-    // Set secondary service for couples
-    if (isCouplesBooking && secondaryService) {
-      const secondaryServiceWithCategory: BookingService = {
-        ...secondaryService,
-        category: serviceCategories.find(cat => 
-          cat.services.some(s => s.id === secondaryService.id)
-        )?.name || ''
-      }
-      bookingState.setSecondaryService(secondaryServiceWithCategory)
-      
-      // Track couples booking
-      analytics.couplesBookingStarted(
-        selectedService.name,
-        secondaryService.name,
-        totalPrice
-      )
-    } else {
-      bookingState.setSecondaryService(null)
-    }
-    
-    console.log('[CouplesBooking] State saved:', {
-      bookingType: isCouplesBooking ? 'couples' : 'single',
-      serviceName: selectedService.name,
-      secondaryService: secondaryService?.name,
-      totalPrice,
-      totalDuration
-    })
-    
-    // Still call onContinue for compatibility
     const bookingData: BookingData = {
       isCouplesBooking,
       primaryService: selectedService,
@@ -130,6 +68,16 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
       totalPrice,
       totalDuration
     }
+    
+    // Track couples booking if enabled
+    if (isCouplesBooking && secondaryService) {
+      analytics.couplesBookingStarted(
+        selectedService.name,
+        secondaryService.name,
+        totalPrice
+      )
+    }
+    
     onContinue(bookingData)
   }
 
@@ -149,76 +97,33 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
         </div>
       </div>
 
-      {/* Booking Type Selection - Default to Single */}
+      {/* Couples Booking Toggle */}
       <div className="mb-6">
-        <h3 className="font-medium text-primary-dark mb-3">Booking Type</h3>
-        
-        {/* Single Booking Option - Default Selected */}
-        <div className={`mb-3 flex items-center justify-between p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${
-          !isCouplesBooking 
-            ? 'border-primary bg-primary/10 shadow-md' 
-            : 'border-gray-300 bg-white hover:border-primary/50 hover:bg-gray-50'
-        }`}
-        onClick={() => {
-          console.log('[CouplesBooking] Single booking selected')
-          setIsCouplesBooking(false)
-        }}>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg font-medium text-primary-dark">Single Booking</span>
-              {!isCouplesBooking && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                  Selected
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-600">
-              Book this service for yourself
-            </p>
-          </div>
-          <div className={`w-5 h-5 rounded-full border-2 ${
-            !isCouplesBooking ? 'bg-primary border-primary' : 'border-gray-400'
-          }`}>
-            {!isCouplesBooking && (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Couples Booking Option */}
         <div className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${
           isCouplesBooking 
             ? 'border-primary bg-primary/10 shadow-md' 
-            : 'border-gray-300 bg-white hover:border-primary/50 hover:bg-gray-50'
+            : 'border-gray-400 bg-white hover:border-primary/70 hover:bg-primary/5 hover:shadow-sm'
         }`}
-        onClick={() => {
-          console.log('[CouplesBooking] Couples booking selected')
-          setIsCouplesBooking(true)
-        }}>
-          <div className="flex-1">
+        onClick={() => setIsCouplesBooking(!isCouplesBooking)}>
+          <Label htmlFor="couples-toggle" className="cursor-pointer flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg font-medium text-primary-dark">Couples Booking</span>
-              {isCouplesBooking && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                  Selected
+              <span className="text-lg font-medium text-primary-dark">Book as a couple</span>
+              {!isCouplesBooking && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                  Available
                 </span>
               )}
             </div>
             <p className="text-sm text-gray-600">
-              Enjoy your spa experience together with a partner
+              Enjoy your spa experience together
             </p>
-          </div>
-          <div className={`w-5 h-5 rounded-full border-2 ${
-            isCouplesBooking ? 'bg-primary border-primary' : 'border-gray-400'
-          }`}>
-            {isCouplesBooking && (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-              </div>
-            )}
-          </div>
+          </Label>
+          <Switch
+            id="couples-toggle"
+            checked={isCouplesBooking}
+            onCheckedChange={setIsCouplesBooking}
+            className="couples-toggle"
+          />
         </div>
       </div>
 
@@ -356,7 +261,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
         <button
           onClick={handleContinue}
           disabled={isCouplesBooking && !secondaryService}
-          className="btn-continue-premium disabled:opacity-50 disabled:cursor-not-allowed"
+          className="btn-continue disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue to Date & Time Selection
         </button>

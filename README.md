@@ -209,7 +209,7 @@ npm run test:watch   # Run tests in watch mode
 - **services**: Service definitions and pricing
 - **staff**: Staff members and capabilities (uses `can_perform_services` field)
 - **rooms**: Room configurations with equipment flags (`has_body_scrub_equipment`, `is_couples_room`)
-- **bookings**: Booking records with customer info (uses `appointment_date` field)
+- **bookings**: Booking records with customer info (uses `booking_date` field)
 - **admin_users**: Admin authentication and role management
 - **staff_schedules**: Staff availability and schedules
 
@@ -477,10 +477,9 @@ For complete change history, see [`CHANGELOG.md`](./CHANGELOG.md)
 
 3. **Field Name Inconsistencies**
    - **Issues Fixed**:
-     - `booking_date` → `appointment_date` (bookings table) - CURRENT FIELD NAME
-     - `capabilities` array implemented for staff service matching
-     - `service_exclusions` array added for staff restrictions
-     - `payment_option` with CHECK constraints for payment validation
+     - `appointment_date` → `booking_date` (bookings table)
+     - `capabilities` → `can_perform_services` (staff table)
+     - `requires_room_3` → `requires_body_scrub_room` (services)
    - **Resolution**: Updated all references throughout codebase
    - **Impact**: Consistent field naming eliminates query failures
 
@@ -516,10 +515,9 @@ For complete change history, see [`CHANGELOG.md`](./CHANGELOG.md)
 - ✅ **MAJOR**: Resolved critical database schema mismatch issues
 - ✅ **FIXED**: "column rooms.has_body_scrub_equipment does not exist" admin panel error
 - ✅ **UPDATED**: All field name inconsistencies resolved:
-  - `booking_date` → `appointment_date` (CURRENT: appointment_date)
-  - `capabilities` array implemented for service matching
-  - `service_exclusions` array added for staff restrictions
-  - `payment_option` with validation constraints
+  - `appointment_date` → `booking_date`
+  - `capabilities` → `can_perform_services`
+  - `requires_room_3` → `requires_body_scrub_room`
 - ✅ **CORRECTED**: All room IDs changed from number to string (UUID) throughout codebase
 - ✅ **SYNCHRONIZED**: TypeScript types now fully match actual database schema
 - ✅ **RESOLVED**: All TypeScript compilation errors for successful deployment

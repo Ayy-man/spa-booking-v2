@@ -14,7 +14,8 @@ import BookingProgressIndicator from '@/components/booking/BookingProgressIndica
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { StaffCardSkeleton } from '@/components/ui/skeleton-loader'
 import { analytics } from '@/lib/analytics'
-import { useBookingState, type Staff as BookingStaff } from '@/lib/booking-state-v2'
+import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
+import { validateServiceSelection } from '@/lib/booking-step-validation'
 
 type Staff = Database['public']['Tables']['staff']['Row']
 
@@ -40,9 +41,6 @@ export default function StaffPage() {
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [availableStaff, setAvailableStaff] = useState<Staff[]>([])
   const [loadingStaff, setLoadingStaff] = useState<boolean>(true)
-  
-  // Use the new booking state manager
-  const bookingState = useBookingState()
 
   // Remove duplicate function - using imported one from staff-data.ts
 
@@ -54,85 +52,107 @@ export default function StaffPage() {
   }, [selectedService])
 
   useEffect(() => {
-    // Validate and redirect if this is a couples booking
-    const state = bookingState.state
-    if (state.bookingType === 'couples') {
-      console.log('[StaffPage] Couples booking detected, redirecting to couples staff page')
-      window.location.href = '/booking/staff-couples'
-      return
-    }
+    // Get data from state manager
+    const state = loadBookingState()
     
-    // Validate that we can proceed to staff selection
-    const validation = bookingState.canProceedTo('staff')
-    if (!validation.isValid) {
-      console.error('[StaffPage] Invalid state:', validation.errors)
+    if (!state) {
+      console.log('[StaffPage] No booking state found, redirecting to service selection')
       window.location.href = '/booking'
       return
     }
 
-    // Set booking data from new state manager
-    if (state.service) {
-      setSelectedService(state.service)
-      const bookingData: BookingData = {
+    // Set booking data
+    if (state.bookingData) {
+      setBookingData(state.bookingData)
+      setSelectedService(state.bookingData.primaryService)
+    } else if (state.selectedService) {
+      // Fallback for backward compatibility
+      const service = state.selectedService
+      const fallbackBookingData = {
         isCouplesBooking: false,
-        primaryService: state.service,
-        totalPrice: state.service.price,
-        totalDuration: state.service.duration
+        primaryService: service,
+        totalPrice: service.price,
+        totalDuration: service.duration
       }
-      setBookingData(bookingData)
+      setBookingData(fallbackBookingData)
+      setSelectedService(service)
     }
     
-    // Set date and time from new state manager
-    if (state.date) setSelectedDate(state.date)
-    if (state.time) setSelectedTime(state.time)
+    // Set date and time
+    if (state.selectedDate) setSelectedDate(state.selectedDate)
+    if (state.selectedTime) setSelectedTime(state.selectedTime)
     
     // Fetch available staff if we have all required data
-    if (state.service && state.date && state.time) {
-      fetchAvailableStaff(state.service, state.date, state.time)
+    if ((state.bookingData || state.selectedService) && state.selectedDate && state.selectedTime) {
+      fetchAvailableStaff()
     } else {
       console.log('[StaffPage] Missing required data for staff lookup')
-      // Redirect back to date-time selection
-      if (!state.date || !state.time) {
+      // Redirect back to appropriate step
+      if (!state.selectedDate || !state.selectedTime) {
         window.location.href = '/booking/date-time'
       }
     }
   }, [])
 
-  const fetchAvailableStaff = async (service: any, date: string, time: string) => {
-    if (!service || !date || !time) {
-      console.error('[StaffPage] fetchAvailableStaff called without required parameters')
-      setLoadingStaff(false)
-      return
-    }
-
+  const fetchAvailableStaff = async () => {
     setLoadingStaff(true)
     try {
       // Get the service from Supabase to get the correct ID
       const services = await supabaseClient.getServices()
       
+      // Get service data directly from localStorage to avoid race conditions
+      const bookingDataStr = localStorage.getItem('bookingData')
+      const serviceDataStr = localStorage.getItem('selectedService')
+      
+      let selectedServiceData = null
+      
+      if (bookingDataStr) {
+        const parsedBookingData = JSON.parse(bookingDataStr)
+        selectedServiceData = parsedBookingData.primaryService
+      } else if (serviceDataStr) {
+        selectedServiceData = JSON.parse(serviceDataStr)
+      }
+      
+      
       const matchingService = services.find(s => 
-        s.name.toLowerCase() === service.name.toLowerCase()
+        s.name.toLowerCase() === selectedServiceData?.name.toLowerCase()
       )
       
       if (!matchingService) {
-        console.error('[StaffPage] No matching service found in database:', service.name)
-        setAvailableStaff([])
+        // Fallback: show all active staff for now
+        const allStaff = await supabaseClient.getStaff()
+        const activeStaff = allStaff.filter(staff => staff.is_active && staff.id !== 'any')
+        setAvailableStaff(activeStaff)
         return
       }
       
       
-      // Get all staff and filter by capability and availability
+      // Simplified logic: Get all staff and filter by capability and availability
       const allStaff = await supabaseClient.getStaff()
       
-      const appointmentDate = new Date(date)
-      const dayOfWeek = appointmentDate.getDay() // 0 = Sunday, 1 = Monday, etc.
+      const dateData = localStorage.getItem('selectedDate')
+      const timeData = localStorage.getItem('selectedTime')
+      
+      if (!dateData || !timeData) {
+        // If no date/time, show all capable staff using proper capability checking
+        const capableStaff = allStaff.filter(staff => {
+          return staff.is_active && 
+                 staff.id !== 'any' &&
+                 canDatabaseStaffPerformService(staff, matchingService.category)
+        })
+        setAvailableStaff(capableStaff)
+        return
+      }
+      
+      const date = new Date(dateData)
+      const dayOfWeek = date.getDay() // 0 = Sunday, 1 = Monday, etc.
       
       // Filter staff by capability and work day availability using proper functions
       const availableStaffForDay = allStaff.filter(staff => {
         if (!staff.is_active || staff.id === 'any') return false
         
-        const hasCapability = canDatabaseStaffPerformService(staff, matchingService.category, matchingService.name)
-        const worksOnDay = isDatabaseStaffAvailableOnDate(staff, date)
+        const hasCapability = canDatabaseStaffPerformService(staff, matchingService.category)
+        const worksOnDay = isDatabaseStaffAvailableOnDate(staff, dateData)
         
         
         return hasCapability && worksOnDay
@@ -171,29 +191,18 @@ export default function StaffPage() {
 
   const handleContinue = () => {
     if (selectedStaff) {
-      // Save staff selection using new state manager
-      const staffMember = selectedStaff === 'any' 
-        ? { id: 'any', name: 'Any Available Staff' }
-        : availableStaff.find(s => s.id === selectedStaff)
+      // Save staff selection using state manager
+      saveBookingState({ selectedStaff })
       
-      if (staffMember) {
-        const bookingStaff: BookingStaff = {
-          id: staffMember.id,
-          name: staffMember.name || 'Unknown'
-        }
-        bookingState.setStaff(bookingStaff)
-        
-        // Track staff selection completion
-        analytics.track('staff_selected', {
-          staff_name: bookingStaff.name,
-          staff_id: bookingStaff.id,
-          service: selectedService?.name || 'unknown'
-        })
-        
-        // Navigate to next page
-        const nextPage = bookingState.getNextPage('/booking/staff')
-        window.location.href = nextPage
-      }
+      // Track staff selection completion
+      const staffName = selectedStaff === 'any' ? 'Any Available Staff' : availableStaff.find(s => s.id === selectedStaff)?.name || 'Unknown'
+      analytics.track('staff_selected', {
+        staff_name: staffName,
+        staff_id: selectedStaff,
+        service: selectedService?.name || 'unknown'
+      })
+      
+      window.location.href = '/booking/customer-info'
     }
   }
 
@@ -220,10 +229,18 @@ export default function StaffPage() {
               {/* Header */}
               <div className="text-center lg:text-left">
                 <Link 
-                  href="/booking/date-time"
+                  href={validateServiceSelection().isValid ? "/booking/date-time" : "/booking"} 
                   className="btn-tertiary !w-auto px-6 mb-6 inline-flex"
+                  onClick={(e) => {
+                    const validation = validateServiceSelection()
+                    if (!validation.isValid) {
+                      e.preventDefault()
+                      console.log('[StaffPage] Cannot go back: no service selected')
+                      window.location.href = '/booking'
+                    }
+                  }}
                 >
-                  ← Back to Date & Time
+                  ← {validateServiceSelection().isValid ? 'Back to Date & Time' : 'Back to Service Selection'}
                 </Link>
                 <h1 className="text-4xl md:text-5xl font-heading text-primary mb-4">
                   Select Staff Member

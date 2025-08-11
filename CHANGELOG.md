@@ -7,56 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.1] - 2025-08-09
-
-### 🛠️ Critical Bug Fixes
-- **Booking Modal Positioning Fix**: Resolved modal floating in center instead of appearing over selected service
-  - Root cause: BookingPageWrapper CSS stacking context breaking fixed positioning
-  - Solution: Reverted to proven implementation from commit a772bff with clean z-index layering
-  - Impact: Modal now appears prominently over selected service as intended
-- **Database Room Availability Fix**: Fixed "Room not available" error affecting all booking types
-  - Root cause: Multiple schema mismatches (INTEGER vs UUID IDs, missing columns, function logic errors)
-  - Solution: Comprehensive migration 031_fix_room_availability_simple.sql with simplified room assignment
-  - Impact: Room assignment now works correctly for both individual and couples bookings
-- **Appointment Search Logic Fix**: Eliminated false positive matches in check-in system
-  - Root cause: Simple substring matching causing "ayman" to match "testman four"
-  - Solution: Implemented precise word-boundary matching with starts-with priority
-  - Impact: Search now accurately finds intended customers without false positives
-
-### 🎨 UI/UX Improvements  
-- **Scroll Icon Enhancement**: Fixed scroll indicator covering staff names on couples staff page
-  - Moved icon from center to right side positioning
-  - Added auto-hide after 5 seconds with smooth fade transition
-  - Improved user experience without content interference
-
-### 🔧 Technical Improvements
-- **Search Algorithm Enhancement**: Advanced customer search with multiple matching strategies
-  - Exact word matching with starts-with priority
-  - Minimum character requirements for substring matching  
-  - Phone number matching by ending digits
-  - Email prefix and exact matching logic
-- **CSS Positioning Optimization**: Restored reliable modal positioning architecture
-- **Database Function Simplification**: Streamlined room assignment logic without enum dependencies
-
-### 📁 Files Modified
-- `/src/app/booking/page.tsx` - Modal positioning fix
-- `/src/app/booking/staff-couples/page.tsx` - Scroll icon improvements
-- `/src/app/api/appointments/checkin/route.ts` - Search logic enhancement
-- `/supabase/migrations/031_fix_room_availability_simple.sql` - Database room availability fix
-
-### 🧪 Testing & Quality Assurance
-- Comprehensive manual testing of all booking flows
-- Database migration testing with zero-downtime deployment
-- Cross-browser modal positioning verification
-- Search accuracy testing with multiple customer profiles
-- End-to-end booking system validation
-
-### 📊 System Reliability Improvements
-- Booking success rate increased to 99.8%
-- Search accuracy improved to 99.9%
-- Room assignment success rate: 100%
-- Zero critical bugs outstanding
-
 ## [1.2.0] - 2025-08-06
 
 ### 🎉 Major Features Added
@@ -178,20 +128,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Release Date | Key Features | Status |
 |---------|-------------|--------------|---------|
-| 1.2.1 | 2025-08-09 | Critical bug fixes, modal positioning, room availability, search accuracy | 🚀 Current |
-| 1.2.0 | 2025-08-06 | Mobile calendar, confetti animations, security hardening | ✅ Stable |
+| 1.2.0 | 2025-08-06 | Mobile calendar, confetti animations, security hardening | 🚀 Current |
 | 1.1.0 | 2025-01-27 | Admin panel, real-time monitoring, couples booking | ✅ Stable |
 | 1.0.0 | 2025-01-15 | Core booking system, mobile-responsive design | ✅ Foundation |
 
 ## Upgrade Notes
-
-### Upgrading to 1.2.1
-- **Database**: Migration 031 required for room availability fix (zero-downtime deployment)
-- **Frontend**: Modal positioning improvements are backward compatible
-- **Search**: Enhanced search algorithm maintains existing API endpoints
-- **Breaking Changes**: None - all changes are backward compatible
-- **Testing**: Run full booking flow tests to validate modal and room assignment functionality
-- **Critical**: This release fixes system-breaking bugs - immediate deployment recommended
 
 ### Upgrading to 1.2.0
 - **Database**: No migration required - schema updates are backward compatible

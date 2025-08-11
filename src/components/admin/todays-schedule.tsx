@@ -143,8 +143,7 @@ export function TodaysSchedule({
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4 mx-auto"></div>
-          {/* eslint-disable-next-line react/no-unescaped-entities */}
-          <p className="text-gray-600">Loading today's schedule...</p>
+          <p className="text-gray-600">Loading today&apos;s schedule...</p>
         </div>
       </div>
     )
@@ -185,83 +184,56 @@ export function TodaysSchedule({
         
         {displayMode === "dashboard" && (
           <div className="flex items-center space-x-3">
-            {/* Date Toggle with enhanced micro-interactions */}
-            <div className="flex bg-gray-100 rounded-lg p-1 shadow-sm">
+            {/* Date Toggle */}
+            <div className="flex bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewDate('today')}
                 className={cn(
-                  "px-4 py-2 text-sm font-medium rounded-md transition-all duration-300 ease-out relative",
+                  "px-3 py-1 text-sm font-medium rounded transition-colors",
                   viewDate === 'today' 
-                    ? "bg-white text-gray-900 shadow-lg shadow-gray-200/50 scale-105" 
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 hover:scale-102"
+                    ? "bg-white text-gray-900 shadow-sm" 
+                    : "text-gray-600 hover:text-gray-900"
                 )}
               >
-                <span className="relative z-10">Today</span>
-                {viewDate === 'today' && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/20 rounded-md opacity-20"></div>
-                )}
+                Today
               </button>
               <button
                 onClick={() => setViewDate('tomorrow')}
                 className={cn(
-                  "px-4 py-2 text-sm font-medium rounded-md transition-all duration-300 ease-out relative",
+                  "px-3 py-1 text-sm font-medium rounded transition-colors",
                   viewDate === 'tomorrow' 
-                    ? "bg-white text-gray-900 shadow-lg shadow-gray-200/50 scale-105" 
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 hover:scale-102"
+                    ? "bg-white text-gray-900 shadow-sm" 
+                    : "text-gray-600 hover:text-gray-900"
                 )}
               >
-                <span className="relative z-10">Tomorrow</span>
-                {viewDate === 'tomorrow' && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/20 rounded-md opacity-20"></div>
-                )}
+                Tomorrow
               </button>
             </div>
             
             <Button
               onClick={fetchTodaysSchedule}
               disabled={loading}
-              className="bg-black text-white hover:bg-gray-900 
-                       transition-all duration-300 ease-out
-                       hover:shadow-lg hover:shadow-gray-400/30 hover:-translate-y-0.5
-                       active:translate-y-0 active:shadow-sm
-                       disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none
-                       group"
+              className="bg-black text-white hover:bg-gray-900"
             >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Refreshing...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" 
-                       fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Refresh
-                </span>
-              )}
+              {loading ? 'Refreshing...' : 'Refresh'}
             </Button>
           </div>
         )}
       </div>
 
-      {/* Filters - Only show in dashboard mode with enhanced animations */}
+      {/* Filters - Only show in dashboard mode */}
       {displayMode === "dashboard" && (
-        <div className="animate-in slide-in-from-top-4 fade-in duration-500 delay-100">
-          <FilterBar
-            onRoomFilter={setSelectedRoom}
-            onStaffFilter={setSelectedStaff}
-            onStatusFilter={setSelectedStatus}
-            onClearFilters={clearFilters}
-            rooms={rooms}
-            staff={staff}
-            selectedRoom={selectedRoom}
-            selectedStaff={selectedStaff}
-            selectedStatus={selectedStatus}
-          />
-        </div>
+        <FilterBar
+          onRoomFilter={setSelectedRoom}
+          onStaffFilter={setSelectedStaff}
+          onStatusFilter={setSelectedStatus}
+          onClearFilters={clearFilters}
+          rooms={rooms}
+          staff={staff}
+          selectedRoom={selectedRoom}
+          selectedStaff={selectedStaff}
+          selectedStatus={selectedStatus}
+        />
       )}
 
       {/* Error Display */}
@@ -271,15 +243,14 @@ export function TodaysSchedule({
         </Card>
       )}
 
-      {/* Schedule Grid with enhanced animations */}
+      {/* Schedule Grid */}
       {filteredBookings.length === 0 ? (
-        <Card className="p-8 text-center animate-in fade-in duration-500 delay-200 
-                       hover:shadow-lg hover:shadow-gray-200/30 transition-shadow duration-300">
+        <Card className="p-8 text-center">
           <div className="space-y-4">
-            <div className="text-6xl animate-bounce">📅</div>
+            <div className="text-6xl">📅</div>
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {bookings.length === 0 ? "No appointments today" : "No appointments match your filters"}
+{bookings.length === 0 ? "No appointments today" : "No appointments match your filters"}
               </h3>
               <p className="text-gray-600">
                 {bookings.length === 0 
@@ -295,23 +266,15 @@ export function TodaysSchedule({
           "grid gap-4",
           getGridColumns()
         )}>
-          {filteredBookings.map((booking, index) => (
-            <div
+          {filteredBookings.map((booking) => (
+            <BookingCard
               key={booking.id}
-              className="animate-in fade-in duration-500"
-              style={{
-                animationDelay: `${index * 100}ms`,
-                animationFillMode: 'backwards'
-              }}
-            >
-              <BookingCard
-                booking={booking}
-                size={getCardSize()}
-                showRoom={true}
-                showStaff={true}
-                showDuration={true}
-              />
-            </div>
+              booking={booking}
+              size={getCardSize()}
+              showRoom={true}
+              showStaff={true}
+              showDuration={true}
+            />
           ))}
         </div>
       )}
@@ -328,107 +291,33 @@ export function TodaysSchedule({
         </div>
       </Card>
 
-      {/* Summary Stats for Monitor Mode with enhanced micro-interactions */}
+      {/* Summary Stats for Monitor Mode */}
       {displayMode === "monitor" && filteredBookings.length > 0 && (
-        <Card className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200 
-                       hover:shadow-xl hover:shadow-gray-200/50 
-                       transition-all duration-500 ease-out
-                       animate-in fade-in duration-700 delay-500">
-          <div className="grid grid-cols-4 gap-6">
-            {/* Total Appointments */}
-            <div className="text-center group cursor-default">
-              <div className="p-4 rounded-xl bg-white shadow-sm border border-gray-100
-                            transition-all duration-300 ease-out
-                            hover:shadow-lg hover:shadow-gray-200/30 hover:-translate-y-1
-                            hover:border-primary/20 hover:bg-gradient-to-br hover:from-white hover:to-primary/5
-                            group-hover:scale-105">
-                <div className="text-4xl font-bold text-gray-900 mb-2
-                              transition-all duration-300 group-hover:text-primary">
-                  {filteredBookings.length}
-                </div>
-                <div className="text-gray-600 font-medium transition-colors duration-300
-                              group-hover:text-primary-dark">
-                  Total Appointments
-                </div>
+        <Card className="p-6 bg-gray-50 border-gray-200">
+          <div className="grid grid-cols-4 gap-6 text-center">
+            <div>
+              <div className="text-3xl font-bold text-gray-900">
+                {filteredBookings.length}
               </div>
+              <div className="text-gray-600">Total Appointments</div>
             </div>
-            
-            {/* Confirmed */}
-            <div className="text-center group cursor-default">
-              <div className="p-4 rounded-xl bg-white shadow-sm border border-gray-100
-                            transition-all duration-300 ease-out
-                            hover:shadow-lg hover:shadow-green-200/30 hover:-translate-y-1
-                            hover:border-green-200 hover:bg-gradient-to-br hover:from-white hover:to-green-50
-                            group-hover:scale-105">
-                <div className="text-4xl font-bold text-green-600 mb-2
-                              transition-all duration-300 group-hover:text-green-700 group-hover:scale-110">
-                  {filteredBookings.filter(b => b.status === 'confirmed').length}
-                </div>
-                <div className="text-gray-600 font-medium transition-colors duration-300
-                              group-hover:text-green-700">
-                  Confirmed
-                </div>
+            <div>
+              <div className="text-3xl font-bold text-green-600">
+                {filteredBookings.filter(b => b.status === 'confirmed').length}
               </div>
+              <div className="text-gray-600">Confirmed</div>
             </div>
-            
-            {/* In Progress */}
-            <div className="text-center group cursor-default">
-              <div className="p-4 rounded-xl bg-white shadow-sm border border-gray-100
-                            transition-all duration-300 ease-out
-                            hover:shadow-lg hover:shadow-yellow-200/30 hover:-translate-y-1
-                            hover:border-yellow-200 hover:bg-gradient-to-br hover:from-white hover:to-yellow-50
-                            group-hover:scale-105">
-                <div className="text-4xl font-bold text-yellow-600 mb-2
-                              transition-all duration-300 group-hover:text-yellow-700 group-hover:scale-110">
-                  {filteredBookings.filter(b => b.status === 'in_progress').length}
-                </div>
-                <div className="text-gray-600 font-medium transition-colors duration-300
-                              group-hover:text-yellow-700">
-                  In Progress
-                </div>
+            <div>
+              <div className="text-3xl font-bold text-yellow-600">
+                {filteredBookings.filter(b => b.status === 'in_progress').length}
               </div>
+              <div className="text-gray-600">In Progress</div>
             </div>
-            
-            {/* Completed */}
-            <div className="text-center group cursor-default">
-              <div className="p-4 rounded-xl bg-white shadow-sm border border-gray-100
-                            transition-all duration-300 ease-out
-                            hover:shadow-lg hover:shadow-blue-200/30 hover:-translate-y-1
-                            hover:border-blue-200 hover:bg-gradient-to-br hover:from-white hover:to-blue-50
-                            group-hover:scale-105 relative overflow-hidden">
-                <div className="text-4xl font-bold text-blue-600 mb-2
-                              transition-all duration-300 group-hover:text-blue-700 group-hover:scale-110">
-                  {filteredBookings.filter(b => b.status === 'completed').length}
-                </div>
-                <div className="text-gray-600 font-medium transition-colors duration-300
-                              group-hover:text-blue-700">
-                  Completed
-                </div>
-                {/* Celebration sparkles for completed */}
-                <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="text-xs animate-bounce">✨</div>
-                </div>
+            <div>
+              <div className="text-3xl font-bold text-blue-600">
+                {filteredBookings.filter(b => b.status === 'completed').length}
               </div>
-            </div>
-          </div>
-          
-          {/* Progress bar indicator */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-              {/* eslint-disable-next-line react/no-unescaped-entities */}
-              <span>Today's Progress</span>
-              <span className="font-medium">
-                {Math.round((filteredBookings.filter(b => b.status === 'completed').length / filteredBookings.length) * 100)}% Complete
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div 
-                className="h-2 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full 
-                         transition-all duration-1000 ease-out hover:from-blue-600 hover:to-blue-700"
-                style={{ 
-                  width: `${(filteredBookings.filter(b => b.status === 'completed').length / filteredBookings.length) * 100}%` 
-                }}
-              ></div>
+              <div className="text-gray-600">Completed</div>
             </div>
           </div>
         </Card>

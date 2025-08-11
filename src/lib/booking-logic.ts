@@ -1,6 +1,5 @@
 import { addMinutes, format, isAfter, isBefore, parseISO, isEqual } from 'date-fns'
 import { Service, Staff, Room, Booking, BookingConflict, TimeSlot } from '@/types/booking'
-import { STAFF_ASSIGNMENT_CONFIG } from '@/lib/business-config'
 
 // Business constants with enhanced configuration
 export const BUSINESS_HOURS = {
@@ -250,19 +249,13 @@ export function checkBookingConflicts(
     )
     
     if (hasOverlap) {
-      // Staff conflict - but only check if both are actual staff members (not "any" placeholders)
-      const isNewBookingAnyStaff = newBooking.staff_id === STAFF_ASSIGNMENT_CONFIG.anyStaffAlias || 
-                                   newBooking.staff_id === STAFF_ASSIGNMENT_CONFIG.anyStaffId
-      const isExistingBookingAnyStaff = booking.staff_id === STAFF_ASSIGNMENT_CONFIG.anyStaffAlias || 
-                                        booking.staff_id === STAFF_ASSIGNMENT_CONFIG.anyStaffId
-
-      // Only flag staff conflict if both are specific staff members and they're the same
-      if (!isNewBookingAnyStaff && !isExistingBookingAnyStaff && booking.staff_id === newBooking.staff_id) {
+      // Staff conflict
+      if (booking.staff_id === newBooking.staff_id) {
         const bufferMessage = includeBufferTime ? 
           ` (including 15-minute buffer time)` : ''
         conflicts.push({
           type: 'staff',
-          message: `Staff member is already booked for this time slot${bufferMessage}`,
+          message: `Staff member is already booked from ${booking.start_time} to ${booking.end_time}${bufferMessage}`,
           conflicting_booking: booking
         })
       }

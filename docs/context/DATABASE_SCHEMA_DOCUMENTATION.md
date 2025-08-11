@@ -1,8 +1,8 @@
 # Database Schema Documentation - Dermal Spa Booking System
 
-**Last Updated**: August 8, 2025  
+**Last Updated**: July 31, 2025  
 **Database**: Supabase (PostgreSQL)  
-**Schema Version**: 2.0 (Production Ready with Payment Tracking, Walk-ins, and Staff Exclusions)  
+**Schema Version**: 1.6 (Couples Booking + Admin Panel Support)  
 
 ## Executive Summary
 
@@ -25,10 +25,6 @@ The Dermal Spa Booking System uses a normalized PostgreSQL database hosted on Su
 - **v1.4**: Complete service catalog integration
 - **v1.5**: Couples booking support with group management
 - **v1.6**: Admin panel authentication and permissions
-- **v1.7**: Service exclusions and enhanced staff scheduling
-- **v1.8**: Walk-ins table and GoHighLevel integration
-- **v1.9**: Payment tracking with multiple options
-- **v2.0**: Production ready with waiver integration and validation fixes
 
 ## Core Tables
 
@@ -64,7 +60,7 @@ CREATE TABLE services (
 - Service duration determines booking time slots
 
 ### 2. Staff Table
-**Purpose**: Staff member profiles, capabilities, and scheduling
+**Purpose**: Staff member profiles and availability
 
 ```sql
 CREATE TABLE staff (
@@ -72,16 +68,9 @@ CREATE TABLE staff (
   name TEXT NOT NULL,
   email TEXT UNIQUE,
   phone TEXT,
-  specialties TEXT,
-  capabilities service_category[] NOT NULL DEFAULT '{}',
-  work_days INTEGER[] NOT NULL DEFAULT '{}',
-  default_room_id INTEGER REFERENCES rooms(id),
-  role staff_role DEFAULT 'therapist',
-  initials TEXT,
-  hourly_rate NUMERIC,
   is_active BOOLEAN DEFAULT TRUE,
-  auth_user_id UUID,
-  service_exclusions TEXT[] DEFAULT '{}',
+  default_room_id INTEGER REFERENCES rooms(id),
+  work_schedule JSONB, -- {mon: true, tue: false, ...}
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -89,21 +78,22 @@ CREATE TABLE staff (
 
 **Key Features**:
 - 4 active staff members: Selma, Tanisha, Leonel, Robyn
-- Capabilities array for service category matching
-- Work days as integer array (0-6 for Sunday-Saturday)
-- Service exclusions for services staff cannot perform
+- Individual work schedules (e.g., Leonel only works Sundays)
 - Default room assignments for efficiency
-- Role-based system with hourly rate tracking
+- Contact information for admin communications
 
-**Work Days Array Format**:
-- Array of integers where 0=Sunday, 1=Monday, etc.
-- Example: [0,1,3,5,6] = Sun, Mon, Wed, Fri, Sat
-
-**Staff Schedules**:
-- Robyn Camacho: [0,3,4,5,6] (off Mon/Tue)
-- Selma Villaver: [0,1,2,3,4,5,6] (all days)
-- Tanisha Harris: [0,1,3,5,6] (off Tue/Thu)
-- Leonel Sidon: [0] (Sunday only)
+**Work Schedule Format**:
+```json
+{
+  "monday": true,
+  "tuesday": false,
+  "wednesday": true,
+  "thursday": false,
+  "friday": true,
+  "saturday": true,
+  "sunday": false
+}
+```
 
 ### 3. Staff Capabilities Table
 **Purpose**: Define which services each staff member can perform
@@ -189,151 +179,39 @@ CREATE TABLE bookings (
   end_time TIME NOT NULL,
   duration INTEGER NOT NULL, -- minutes
   total_price DECIMAL(10,2) NOT NULL,
-  discount DECIMAL DEFAULT 0,
-  final_price DECIMAL(10,2) NOT NULL CHECK (final_price >= 0),
+  final_price DECIMAL(10,2) NOT NULL,
   status booking_status DEFAULT 'pending',
   payment_status payment_status DEFAULT 'pending',
   notes TEXT,
   internal_notes TEXT,
+  special_requests TEXT,
   
   -- Couples Booking Support
   booking_group_id UUID,
-  booking_type VARCHAR DEFAULT 'single' CHECK (booking_type IN ('single', 'couple', 'group')),
-  
-  -- Waiver Integration
-  waiver_signed BOOLEAN DEFAULT false,
-  waiver_data JSONB,
-  waiver_signed_at TIMESTAMP WITH TIME ZONE,
-  
-  -- Payment Tracking
-  payment_option TEXT NOT NULL DEFAULT 'deposit' CHECK (payment_option IN ('deposit', 'full_payment', 'pay_on_location')),
+  booking_type booking_type_enum DEFAULT 'individual',
   
   -- Tracking Fields
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  checked_in_at TIMESTAMP WITH TIME ZONE,
+  confirmed_at TIMESTAMP WITH TIME ZONE,
   completed_at TIMESTAMP WITH TIME ZONE,
   cancelled_at TIMESTAMP WITH TIME ZONE,
-  cancellation_reason TEXT,
-  created_by TEXT
+  created_by TEXT DEFAULT 'customer'
 );
 ```
 
 **Status Management**:
 - **booking_status**: pending, confirmed, in_progress, completed, cancelled, no_show
-- **payment_status**: pending, paid, partial, refunded, failed, not_applicable
-- **payment_option**: deposit ($30), full_payment (service cost), pay_on_location (collect at spa)
+- **payment_status**: pending, paid, partial, refunded, not_applicable
 
-**Enhanced Features**:
+**Couples Booking Features**:
 - `booking_group_id`: Links related couple bookings
-- `booking_type`: single, couple, group bookings
-- `waiver_signed`: Digital waiver completion tracking
-- `payment_option`: Enhanced payment method selection
-- Atomic operations ensure data consistency
-
-### 7. Walk-ins Table
-**Purpose**: Walk-in customer management and immediate service requests
-
-```sql
-CREATE TABLE walk_ins (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id UUID,
-  booking_id UUID,
-  customer_name TEXT NOT NULL,
-  customer_email TEXT,
-  customer_phone TEXT NOT NULL,
-  service_name TEXT NOT NULL,
-  service_category TEXT NOT NULL DEFAULT 'general',
-  scheduling_type TEXT NOT NULL DEFAULT 'walk_in',
-  scheduled_date DATE,
-  scheduled_time TIME,
-  notes TEXT,
-  status TEXT NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'served', 'cancelled', 'no_show')),
-  checked_in_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  completed_at TIMESTAMP WITH TIME ZONE,
-  ghl_webhook_sent BOOLEAN DEFAULT false,
-  ghl_webhook_sent_at TIMESTAMP WITH TIME ZONE,
-  created_by UUID,
-  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-```
-
-**Key Features**:
-- Walk-in and scheduled appointment support
-- Customer information capture with optional linking
-- Service selection and categorization
-- Status validation with check constraints
-- GoHighLevel webhook integration tracking
-- Automatic timestamp management with triggers
-- Performance indexes for faster queries
-
-### 8. Payments Table
-**Purpose**: Payment transaction tracking and reconciliation
-
-```sql
-CREATE TABLE payments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  booking_id UUID REFERENCES bookings(id) NOT NULL,
-  amount DECIMAL NOT NULL CHECK (amount > 0),
-  payment_method TEXT NOT NULL,
-  transaction_id TEXT,
-  status payment_status DEFAULT 'pending',
-  processed_at TIMESTAMP WITH TIME ZONE,
-  notes TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-```
-
-**Key Features**:
-- Links payments to specific bookings
-- Multiple payment methods support
-- Transaction ID tracking for external payment processors
-- Payment status lifecycle management
-- Processing timestamp for reconciliation
-
-### 9. Waivers Table
-**Purpose**: Digital waiver management and liability protection
-
-```sql
-CREATE TABLE waivers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id UUID REFERENCES customers(id),
-  booking_id UUID REFERENCES bookings(id),
-  service_category TEXT NOT NULL,
-  service_name TEXT NOT NULL,
-  signature TEXT NOT NULL,
-  agreed_to_terms BOOLEAN NOT NULL DEFAULT false,
-  medical_conditions TEXT,
-  allergies TEXT,
-  skin_conditions TEXT,
-  medications TEXT,
-  pregnancy_status BOOLEAN,
-  previous_waxing BOOLEAN,
-  recent_sun_exposure BOOLEAN,
-  emergency_contact_name TEXT NOT NULL,
-  emergency_contact_phone TEXT NOT NULL,
-  waiver_content JSONB,
-  ip_address INET,
-  user_agent TEXT,
-  signed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-```
-
-**Key Features**:
-- Digital signature capture
-- Comprehensive medical and health questionnaire
-- Service-specific waiver content
-- IP address and user agent tracking for legal validity
-- Emergency contact information
-- Medical condition and allergy tracking
+- `booking_type`: individual, couples_primary, couples_secondary
+- Atomic operations ensure both bookings succeed or fail together
 
 ## Admin Panel Authentication Schema
 
-### 10. Admin Users Table
+### 7. Admin Users Table
 **Purpose**: Role-based access control for admin panel
 
 ```sql

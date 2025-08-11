@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { supabaseClient } from '@/lib/supabase'
 import { Database } from '@/types/database'
 import { getServiceCategory, canDatabaseStaffPerformService, isDatabaseStaffAvailableOnDate } from '@/lib/staff-data'
-import { useBookingState, type Staff as BookingStaff } from '@/lib/booking-state-v2'
+import { validateServiceSelection } from '@/lib/booking-step-validation'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -38,61 +38,22 @@ export default function CouplesStaffPage() {
   const [secondaryServiceStaff, setSecondaryServiceStaff] = useState<Staff[]>([])
   const [loadingStaff, setLoadingStaff] = useState<boolean>(true)
   const [staffMap, setStaffMap] = useState<Record<string, string>>({})
-  const [showScrollIcon, setShowScrollIcon] = useState<boolean>(true)
-  
-  // Use the new booking state manager
-  const bookingState = useBookingState()
 
   // Remove duplicate function - using imported one from staff-data.ts
 
   useEffect(() => {
-    // Validate this is a couples booking
-    const state = bookingState.state
-    
-    if (state.bookingType !== 'couples') {
-      console.error('[CouplesStaffPage] ERROR: Single booking incorrectly routed to couples staff page!')
-      console.log('[CouplesStaffPage] Redirecting to single staff page...')
-      window.location.href = '/booking/staff'
-      return
-    }
-    
-    // Validate that we can proceed to staff selection
-    const validation = bookingState.canProceedTo('staff-couples')
-    if (!validation.isValid) {
-      console.error('[CouplesStaffPage] Invalid state:', validation.errors)
-      window.location.href = '/booking'
-      return
-    }
-    
-    // Double check - couples booking should have secondary service
-    if (!state.secondaryService) {
-      console.error('[CouplesStaffPage] ERROR: Couples booking without secondary service!')
-      console.log('[CouplesStaffPage] Redirecting to booking page...')
-      window.location.href = '/booking'
-      return
-    }
-    
-    // Set booking data from new state manager
-    const bookingData: BookingData = {
-      isCouplesBooking: true,
-      primaryService: state.service!,
-      secondaryService: state.secondaryService,
-      totalPrice: (state.service?.price || 0) + (state.secondaryService?.price || 0),
-      totalDuration: Math.max(state.service?.duration || 0, state.secondaryService?.duration || 0)
-    }
-    setBookingData(bookingData)
-    
-    if (state.date) setSelectedDate(state.date)
-    if (state.time) setSelectedTime(state.time)
-  }, [])
+    // Get data from localStorage
+    const bookingDataStr = localStorage.getItem('bookingData')
+    const dateData = localStorage.getItem('selectedDate')
+    const timeData = localStorage.getItem('selectedTime')
 
-  // Auto-hide scroll icon after 5 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowScrollIcon(false)
-    }, 5000)
-
-    return () => clearTimeout(timer)
+    if (bookingDataStr) {
+      const parsedBookingData = JSON.parse(bookingDataStr)
+      setBookingData(parsedBookingData)
+    }
+    
+    if (dateData) setSelectedDate(dateData)
+    if (timeData) setSelectedTime(timeData)
   }, [])
 
   // Separate useEffect to fetch staff when all data is available
@@ -116,7 +77,7 @@ export default function CouplesStaffPage() {
       const primaryServiceCapableStaff = allStaff.filter(staff => {
         if (!staff.is_active || staff.id === 'any') return false
         
-        const hasCapability = canDatabaseStaffPerformService(staff, primaryServiceCategory, bookingData.primaryService.name)
+        const hasCapability = canDatabaseStaffPerformService(staff, primaryServiceCategory)
         const worksOnDay = isDatabaseStaffAvailableOnDate(staff, selectedDate)
         
         
@@ -131,7 +92,7 @@ export default function CouplesStaffPage() {
         secondaryServiceCapableStaff = allStaff.filter(staff => {
           if (!staff.is_active || staff.id === 'any') return false
           
-          const hasCapability = canDatabaseStaffPerformService(staff, secondaryServiceCategory, bookingData.secondaryService?.name)
+          const hasCapability = canDatabaseStaffPerformService(staff, secondaryServiceCategory)
           const worksOnDay = isDatabaseStaffAvailableOnDate(staff, selectedDate)
           
           
@@ -198,37 +159,22 @@ export default function CouplesStaffPage() {
   }, [bookingData, selectedDate, selectedTime, fetchAvailableStaff])
 
   const handleContinue = () => {
-    if (!primaryStaff || !secondaryStaff) {
+    if (bookingData?.isCouplesBooking && (!primaryStaff || !secondaryStaff)) {
       alert('Please select staff for both people')
       return
     }
-
-    // Save staff selections using new state manager
-    const primaryStaffMember = primaryStaff === 'any' 
-      ? { id: 'any', name: 'Any Available Staff' }
-      : availableStaff.find(s => s.id === primaryStaff)
     
-    const secondaryStaffMember = secondaryStaff === 'any'
-      ? { id: 'any', name: 'Any Available Staff' }
-      : availableStaff.find(s => s.id === secondaryStaff)
-    
-    if (primaryStaffMember && secondaryStaffMember) {
-      const primaryBookingStaff: BookingStaff = {
-        id: primaryStaffMember.id,
-        name: primaryStaffMember.name || 'Unknown'
-      }
-      const secondaryBookingStaff: BookingStaff = {
-        id: secondaryStaffMember.id,
-        name: secondaryStaffMember.name || 'Unknown'
-      }
-      
-      bookingState.setStaff(primaryBookingStaff)
-      bookingState.setSecondaryStaff(secondaryBookingStaff)
-      
-      // Navigate to next page
-      const nextPage = bookingState.getNextPage('/booking/staff-couples')
-      window.location.href = nextPage
+    if (!bookingData?.isCouplesBooking && !primaryStaff) {
+      alert('Please select a staff member')
+      return
     }
+
+    localStorage.setItem('selectedStaff', primaryStaff)
+    if (bookingData?.isCouplesBooking) {
+      localStorage.setItem('secondaryStaff', secondaryStaff)
+    }
+    
+    window.location.href = '/booking/customer-info'
   }
 
   const formatDate = (dateString: string) => {
@@ -308,26 +254,21 @@ export default function CouplesStaffPage() {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4 max-w-4xl">
-        {/* Floating scroll cue for couples selection (right side) */}
-        {bookingData?.isCouplesBooking && showScrollIcon && (
-          <div className="fixed right-6 top-[40vh] z-30 pointer-events-none select-none transition-opacity duration-500">
-            <div className="flex flex-col items-center text-primary">
-              <div className="bg-primary/10 text-primary rounded-full p-2 shadow-md animate-bounce">
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </div>
-              <span className="mt-1 text-xs text-primary/80">Scroll</span>
-            </div>
-          </div>
-        )}
         {/* Header */}
         <div className="text-center mb-8">
           <Link 
-            href="/booking/date-time"
+            href={validateServiceSelection().isValid ? "/booking/date-time" : "/booking"} 
             className="text-primary hover:text-primary-dark transition-colors"
+            onClick={(e) => {
+              const validation = validateServiceSelection()
+              if (!validation.isValid) {
+                e.preventDefault()
+                console.log('[StaffCouplesPage] Cannot go back: no service selected')
+                window.location.href = '/booking'
+              }
+            }}
           >
-            ← Back to Date & Time
+            ← {validateServiceSelection().isValid ? 'Back to Date & Time' : 'Back to Service Selection'}
           </Link>
           <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
             Select Staff Members

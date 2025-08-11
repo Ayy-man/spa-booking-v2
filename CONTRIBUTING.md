@@ -286,7 +286,7 @@ type DatabaseBooking = {
   service_id: string         // UUID string
   staff_id: string          // UUID string
   room_id: string           // UUID string
-  appointment_date: string  // Current field name (was booking_date)
+  booking_date: string      // Not appointment_date
   booking_time: string
   customer_name: string
   customer_email: string

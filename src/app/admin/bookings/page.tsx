@@ -134,29 +134,10 @@ export default function AdminBookingsPage() {
         </div>
         <button
           onClick={fetchBookings}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark 
-                   transition-all duration-300 ease-out
-                   hover:shadow-lg hover:shadow-primary/30 hover:-translate-y-0.5
-                   active:translate-y-0 active:shadow-sm
-                   disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none
-                   group"
+          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
           disabled={loading}
         >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Refreshing...
-            </span>
-          ) : (
-            <span className="flex items-center gap-2">
-              <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" 
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Refresh
-            </span>
-          )}
+          {loading ? 'Refreshing...' : 'Refresh'}
         </button>
       </div>
 
@@ -174,104 +155,66 @@ export default function AdminBookingsPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden 
-                      hover:shadow-xl transition-shadow duration-300">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+              <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                               hover:text-primary transition-colors duration-200">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Customer
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                               hover:text-primary transition-colors duration-200">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Service
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                               hover:text-primary transition-colors duration-200">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date & Time
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                               hover:text-primary transition-colors duration-200">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Staff
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                               hover:text-primary transition-colors duration-200">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Room
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                               hover:text-primary transition-colors duration-200">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                               hover:text-primary transition-colors duration-200">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Payment
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                               hover:text-primary transition-colors duration-200">
+                    </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Price
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {bookings.map((booking, index) => (
-                  <tr 
-                    key={booking.id} 
-                    className="hover:bg-gradient-to-r hover:from-primary/5 hover:to-accent/10 
-                             transition-all duration-300 ease-out hover:shadow-sm
-                             group cursor-pointer"
-                    style={{
-                      animationDelay: `${index * 50}ms`,
-                      animationFillMode: 'backwards'
-                    }}
-                  >
+                {bookings.map((booking) => (
+                  <tr key={booking.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900 group-hover:text-primary-dark
-                                       transition-colors duration-200">
+                        <div className="text-sm font-medium text-gray-900">
                           {booking.customer?.first_name} {booking.customer?.last_name}
                         </div>
-                        <div className="text-sm text-gray-500 group-hover:text-gray-700
-                                       transition-colors duration-200">
+                        <div className="text-sm text-gray-500">
                           {booking.customer?.email}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 group-hover:text-primary-dark
-                                     transition-colors duration-200">{booking.service?.name}</div>
-                      <div className="text-sm text-gray-500 group-hover:text-gray-700
-                                     transition-colors duration-200">{booking.duration} mins</div>
+                      <div className="text-sm text-gray-900">{booking.service?.name}</div>
+                      <div className="text-sm text-gray-500">{booking.duration} mins</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 group-hover:text-primary-dark
-                                     transition-colors duration-200">{formatDate(booking.appointment_date)}</div>
-                      <div className="text-sm text-gray-500 group-hover:text-gray-700
-                                     transition-colors duration-200">{booking.start_time} - {booking.end_time}</div>
+                      <div className="text-sm text-gray-900">{formatDate(booking.appointment_date)}</div>
+                      <div className="text-sm text-gray-500">{booking.start_time} - {booking.end_time}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <div className="text-sm text-gray-900 group-hover:text-primary-dark
-                                       transition-colors duration-200">
-                          {booking.staff?.name}
-                        </div>
-                        {booking.staff?.id === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' && (
-                          <span className="px-2 py-1 text-xs font-semibold bg-amber-100 text-amber-800 rounded-full
-                                         animate-pulse border border-amber-300">
-                            Needs Assignment
-                          </span>
-                        )}
-                      </div>
+                      <div className="text-sm text-gray-900">{booking.staff?.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 group-hover:text-primary-dark
-                                     transition-colors duration-200">{booking.room?.name}</div>
+                      <div className="text-sm text-gray-900">{booking.room?.name}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                       transition-all duration-200 group-hover:scale-105 
-                                       ${getStatusColor(booking.status)}`}>
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(booking.status)}`}>
                         {booking.status}
                       </span>
                     </td>
@@ -280,22 +223,17 @@ export default function AdminBookingsPage() {
                         const paymentInfo = formatPaymentInfo(booking)
                         return (
                           <div>
-                            <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                           transition-all duration-200 group-hover:scale-105
-                                           ${paymentInfo.color}`}>
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${paymentInfo.color}`}>
                               {paymentInfo.main}
                             </span>
-                            <div className="text-xs text-gray-500 mt-1 group-hover:text-gray-700
-                                           transition-colors duration-200">
+                            <div className="text-xs text-gray-500 mt-1">
                               {paymentInfo.sub}
                             </div>
                           </div>
                         )
                       })()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold
-                                   group-hover:text-primary-dark group-hover:scale-105 
-                                   transition-all duration-200">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       ${booking.final_price}
                     </td>
                   </tr>

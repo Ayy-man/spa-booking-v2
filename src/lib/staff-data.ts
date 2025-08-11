@@ -16,7 +16,7 @@ export interface StaffMember {
 // Centralized staff data with capabilities and schedules matching database schema
 export const staffMembers: StaffMember[] = [
   {
-    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    id: 'any',
     name: 'Any Available Staff',
     email: '',
     phone: '',
@@ -84,7 +84,6 @@ export const staffMembers: StaffMember[] = [
 // Staff name mapping for display purposes
 export const staffNameMap = {
   'any': 'Any Available Staff',
-  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa': 'Any Available Staff',
   'selma': 'Selma Villaver',
   'robyn': 'Robyn Camacho',
   'tanisha': 'Tanisha Harris',  
@@ -216,7 +215,7 @@ export const getGHLServiceCategory = (serviceName: string): string => {
 
 // Helper function to check if staff can perform service
 export const canStaffPerformService = (staff: StaffMember, serviceCategory: string, serviceName?: string): boolean => {
-  if (staff.id === 'any' || staff.id === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa') return true
+  if (staff.id === 'any') return true
   
   // Check if staff has the required capability
   const hasCapability = staff.capabilities.includes(serviceCategory) || staff.capabilities.includes('packages')
@@ -246,7 +245,7 @@ export const canStaffPerformService = (staff: StaffMember, serviceCategory: stri
 
 // Helper function to check if staff is available on selected date
 export const isStaffAvailableOnDate = (staff: StaffMember, dateString: string): boolean => {
-  if (!dateString || staff.id === 'any' || staff.id === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa') return true
+  if (!dateString || staff.id === 'any') return true
   
   const date = new Date(dateString)
   const dayOfWeek = date.getDay() // 0=Sunday, 1=Monday, etc.
@@ -288,7 +287,7 @@ export const convertDatabaseStaffToStaffMember = (dbStaff: any): StaffMember => 
 // Helper function to check if a staff member from database can perform a service
 export const canDatabaseStaffPerformService = (dbStaff: any, serviceCategory: string, serviceName?: string): boolean => {
   if (!dbStaff || !dbStaff.capabilities) return false
-  if (dbStaff.id === 'any' || dbStaff.id === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa') return true
+  if (dbStaff.id === 'any') return true
   
   // Check if staff has capability for this service category
   const hasCapability = dbStaff.capabilities.includes(serviceCategory) || dbStaff.capabilities.includes('packages')
@@ -318,7 +317,7 @@ export const canDatabaseStaffPerformService = (dbStaff: any, serviceCategory: st
 
 // Helper function to check if database staff is available on date
 export const isDatabaseStaffAvailableOnDate = (dbStaff: any, dateString: string): boolean => {
-  if (!dateString || dbStaff.id === 'any' || dbStaff.id === 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa') return true
+  if (!dateString || dbStaff.id === 'any') return true
   if (!dbStaff.work_days || !Array.isArray(dbStaff.work_days)) return false
   
   const date = new Date(dateString)

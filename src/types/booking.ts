@@ -98,6 +98,7 @@ export type BookingStatus =
 // Payment option enum
 export type PaymentOption = 
   | 'deposit'
+  | 'full_payment'
   | 'pay_on_location'
 
 // Payment status enum (matches database)

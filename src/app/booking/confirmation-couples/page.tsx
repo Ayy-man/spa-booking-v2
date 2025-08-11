@@ -2,14 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { SuccessConfetti } from '@/components/ui/success-confetti'
-import { CouplesBookingConfirmationCard } from '@/components/ui/success-confirmation-card'
-import { useToast, showSuccessToast } from '@/components/ui/toast-notification'
 import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
-import { resolveStaffForCouplesBooking } from '@/lib/booking-utils'
 
 interface Service {
   id?: string
@@ -46,22 +42,6 @@ export default function CouplesConfirmationPage() {
   const [error, setError] = useState<string>('')
   const [bookingResults, setBookingResults] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [showConfetti, setShowConfetti] = useState(false)
-  const [showSuccessCard, setShowSuccessCard] = useState(false)
-  const { showToast } = useToast()
-
-  // Ensure page starts at the top of the viewport on mount
-  useEffect(() => {
-    requestAnimationFrame(() => {
-      try {
-        window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
-      } catch {
-        window.scrollTo(0, 0)
-      }
-      document.body.scrollTop = 0
-      document.documentElement.scrollTop = 0
-    })
-  }, [])
 
   useEffect(() => {
     // Get all booking data from localStorage
@@ -74,15 +54,6 @@ export default function CouplesConfirmationPage() {
 
     if (bookingDataStr) {
       const parsedBookingData = JSON.parse(bookingDataStr)
-      
-      // SAFEGUARD: Check if this is actually a couples booking
-      if (parsedBookingData.isCouplesBooking !== true) {
-        console.log('[CouplesConfirmation] ERROR: Single booking incorrectly routed to couples confirmation!', parsedBookingData)
-        console.log('[CouplesConfirmation] Redirecting to single confirmation page...')
-        window.location.href = '/booking/confirmation'
-        return
-      }
-      
       setBookingData(parsedBookingData)
     }
     
@@ -119,7 +90,7 @@ export default function CouplesConfirmationPage() {
       }
 
       if (bookingData.isCouplesBooking) {
-        // Handle couples booking with pre-validation
+        // Handle couples booking
         const secondaryServiceData = bookingData.secondaryService 
           ? services.find(s => s.name.toLowerCase() === bookingData.secondaryService!.name.toLowerCase())
           : primaryServiceData // Same service for both
@@ -128,103 +99,19 @@ export default function CouplesConfirmationPage() {
           throw new Error('Secondary service not found in database')
         }
 
-        // Pre-booking validation: Resolve staff assignments
-        console.log('[CouplesBooking] Resolving staff for couples booking:', {
-          selectedStaff,
-          secondaryStaff,
-          primaryService: bookingData.primaryService.name,
-          secondaryService: bookingData.secondaryService?.name || bookingData.primaryService.name,
-          selectedDate,
-          selectedTime,
-          primaryDuration: bookingData.primaryService.duration,
-          secondaryDuration: bookingData.secondaryService?.duration || bookingData.primaryService.duration
-        })
-
-        const staffResolution = await resolveStaffForCouplesBooking(
-          selectedStaff,
-          secondaryStaff || selectedStaff,
-          bookingData.primaryService.name,
-          bookingData.secondaryService?.name || bookingData.primaryService.name,
-          selectedDate,
-          selectedTime,
-          bookingData.primaryService.duration,
-          bookingData.secondaryService?.duration || bookingData.primaryService.duration
-        )
-
-        console.log('[CouplesBooking] Staff resolution result:', staffResolution)
-
-        if (!staffResolution.isValid) {
-          const detailedError = staffResolution.error || 'Staff assignment validation failed'
-          console.error('[CouplesBooking] Staff validation failed:', detailedError)
-          
-          // If the error is about same staff member and we don't have a secondary staff,
-          // let the database function handle the error with better messaging
-          if (detailedError.includes('Cannot book the same staff member') && !secondaryStaff) {
-            console.log('[CouplesBooking] Bypassing same-staff validation - letting database function handle it')
-            // Continue with the booking attempt - the database function will provide better error handling
-          } else {
-            // Try to provide more helpful error messages for other cases
-            let userFriendlyError = detailedError
-            if (detailedError.includes('already booked during this time')) {
-              userFriendlyError = 'One or more staff members are not available at the requested time. Please select a different time slot or different staff members.'
-            } else if (detailedError.includes('not available on')) {
-              userFriendlyError = 'One or more staff members do not work on the selected date. Please choose a different date.'
-            } else if (detailedError.includes('cannot perform')) {
-              userFriendlyError = 'The selected staff members cannot perform the requested services. Please select different staff or services.'
-            }
-            
-            throw new Error(userFriendlyError)
-          }
-        }
-
-        // Use the resolved staff IDs instead of the original selections, or fallback to original if resolution failed
-        const resolvedPrimaryStaffId = staffResolution.isValid ? staffResolution.primaryStaff.id : selectedStaff
-        const resolvedSecondaryStaffId = staffResolution.isValid ? staffResolution.secondaryStaff.id : (secondaryStaff || selectedStaff)
-
-        console.log('[CouplesBooking] Resolved staff IDs:', {
-          original: { primary: selectedStaff, secondary: secondaryStaff },
-          resolved: { primary: resolvedPrimaryStaffId, secondary: resolvedSecondaryStaffId },
-          names: staffResolution.isValid ? 
-            { primary: staffResolution.primaryStaff.name, secondary: staffResolution.secondaryStaff.name } :
-            { primary: 'Unresolved', secondary: 'Unresolved' },
-          validationPassed: staffResolution.isValid
-        })
-
-        // Only validate different staff if resolution was successful
-        if (staffResolution.isValid && resolvedPrimaryStaffId === resolvedSecondaryStaffId) {
-          throw new Error(`Cannot book the same staff member (${staffResolution.primaryStaff.name}) for both people. Please select different staff or different time slots.`)
-        }
-
-        // Use process_couples_booking function with resolved staff
-        console.log('[CouplesBooking] Calling database function with:', {
-          primary_service_id: primaryServiceData.id,
-          secondary_service_id: secondaryServiceData.id,
-          primary_staff_id: resolvedPrimaryStaffId,
-          secondary_staff_id: resolvedSecondaryStaffId,
-          customer_name: customerInfo.name,
-          customer_email: customerInfo.email,
-          customer_phone: customerInfo.phone,
-          appointment_date: selectedDate,
-          start_time: selectedTime,
-          notes: customerInfo.specialRequests,
-          payment_option: 'deposit'
-        })
-
+        // Use process_couples_booking function
         const couplesResult = await supabaseClient.processCouplesBooking({
           primary_service_id: primaryServiceData.id,
           secondary_service_id: secondaryServiceData.id,
-          primary_staff_id: resolvedPrimaryStaffId,
-          secondary_staff_id: resolvedSecondaryStaffId,
+          primary_staff_id: selectedStaff,
+          secondary_staff_id: secondaryStaff || selectedStaff,
           customer_name: customerInfo.name,
           customer_email: customerInfo.email,
           customer_phone: customerInfo.phone,
           appointment_date: selectedDate,
           start_time: selectedTime,
-          notes: customerInfo.specialRequests,
-          payment_option: 'deposit'  // Default to deposit for couples bookings
+          notes: customerInfo.specialRequests
         })
-
-        console.log('[CouplesBooking] Database function result:', couplesResult)
 
         
         if (!couplesResult || couplesResult.length === 0) {
@@ -276,8 +163,8 @@ export default function CouplesConfirmationPage() {
               time: selectedTime,
               duration: bookingData.primaryService.duration,
               price: bookingData.primaryService.price,
-              staff: staffResolution.primaryStaff.name,
-              staffId: resolvedPrimaryStaffId,
+              staff: (staffNameMap as any)[selectedStaff] || selectedStaff,
+              staffId: selectedStaff,
               room: `Room ${processedResults[0].room_id || '11111111-1111-1111-1111-111111111111'}`,
               roomId: (processedResults[0].room_id || 1).toString()
             }
@@ -301,8 +188,8 @@ export default function CouplesConfirmationPage() {
                 time: selectedTime,
                 duration: bookingData.secondaryService.duration,
                 price: bookingData.secondaryService.price,
-                staff: staffResolution.secondaryStaff.name,
-                staffId: resolvedSecondaryStaffId,
+                staff: (staffNameMap as any)[secondaryStaff || selectedStaff] || secondaryStaff || selectedStaff,
+                staffId: secondaryStaff || selectedStaff,
                 room: `Room ${processedResults[1].room_id || 2}`,
                 roomId: (processedResults[1].room_id || 2).toString()
               }
@@ -385,27 +272,6 @@ export default function CouplesConfirmationPage() {
       
       setIsSuccess(true)
       
-      // Show success toast notification
-      showSuccessToast(showToast)('Couples booking confirmed successfully!', {
-        title: 'Success!',
-        duration: 4000
-      })
-      
-      // Trigger confetti animation
-      setTimeout(() => {
-        setShowConfetti(true)
-      }, 500)
-      
-      // Show success card animation
-      setTimeout(() => {
-        setShowSuccessCard(true)
-      }, 800)
-      
-      // Auto-hide confetti after 3 seconds
-      setTimeout(() => {
-        setShowConfetti(false)
-      }, 3500)
-      
       // Clear booking flow data
       localStorage.removeItem('bookingData')
       localStorage.removeItem('selectedService')
@@ -425,39 +291,14 @@ export default function CouplesConfirmationPage() {
       )
       
       let errorMessage = 'Failed to confirm booking. '
-      
-      // Enhanced error message mapping for specific scenarios
-      const errorText = err.message || ''
-      
-      if (errorText.includes('staff_not_available') || errorText.includes('is already booked')) {
-        errorMessage = 'One or more staff members are not available at this time. Please go back and select different staff or a different time slot.'
-      } else if (errorText.includes('no_couples_room') || errorText.includes('No couples rooms available')) {
-        errorMessage = 'No couples rooms (Room 2 or Room 3) are available at this time. Please select a different time slot.'
-      } else if (errorText.includes('Cannot book the same staff member')) {
-        errorMessage = errorText + ' Please select different staff members or different time slots.'
-      } else if (errorText.includes('must be resolved to actual staff member')) {
-        errorMessage = 'There was an issue with staff assignment. Please go back and reselect your preferred staff members.'
-      } else if (errorText.includes('cannot perform') || errorText.includes('not available who can perform')) {
-        errorMessage = errorText + ' Please go back and select different staff members who can perform these services.'
-      } else if (errorText.includes('does not work on')) {
-        errorMessage = errorText + ' Please select a different date or different staff members.'
-      } else if (errorText.includes('Selected room does not have capacity')) {
-        errorMessage = 'The selected room cannot accommodate couples booking. Please try a different time slot.'
-      } else if (errorText.includes('violates check constraint') || errorText.includes('check_duration_matches_times')) {
-        errorMessage = 'There was a scheduling conflict with the service durations. Please try booking again or contact support.'
-      } else if (errorText.includes('duplicate')) {
-        errorMessage = 'A booking already exists for this time slot. Please select a different time.'
-      } else if (errorText.includes('service not found')) {
-        errorMessage = 'One of the selected services is no longer available. Please go back and reselect your services.'
-      } else if (errorText.includes('Primary service not found') || errorText.includes('Secondary service not found')) {
-        errorMessage = 'Selected service is no longer available. Please go back and reselect your services.'
+      if (err.message?.includes('staff_not_available')) {
+        errorMessage = 'One or more staff members are not available at this time. Please go back and select different staff.'
+      } else if (err.message?.includes('no_couples_room')) {
+        errorMessage = 'No couples rooms are available at this time. Please select a different time.'
+      } else if (err.message?.includes('duplicate')) {
+        errorMessage = 'A booking already exists for this time slot.'
       } else {
-        // Default error with the original message if it's user-friendly, otherwise generic
-        if (errorText.length > 0 && errorText.length < 200 && !errorText.includes('undefined') && !errorText.includes('null')) {
-          errorMessage = errorText
-        } else {
-          errorMessage = 'Unable to confirm your booking at this time. Please try again or contact us for assistance.'
-        }
+        errorMessage += err.message || 'Please try again.'
       }
       
       setError(errorMessage)
@@ -549,48 +390,72 @@ export default function CouplesConfirmationPage() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-background py-8">
-        {/* Enhanced Confetti Animation */}
-        <SuccessConfetti
-          isActive={showConfetti}
-          duration={3500}
-          particleCount={150} // More particles for couples celebration
-          colors={[
-            '#10B981', // Success green
-            '#C36678', // Spa primary
-            '#F6C7CF', // Spa accent
-            '#3B82F6', // Blue
-            '#8B5CF6', // Purple
-            '#F59E0B', // Amber
-            '#EF4444', // Rose
-            '#06B6D4', // Cyan
-            '#84CC16'  // Lime
-          ]}
-          shapes={['circle', 'square', 'heart', 'star']}
-        />
-        
-        <div className="container mx-auto px-4 max-w-2xl">
-          <CouplesBookingConfirmationCard
-            bookingData={{
-              primaryService: bookingData.primaryService.name,
-              secondaryService: bookingData.secondaryService?.name || bookingData.primaryService.name,
-              date: formatDate(selectedDate),
-              time: formatTimeRange(selectedTime, bookingData.primaryService.duration),
-              primaryStaff: selectedStaff === 'any' ? 'Any Available Staff' : (staffNameMap[selectedStaff as keyof typeof staffNameMap] || 'Any Available Staff'),
-              secondaryStaff: (secondaryStaff === 'any' || !secondaryStaff) ? 'Any Available Staff' : (staffNameMap[secondaryStaff as keyof typeof staffNameMap] || 'Any Available Staff'),
-              totalPrice: bookingData.totalPrice,
-              customerName: customerInfo.name
-            }}
-            showAnimation={showSuccessCard}
-            className="mb-8"
-          />
-          
-          <div className="text-center space-y-4">
-            <Link href="/" className="btn-primary block animate-gentle-bounce">
-              Return to Home
-            </Link>
-            <Link href="/booking" className="btn-secondary block">
-              Book Another Appointment
-            </Link>
+        <div className="container mx-auto px-4 max-w-2xl text-center">
+          <div className="bg-white rounded-xl shadow-md p-8">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            
+            <h1 className="text-3xl font-heading text-primary-dark mb-4">
+              {bookingData.isCouplesBooking ? 'Couples Booking Confirmed!' : 'Booking Confirmed!'}
+            </h1>
+            
+            <p className="text-gray-600 mb-6">
+              Your appointment{bookingData.isCouplesBooking ? 's have' : ' has'} been successfully booked. 
+              You will receive a confirmation email shortly.
+            </p>
+            
+            <div className="bg-accent rounded-lg p-6 mb-8 text-left">
+              <h2 className="font-semibold text-primary-dark mb-4">Booking Details</h2>
+              
+              {bookingData.isCouplesBooking ? (
+                <div className="space-y-4">
+                  <div className="border-b border-gray-200 pb-4">
+                    <h3 className="font-medium text-primary mb-2">Person 1</h3>
+                    <div className="space-y-1 text-sm">
+                      <div><span className="font-medium">Service:</span> {bookingData.primaryService.name}</div>
+                      <div><span className="font-medium">Staff:</span> {staffNameMap[selectedStaff as keyof typeof staffNameMap]}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="pb-4">
+                    <h3 className="font-medium text-primary mb-2">Person 2</h3>
+                    <div className="space-y-1 text-sm">
+                      <div><span className="font-medium">Service:</span> {bookingData.secondaryService?.name || bookingData.primaryService.name}</div>
+                      <div><span className="font-medium">Staff:</span> {staffNameMap[(secondaryStaff || selectedStaff) as keyof typeof staffNameMap]}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-gray-200 pt-4 space-y-1 text-sm">
+                    <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
+                    <div><span className="font-medium">Time:</span> {formatTimeRange(selectedTime, bookingData.primaryService.duration)}</div>
+                    <div><span className="font-medium">Room:</span> Couples Room</div>
+                    <div><span className="font-medium">Total Price:</span> ${bookingData.totalPrice}</div>
+                    <div><span className="font-medium">Customer:</span> {customerInfo.name}</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 text-sm">
+                  <div><span className="font-medium">Service:</span> {bookingData.primaryService.name}</div>
+                  <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
+                  <div><span className="font-medium">Time:</span> {formatTimeRange(selectedTime, bookingData.primaryService.duration)}</div>
+                  <div><span className="font-medium">Staff:</span> {staffNameMap[selectedStaff as keyof typeof staffNameMap]}</div>
+                  <div><span className="font-medium">Price:</span> ${bookingData.primaryService.price}</div>
+                  <div><span className="font-medium">Customer:</span> {customerInfo.name}</div>
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-4">
+              <Link href="/" className="btn-primary block">
+                Return to Home
+              </Link>
+              <Link href="/booking" className="btn-secondary block">
+                Book Another Appointment
+              </Link>
+            </div>
           </div>
         </div>
       </div>

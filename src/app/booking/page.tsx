@@ -5,19 +5,30 @@ import Link from 'next/link'
 import CouplesBooking from '@/components/CouplesBooking'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import { analytics } from '@/lib/analytics'
-import { useBookingState } from '@/lib/booking-state-v2'
+import { saveBookingState } from '@/lib/booking-state-manager'
 
 export default function BookingPage() {
   const [selectedService, setSelectedService] = useState('')
   const [showCouplesOptions, setShowCouplesOptions] = useState(false)
-  const bookingState = useBookingState()
 
   // Track page view
   useEffect(() => {
     analytics.pageViewed('service_selection', 1)
-    // Only reset if user is intentionally starting a new booking
-    // Don't reset on every page load to avoid clearing progress
   }, [])
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (showCouplesOptions) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showCouplesOptions])
 
   const serviceCategories = [
     {
@@ -96,7 +107,6 @@ export default function BookingPage() {
       ]
     }
   ]
-
 
   return (
     <>
@@ -191,10 +201,10 @@ export default function BookingPage() {
 
       {/* Couples Booking Component - Fixed Position Overlay */}
       {selectedService && showCouplesOptions && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in-0 duration-300">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom-2 duration-300">
-            <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center rounded-t-2xl">
-              <h2 className="text-2xl font-heading font-bold text-primary">
+        <div className="modal-overlay animate-in fade-in-0 duration-300">
+          <div className="modal-content animate-in slide-in-from-bottom-2 duration-300">
+            <div className="modal-header">
+              <h2 className="text-xl sm:text-2xl font-heading font-bold text-primary">
                 Booking Options
               </h2>
               <button
@@ -202,12 +212,12 @@ export default function BookingPage() {
                   setShowCouplesOptions(false)
                   setSelectedService('')
                 }}
-                className="text-gray-400 hover:text-gray-600 text-3xl transition-colors"
+                className="modal-close-btn"
               >
                 ×
               </button>
             </div>
-            <div className="p-8">
+            <div className="modal-body">
               <CouplesBooking
                 selectedService={
                   serviceCategories
@@ -216,10 +226,18 @@ export default function BookingPage() {
                 }
                 serviceCategories={serviceCategories}
                 onContinue={(bookingData) => {
-                  // The new state manager handles storage automatically
-                  // Navigate to the next page based on booking type
-                  const nextPage = bookingState.getNextPage('/booking')
-                  window.location.href = nextPage
+                  // Store booking data using state manager
+                  saveBookingState({ bookingData })
+                  
+                  // Track couples booking selection
+                  analytics.track('couples_booking_selected', {
+                    primary_service: bookingData.primaryService.name,
+                    secondary_service: bookingData.secondaryService?.name,
+                    total_price: bookingData.totalPrice
+                  })
+                  
+                  // Navigate to date/time selection
+                  window.location.href = '/booking/date-time'
                 }}
               />
             </div>

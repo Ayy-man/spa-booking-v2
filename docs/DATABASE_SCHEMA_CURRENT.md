@@ -1,6 +1,6 @@
 # Current Database Schema Documentation - Dermal Spa Booking System
 
-**Last Updated**: August 2025  
+**Last Updated**: January 2025  
 **Database**: Supabase (PostgreSQL)  
 **Schema Version**: Current Production Schema  
 
@@ -160,7 +160,6 @@ CREATE TABLE public.staff (
   hourly_rate numeric,
   is_active boolean DEFAULT true,
   auth_user_id uuid,
-  service_exclusions ARRAY DEFAULT '{}'::text[],
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT staff_pkey PRIMARY KEY (id),
@@ -172,7 +171,6 @@ CREATE TABLE public.staff (
 - Text-based IDs for staff identification
 - Capabilities array matching service categories
 - Work days as integer array (0-6 for Sunday-Saturday)
-- Service exclusions array for services staff cannot perform
 - Default room assignment for efficiency
 - Role-based system for different staff types
 - Hourly rate tracking for payroll
@@ -239,7 +237,7 @@ CREATE TABLE public.bookings (
   waiver_signed boolean DEFAULT false,
   waiver_data jsonb,
   waiver_signed_at timestamp with time zone,
-  payment_option text NOT NULL DEFAULT 'deposit' CHECK (payment_option IN ('deposit', 'full_payment', 'pay_on_location')),
+  payment_option text DEFAULT 'deposit'::text,
   CONSTRAINT bookings_pkey PRIMARY KEY (id),
   CONSTRAINT bookings_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customers(id),
   CONSTRAINT bookings_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),
@@ -256,8 +254,7 @@ CREATE TABLE public.bookings (
 - Waiver integration with signature tracking
 - Timestamped status changes (check-in, completion, cancellation)
 - Internal notes separate from customer-visible notes
-- Payment options: deposit, full_payment, pay_on_location
-- Enhanced payment tracking with validation constraints
+- Flexible payment options
 
 ### 8. Payments Table
 **Purpose**: Payment transaction tracking and management
@@ -368,32 +365,33 @@ CREATE TABLE public.walk_ins (
   customer_email text,
   customer_phone text NOT NULL,
   service_name text NOT NULL,
-  service_category text NOT NULL DEFAULT 'general',
-  scheduling_type text NOT NULL DEFAULT 'walk_in',
+  service_category text NOT NULL,
+  scheduling_type text NOT NULL DEFAULT 'immediate'::text,
   scheduled_date date,
   scheduled_time time without time zone,
   notes text,
-  status text NOT NULL DEFAULT 'waiting' CHECK (status IN ('waiting', 'served', 'cancelled', 'no_show')),
-  checked_in_at timestamp with time zone DEFAULT now(),
+  status text DEFAULT 'pending'::text,
+  checked_in_at timestamp with time zone,
   completed_at timestamp with time zone,
   ghl_webhook_sent boolean DEFAULT false,
   ghl_webhook_sent_at timestamp with time zone,
   created_by uuid,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  updated_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT walk_ins_pkey PRIMARY KEY (id)
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT walk_ins_pkey PRIMARY KEY (id),
+  CONSTRAINT walk_ins_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customers(id),
+  CONSTRAINT walk_ins_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id)
 );
 ```
 
 **Key Features**:
-- Walk-in and scheduled appointment support
-- Customer information capture with optional linking
+- Immediate and scheduled walk-in support
+- Customer information capture
 - Service selection and categorization
-- Status validation (waiting, served, cancelled, no_show)
-- GoHighLevel webhook integration with tracking
-- Automatic timestamp management with triggers
+- Status tracking from arrival to completion
+- GoHighLevel webhook integration
+- Conversion to regular booking capability
 - Staff member tracking for creation
-- Performance indexes for faster queries
 
 ## Custom Data Types (Enums)
 
@@ -554,6 +552,5 @@ This schema represents the current production database structure and includes:
 - ✅ Integration with external systems
 - ✅ Audit and compliance features
 
-**Last Schema Verification**: August 2025
-**Migration Status**: All 27 migrations applied including latest payment tracking and validation fixes
+**Last Schema Verification**: January 2025
 **Production Status**: Active and Deployed

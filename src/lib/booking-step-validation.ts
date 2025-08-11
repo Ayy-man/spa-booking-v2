@@ -72,15 +72,12 @@ export function validateStaffSelection(): ValidationResult {
   }
   
   const state = loadBookingState()!
-  const isCouples = !!state.bookingData?.isCouplesBooking
-  const missingPrimary = !state.selectedStaff
-  const missingSecondary = isCouples && !state.secondaryStaff
-
-  if (missingPrimary || missingSecondary) {
+  
+  if (!state.selectedStaff) {
     return {
       isValid: false,
-      redirectTo: isCouples ? '/booking/staff-couples' : '/booking/staff',
-      message: isCouples ? 'Please select staff for both people' : 'Please select a staff member'
+      redirectTo: '/booking/staff',
+      message: 'Please select a staff member'
     }
   }
   

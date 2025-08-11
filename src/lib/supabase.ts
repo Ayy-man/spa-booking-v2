@@ -311,9 +311,8 @@ export const supabaseClient = {
     appointment_date: string
     start_time: string
     notes?: string
-    payment_option?: string
   }) {
-    const { data, error } = await supabase.rpc('process_couples_booking_v3', {
+    const { data, error } = await supabase.rpc('process_couples_booking_v2', {
       p_primary_service_id: booking.primary_service_id,
       p_secondary_service_id: booking.secondary_service_id,
       p_primary_staff_id: booking.primary_staff_id,
@@ -323,8 +322,7 @@ export const supabaseClient = {
       p_customer_phone: booking.customer_phone,
       p_booking_date: booking.appointment_date,
       p_start_time: booking.start_time,
-      p_special_requests: booking.notes,
-      p_payment_option: booking.payment_option || 'deposit'
+      p_special_requests: booking.notes
     })
 
     if (error) {
@@ -333,26 +331,6 @@ export const supabaseClient = {
     }
     
     return data
-  },
-
-  // Staff validation for booking
-  async validateStaffForBooking(
-    staffId: string, 
-    serviceId: string, 
-    appointmentDate: string, 
-    startTime: string, 
-    duration: number
-  ) {
-    const { data, error } = await supabase.rpc('validate_staff_for_booking', {
-      p_staff_id: staffId,
-      p_service_id: serviceId,
-      p_appointment_date: appointmentDate,
-      p_start_time: startTime,
-      p_duration: duration
-    })
-
-    if (error) throw error
-    return data?.[0] || { is_valid: false, error_message: 'Unknown validation error', staff_name: staffId }
   },
 
   async getCouplesBookingDetails(bookingGroupId: string) {

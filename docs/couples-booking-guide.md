@@ -28,7 +28,7 @@ Creates two linked bookings for couples services.
 - `p_service_id`: The couples service to book
 - `p_customer1_name/email/phone`: First customer details
 - `p_customer2_name/email/phone`: Second customer details
-- `p_appointment_date`: Date of the appointment (current field name)
+- `p_booking_date`: Date of the appointment
 - `p_start_time`: Start time
 - `p_staff1_id` (optional): Specific staff for customer 1
 - `p_staff2_id` (optional): Specific staff for customer 2
@@ -117,7 +117,7 @@ SELECT
     b.customer_name,
     s.name as service,
     r.name as room,
-    b.appointment_date,
+    b.booking_date,
     b.start_time
 FROM bookings b
 JOIN services s ON s.id = b.service_id

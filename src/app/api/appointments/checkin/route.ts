@@ -271,63 +271,32 @@ export async function POST(request: NextRequest) {
         let matchFound = false
         let matchReason = ''
 
-        // Search by name (improved matching logic)
+        // Search by name (must contain the search term)
         const fullName = `${customer.first_name || ''} ${customer.last_name || ''}`.toLowerCase().trim()
-        if (fullName) {
-          // Split search term into words for better matching
-          const searchWords = searchTerm.split(' ').filter(word => word.length > 0)
-          const nameWords = fullName.split(' ').filter(word => word.length > 0)
-          
-          // Check if any name word starts with any search word (more precise matching)
-          const hasNameMatch = searchWords.some(searchWord => 
-            nameWords.some(nameWord => {
-              // Exact match or starts with search term
-              if (nameWord === searchWord || nameWord.startsWith(searchWord)) {
-                return true
-              }
-              // For longer search terms (4+ chars), allow contains match
-              // But avoid short ambiguous terms like "man"
-              if (searchWord.length >= 4 && nameWord.includes(searchWord)) {
-                return true  
-              }
-              return false
-            })
-          )
-          
-          if (hasNameMatch) {
-            matchFound = true
-            matchReason = 'name'
-            console.log('Match found by name:', fullName, 'matches search terms:', searchWords)
-          }
+        if (fullName && fullName.includes(searchTerm)) {
+          matchFound = true
+          matchReason = 'name'
+          console.log('Match found by name:', fullName, 'contains', searchTerm)
         }
 
-        // Search by email (improved matching logic)
+        // Search by email (must contain the search term)
         if (!matchFound && customer.email) {
           const email = customer.email.toLowerCase()
-          // For emails, check if it starts with search term or contains it as a whole word
-          if (email.startsWith(searchTerm) || 
-              (searchTerm.length >= 3 && email.includes(searchTerm)) ||
-              searchTerm.includes('@') && email === searchTerm) {
+          if (email.includes(searchTerm)) {
             matchFound = true
             matchReason = 'email'
-            console.log('Match found by email:', email, 'matches', searchTerm)
+            console.log('Match found by email:', email, 'contains', searchTerm)
           }
         }
 
-        // Search by phone (improved matching logic)
+        // Search by phone (extract digits and match)
         if (!matchFound && customer.phone && searchTerm.replace(/[\D]/g, '').length >= 3) {
           const cleanSearchPhone = searchTerm.replace(/[\D]/g, '')
           const cleanCustomerPhone = customer.phone.replace(/[\D]/g, '')
-          
-          // For phone numbers, match if the customer phone ends with search digits (more specific)
-          // or contains the search digits for longer search terms
-          if (cleanSearchPhone && (
-              cleanCustomerPhone.endsWith(cleanSearchPhone) ||
-              (cleanSearchPhone.length >= 4 && cleanCustomerPhone.includes(cleanSearchPhone))
-            )) {
+          if (cleanSearchPhone && cleanCustomerPhone.includes(cleanSearchPhone)) {
             matchFound = true
             matchReason = 'phone'
-            console.log('Match found by phone:', customer.phone, 'matches digits', cleanSearchPhone)
+            console.log('Match found by phone:', customer.phone, 'contains', cleanSearchPhone)
           }
         }
 
