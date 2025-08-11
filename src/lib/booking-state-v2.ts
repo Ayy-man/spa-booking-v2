@@ -350,14 +350,30 @@ export class BookingStateManager {
       '/booking/date-time': isCouples ? '/booking/staff-couples' : '/booking/staff',
       '/booking/staff': '/booking/customer-info',
       '/booking/staff-couples': '/booking/customer-info',
-      '/booking/customer-info': this.state.customer?.isNewCustomer 
-        ? '/booking/payment-gateway'
-        : (isCouples ? '/booking/confirmation-couples' : '/booking/payment-selection'),
+      '/booking/customer-info': '/booking/payment-selection', // Default to payment selection - customer page will handle new customer logic
       '/booking/payment-selection': '/booking/confirmation',
       '/booking/payment-gateway': isCouples ? '/booking/confirmation-couples' : '/booking/confirmation'
     }
     
-    return flowMap[currentPage] || '/booking'
+    // Better fallback logic - don't default to /booking which causes the redirect bug
+    const nextPage = flowMap[currentPage]
+    if (!nextPage) {
+      console.error(`[BookingStateManager] No next page defined for: ${currentPage}`)
+      // Fallback based on current booking state instead of defaulting to service selection
+      if (!this.state.service) {
+        return '/booking'
+      } else if (!this.state.date || !this.state.time) {
+        return '/booking/date-time'
+      } else if (!this.state.staff || (this.state.bookingType === 'couples' && !this.state.secondaryStaff)) {
+        return this.state.bookingType === 'couples' ? '/booking/staff-couples' : '/booking/staff'
+      } else if (!this.state.customer) {
+        return '/booking/customer-info'
+      } else {
+        return '/booking/payment-selection'
+      }
+    }
+    
+    return nextPage
   }
   
   /**

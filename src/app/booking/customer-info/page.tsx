@@ -166,14 +166,8 @@ export default function CustomerInfoPage() {
       window.location.href = depositPaymentUrl
     } else {
       // Existing customer - redirect to payment selection page for deposit or pay-on-location choice
-      // Navigate to the next page based on booking type and customer status
-      const nextPage = bookingState.getNextPage('/booking/customer-info')
-      console.log(`[CustomerInfo] Getting next page for existing customer:`)
-      console.log(`[CustomerInfo] Current booking state:`, bookingState.state)
-      console.log(`[CustomerInfo] Next page determined: ${nextPage}`)
-      console.log(`[CustomerInfo] Customer is new: ${data.isNewCustomer}`)
-      console.log(`[CustomerInfo] Booking type: ${bookingState.state.bookingType}`)
-      window.location.href = nextPage
+      console.log('[CustomerInfo] Existing customer - redirecting to payment selection')
+      window.location.href = '/booking/payment-selection'
     }
   }
 
