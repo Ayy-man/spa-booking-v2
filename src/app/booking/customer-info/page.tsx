@@ -27,21 +27,30 @@ export default function CustomerInfoPage() {
   const bookingState = useBookingState()
 
   useEffect(() => {
+    console.log('[CustomerInfoPage] Initializing with booking state:', bookingState.state)
+    
     // Validate that we can proceed to customer info
     const validation = bookingState.canProceedTo('customer-info')
     if (!validation.isValid) {
-      console.error('[CustomerInfoPage] Invalid state:', validation.errors)
+      console.error('[CustomerInfoPage] Invalid state - redirecting:', validation.errors)
+      console.error('[CustomerInfoPage] Current state:', bookingState.state)
+      
       // Redirect based on what's missing
       const state = bookingState.state
       if (!state.service) {
+        console.log('[CustomerInfoPage] Missing service, redirecting to /booking')
         window.location.href = '/booking'
       } else if (!state.date || !state.time) {
+        console.log('[CustomerInfoPage] Missing date/time, redirecting to /booking/date-time')
         window.location.href = '/booking/date-time'
       } else if (!state.staff || (state.bookingType === 'couples' && !state.secondaryStaff)) {
+        console.log('[CustomerInfoPage] Missing staff, redirecting to staff selection')
         window.location.href = state.bookingType === 'couples' ? '/booking/staff-couples' : '/booking/staff'
       }
       return
     }
+    
+    console.log('[CustomerInfoPage] Validation passed, proceeding with customer info')
     
     const state = bookingState.state
     
@@ -74,7 +83,10 @@ export default function CustomerInfoPage() {
       notes: data.specialRequests,
       isNewCustomer: data.isNewCustomer
     }
+    
+    console.log('[CustomerInfoPage] Saving customer info:', customerInfo)
     bookingState.setCustomer(customerInfo)
+    console.log('[CustomerInfoPage] Updated booking state:', bookingState.state)
     
     // Send new customer webhook to GHL if it's a new customer
     if (data.isNewCustomer && selectedService) {
@@ -156,7 +168,11 @@ export default function CustomerInfoPage() {
       // Existing customer - redirect to payment selection page for deposit or pay-on-location choice
       // Navigate to the next page based on booking type and customer status
       const nextPage = bookingState.getNextPage('/booking/customer-info')
-      console.log(`[CustomerInfo] Navigating to: ${nextPage}`)
+      console.log(`[CustomerInfo] Getting next page for existing customer:`)
+      console.log(`[CustomerInfo] Current booking state:`, bookingState.state)
+      console.log(`[CustomerInfo] Next page determined: ${nextPage}`)
+      console.log(`[CustomerInfo] Customer is new: ${data.isNewCustomer}`)
+      console.log(`[CustomerInfo] Booking type: ${bookingState.state.bookingType}`)
       window.location.href = nextPage
     }
   }

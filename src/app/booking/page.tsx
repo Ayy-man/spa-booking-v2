@@ -12,11 +12,11 @@ export default function BookingPage() {
   const [showCouplesOptions, setShowCouplesOptions] = useState(false)
   const bookingState = useBookingState()
 
-  // Track page view and reset state on page load
+  // Track page view
   useEffect(() => {
     analytics.pageViewed('service_selection', 1)
-    // Clear any existing booking state when starting fresh
-    bookingState.reset()
+    // Only reset if user is intentionally starting a new booking
+    // Don't reset on every page load to avoid clearing progress
   }, [])
 
   const serviceCategories = [

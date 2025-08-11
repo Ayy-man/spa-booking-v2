@@ -266,7 +266,13 @@ export class BookingStateManager {
         break
         
       case 'customer-info':
+        if (!this.state.service) errors.push('Service not selected')
+        if (!this.state.date) errors.push('Date not selected')
+        if (!this.state.time) errors.push('Time not selected')
         if (!this.state.staff) errors.push('Staff not selected')
+        if (this.state.bookingType === 'couples' && !this.state.secondaryService) {
+          errors.push('Service for second person not selected')
+        }
         if (this.state.bookingType === 'couples' && !this.state.secondaryStaff) {
           errors.push('Staff for second person not selected')
         }
