@@ -61,19 +61,15 @@ export default function ConfirmationPage() {
         customer
       })
       
-      // Set payment type from state
-      if (state.paymentType) {
-        setPaymentType(state.paymentType)
-      }
-      
       // Determine if payment was completed
       if (customer.isNewCustomer || paymentSuccess) {
+        // New customer paid deposit
         setPaymentCompleted(true)
-      }
-      
-      // For pay on location, payment is not completed yet
-      if (paymentLocation || state.paymentType === 'location') {
+        setPaymentType('deposit')
+      } else {
+        // Existing customer - pay on location
         setPaymentCompleted(false)
+        setPaymentType('location')
       }
     } else {
       console.log('[ConfirmationPage] Missing required booking data:', { service, customer, date: state.selectedDate, time: state.selectedTime, staff: state.selectedStaff })
@@ -113,19 +109,19 @@ export default function ConfirmationPage() {
         // Continue with default room
       }
 
-      // Determine payment option and status based on payment type
-      let paymentOption = 'deposit'
+      // Determine payment option and status
+      // New customers = deposit paid, Existing customers = pay on location
+      let paymentOption = 'pay_on_location'
       let paymentStatus = 'pending'
       
-      if (paymentType === 'location') {
-        paymentOption = 'pay_on_location'
-        paymentStatus = 'pending' // Will be paid at location
-      } else if (paymentType === 'full') {
-        paymentOption = 'full_payment'
-        paymentStatus = 'paid' // Already paid online
-      } else {
+      if (bookingData.customer.isNewCustomer) {
+        // New customer - deposit was paid
         paymentOption = 'deposit'
-        paymentStatus = 'paid' // Deposit already paid online
+        paymentStatus = 'paid'
+      } else {
+        // Existing customer - pay on location
+        paymentOption = 'pay_on_location'
+        paymentStatus = 'pending'
       }
 
       // Create the booking in Supabase

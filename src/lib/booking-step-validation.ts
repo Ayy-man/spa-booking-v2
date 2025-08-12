@@ -124,13 +124,8 @@ export function validatePaymentSelection(): ValidationResult {
     return { isValid: true }
   }
   
-  if (!state.paymentType) {
-    return {
-      isValid: false,
-      redirectTo: '/booking/payment-selection',
-      message: 'Please choose a payment option'
-    }
-  }
+  // Payment selection step removed - go directly to confirmation
+  // Payment type is determined automatically based on customer status
   
   return { isValid: true }
 }
@@ -230,7 +225,7 @@ export function getStepUrl(step: number): string {
     2: '/booking/date-time',
     3: '/booking/staff',
     4: '/booking/customer-info',
-    5: '/booking/payment-selection',
+    5: '/booking/confirmation',
     6: '/booking/confirmation'
   }
   

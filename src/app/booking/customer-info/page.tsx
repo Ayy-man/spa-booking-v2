@@ -163,14 +163,13 @@ export default function CustomerInfoPage() {
       const depositPaymentUrl = `https://link.fastpaydirect.com/payment-link/688fd64ad6ab80e9dae7162b?return_url=${encodeURIComponent(returnUrl)}`
       window.location.href = depositPaymentUrl
     } else {
-      // Existing customer - redirect to payment selection page for full payment option
+      // Existing customer - go directly to confirmation (payment on location)
       if (isCouplesBooking) {
-        // For couples booking, skip payment selection and go directly to confirmation
-        // (couples booking logic can be enhanced later for full payment support)
+        // For couples booking, go directly to couples confirmation
         window.location.href = '/booking/confirmation-couples'
       } else {
-        // Single booking - offer payment choice
-        window.location.href = '/booking/payment-selection'
+        // Single booking - go directly to confirmation
+        window.location.href = '/booking/confirmation'
       }
     }
   }
