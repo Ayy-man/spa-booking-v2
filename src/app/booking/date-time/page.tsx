@@ -212,8 +212,12 @@ export default function DateTimePage() {
       )
       
       if (availableSlots && availableSlots.length > 0) {
-        // Extract unique times from the results
-        const uniqueTimes = Array.from(new Set(availableSlots.map((slot: any) => slot.available_time))) as string[]
+        // Extract unique times from the results and format as HH:MM
+        const uniqueTimes = Array.from(new Set(availableSlots.map((slot: any) => {
+          const time = slot.available_time
+          // Convert HH:MM:SS to HH:MM
+          return time.slice(0, 5)
+        }))) as string[]
         setAvailableTimes(uniqueTimes.sort())
       } else {
         setAvailableTimes([])
@@ -457,7 +461,7 @@ export default function DateTimePage() {
                                 : 'time-slot-available'
                             }
                           >
-                            {time}
+                            {time.slice(0, 5)}
                           </button>
                         ))}
                       </div>
