@@ -44,16 +44,49 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get service details by name
-    const { data: service, error: serviceError } = await supabase
+    // Get service details by name - handle potential mismatches
+    // First try exact match
+    let { data: service, error: serviceError } = await supabase
       .from('services')
       .select('*')
       .eq('name', walkIn.service_name)
-      .single()
+      .maybeSingle()
 
-    if (serviceError || !service) {
+    // If no exact match, try to clean up the service name and search again
+    if (!service) {
+      // Remove any suffixes like "(treatments)" that might have been added
+      const cleanedServiceName = walkIn.service_name.replace(/\s*\([^)]*\)\s*$/, '').trim()
+      
+      const { data: serviceByCleanName } = await supabase
+        .from('services')
+        .select('*')
+        .eq('name', cleanedServiceName)
+        .maybeSingle()
+      
+      if (serviceByCleanName) {
+        service = serviceByCleanName
+      } else {
+        // Try partial match as last resort
+        const { data: serviceByPartial } = await supabase
+          .from('services')
+          .select('*')
+          .ilike('name', `%${cleanedServiceName}%`)
+          .limit(1)
+          .maybeSingle()
+        
+        if (serviceByPartial) {
+          service = serviceByPartial
+        }
+      }
+    }
+
+    if (!service) {
+      console.error('Service not found for walk-in:', {
+        originalName: walkIn.service_name,
+        walkInId: body.walkInId
+      })
       return NextResponse.json(
-        { error: 'Service not found for walk-in' },
+        { error: `Service "${walkIn.service_name}" not found in database` },
         { status: 400 }
       )
     }
@@ -147,31 +180,40 @@ export async function POST(request: NextRequest) {
     const endTimeStr = endTime.toTimeString().slice(0, 5)
 
     // Create booking record
+    const bookingData = {
+      customer_id: customerId,
+      service_id: service.id,
+      staff_id: body.staffId,
+      room_id: body.roomId,
+      appointment_date: body.appointmentDate,
+      start_time: body.startTime,
+      end_time: endTimeStr,
+      duration: service.duration,
+      total_price: service.price,
+      discount: 0,
+      final_price: service.price,
+      status: 'confirmed', // Walk-ins that are assigned are immediately confirmed
+      payment_status: 'pending',
+      payment_option: 'pay_on_location', // Add payment_option field which is required
+      notes: body.notes || walkIn.notes,
+      booking_type: 'single',
+      created_by: 'walk_in_assignment'
+    }
+
+    console.log('Creating booking with data:', bookingData)
+
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .insert({
-        customer_id: customerId,
-        service_id: service.id,
-        staff_id: body.staffId,
-        room_id: body.roomId,
-        appointment_date: body.appointmentDate,
-        start_time: body.startTime,
-        end_time: endTimeStr,
-        duration: service.duration,
-        total_price: service.price,
-        discount: 0,
-        final_price: service.price,
-        status: 'confirmed', // Walk-ins that are assigned are immediately confirmed
-        payment_status: 'pending',
-        notes: body.notes || walkIn.notes,
-        booking_type: 'single',
-        created_by: 'walk_in_assignment'
-      })
+      .insert(bookingData)
       .select()
       .single()
 
     if (bookingError || !booking) {
-      throw new Error('Failed to create booking record')
+      console.error('Booking creation failed:', {
+        error: bookingError,
+        data: bookingData
+      })
+      throw new Error(`Failed to create booking record: ${bookingError?.message || 'Unknown error'}`)
     }
 
     // Update walk-in record with assignment details
@@ -182,7 +224,7 @@ export async function POST(request: NextRequest) {
         customer_id: customerId,
         scheduled_date: body.appointmentDate,
         scheduled_time: body.startTime,
-        status: 'assigned',
+        status: 'served', // Mark as served since they've been scheduled
         updated_at: new Date().toISOString()
       })
       .eq('id', body.walkInId)
