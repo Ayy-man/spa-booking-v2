@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
+import { validateTimeForDatabase } from '@/lib/time-utils'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -163,8 +164,9 @@ export const supabaseClient = {
       customerId = newCustomer.id
     }
 
-    // Calculate end time
-    const startTime = new Date(`2000-01-01T${booking.start_time}:00`)
+    // Validate and calculate end time
+    const validatedStartTime = validateTimeForDatabase(booking.start_time, 'start_time')
+    const startTime = new Date(`2000-01-01T${validatedStartTime}`)
     const endTime = new Date(startTime.getTime() + service.duration * 60000)
     const endTimeStr = endTime.toTimeString().slice(0, 5)
 
@@ -180,7 +182,7 @@ export const supabaseClient = {
         staff_id: booking.staff_id,
         room_id: booking.room_id,
         appointment_date: booking.appointment_date,
-        start_time: booking.start_time,
+        start_time: validatedStartTime,
         end_time: endTimeStr,
         duration: service.duration,
         total_price: service.price,

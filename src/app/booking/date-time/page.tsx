@@ -6,6 +6,7 @@ import { format, addDays, startOfDay, isSameDay, startOfWeek, endOfWeek, addWeek
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import { getAvailableStaff } from '@/lib/staff-data'
+import { processTimeSlots, formatTimeToHHMM } from '@/lib/time-utils'
 
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { TimeSlotSkeleton } from '@/components/ui/skeleton-loader'
@@ -212,13 +213,11 @@ export default function DateTimePage() {
       )
       
       if (availableSlots && availableSlots.length > 0) {
-        // Extract unique times from the results and format as HH:MM
-        const uniqueTimes = Array.from(new Set(availableSlots.map((slot: any) => {
-          const time = slot.available_time
-          // Convert HH:MM:SS to HH:MM
-          return time.slice(0, 5)
-        }))) as string[]
-        setAvailableTimes(uniqueTimes.sort())
+        // Process time slots with proper validation
+        const validTimes = processTimeSlots(availableSlots)
+        // Remove duplicates and sort
+        const uniqueTimes = Array.from(new Set(validTimes)).sort()
+        setAvailableTimes(uniqueTimes)
       } else {
         setAvailableTimes([])
       }
@@ -461,7 +460,7 @@ export default function DateTimePage() {
                                 : 'time-slot-available'
                             }
                           >
-                            {time.slice(0, 5)}
+                            {formatTimeToHHMM(time) || time}
                           </button>
                         ))}
                       </div>

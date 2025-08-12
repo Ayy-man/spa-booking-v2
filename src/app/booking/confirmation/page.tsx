@@ -9,6 +9,7 @@ import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 import { getGHLServiceCategory } from '@/lib/staff-data'
 import { loadBookingState, recoverBookingBySessionId, clearBookingState } from '@/lib/booking-state-manager'
+import { validateTimeForDatabase, parseTimeString } from '@/lib/time-utils'
 
 export default function ConfirmationPage() {
   const [bookingData, setBookingData] = useState<any>(null)
@@ -49,10 +50,13 @@ export default function ConfirmationPage() {
     const customer = state.customerInfo
     
     if (service && state.selectedDate && state.selectedTime && state.selectedStaff && customer) {
+      // Parse and validate the time to prevent "Invalid" errors
+      const parsedTime = parseTimeString(state.selectedTime)
+      
       setBookingData({
         service,
         date: state.selectedDate,
-        time: state.selectedTime,
+        time: parsedTime,
         staff: state.selectedStaff,
         customer
       })
@@ -133,7 +137,7 @@ export default function ConfirmationPage() {
         customer_email: bookingData.customer.email,
         customer_phone: bookingData.customer.phone || undefined,
         appointment_date: bookingData.date,
-        start_time: bookingData.time,
+        start_time: validateTimeForDatabase(bookingData.time, 'start_time'),
         notes: bookingData.customer.specialRequests || undefined,
         payment_option: paymentOption,
         payment_status: paymentStatus

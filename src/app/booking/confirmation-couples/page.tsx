@@ -6,6 +6,7 @@ import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
+import { validateTimeForDatabase, parseTimeString } from '@/lib/time-utils'
 
 interface Service {
   id?: string
@@ -48,6 +49,9 @@ export default function CouplesConfirmationPage() {
     const bookingDataStr = localStorage.getItem('bookingData')
     const dateData = localStorage.getItem('selectedDate')
     const timeData = localStorage.getItem('selectedTime')
+    
+    // Parse and validate time to prevent corruption
+    const validatedTime = timeData ? parseTimeString(timeData) : null
     const staffData = localStorage.getItem('selectedStaff')
     const secondaryStaffData = localStorage.getItem('secondaryStaff')
     const customerData = localStorage.getItem('customerInfo')
@@ -58,7 +62,7 @@ export default function CouplesConfirmationPage() {
     }
     
     if (dateData) setSelectedDate(dateData)
-    if (timeData) setSelectedTime(timeData)
+    if (validatedTime) setSelectedTime(validatedTime)
     if (staffData) setSelectedStaff(staffData)
     if (secondaryStaffData) setSecondaryStaff(secondaryStaffData)
     
@@ -109,7 +113,7 @@ export default function CouplesConfirmationPage() {
           customer_email: customerInfo.email,
           customer_phone: customerInfo.phone,
           appointment_date: selectedDate,
-          start_time: selectedTime,
+          start_time: validateTimeForDatabase(selectedTime, 'start_time'),
           notes: customerInfo.specialRequests
         })
 
@@ -220,7 +224,7 @@ export default function CouplesConfirmationPage() {
           customer_email: customerInfo.email,
           customer_phone: customerInfo.phone,
           appointment_date: selectedDate,
-          start_time: selectedTime,
+          start_time: validateTimeForDatabase(selectedTime, 'start_time'),
           notes: customerInfo.specialRequests
         })
         
