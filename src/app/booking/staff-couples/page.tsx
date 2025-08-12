@@ -375,7 +375,11 @@ export default function CouplesStaffPage() {
                     {primaryStaff && primaryStaff !== 'any' && (
                       <Alert className="mb-3">
                         <AlertDescription>
-                          Different staff members will be assigned to ensure personalized attention for both guests.
+                          {/* Check if both services are massages */}
+                          {getServiceCategory(bookingData.primaryService.name) === 'massages' && 
+                           getServiceCategory(bookingData.secondaryService?.name || bookingData.primaryService.name) === 'massages'
+                            ? 'For massage services, the same therapist can provide treatments for both guests.'
+                            : 'Different staff members will be assigned to ensure personalized attention for both guests.'}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -399,7 +403,15 @@ export default function CouplesStaffPage() {
                           label={primaryStaff === 'any' ? undefined : 'Different from Person 1'}
                         />
                         {secondaryServiceStaff
-                          .filter(member => member.id !== primaryStaff || primaryStaff === 'any')
+                          .filter(member => {
+                            // For massage services, allow same staff
+                            const isMassageBooking = 
+                              getServiceCategory(bookingData.primaryService.name) === 'massages' && 
+                              getServiceCategory(bookingData.secondaryService?.name || bookingData.primaryService.name) === 'massages';
+                            
+                            // Allow same staff for massages, or if 'any' is selected, otherwise filter out
+                            return isMassageBooking || member.id !== primaryStaff || primaryStaff === 'any';
+                          })
                           .map((member) => (
                             <StaffCard
                               key={member.id}
