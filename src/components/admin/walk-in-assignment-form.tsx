@@ -118,14 +118,7 @@ export function WalkInAssignmentForm({ walkIn, onSuccess, onCancel }: Assignment
     if (!appointmentDate) return 'Please select an appointment date'
     if (!startTime) return 'Please select a start time'
     
-    // Check if date is not in the past
-    const selectedDate = new Date(appointmentDate)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    if (selectedDate < today) {
-      return 'Appointment date cannot be in the past'
-    }
+    // Removed past date validation - admin can schedule any time
 
     return null
   }
@@ -287,7 +280,6 @@ export function WalkInAssignmentForm({ walkIn, onSuccess, onCancel }: Assignment
               value={appointmentDate}
               onChange={(e) => setAppointmentDate(e.target.value)}
               disabled={loading}
-              min={new Date().toISOString().split('T')[0]}
             />
           </div>
 
