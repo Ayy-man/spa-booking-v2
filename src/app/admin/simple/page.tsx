@@ -169,6 +169,15 @@ export default function SimpleAdminPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
+        {/* Breadcrumb Navigation */}
+        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+          <a href="/admin" className="hover:text-primary transition-colors">
+            Home
+          </a>
+          <span>/</span>
+          <span className="text-gray-900">Today's Appointments</span>
+        </div>
+        
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Admin Panel - Today&apos;s Appointments</h1>
           <button 

@@ -127,6 +127,15 @@ export default function AdminBookingsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center space-x-2 text-sm text-gray-600">
+        <a href="/admin" className="hover:text-primary transition-colors">
+          Home
+        </a>
+        <span>/</span>
+        <span className="text-gray-900">All Bookings</span>
+      </div>
+      
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">All Bookings</h1>

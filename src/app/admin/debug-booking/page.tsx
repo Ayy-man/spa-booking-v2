@@ -39,6 +39,15 @@ export default function DebugBookingPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Breadcrumb Navigation */}
+      <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+        <a href="/admin" className="hover:text-primary transition-colors">
+          Home
+        </a>
+        <span>/</span>
+        <span className="text-gray-900">Debug Booking</span>
+      </div>
+      
       <h1 className="text-3xl font-bold mb-8">Debug Booking Conflict</h1>
       
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
