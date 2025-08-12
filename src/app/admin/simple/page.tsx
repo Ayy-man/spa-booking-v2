@@ -175,7 +175,7 @@ export default function SimpleAdminPage() {
             Home
           </a>
           <span>/</span>
-          <span className="text-gray-900">Today's Appointments</span>
+          <span className="text-gray-900">Today&apos;s Appointments</span>
         </div>
         
         <div className="flex justify-between items-center mb-8">
