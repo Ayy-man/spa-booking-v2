@@ -242,23 +242,32 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
           </p>
         </div>
 
-        {/* Customer Status Checkbox */}
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        {/* Customer Status Checkbox - More Prominent */}
+        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-5 rounded-xl border-2 border-amber-300 shadow-sm">
           <div className="flex items-start space-x-3">
             <input
               type="checkbox"
               id="isNewCustomer"
-              className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+              className="mt-1.5 w-5 h-5 text-amber-600 bg-white border-2 border-amber-400 rounded focus:ring-amber-500 focus:ring-2 cursor-pointer"
               {...register('isNewCustomer')}
             />
-            <div>
-              <Label htmlFor="isNewCustomer" className="text-sm font-medium text-gray-900 cursor-pointer">
-                This is my first visit to Dermal Skin Clinic
-              </Label>
-              <p className="text-xs text-gray-600 mt-1">
-                New customers require a $25 deposit to secure their booking. 
-                Existing customers can book without a deposit.
-              </p>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <Label htmlFor="isNewCustomer" className="text-base font-semibold text-gray-900 cursor-pointer">
+                  This is my first visit to Dermal Skin Clinic
+                </Label>
+              </div>
+              <div className="bg-white/70 rounded-lg p-3 border border-amber-200">
+                <p className="text-sm text-gray-800 font-medium">
+                  ⚠️ <span className="font-bold text-amber-700">New customers require a $30 deposit</span> to secure their booking.
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Existing customers can book without a deposit.
+                </p>
+              </div>
             </div>
           </div>
         </div>
