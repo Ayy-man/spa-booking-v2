@@ -243,9 +243,9 @@ function extractCustomerContact(payload: PaymentWebhookPayload): {
   const root: any = payload as any
   const email = payload.customer_email || root.email || root.Email ||
                 root.customer?.email ||
-                payload.invoice?.["customer_email" as any] ||
-                payload.order?.["customer_email" as any] ||
-                payload.transaction?.["customer_email" as any] ||
+                (payload.invoice as any)?.customer_email ||
+                (payload.order as any)?.customer_email ||
+                (payload.transaction as any)?.customer_email ||
                 payload.customFields?.email || payload.customFields?.Email ||
                 payload.transaction?.customFields?.email || payload.transaction?.customFields?.Email
   const phone = payload.customer_phone || root.phone || root.Phone ||
