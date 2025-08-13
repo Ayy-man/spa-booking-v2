@@ -160,23 +160,45 @@ export default function CustomerInfoPage() {
       const { validateTimeForDatabase } = await import('@/lib/time-utils')
       
       try {
-        // Get optimal room assignment
+        // Get optimal room assignment based on service type and staff
         let roomId = 1 // Default to Room 1
-        try {
-          const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
-            selectedService?.id || '',
-            selectedStaff,
-            selectedDate,
-            selectedTime
-          )
-          
-          if (roomAssignment && roomAssignment.assigned_room_id) {
-            roomId = typeof roomAssignment.assigned_room_id === 'string' 
-              ? parseInt(roomAssignment.assigned_room_id) 
-              : roomAssignment.assigned_room_id
+        
+        // Check service type for room assignment
+        const serviceName = selectedService?.name?.toLowerCase() || ''
+        
+        if (serviceName.includes('couple')) {
+          // Couples services prefer Room 3 (bigger), fallback to Room 2
+          roomId = 3
+        } else if (serviceName.includes('body scrub') || serviceName.includes('salt body')) {
+          // Body scrubs MUST be in Room 3 only
+          roomId = 3
+        } else {
+          // Single services - assign based on staff default room
+          if (selectedStaff === 'selma') {
+            roomId = 1
+          } else if (selectedStaff === 'tanisha') {
+            roomId = 2
+          } else if (selectedStaff === 'robyn') {
+            roomId = 3
+          } else {
+            // Try to get optimal room from database
+            try {
+              const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
+                selectedService?.id || '',
+                selectedStaff,
+                selectedDate,
+                selectedTime
+              )
+              
+              if (roomAssignment && roomAssignment.assigned_room_id) {
+                roomId = typeof roomAssignment.assigned_room_id === 'string' 
+                  ? parseInt(roomAssignment.assigned_room_id) 
+                  : roomAssignment.assigned_room_id
+              }
+            } catch (roomError) {
+              console.error('Room assignment error:', roomError)
+            }
           }
-        } catch (roomError) {
-          console.error('Room assignment error:', roomError)
         }
 
         // Create the booking with pending payment status

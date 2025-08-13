@@ -165,6 +165,29 @@ export default function ConfirmationPage() {
     setError('')
 
     try {
+      // Validate staff availability before creating booking
+      if (bookingData.staff && bookingData.staff !== 'any') {
+        const date = new Date(bookingData.date)
+        const dayOfWeek = date.getDay()
+        
+        // Check specific staff schedules
+        if (bookingData.staff === 'leonel' && dayOfWeek !== 0) {
+          setError('Leonel only works on Sundays. Please select a different staff member or change your date.')
+          setIsSubmitting(false)
+          return
+        }
+        if (bookingData.staff === 'tanisha' && (dayOfWeek === 2 || dayOfWeek === 4)) {
+          setError('Tanisha is off on Tuesdays and Thursdays. Please select a different staff member or change your date.')
+          setIsSubmitting(false)
+          return
+        }
+        if (bookingData.staff === 'robyn' && (dayOfWeek === 1 || dayOfWeek === 2)) {
+          setError('Robyn is off on Mondays and Tuesdays. Please select a different staff member or change your date.')
+          setIsSubmitting(false)
+          return
+        }
+      }
+
       let bookingResult = null
       let bookingId = bookingData.existingBookingId
 
@@ -174,24 +197,46 @@ export default function ConfirmationPage() {
         bookingResult = { booking_id: bookingId }
       } else {
         // No existing booking, create a new one
-        // First, get optimal room assignment
+        // First, get optimal room assignment based on service type and staff
         let roomId = 1; // Default fallback to Room 1 (integer)
-        try {
-          const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
-            bookingData.service.id,
-            bookingData.staff,
-            bookingData.date,
-            bookingData.time
-          )
-          
-          if (roomAssignment && roomAssignment.assigned_room_id) {
-            // Convert to integer if needed
-            roomId = typeof roomAssignment.assigned_room_id === 'string' 
-              ? parseInt(roomAssignment.assigned_room_id) 
-              : roomAssignment.assigned_room_id
+        
+        // Check service type for room assignment
+        const serviceName = bookingData.service.name?.toLowerCase() || ''
+        
+        if (serviceName.includes('couple')) {
+          // Couples services prefer Room 3 (bigger), fallback to Room 2
+          roomId = 3
+        } else if (serviceName.includes('body scrub') || serviceName.includes('salt body')) {
+          // Body scrubs MUST be in Room 3 only
+          roomId = 3
+        } else {
+          // Single services - assign based on staff default room
+          if (bookingData.staff === 'selma') {
+            roomId = 1
+          } else if (bookingData.staff === 'tanisha') {
+            roomId = 2
+          } else if (bookingData.staff === 'robyn') {
+            roomId = 3
+          } else {
+            // Try to get optimal room from database
+            try {
+              const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
+                bookingData.service.id,
+                bookingData.staff,
+                bookingData.date,
+                bookingData.time
+              )
+              
+              if (roomAssignment && roomAssignment.assigned_room_id) {
+                // Convert to integer if needed
+                roomId = typeof roomAssignment.assigned_room_id === 'string' 
+                  ? parseInt(roomAssignment.assigned_room_id) 
+                  : roomAssignment.assigned_room_id
+              }
+            } catch (roomError) {
+              // Continue with default room assignment
+            }
           }
-        } catch (roomError) {
-          // Continue with default room
         }
 
         // Determine payment option and status

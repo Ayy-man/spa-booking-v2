@@ -35,7 +35,7 @@ export const staffMembers: StaffMember[] = [
     specialties: 'All Facials (except dermaplaning)',
     initials: 'SV',
     capabilities: ['facials'],
-    work_days: [0, 1, 2, 3, 4, 5, 6], // All 7 days
+    work_days: [0, 1, 3, 5, 6], // Sun, Mon, Wed, Fri, Sat (off Tue/Thu)
     default_room_id: '11111111-1111-1111-1111-111111111111',
     defaultRoom: 1,
     service_exclusions: ['derma_planing']

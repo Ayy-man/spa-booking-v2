@@ -703,19 +703,22 @@ export function getStaffDayAvailability(
   const dayName = format(date, 'EEEE').toLowerCase() // sunday, monday, tuesday, etc.
   const dayOfWeek = date.getDay() // 0 = Sunday, 1 = Monday, etc.
   
-  // Check if staff works on this day
-  // For now, assume all staff work all days (can be enhanced with proper schedule logic)
-  const worksOnDay = true
+  // Check if staff works on this day using their work_days array
+  const worksOnDay = staff.work_days?.includes(dayOfWeek) ?? false
   
   if (!worksOnDay) {
     // Add specific reasons based on staff member
-    if (staff.name === 'Leonel Sidon' && dayOfWeek !== 0) {
+    if (staff.id === 'leonel' && dayOfWeek !== 0) {
       reasons.push('Leonel only works on Sundays')
-    } else if ((staff.name === 'Selma Villaver' || staff.name === 'Tanisha Harris') && 
-               (dayOfWeek === 2 || dayOfWeek === 4)) {
-      reasons.push(`${staff.name} is off on Tuesdays and Thursdays`)
+    } else if (staff.id === 'tanisha' && (dayOfWeek === 2 || dayOfWeek === 4)) {
+      reasons.push('Tanisha is off on Tuesdays and Thursdays')
+    } else if (staff.id === 'robyn' && (dayOfWeek === 1 || dayOfWeek === 2)) {
+      reasons.push('Robyn is off on Mondays and Tuesdays')
+    } else if (staff.id === 'selma') {
+      // Selma works all days, this shouldn't happen
+      reasons.push('Staff schedule error')
     } else {
-      reasons.push(`${staff.name} does not work on ${dayName}s`)
+      reasons.push(`${staff.name} does not work on ${format(date, 'EEEE')}s`)
     }
     return { isAvailable: false, reasons, dayName }
   }
