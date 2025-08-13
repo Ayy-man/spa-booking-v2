@@ -264,7 +264,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
                   onChange={() => setValue('isNewCustomer', true)}
                   className="sr-only peer"
                 />
-                <div className="py-3 px-4 bg-white rounded-lg border-2 border-gray-300 cursor-pointer text-center font-medium hover:bg-gray-50 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-700 transition-all">
+                <div className="py-3 px-4 bg-white rounded-lg border-2 border-gray-300 cursor-pointer text-center font-medium hover:bg-gray-50 peer-checked:border-primary peer-checked:bg-accent peer-checked:text-primary-dark transition-all">
                   Yes
                 </div>
               </label>
@@ -277,7 +277,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
                   onChange={() => setValue('isNewCustomer', false)}
                   className="sr-only peer"
                 />
-                <div className="py-3 px-4 bg-white rounded-lg border-2 border-gray-300 cursor-pointer text-center font-medium hover:bg-gray-50 peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-700 transition-all">
+                <div className="py-3 px-4 bg-white rounded-lg border-2 border-gray-300 cursor-pointer text-center font-medium hover:bg-gray-50 peer-checked:border-primary peer-checked:bg-accent peer-checked:text-primary-dark transition-all">
                   No
                 </div>
               </label>
