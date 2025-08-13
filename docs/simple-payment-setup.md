@@ -59,6 +59,7 @@ If payment fails or is cancelled:
 ## Setup Checklist
 
 - [ ] Configure GHL payment link redirect URL
+- [ ] **IMPORTANT**: Set redirect to "Open in Existing tab" (not new tab)
 - [ ] Test payment flow end-to-end
 - [ ] Verify booking status updates correctly
 - [ ] Confirm notification emails are sent
@@ -72,6 +73,15 @@ If payment fails or is cancelled:
 5. Confirm notification emails are sent
 
 ## Troubleshooting
+
+### "Booking session expired" Error
+This happens when the booking ID can't be found. Common causes:
+- Payment page opened in a new tab (must use "Open in Existing tab" in GHL)
+- Browser blocked cookies/storage
+- Session expired (after 1 hour)
+- Using incognito/private browsing mode
+
+**Solution**: Configure GHL to "Open in Existing tab" for the redirect
 
 ### Payment Not Marked as Paid
 - Verify the redirect URL is configured correctly in GHL

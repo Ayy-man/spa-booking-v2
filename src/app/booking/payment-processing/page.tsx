@@ -82,8 +82,13 @@ export default function PaymentProcessingPage() {
 
       setBookingId(bookingResult.booking_id)
       
-      // Store booking ID in session for recovery
+      // Store booking ID in multiple places for recovery
       sessionStorage.setItem('currentBookingId', bookingResult.booking_id)
+      localStorage.setItem('currentBookingId', bookingResult.booking_id)
+      localStorage.setItem('bookingIntent', JSON.stringify({
+        bookingId: bookingResult.booking_id,
+        createdAt: new Date().toISOString()
+      }))
       
       // Build payment URL with booking_id and success parameters
       const baseUrl = window.location.origin
@@ -122,13 +127,34 @@ export default function PaymentProcessingPage() {
     const paymentStatus = searchParams.get('payment_status') || searchParams.get('status')
     const paymentSuccess = searchParams.get('payment') === 'success'
     
-    // Try to get booking ID from URL or session storage
-    const actualBookingId = bookingIdParam || sessionStorage.getItem('currentBookingId')
+    // Try to get booking ID from URL, session storage, or local storage
+    const actualBookingId = bookingIdParam || 
+                           sessionStorage.getItem('currentBookingId') || 
+                           localStorage.getItem('currentBookingId')
+    
+    // Clean up old booking IDs from localStorage (older than 1 hour)
+    try {
+      const storedIntent = localStorage.getItem('bookingIntent')
+      if (storedIntent) {
+        const intent = JSON.parse(storedIntent)
+        const createdAt = new Date(intent.createdAt)
+        const hourAgo = new Date(Date.now() - 60 * 60 * 1000)
+        if (createdAt < hourAgo) {
+          localStorage.removeItem('currentBookingId')
+          localStorage.removeItem('bookingIntent')
+        }
+      }
+    } catch (e) {
+      // Ignore parsing errors
+    }
     
     if (!actualBookingId) {
       // No booking ID found anywhere
-      setError('Booking information lost. Please contact support.')
+      setError('Booking session expired. Please start a new booking.')
       setStatus('error')
+      setTimeout(() => {
+        window.location.href = '/booking'
+      }, 3000)
       return
     }
     
@@ -163,9 +189,11 @@ export default function PaymentProcessingPage() {
         setStatus('success')
         setBookingId(bookingId)
         
-        // Clear session storage
+        // Clear all stored booking data
         sessionStorage.removeItem('bookingIntent')
         sessionStorage.removeItem('currentBookingId')
+        localStorage.removeItem('bookingIntent')
+        localStorage.removeItem('currentBookingId')
         
         // Redirect to confirmation page
         setTimeout(() => {
@@ -199,9 +227,11 @@ export default function PaymentProcessingPage() {
             clearInterval(intervalRef.current)
           }
           
-          // Clear session storage
+          // Clear all stored booking data
           sessionStorage.removeItem('bookingIntent')
           sessionStorage.removeItem('currentBookingId')
+          localStorage.removeItem('bookingIntent')
+          localStorage.removeItem('currentBookingId')
           
           // Redirect to confirmation page
           setTimeout(() => {
