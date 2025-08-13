@@ -82,7 +82,6 @@ export default function WaiverPage() {
       const requiredWaiverType = requiresWaiver(service.name)
       
       if (!requiredWaiverType) {
-        console.log('Service does not require waiver, redirecting to payment')
         proceedToPayment()
         return
       }
@@ -94,7 +93,6 @@ export default function WaiverPage() {
       const completedWaiverType = localStorage.getItem('completedWaiverType')
       
       if (waiverCompleted === 'true' && completedWaiverType === requiredWaiverType) {
-        console.log('Waiver already completed, redirecting to payment')
         proceedToPayment()
         return
       }
@@ -122,8 +120,7 @@ export default function WaiverPage() {
         customerInfo: customerInfo || '{}'
       }
 
-      console.log('Submitting waiver:', { waiverType, serviceName: selectedService?.name })
-
+  
       const response = await fetch('/api/waivers', {
         method: 'POST',
         headers: {

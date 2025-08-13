@@ -107,7 +107,6 @@ export default function ConfirmationPage() {
       // Try to recover state by session ID if provided (for payment returns)
       if (!state && sessionId) {
         state = recoverBookingBySessionId(sessionId)
-        console.log('[ConfirmationPage] Recovered state by session ID:', sessionId, state)
       }
       
       // Try to load normal state
@@ -116,7 +115,6 @@ export default function ConfirmationPage() {
       }
       
       if (!state) {
-        console.log('[ConfirmationPage] No booking state found, redirecting to service selection')
         window.location.href = '/booking'
         return
       }
@@ -149,7 +147,6 @@ export default function ConfirmationPage() {
           setPaymentType('location')
         }
       } else {
-        console.log('[ConfirmationPage] Missing required booking data:', { service, customer, date: state.selectedDate, time: state.selectedTime, staff: state.selectedStaff })
         // Redirect back to start if missing critical data
         window.location.href = '/booking'
         return
@@ -175,7 +172,6 @@ export default function ConfirmationPage() {
       if (bookingId) {
         // Booking already exists, just use the existing ID
         bookingResult = { booking_id: bookingId }
-        console.log('Using existing booking ID:', bookingId)
       } else {
         // No existing booking, create a new one
         // First, get optimal room assignment

@@ -29,7 +29,6 @@ export default function CustomerInfoPage() {
     const state = loadBookingState()
     
     if (!state) {
-      console.log('[CustomerInfoPage] No booking state found, redirecting to service selection')
       window.location.href = '/booking'
       return
     }
@@ -49,7 +48,6 @@ export default function CustomerInfoPage() {
     
     // Validate we have all required data for this step
     if (!state.selectedDate || !state.selectedTime || !state.selectedStaff) {
-      console.log('[CustomerInfoPage] Missing required booking data, redirecting to staff selection')
       // Check if it's a couples booking to redirect to the appropriate staff selection page
       if (state.bookingData?.isCouplesBooking) {
         window.location.href = '/booking/staff-couples'
@@ -145,7 +143,6 @@ export default function CustomerInfoPage() {
     
     if (waiverType) {
       // Service requires waiver - redirect to waiver page
-      console.log('Service requires waiver, redirecting to waiver page')
       window.location.href = '/booking/waiver'
       return
     }
