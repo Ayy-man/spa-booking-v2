@@ -56,7 +56,7 @@ export default function PaymentSimplePage() {
     // Simple redirect to payment with return URL
     const baseUrl = window.location.origin
     const returnUrl = `${baseUrl}/booking/payment-simple?payment_status=success`
-    const paymentUrl = `https://link.fastpaydirect.com/payment-link/688fd64ad6ab80e9dae7162b?return_url=${encodeURIComponent(returnUrl)}`
+    const paymentUrl = `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034?return_url=${encodeURIComponent(returnUrl)}`
     
     // Redirect in same window
     window.location.replace(paymentUrl)

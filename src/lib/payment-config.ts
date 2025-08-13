@@ -130,7 +130,7 @@ export const FULL_PAYMENT_LINKS: Record<string, PaymentLink> = {
 export const DEPOSIT_PAYMENT_CONFIG: PaymentLink = {
   serviceName: 'Service Deposit',
   price: 30.00,
-  paymentUrl: 'https://link.fastpaydirect.com/payment-link/688fd64ad6ab80e9dae7162b',
+  paymentUrl: 'https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034',
   type: 'deposit',
   status: 'active'
 };

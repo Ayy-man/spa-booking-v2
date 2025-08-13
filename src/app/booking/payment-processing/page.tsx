@@ -100,7 +100,7 @@ export default function PaymentProcessingPage() {
       const cancelUrl = `${baseUrl}/booking/payment-processing?booking_id=${bookingResult.booking_id}&status=cancelled`
       
       // Build the payment URL - include booking_id in return_url
-      const depositPaymentUrl = `https://link.fastpaydirect.com/payment-link/688fd64ad6ab80e9dae7162b?return_url=${encodeURIComponent(successUrl)}`
+      const depositPaymentUrl = `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034?return_url=${encodeURIComponent(successUrl)}`
       
       setPaymentUrl(depositPaymentUrl)
       setStatus('redirecting')
