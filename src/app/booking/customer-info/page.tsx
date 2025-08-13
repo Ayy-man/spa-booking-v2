@@ -12,6 +12,7 @@ import { getGHLServiceCategory } from '@/lib/staff-data'
 import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
 
 interface Service {
+  id?: string
   name: string
   price: number
   duration: number
@@ -157,27 +158,91 @@ export default function CustomerInfoPage() {
     // Check customer status and redirect accordingly
     if (data.isNewCustomer) {
       // New customer needs to pay deposit
-      // Store all booking data for after payment
-      const pendingBooking = {
-        customerInfo: data,
-        selectedService,
-        selectedDate,
-        selectedTime,
-        selectedStaff,
-        isCouplesBooking,
-        createdAt: new Date().toISOString()
+      // Import supabase client
+      const { supabaseClient } = await import('@/lib/supabase')
+      const { validateTimeForDatabase } = await import('@/lib/time-utils')
+      
+      try {
+        // Get optimal room assignment
+        let roomId = 1 // Default to Room 1
+        try {
+          const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
+            selectedService?.id || '',
+            selectedStaff,
+            selectedDate,
+            selectedTime
+          )
+          
+          if (roomAssignment && roomAssignment.assigned_room_id) {
+            roomId = typeof roomAssignment.assigned_room_id === 'string' 
+              ? parseInt(roomAssignment.assigned_room_id) 
+              : roomAssignment.assigned_room_id
+          }
+        } catch (roomError) {
+          console.error('Room assignment error:', roomError)
+        }
+
+        // Create the booking with pending payment status
+        const bookingResult = await supabaseClient.createBooking({
+          service_id: selectedService?.id || '',
+          staff_id: selectedStaff,
+          room_id: roomId,
+          customer_name: data.name,
+          customer_email: data.email,
+          customer_phone: data.phone || undefined,
+          appointment_date: selectedDate,
+          start_time: validateTimeForDatabase(selectedTime, 'start_time'),
+          notes: data.specialRequests || undefined,
+          payment_option: 'deposit',
+          payment_status: 'pending' // Will be updated to 'paid' after payment
+        })
+        
+        if (!bookingResult || !bookingResult.booking_id) {
+          throw new Error('Failed to create booking')
+        }
+
+        // Store booking ID in localStorage as backup
+        localStorage.setItem('pendingBookingId', bookingResult.booking_id)
+        
+        // Store full booking data as additional backup
+        const pendingBooking = {
+          bookingId: bookingResult.booking_id,
+          customerInfo: data,
+          selectedService,
+          selectedDate,
+          selectedTime,
+          selectedStaff,
+          isCouplesBooking,
+          createdAt: new Date().toISOString()
+        }
+        localStorage.setItem('pendingBooking', JSON.stringify(pendingBooking))
+        
+        // Redirect to payment with booking ID in return URL
+        const baseUrl = window.location.origin
+        const returnUrl = `${baseUrl}/booking/confirmation?booking_id=${bookingResult.booking_id}&payment=success`
+        const paymentUrl = `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034?return_url=${encodeURIComponent(returnUrl)}`
+        
+        // Redirect in SAME WINDOW
+        window.location.replace(paymentUrl)
+      } catch (error) {
+        console.error('Failed to create booking:', error)
+        // Fallback to old approach if booking creation fails
+        const pendingBooking = {
+          customerInfo: data,
+          selectedService,
+          selectedDate,
+          selectedTime,
+          selectedStaff,
+          isCouplesBooking,
+          createdAt: new Date().toISOString()
+        }
+        localStorage.setItem('pendingBooking', JSON.stringify(pendingBooking))
+        
+        const baseUrl = window.location.origin
+        const returnUrl = `${baseUrl}/booking/confirmation?payment=success`
+        const paymentUrl = `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034?return_url=${encodeURIComponent(returnUrl)}`
+        window.location.replace(paymentUrl)
       }
-      
-      // Save to localStorage (survives redirects better)
-      localStorage.setItem('pendingBooking', JSON.stringify(pendingBooking))
-      
-      // SIMPLE APPROACH: Direct redirect to payment with return URL
-      const baseUrl = window.location.origin
-      const returnUrl = `${baseUrl}/booking/confirmation?payment=success`
-      const paymentUrl = `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034?return_url=${encodeURIComponent(returnUrl)}`
-      
-      // Redirect in SAME WINDOW
-      window.location.replace(paymentUrl)
     } else {
       // Existing customer - go directly to confirmation (payment on location)
       if (isCouplesBooking) {

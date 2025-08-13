@@ -22,89 +22,143 @@ export default function ConfirmationPage() {
   const [showConfetti, setShowConfetti] = useState(false)
 
   useEffect(() => {
-    // Check URL parameters for session recovery
-    const urlParams = new URLSearchParams(window.location.search)
-    const sessionId = urlParams.get('session')
-    const paymentSuccess = urlParams.get('payment') === 'success'
-    const paymentLocation = urlParams.get('payment') === 'location'
-    
-    let state = null
-    
-    // FIRST: Check if returning from payment
-    if (paymentSuccess) {
-      // Try to get pending booking from localStorage
-      const pendingBookingStr = localStorage.getItem('pendingBooking')
-      if (pendingBookingStr) {
+    const loadBookingData = async () => {
+      // Check URL parameters for session recovery
+      const urlParams = new URLSearchParams(window.location.search)
+      const bookingIdParam = urlParams.get('booking_id')
+      const sessionId = urlParams.get('session')
+      const paymentSuccess = urlParams.get('payment') === 'success'
+      const paymentLocation = urlParams.get('payment') === 'location'
+      
+      let state = null
+      let existingBookingId = null
+      
+      // FIRST: Check if we have a booking ID in URL (returning from payment)
+      if (bookingIdParam && paymentSuccess) {
         try {
-          const pendingBooking = JSON.parse(pendingBookingStr)
-          // Reconstruct state from pending booking
-          state = {
-            selectedService: pendingBooking.selectedService,
-            selectedDate: pendingBooking.selectedDate,
-            selectedTime: pendingBooking.selectedTime,
-            selectedStaff: pendingBooking.selectedStaff,
-            customerInfo: pendingBooking.customerInfo,
-            bookingData: pendingBooking.bookingData
+          // Fetch booking details from database
+          const response = await fetch(`/api/bookings/${bookingIdParam}`)
+          if (response.ok) {
+            const bookingDetails = await response.json()
+            
+            // Update booking status to paid
+            await fetch(`/api/bookings/${bookingIdParam}/payment-complete`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ payment_status: 'paid' })
+            })
+            
+            // Reconstruct state from booking details
+            state = {
+              selectedService: {
+                id: bookingDetails.service_id,
+                name: bookingDetails.service_name || bookingDetails.service?.name,
+                price: bookingDetails.service_price || bookingDetails.service?.price || 0,
+                duration: bookingDetails.service_duration || bookingDetails.service?.duration || 60
+              },
+              selectedDate: bookingDetails.appointment_date,
+              selectedTime: bookingDetails.start_time,
+              selectedStaff: bookingDetails.staff_id,
+              customerInfo: {
+                name: bookingDetails.customer_name,
+                email: bookingDetails.customer_email,
+                phone: bookingDetails.customer_phone,
+                isNewCustomer: true, // Assume new customer if they went through payment
+                specialRequests: bookingDetails.notes
+              }
+            }
+            existingBookingId = bookingIdParam
+            
+            // Clear any pending booking data
+            localStorage.removeItem('pendingBooking')
+            localStorage.removeItem('pendingBookingId')
           }
-          // Clear pending booking
-          localStorage.removeItem('pendingBooking')
-        } catch (e) {
-          console.error('Failed to parse pending booking:', e)
+        } catch (error) {
+          console.error('Failed to fetch booking details:', error)
         }
       }
-    }
-    
-    // Try to recover state by session ID if provided (for payment returns)
-    if (!state && sessionId) {
-      state = recoverBookingBySessionId(sessionId)
-      console.log('[ConfirmationPage] Recovered state by session ID:', sessionId, state)
-    }
-    
-    // Try to load normal state
-    if (!state) {
-      state = loadBookingState()
-    }
-    
-    if (!state) {
-      console.log('[ConfirmationPage] No booking state found, redirecting to service selection')
-      window.location.href = '/booking'
-      return
-    }
-    
-    // Validate we have all required data
-    const service = state.bookingData?.primaryService || state.selectedService
-    const customer = state.customerInfo
-    
-    if (service && state.selectedDate && state.selectedTime && state.selectedStaff && customer) {
-      // Parse and validate the time to prevent "Invalid" errors
-      const parsedTime = parseTimeString(state.selectedTime)
       
-      setBookingData({
-        service,
-        date: state.selectedDate,
-        time: parsedTime,
-        staff: state.selectedStaff,
-        customer
-      })
-      
-      // Determine if payment was completed
-      if (customer.isNewCustomer || paymentSuccess) {
-        // New customer paid deposit
-        setPaymentCompleted(true)
-        setPaymentType('deposit')
-      } else {
-        // Existing customer - pay on location
-        setPaymentCompleted(false)
-        setPaymentType('location')
+      // SECOND: Check if returning from payment without booking ID (fallback)
+      if (!state && paymentSuccess) {
+        // Try to get pending booking from localStorage
+        const pendingBookingStr = localStorage.getItem('pendingBooking')
+        if (pendingBookingStr) {
+          try {
+            const pendingBooking = JSON.parse(pendingBookingStr)
+            // Reconstruct state from pending booking
+            state = {
+              selectedService: pendingBooking.selectedService,
+              selectedDate: pendingBooking.selectedDate,
+              selectedTime: pendingBooking.selectedTime,
+              selectedStaff: pendingBooking.selectedStaff,
+              customerInfo: pendingBooking.customerInfo,
+              bookingData: pendingBooking.bookingData
+            }
+            existingBookingId = pendingBooking.bookingId
+            // Clear pending booking
+            localStorage.removeItem('pendingBooking')
+            localStorage.removeItem('pendingBookingId')
+          } catch (e) {
+            console.error('Failed to parse pending booking:', e)
+          }
+        }
       }
-    } else {
-      console.log('[ConfirmationPage] Missing required booking data:', { service, customer, date: state.selectedDate, time: state.selectedTime, staff: state.selectedStaff })
-      // Redirect back to start if missing critical data
-      window.location.href = '/booking'
-      return
+      
+      // Try to recover state by session ID if provided (for payment returns)
+      if (!state && sessionId) {
+        state = recoverBookingBySessionId(sessionId)
+        console.log('[ConfirmationPage] Recovered state by session ID:', sessionId, state)
+      }
+      
+      // Try to load normal state
+      if (!state) {
+        state = loadBookingState()
+      }
+      
+      if (!state) {
+        console.log('[ConfirmationPage] No booking state found, redirecting to service selection')
+        window.location.href = '/booking'
+        return
+      }
+      
+      // Validate we have all required data
+      const service = state.bookingData?.primaryService || state.selectedService
+      const customer = state.customerInfo
+      
+      if (service && state.selectedDate && state.selectedTime && state.selectedStaff && customer) {
+        // Parse and validate the time to prevent "Invalid" errors
+        const parsedTime = parseTimeString(state.selectedTime)
+        
+        setBookingData({
+          service,
+          date: state.selectedDate,
+          time: parsedTime,
+          staff: state.selectedStaff,
+          customer,
+          existingBookingId // Store the booking ID if we already have one
+        })
+        
+        // Determine if payment was completed
+        if (customer.isNewCustomer || paymentSuccess) {
+          // New customer paid deposit
+          setPaymentCompleted(true)
+          setPaymentType('deposit')
+        } else {
+          // Existing customer - pay on location
+          setPaymentCompleted(false)
+          setPaymentType('location')
+        }
+      } else {
+        console.log('[ConfirmationPage] Missing required booking data:', { service, customer, date: state.selectedDate, time: state.selectedTime, staff: state.selectedStaff })
+        // Redirect back to start if missing critical data
+        window.location.href = '/booking'
+        return
+      }
+      
+      setIsLoading(false)
     }
     
-    setIsLoading(false)
+    loadBookingData()
   }, [])
 
   const handleConfirmBooking = async () => {
@@ -114,61 +168,69 @@ export default function ConfirmationPage() {
     setError('')
 
     try {
+      let bookingResult = null
+      let bookingId = bookingData.existingBookingId
 
-      // First, get optimal room assignment
-      let roomId = 1; // Default fallback to Room 1 (integer)
-      try {
-        const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
-          bookingData.service.id,
-          bookingData.staff,
-          bookingData.date,
-          bookingData.time
-        )
-        
-        if (roomAssignment && roomAssignment.assigned_room_id) {
-          // Convert to integer if needed
-          roomId = typeof roomAssignment.assigned_room_id === 'string' 
-            ? parseInt(roomAssignment.assigned_room_id) 
-            : roomAssignment.assigned_room_id
-        }
-      } catch (roomError) {
-        // Continue with default room
-      }
-
-      // Determine payment option and status
-      // New customers = deposit paid, Existing customers = pay on location
-      let paymentOption = 'pay_on_location'
-      let paymentStatus = 'pending'
-      
-      if (bookingData.customer.isNewCustomer) {
-        // New customer - deposit was paid
-        paymentOption = 'deposit'
-        paymentStatus = 'paid'
+      // Check if we already have a booking (returning from payment)
+      if (bookingId) {
+        // Booking already exists, just use the existing ID
+        bookingResult = { booking_id: bookingId }
+        console.log('Using existing booking ID:', bookingId)
       } else {
-        // Existing customer - pay on location
-        paymentOption = 'pay_on_location'
-        paymentStatus = 'pending'
-      }
+        // No existing booking, create a new one
+        // First, get optimal room assignment
+        let roomId = 1; // Default fallback to Room 1 (integer)
+        try {
+          const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
+            bookingData.service.id,
+            bookingData.staff,
+            bookingData.date,
+            bookingData.time
+          )
+          
+          if (roomAssignment && roomAssignment.assigned_room_id) {
+            // Convert to integer if needed
+            roomId = typeof roomAssignment.assigned_room_id === 'string' 
+              ? parseInt(roomAssignment.assigned_room_id) 
+              : roomAssignment.assigned_room_id
+          }
+        } catch (roomError) {
+          // Continue with default room
+        }
 
-      // Create the booking in Supabase
-      const bookingResult = await supabaseClient.createBooking({
-        service_id: bookingData.service.id,
-        staff_id: bookingData.staff,
-        room_id: roomId,
-        customer_name: bookingData.customer.name,
-        customer_email: bookingData.customer.email,
-        customer_phone: bookingData.customer.phone || undefined,
-        appointment_date: bookingData.date,
-        start_time: validateTimeForDatabase(bookingData.time, 'start_time'),
-        notes: bookingData.customer.specialRequests || undefined,
-        payment_option: paymentOption,
-        payment_status: paymentStatus
-      })
-      
+        // Determine payment option and status
+        // New customers = deposit paid, Existing customers = pay on location
+        let paymentOption = 'pay_on_location'
+        let paymentStatus = 'pending'
+        
+        if (bookingData.customer.isNewCustomer) {
+          // New customer - deposit was paid
+          paymentOption = 'deposit'
+          paymentStatus = 'paid'
+        } else {
+          // Existing customer - pay on location
+          paymentOption = 'pay_on_location'
+          paymentStatus = 'pending'
+        }
 
-      
-      if (!bookingResult || !bookingResult.booking_id) {
-        throw new Error('Booking was not created properly - no booking ID returned')
+        // Create the booking in Supabase
+        bookingResult = await supabaseClient.createBooking({
+          service_id: bookingData.service.id,
+          staff_id: bookingData.staff,
+          room_id: roomId,
+          customer_name: bookingData.customer.name,
+          customer_email: bookingData.customer.email,
+          customer_phone: bookingData.customer.phone || undefined,
+          appointment_date: bookingData.date,
+          start_time: validateTimeForDatabase(bookingData.time, 'start_time'),
+          notes: bookingData.customer.specialRequests || undefined,
+          payment_option: paymentOption,
+          payment_status: paymentStatus
+        })
+        
+        if (!bookingResult || !bookingResult.booking_id) {
+          throw new Error('Booking was not created properly - no booking ID returned')
+        }
       }
       
       // Store booking result
@@ -191,41 +253,43 @@ export default function ConfirmationPage() {
         false // isCouples
       )
       
-      // Send booking confirmation webhook to GHL
-      try {
-        const serviceCategory = getServiceCategory(bookingData.service.name)
-        const ghlCategory = getGHLServiceCategory(bookingData.service.name)
-        const result = await ghlWebhookSender.sendBookingConfirmationWebhook(
-          bookingResult.booking_id,
-          {
-            name: bookingData.customer.name,
-            email: bookingData.customer.email,
-            phone: bookingData.customer.phone || '',
-            isNewCustomer: bookingData.customer.isNewCustomer || false
-          },
-          {
-            service: bookingData.service.name,
-            serviceId: bookingData.service.id,
-            serviceCategory,
-            ghlCategory,
-            date: bookingData.date,
-            time: bookingData.time,
-            duration: bookingData.service.duration,
-            price: bookingData.service.price,
-            staff: (staffNameMap as any)[bookingData.staff] || bookingData.staff,
-            staffId: bookingData.staff,
-            room: roomId.toString(),
-            roomId: roomId.toString()
+      // Send booking confirmation webhook to GHL (only if it's a new booking)
+      if (!bookingData.existingBookingId) {
+        try {
+          const serviceCategory = getServiceCategory(bookingData.service.name)
+          const ghlCategory = getGHLServiceCategory(bookingData.service.name)
+          const result = await ghlWebhookSender.sendBookingConfirmationWebhook(
+            bookingResult.booking_id,
+            {
+              name: bookingData.customer.name,
+              email: bookingData.customer.email,
+              phone: bookingData.customer.phone || '',
+              isNewCustomer: bookingData.customer.isNewCustomer || false
+            },
+            {
+              service: bookingData.service.name,
+              serviceId: bookingData.service.id,
+              serviceCategory,
+              ghlCategory,
+              date: bookingData.date,
+              time: bookingData.time,
+              duration: bookingData.service.duration,
+              price: bookingData.service.price,
+              staff: (staffNameMap as any)[bookingData.staff] || bookingData.staff,
+              staffId: bookingData.staff,
+              room: '1', // Default room for webhook
+              roomId: '1' // Default room for webhook
+            }
+          )
+          
+          if (result.success) {
+          } else {
+            // Failed to send booking confirmation to GHL
           }
-        )
-        
-        if (result.success) {
-        } else {
-          // Failed to send booking confirmation to GHL
+        } catch (error) {
+          // Don't fail the booking if GHL webhook fails
+          // Error is logged in the webhook sender
         }
-      } catch (error) {
-        // Don't fail the booking if GHL webhook fails
-        // Error is logged in the webhook sender
       }
       
       setIsSuccess(true)
