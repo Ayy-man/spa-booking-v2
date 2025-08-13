@@ -157,12 +157,8 @@ export default function CustomerInfoPage() {
     // Check customer status and redirect accordingly
     if (data.isNewCustomer) {
       // New customer needs to pay deposit
-      // Create a temporary booking ID that will be used after payment
-      const tempBookingId = `pending_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      
-      // Store the booking intent with the temporary ID
-      const bookingIntent = {
-        tempBookingId,
+      // Store all booking data for after payment
+      const pendingBooking = {
         customerInfo: data,
         selectedService,
         selectedDate,
@@ -172,12 +168,16 @@ export default function CustomerInfoPage() {
         createdAt: new Date().toISOString()
       }
       
-      // Save to session storage for recovery after payment
-      sessionStorage.setItem('bookingIntent', JSON.stringify(bookingIntent))
+      // Save to localStorage (survives redirects better)
+      localStorage.setItem('pendingBooking', JSON.stringify(pendingBooking))
       
-      // Redirect to payment processing page instead of direct payment link
-      // This page will handle the payment flow and booking creation
-      window.location.href = `/booking/payment-processing?booking_ref=${tempBookingId}`
+      // SIMPLE APPROACH: Direct redirect to payment with return URL
+      const baseUrl = window.location.origin
+      const returnUrl = `${baseUrl}/booking/confirmation?payment=success`
+      const paymentUrl = `https://link.fastpaydirect.com/payment-link/688fd64ad6ab80e9dae7162b?return_url=${encodeURIComponent(returnUrl)}`
+      
+      // Redirect in SAME WINDOW
+      window.location.replace(paymentUrl)
     } else {
       // Existing customer - go directly to confirmation (payment on location)
       if (isCouplesBooking) {

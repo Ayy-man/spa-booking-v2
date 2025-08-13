@@ -30,12 +30,38 @@ export default function ConfirmationPage() {
     
     let state = null
     
+    // FIRST: Check if returning from payment
+    if (paymentSuccess) {
+      // Try to get pending booking from localStorage
+      const pendingBookingStr = localStorage.getItem('pendingBooking')
+      if (pendingBookingStr) {
+        try {
+          const pendingBooking = JSON.parse(pendingBookingStr)
+          // Reconstruct state from pending booking
+          state = {
+            selectedService: pendingBooking.selectedService,
+            selectedDate: pendingBooking.selectedDate,
+            selectedTime: pendingBooking.selectedTime,
+            selectedStaff: pendingBooking.selectedStaff,
+            customerInfo: pendingBooking.customerInfo,
+            bookingData: pendingBooking.bookingData
+          }
+          // Clear pending booking
+          localStorage.removeItem('pendingBooking')
+        } catch (e) {
+          console.error('Failed to parse pending booking:', e)
+        }
+      }
+    }
+    
     // Try to recover state by session ID if provided (for payment returns)
-    if (sessionId) {
+    if (!state && sessionId) {
       state = recoverBookingBySessionId(sessionId)
       console.log('[ConfirmationPage] Recovered state by session ID:', sessionId, state)
-    } else {
-      // Try to load normal state
+    }
+    
+    // Try to load normal state
+    if (!state) {
       state = loadBookingState()
     }
     

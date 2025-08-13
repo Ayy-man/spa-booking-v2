@@ -93,25 +93,21 @@ export default function PaymentProcessingPage() {
       // Build payment URL with booking_id and success parameters
       const baseUrl = window.location.origin
       
-      // Success URL - marks payment as complete immediately
+      // CRITICAL: Include booking_id in the return URL itself
       const successUrl = `${baseUrl}/booking/payment-processing?booking_id=${bookingResult.booking_id}&payment_status=success`
       
       // Cancel/return URL - will poll for status
-      const cancelUrl = `${baseUrl}/booking/payment-processing?booking_id=${bookingResult.booking_id}&status=return`
+      const cancelUrl = `${baseUrl}/booking/payment-processing?booking_id=${bookingResult.booking_id}&status=cancelled`
       
-      // Add booking_id and return URLs to the payment link
-      const depositPaymentUrl = `https://link.fastpaydirect.com/payment-link/688fd64ad6ab80e9dae7162b` +
-        `?success_url=${encodeURIComponent(successUrl)}` +
-        `&cancel_url=${encodeURIComponent(cancelUrl)}` +
-        `&return_url=${encodeURIComponent(successUrl)}` +
-        `&booking_id=${bookingResult.booking_id}`
+      // Build the payment URL - include booking_id in return_url
+      const depositPaymentUrl = `https://link.fastpaydirect.com/payment-link/688fd64ad6ab80e9dae7162b?return_url=${encodeURIComponent(successUrl)}`
       
       setPaymentUrl(depositPaymentUrl)
       setStatus('redirecting')
       
-      // Redirect to payment after a short delay
+      // Redirect in SAME WINDOW (not new tab)
       setTimeout(() => {
-        window.location.href = depositPaymentUrl
+        window.location.replace(depositPaymentUrl) // Use replace to ensure same tab
       }, 2000)
       
     } catch (err) {
