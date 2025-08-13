@@ -149,6 +149,38 @@ export function BookingCard({
         </div>
 
 
+        {/* Payment Status */}
+        {booking.payment_option && (
+          <div className="pt-2 border-t border-gray-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                {booking.payment_option === 'deposit' && booking.payment_status === 'paid' ? (
+                  <>
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-xs font-medium text-green-700">$30 Deposit Paid</span>
+                  </>
+                ) : booking.payment_option === 'full_payment' && booking.payment_status === 'paid' ? (
+                  <>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-xs font-medium text-blue-700">Paid in Full</span>
+                  </>
+                ) : booking.payment_option === 'pay_on_location' ? (
+                  <>
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span className="text-xs font-medium text-yellow-700">Pay on Arrival</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                    <span className="text-xs font-medium text-gray-600">Payment Pending</span>
+                  </>
+                )}
+              </div>
+              <span className="text-xs text-gray-500">${booking.final_price || 0}</span>
+            </div>
+          </div>
+        )}
+
         {/* Display-Only Notice */}
         <div className="pt-2 border-t border-gray-100">
           <p className="text-xs text-gray-400 italic">
