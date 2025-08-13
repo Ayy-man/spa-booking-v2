@@ -205,22 +205,38 @@ export default function DateTimePage() {
         return
       }
       
-      // Call Supabase function to get available time slots
-      const dateString = selectedDate.toISOString().split('T')[0]
-      const availableSlots = await supabaseClient.getAvailableTimeSlots(
-        dateString,
-        matchingService.id
-      )
+      // Generate time slots based on service duration and buffer
+      // Don't use Supabase RPC as it doesn't account for service duration properly
+      const times = []
+      const serviceDuration = matchingService.duration || 60
+      const bufferMinutes = 15
       
-      if (availableSlots && availableSlots.length > 0) {
-        // Process time slots with proper validation
-        const validTimes = processTimeSlots(availableSlots)
-        // Remove duplicates and sort
-        const uniqueTimes = Array.from(new Set(validTimes)).sort()
-        setAvailableTimes(uniqueTimes)
-      } else {
-        setAvailableTimes([])
+      // Start at 9:00 AM
+      let currentTime = new Date(selectedDate)
+      currentTime.setHours(9, 0, 0, 0)
+      
+      const closingTime = new Date(selectedDate)
+      closingTime.setHours(19, 0, 0, 0) // 7 PM close
+      
+      // Generate slots with proper spacing
+      while (currentTime < closingTime) {
+        // Check if this time slot can fit before closing
+        const endTime = new Date(currentTime)
+        endTime.setMinutes(endTime.getMinutes() + serviceDuration)
+        
+        if (endTime <= closingTime) {
+          const timeString = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`
+          times.push(timeString)
+          
+          // Move to next slot: add service duration + 15-minute buffer
+          // This ensures proper spacing between appointments
+          currentTime.setMinutes(currentTime.getMinutes() + serviceDuration + bufferMinutes)
+        } else {
+          break
+        }
       }
+      
+      setAvailableTimes(times)
     } catch (error: any) {
       // Fallback to simple time generation
       generateFallbackTimes()
