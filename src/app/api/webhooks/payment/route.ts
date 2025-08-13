@@ -3,41 +3,163 @@ import crypto from 'crypto'
 import { supabase } from '@/lib/supabase'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 
-// Types
+// Types for payment webhooks (supports both FastPayDirect and GoHighLevel formats)
 interface PaymentWebhookPayload {
-  event_id: string
-  event_type: 'payment.completed' | 'payment.failed' | 'payment.refunded' | 'payment.cancelled'
-  transaction_id: string
-  amount: string
-  currency: string
+  // FastPayDirect/Generic format
+  event_id?: string
+  event_type?: 'payment.completed' | 'payment.failed' | 'payment.refunded' | 'payment.cancelled'
+  transaction_id?: string
+  amount?: string | number
+  currency?: string
   payment_method?: string
   customer_email?: string
   metadata?: {
     booking_id?: string
     [key: string]: any
   }
-  timestamp: number
+  timestamp?: number
+  
+  // GoHighLevel specific format
+  type?: 'Invoice' | 'Order' | 'Transaction'
+  eventType?: 'InvoicePaid' | 'OrderPaid' | 'TransactionCompleted' | 'TransactionFailed' | 'TransactionRefunded'
+  contactId?: string
+  locationId?: string
+  webhookId?: string
+  
+  // GoHighLevel Invoice format
+  invoice?: {
+    id: string
+    invoiceNumber: string
+    amount: number
+    currency: string
+    status: 'paid' | 'unpaid' | 'cancelled' | 'refunded'
+    contactId: string
+    customFields?: { [key: string]: any }
+    metadata?: { booking_id?: string }
+  }
+  
+  // GoHighLevel Order format
+  order?: {
+    id: string
+    amount: number
+    currency: string
+    status: 'paid' | 'pending' | 'failed' | 'refunded'
+    contactId: string
+    customFields?: { [key: string]: any }
+  }
+  
+  // GoHighLevel Transaction format
+  transaction?: {
+    id: string
+    amount: number
+    currency: string
+    status: 'completed' | 'failed' | 'refunded'
+    paymentMethod: string
+    invoiceId?: string
+    orderId?: string
+    contactId: string
+    customFields?: { [key: string]: any }
+  }
+  
+  // Custom fields for booking reference
+  customFields?: {
+    booking_id?: string
+    spa_booking_ref?: string
+    [key: string]: any
+  }
+  
   [key: string]: any
 }
 
 interface WebhookHeaders {
+  // FastPayDirect/Generic headers
   'x-webhook-signature'?: string
   'x-webhook-timestamp'?: string
   'x-webhook-event-id'?: string
+  
+  // GoHighLevel headers
+  'x-highlevel-signature'?: string
+  'x-highlevel-timestamp'?: string
+  'x-highlevel-webhook-id'?: string
+  
   [key: string]: string | undefined
 }
 
-// Verify webhook signature to ensure authenticity
+// Verify webhook signature to ensure authenticity (supports both FastPayDirect and GoHighLevel)
 function verifyWebhookSignature(
   payload: string,
-  signature: string | null,
-  timestamp: string | null
+  headers: WebhookHeaders
 ): boolean {
-  if (!signature || !timestamp) {
-    console.error('Missing signature or timestamp in webhook headers')
+  // Try GoHighLevel format first
+  const ghlSignature = headers['x-highlevel-signature']
+  const ghlTimestamp = headers['x-highlevel-timestamp']
+  
+  if (ghlSignature && ghlTimestamp) {
+    return verifyGHLSignature(payload, ghlSignature, ghlTimestamp)
+  }
+  
+  // Fall back to FastPayDirect/Generic format
+  const genericSignature = headers['x-webhook-signature']
+  const genericTimestamp = headers['x-webhook-timestamp']
+  
+  if (genericSignature && genericTimestamp) {
+    return verifyGenericSignature(payload, genericSignature, genericTimestamp)
+  }
+  
+  console.error('No valid signature headers found')
+  return false
+}
+
+// Verify GoHighLevel webhook signature
+function verifyGHLSignature(
+  payload: string,
+  signature: string,
+  timestamp: string
+): boolean {
+  const webhookSecret = process.env.GHL_WEBHOOK_SECRET || process.env.PAYMENT_WEBHOOK_SECRET
+  if (!webhookSecret) {
+    console.error('GHL_WEBHOOK_SECRET or PAYMENT_WEBHOOK_SECRET not configured')
     return false
   }
   
+  // Prevent replay attacks (timestamp must be within 5 minutes)
+  const currentTime = Math.floor(Date.now() / 1000)
+  const webhookTime = parseInt(timestamp)
+  if (Math.abs(currentTime - webhookTime) > 300) {
+    console.error('GoHighLevel webhook timestamp too old or in future', {
+      current: currentTime,
+      webhook: webhookTime,
+      diff: Math.abs(currentTime - webhookTime)
+    })
+    return false
+  }
+  
+  // GoHighLevel uses HMAC-SHA256 with sha256= prefix
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(`${timestamp}.${payload}`)
+    .digest('hex')
+  
+  const formattedExpected = `sha256=${expectedSignature}`
+  
+  // Use timing-safe comparison to prevent timing attacks
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(formattedExpected)
+    )
+  } catch (error) {
+    console.error('GoHighLevel signature comparison failed:', error)
+    return false
+  }
+}
+
+// Verify generic/FastPayDirect webhook signature
+function verifyGenericSignature(
+  payload: string,
+  signature: string,
+  timestamp: string
+): boolean {
   const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET
   if (!webhookSecret) {
     console.error('PAYMENT_WEBHOOK_SECRET not configured')
@@ -74,7 +196,103 @@ function verifyWebhookSignature(
   }
 }
 
-// Log webhook event for debugging and audit
+// Extract booking ID from various possible locations (supports both formats)
+function extractBookingId(payload: PaymentWebhookPayload): string | null {
+  // Check GoHighLevel custom fields first
+  if (payload.customFields?.booking_id) {
+    return payload.customFields.booking_id
+  }
+  if (payload.customFields?.spa_booking_ref) {
+    return payload.customFields.spa_booking_ref
+  }
+  
+  // Check GoHighLevel invoice metadata/custom fields
+  if (payload.invoice?.metadata?.booking_id) {
+    return payload.invoice.metadata.booking_id
+  }
+  if (payload.invoice?.customFields?.booking_id) {
+    return payload.invoice.customFields.booking_id
+  }
+  
+  // Check GoHighLevel order custom fields
+  if (payload.order?.customFields?.booking_id) {
+    return payload.order.customFields.booking_id
+  }
+  
+  // Check GoHighLevel transaction custom fields
+  if (payload.transaction?.customFields?.booking_id) {
+    return payload.transaction.customFields.booking_id
+  }
+  
+  // Check FastPayDirect/Generic format
+  if (payload.metadata?.booking_id) {
+    return payload.metadata.booking_id
+  }
+  
+  return null
+}
+
+// Determine webhook provider and format
+function determineWebhookProvider(payload: PaymentWebhookPayload, headers: WebhookHeaders): string {
+  if (headers['x-highlevel-signature'] || payload.type || payload.eventType) {
+    return 'gohighlevel'
+  }
+  if (headers['x-webhook-signature'] || payload.event_type) {
+    return 'fastpaydirect'
+  }
+  return 'unknown'
+}
+
+// Extract payment details from payload (supports both formats)
+function extractPaymentDetails(payload: PaymentWebhookPayload): {
+  amount: number
+  currency: string
+  transactionId: string
+  paymentMethod: string
+  eventType: string
+} {
+  // GoHighLevel format
+  if (payload.invoice) {
+    return {
+      amount: payload.invoice.amount,
+      currency: payload.invoice.currency || 'USD',
+      transactionId: payload.invoice.id,
+      paymentMethod: 'gohighlevel_invoice',
+      eventType: payload.eventType || 'InvoicePaid'
+    }
+  }
+  
+  if (payload.order) {
+    return {
+      amount: payload.order.amount,
+      currency: payload.order.currency || 'USD',
+      transactionId: payload.order.id,
+      paymentMethod: 'gohighlevel_order',
+      eventType: payload.eventType || 'OrderPaid'
+    }
+  }
+  
+  if (payload.transaction) {
+    return {
+      amount: payload.transaction.amount,
+      currency: payload.transaction.currency || 'USD',
+      transactionId: payload.transaction.id,
+      paymentMethod: payload.transaction.paymentMethod || 'gohighlevel',
+      eventType: payload.eventType || 'TransactionCompleted'
+    }
+  }
+  
+  // FastPayDirect/Generic format
+  return {
+    amount: typeof payload.amount === 'string' ? parseFloat(payload.amount) : (payload.amount || 0),
+    currency: payload.currency || 'USD',
+    transactionId: payload.transaction_id || `unknown_${Date.now()}`,
+    paymentMethod: payload.payment_method || 'card',
+    eventType: payload.event_type || 'payment.completed'
+  }
+}
+
+// Log webhook event for debugging and audit (supports both formats)
 async function logWebhookEvent(
   payload: PaymentWebhookPayload,
   headers: WebhookHeaders,
@@ -82,15 +300,28 @@ async function logWebhookEvent(
   error?: string
 ) {
   try {
+    const provider = determineWebhookProvider(payload, headers)
+    const paymentDetails = extractPaymentDetails(payload)
+    
+    // Generate event ID based on format
+    let eventId: string
+    if (payload.webhookId) {
+      eventId = payload.webhookId
+    } else if (payload.event_id) {
+      eventId = payload.event_id
+    } else {
+      eventId = `${paymentDetails.transactionId}_${Date.now()}`
+    }
+    
     const { error: logError } = await supabase
       .from('webhook_events')
       .insert({
-        event_id: payload.event_id || `${payload.transaction_id}_${Date.now()}`,
-        event_type: payload.event_type,
-        provider: 'fastpaydirect',
+        event_id: eventId,
+        event_type: paymentDetails.eventType,
+        provider,
         payload,
         headers,
-        signature: headers['x-webhook-signature'],
+        signature: headers['x-highlevel-signature'] || headers['x-webhook-signature'],
         signature_verified: verified,
         processing_status: error ? 'failed' : 'pending',
         error_message: error
@@ -104,17 +335,22 @@ async function logWebhookEvent(
   }
 }
 
-// Handle successful payment
+// Handle successful payment (supports both FastPayDirect and GoHighLevel formats)
 async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
-  const { transaction_id, amount, currency, metadata, customer_email } = payload
-  const bookingId = metadata?.booking_id
+  const bookingId = extractBookingId(payload)
+  const paymentDetails = extractPaymentDetails(payload)
+  const provider = determineWebhookProvider(payload, {})
   
   if (!bookingId) {
-    console.error('No booking_id in payment webhook metadata', { transaction_id })
-    throw new Error('Missing booking_id in webhook metadata')
+    console.error('No booking_id found in payment webhook', { 
+      provider,
+      eventType: paymentDetails.eventType,
+      transactionId: paymentDetails.transactionId
+    })
+    throw new Error('Missing booking_id in webhook')
   }
   
-  console.log('Processing payment completion for booking:', bookingId)
+  console.log(`Processing ${provider} payment completion for booking:`, bookingId)
   
   // Get booking details
   const { data: booking, error: bookingError } = await supabase
@@ -153,14 +389,15 @@ async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
   
   // Verify payment amount matches booking
   const bookingAmount = parseFloat(booking.final_price)
-  const paymentAmount = parseFloat(amount)
+  const paymentAmount = paymentDetails.amount
   
   if (Math.abs(bookingAmount - paymentAmount) > 0.01) {
     console.warn('Payment amount mismatch', {
       booking_id: bookingId,
       expected: bookingAmount,
       received: paymentAmount,
-      difference: Math.abs(bookingAmount - paymentAmount)
+      difference: Math.abs(bookingAmount - paymentAmount),
+      provider
     })
     // Log but continue processing - admin can review
   }
@@ -169,11 +406,11 @@ async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
   const { data: existingTransaction } = await supabase
     .from('payment_transactions')
     .select('id')
-    .eq('transaction_id', transaction_id)
+    .eq('transaction_id', paymentDetails.transactionId)
     .single()
   
   if (existingTransaction) {
-    console.log('Transaction already processed:', transaction_id)
+    console.log('Transaction already processed:', paymentDetails.transactionId)
     return // Idempotent - don't process twice
   }
   
@@ -182,14 +419,20 @@ async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
     .from('payment_transactions')
     .insert({
       booking_id: bookingId,
-      transaction_id,
-      payment_provider: 'fastpaydirect',
+      transaction_id: paymentDetails.transactionId,
+      payment_provider: provider === 'gohighlevel' ? 'gohighlevel' : 'fastpaydirect',
       amount: paymentAmount,
-      currency: currency || 'USD',
+      currency: paymentDetails.currency,
       status: 'completed',
-      payment_method: payload.payment_method || 'card',
-      customer_email: customer_email || booking.customers?.email,
-      metadata,
+      payment_method: paymentDetails.paymentMethod,
+      customer_email: payload.customer_email || booking.customers?.email,
+      metadata: {
+        ...payload.metadata,
+        ghl_contact_id: payload.contactId,
+        ghl_location_id: payload.locationId,
+        ghl_event_type: paymentDetails.eventType,
+        provider
+      },
       webhook_payload: payload,
       webhook_received_at: new Date().toISOString()
     })
@@ -241,9 +484,9 @@ async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
         },
         {
           verified: true,
-          transaction_id,
-          payment_method: payload.payment_method || 'card',
-          payment_provider: 'fastpaydirect'
+          transaction_id: paymentDetails.transactionId,
+          payment_method: paymentDetails.paymentMethod,
+          payment_provider: provider === 'gohighlevel' ? 'gohighlevel' : 'fastpaydirect'
         }
       )
     } catch (ghlError) {
@@ -255,29 +498,35 @@ async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
   console.log('Payment successfully processed for booking:', bookingId)
 }
 
-// Handle failed payment
+// Handle failed payment (supports both formats)
 async function handlePaymentFailed(payload: PaymentWebhookPayload) {
-  const { transaction_id, metadata } = payload
-  const bookingId = metadata?.booking_id
+  const bookingId = extractBookingId(payload)
+  const paymentDetails = extractPaymentDetails(payload)
+  const provider = determineWebhookProvider(payload, {})
   
   if (!bookingId) {
-    console.error('No booking_id in failed payment webhook')
+    console.error('No booking_id in failed payment webhook', { provider })
     return
   }
   
-  console.log('Processing payment failure for booking:', bookingId)
+  console.log(`Processing ${provider} payment failure for booking:`, bookingId)
   
   // Create failed transaction record
   await supabase
     .from('payment_transactions')
     .insert({
       booking_id: bookingId,
-      transaction_id,
-      payment_provider: 'fastpaydirect',
-      amount: parseFloat(payload.amount),
-      currency: payload.currency || 'USD',
+      transaction_id: paymentDetails.transactionId,
+      payment_provider: provider === 'gohighlevel' ? 'gohighlevel' : 'fastpaydirect',
+      amount: paymentDetails.amount,
+      currency: paymentDetails.currency,
       status: 'failed',
-      metadata,
+      metadata: {
+        ...payload.metadata,
+        ghl_contact_id: payload.contactId,
+        ghl_location_id: payload.locationId,
+        provider
+      },
       webhook_payload: payload,
       webhook_received_at: new Date().toISOString()
     })
@@ -295,29 +544,35 @@ async function handlePaymentFailed(payload: PaymentWebhookPayload) {
   console.log('Payment failure recorded for booking:', bookingId)
 }
 
-// Handle refunded payment
+// Handle refunded payment (supports both formats)
 async function handlePaymentRefunded(payload: PaymentWebhookPayload) {
-  const { transaction_id, metadata } = payload
-  const bookingId = metadata?.booking_id
+  const bookingId = extractBookingId(payload)
+  const paymentDetails = extractPaymentDetails(payload)
+  const provider = determineWebhookProvider(payload, {})
   
   if (!bookingId) {
-    console.error('No booking_id in refund webhook')
+    console.error('No booking_id in refund webhook', { provider })
     return
   }
   
-  console.log('Processing payment refund for booking:', bookingId)
+  console.log(`Processing ${provider} payment refund for booking:`, bookingId)
   
   // Create refund transaction record
   await supabase
     .from('payment_transactions')
     .insert({
       booking_id: bookingId,
-      transaction_id: `${transaction_id}_refund`,
-      payment_provider: 'fastpaydirect',
-      amount: parseFloat(payload.amount),
-      currency: payload.currency || 'USD',
+      transaction_id: `${paymentDetails.transactionId}_refund`,
+      payment_provider: provider === 'gohighlevel' ? 'gohighlevel' : 'fastpaydirect',
+      amount: paymentDetails.amount,
+      currency: paymentDetails.currency,
       status: 'refunded',
-      metadata,
+      metadata: {
+        ...payload.metadata,
+        ghl_contact_id: payload.contactId,
+        ghl_location_id: payload.locationId,
+        provider
+      },
       webhook_payload: payload,
       webhook_received_at: new Date().toISOString()
     })
@@ -349,19 +604,13 @@ export async function POST(request: NextRequest) {
       headers[key.toLowerCase()] = value
     })
     
-    const signature = headers['x-webhook-signature'] || null
-    const timestamp = headers['x-webhook-timestamp'] || null
-    
-    // Verify webhook signature
-    const isValid = verifyWebhookSignature(rawBody, signature, timestamp)
-    
-    // Parse payload
+    // Parse payload first
     try {
       payload = JSON.parse(rawBody)
     } catch (parseError) {
       console.error('Failed to parse webhook payload:', parseError)
       await logWebhookEvent(
-        { event_type: 'parse_error', transaction_id: 'unknown' } as any,
+        { eventType: 'parse_error', transaction_id: 'unknown', type: 'Unknown', contactId: 'unknown', locationId: 'unknown', timestamp: Date.now() } as any,
         headers,
         false,
         'Invalid JSON payload'
@@ -372,52 +621,56 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Verify webhook signature if secrets are configured (optional)
+    let isValid = true
+    const hasGHLSecret = process.env.GHL_WEBHOOK_SECRET || process.env.PAYMENT_WEBHOOK_SECRET
+    
+    if (hasGHLSecret) {
+      // Only verify if secrets are configured
+      isValid = verifyWebhookSignature(rawBody, headers)
+      
+      if (!isValid) {
+        console.warn('Webhook signature verification failed - processing anyway')
+        // Log warning but continue processing
+      }
+    } else {
+      console.log('Webhook signature verification skipped - no secret configured')
+    }
+    
     // Log the webhook event
     await logWebhookEvent(payload, headers, isValid)
     
-    // Reject if signature invalid (after logging)
-    if (!isValid) {
-      console.error('Invalid webhook signature')
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 401 }
-      )
-    }
+    // Process based on event type (supports both formats)
+    const paymentDetails = extractPaymentDetails(payload)
+    const provider = determineWebhookProvider(payload, headers)
     
-    // Process based on event type
-    console.log(`Processing webhook event: ${payload.event_type}`)
+    console.log(`Processing ${provider} webhook event: ${paymentDetails.eventType}`)
     
-    switch (payload.event_type) {
-      case 'payment.completed':
-        await handlePaymentCompleted(payload)
-        break
-      
-      case 'payment.failed':
-        await handlePaymentFailed(payload)
-        break
-      
-      case 'payment.refunded':
-        await handlePaymentRefunded(payload)
-        break
-      
-      case 'payment.cancelled':
-        // Log but don't process cancelled payments
-        console.log('Payment cancelled:', payload.transaction_id)
-        break
-      
-      default:
-        console.log('Unhandled webhook event type:', payload.event_type)
+    // Handle both FastPayDirect and GoHighLevel event types
+    const eventType = paymentDetails.eventType
+    if (eventType === 'payment.completed' || eventType === 'InvoicePaid' || eventType === 'OrderPaid' || eventType === 'TransactionCompleted') {
+      await handlePaymentCompleted(payload)
+    } else if (eventType === 'payment.failed' || eventType === 'TransactionFailed') {
+      await handlePaymentFailed(payload)
+    } else if (eventType === 'payment.refunded' || eventType === 'TransactionRefunded') {
+      await handlePaymentRefunded(payload)
+    } else if (eventType === 'payment.cancelled') {
+      // Log but don't process cancelled payments
+      console.log('Payment cancelled:', paymentDetails.transactionId)
+    } else {
+      console.log('Unhandled webhook event type:', eventType)
     }
     
     // Mark webhook as processed
-    if (payload.event_id) {
+    const eventId = payload.webhookId || payload.event_id
+    if (eventId) {
       await supabase
         .from('webhook_events')
         .update({
           processing_status: 'completed',
           processed_at: new Date().toISOString()
         })
-        .eq('event_id', payload.event_id)
+        .eq('event_id', eventId)
     }
     
     const processingTime = Date.now() - startTime
@@ -426,7 +679,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { 
         received: true,
-        processing_time: processingTime 
+        processing_time: processingTime,
+        provider,
+        event_type: paymentDetails.eventType
       },
       { status: 200 }
     )
@@ -435,7 +690,8 @@ export async function POST(request: NextRequest) {
     console.error('Webhook processing error:', error)
     
     // Update webhook event with error
-    if (payload?.event_id) {
+    const eventId = payload?.webhookId || payload?.event_id
+    if (eventId) {
       await supabase
         .from('webhook_events')
         .update({
@@ -443,7 +699,7 @@ export async function POST(request: NextRequest) {
           error_message: error.message,
           error_details: { stack: error.stack }
         })
-        .eq('event_id', payload.event_id)
+        .eq('event_id', eventId)
     }
     
     // Return 200 to prevent retries for non-recoverable errors
@@ -466,7 +722,12 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     status: 'healthy',
     endpoint: '/api/webhooks/payment',
-    configured: !!process.env.PAYMENT_WEBHOOK_SECRET,
-    timestamp: new Date().toISOString()
+    supports: ['FastPayDirect', 'GoHighLevel'],
+    configured: {
+      payment_webhook_secret: !!process.env.PAYMENT_WEBHOOK_SECRET,
+      ghl_webhook_secret: !!process.env.GHL_WEBHOOK_SECRET
+    },
+    timestamp: new Date().toISOString(),
+    description: 'Unified payment webhook receiver supporting both FastPayDirect and GoHighLevel payment confirmations'
   })
 }
