@@ -23,8 +23,10 @@ To set up payment links in GoHighLevel (GHL):
 Configure your GHL payment link with this redirect URL:
 
 ```
-https://dermal-spa-booking.vercel.app/booking/payment-processing?payment_status=success
+https://dermal-spa-booking.vercel.app/booking/confirmation?payment=success
 ```
+
+**Note**: The old `/booking/payment-processing` URL will automatically redirect to the new confirmation page for backward compatibility.
 
 ### Key Benefits
 
@@ -89,8 +91,9 @@ This happens when the booking ID can't be found. Common causes:
 - Ensure the booking exists in the system before payment
 
 ### Redirect Issues
-- Confirm the redirect URL matches exactly: `https://dermal-spa-booking.vercel.app/booking/payment-processing?payment_status=success`
+- Confirm the redirect URL matches exactly: `https://dermal-spa-booking.vercel.app/booking/confirmation?payment=success`
 - Check that GHL payment link is configured with the correct redirect URL
+- Legacy URL `/booking/payment-processing` will auto-redirect to the new confirmation page
 
 ## Support
 
