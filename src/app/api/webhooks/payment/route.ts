@@ -482,6 +482,7 @@ async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
           room: `Room ${booking.rooms?.name || booking.room_id}`,
           roomId: booking.room_id.toString()
         },
+        undefined, // ghlContactId (optional)
         {
           verified: true,
           transaction_id: paymentDetails.transactionId,
@@ -637,23 +638,23 @@ export async function POST(request: NextRequest) {
       console.log('Webhook signature verification skipped - no secret configured')
     }
     
-    // Log the webhook event
-    await logWebhookEvent(payload, headers, isValid)
+    // Log the webhook event (payload is guaranteed to be non-null here)
+    await logWebhookEvent(payload!, headers, isValid)
     
     // Process based on event type (supports both formats)
-    const paymentDetails = extractPaymentDetails(payload)
-    const provider = determineWebhookProvider(payload, headers)
+    const paymentDetails = extractPaymentDetails(payload!)
+    const provider = determineWebhookProvider(payload!, headers)
     
     console.log(`Processing ${provider} webhook event: ${paymentDetails.eventType}`)
     
     // Handle both FastPayDirect and GoHighLevel event types
     const eventType = paymentDetails.eventType
     if (eventType === 'payment.completed' || eventType === 'InvoicePaid' || eventType === 'OrderPaid' || eventType === 'TransactionCompleted') {
-      await handlePaymentCompleted(payload)
+      await handlePaymentCompleted(payload!)
     } else if (eventType === 'payment.failed' || eventType === 'TransactionFailed') {
-      await handlePaymentFailed(payload)
+      await handlePaymentFailed(payload!)
     } else if (eventType === 'payment.refunded' || eventType === 'TransactionRefunded') {
-      await handlePaymentRefunded(payload)
+      await handlePaymentRefunded(payload!)
     } else if (eventType === 'payment.cancelled') {
       // Log but don't process cancelled payments
       console.log('Payment cancelled:', paymentDetails.transactionId)
@@ -662,7 +663,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Mark webhook as processed
-    const eventId = payload.webhookId || payload.event_id
+    const eventId = payload!.webhookId || payload!.event_id
     if (eventId) {
       await supabase
         .from('webhook_events')

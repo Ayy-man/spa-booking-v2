@@ -141,6 +141,7 @@ export default function PaymentProcessingPage() {
       setStatus('polling')
       startPollingPaymentStatus(actualBookingId)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
 
   const handlePaymentSuccess = async (bookingId: string) => {
