@@ -13,6 +13,7 @@ interface PaymentWebhookPayload {
   currency?: string
   payment_method?: string
   customer_email?: string
+  customer_phone?: string
   metadata?: {
     booking_id?: string
     [key: string]: any
@@ -232,6 +233,102 @@ function extractBookingId(payload: PaymentWebhookPayload): string | null {
   return null
 }
 
+// Extract common customer contact details from various payload shapes
+function extractCustomerContact(payload: PaymentWebhookPayload): {
+  email?: string
+  phone?: string
+  firstName?: string
+  lastName?: string
+} {
+  const root: any = payload as any
+  const email = payload.customer_email || root.email || root.Email ||
+                root.customer?.email ||
+                payload.invoice?.["customer_email" as any] ||
+                payload.order?.["customer_email" as any] ||
+                payload.transaction?.["customer_email" as any] ||
+                payload.customFields?.email || payload.customFields?.Email ||
+                payload.transaction?.customFields?.email || payload.transaction?.customFields?.Email
+  const phone = payload.customer_phone || root.phone || root.Phone ||
+                root.customer?.phone ||
+                payload.customFields?.phone || payload.customFields?.Phone ||
+                payload.transaction?.customFields?.phone || payload.transaction?.customFields?.Phone
+  const firstName = root.first_name || root.firstName || root.FirstName ||
+                    root.customer?.first_name || root.customer?.firstName
+  const lastName = root.last_name || root.lastName || root.LastName ||
+                   root.customer?.last_name || root.customer?.lastName
+  return { email, phone, firstName, lastName }
+}
+
+// Try to resolve a booking by contact info and amount when booking_id is missing
+async function tryResolveBookingIdByContact(
+  contact: { email?: string; phone?: string },
+  amount: number
+): Promise<string | null> {
+  try {
+    // Require at least one contact field
+    if (!contact.email && !contact.phone) {
+      return null
+    }
+
+    // Find customer by email first
+    let customerId: string | null = null
+    if (contact.email) {
+      const { data: customersByEmail, error: emailErr } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', contact.email)
+        .limit(2)
+      if (!emailErr && customersByEmail && customersByEmail.length === 1) {
+        customerId = customersByEmail[0].id
+      }
+    }
+
+    // If not found by email, try by phone
+    if (!customerId && contact.phone) {
+      const { data: customersByPhone, error: phoneErr } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('phone', contact.phone)
+        .limit(2)
+      if (!phoneErr && customersByPhone && customersByPhone.length === 1) {
+        customerId = customersByPhone[0].id
+      }
+    }
+
+    if (!customerId) {
+      return null
+    }
+
+    // Find recent pending bookings for this customer and match by amount
+    const { data: candidateBookings, error: bookingsErr } = await supabase
+      .from('bookings')
+      .select('id, final_price, payment_status, created_at')
+      .eq('customer_id', customerId)
+      .eq('payment_status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    if (bookingsErr || !candidateBookings || candidateBookings.length === 0) {
+      return null
+    }
+
+    // Amount tolerance of $1 to allow for minor rounding differences
+    const matches = candidateBookings.filter(b => {
+      const bookingAmount = parseFloat((b as any).final_price)
+      return Math.abs(bookingAmount - amount) <= 1
+    })
+
+    if (matches.length === 1) {
+      return matches[0].id as any
+    }
+
+    return null
+  } catch (err) {
+    console.warn('Failed to resolve booking by contact:', err)
+    return null
+  }
+}
+
 // Determine webhook provider and format
 function determineWebhookProvider(payload: PaymentWebhookPayload, headers: WebhookHeaders): string {
   if (headers['x-highlevel-signature'] || payload.type || payload.eventType) {
@@ -337,17 +434,46 @@ async function logWebhookEvent(
 
 // Handle successful payment (supports both FastPayDirect and GoHighLevel formats)
 async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
-  const bookingId = extractBookingId(payload)
+  let bookingId = extractBookingId(payload)
   const paymentDetails = extractPaymentDetails(payload)
   const provider = determineWebhookProvider(payload, {})
   
+  // If booking_id is missing, attempt a best-effort resolution using contact info
   if (!bookingId) {
-    console.error('No booking_id found in payment webhook', { 
-      provider,
-      eventType: paymentDetails.eventType,
-      transactionId: paymentDetails.transactionId
-    })
-    throw new Error('Missing booking_id in webhook')
+    const contact = extractCustomerContact(payload)
+    bookingId = await tryResolveBookingIdByContact(contact, paymentDetails.amount)
+    if (!bookingId) {
+      // Record an unlinked transaction and return success (to avoid retries)
+      const { error: unlinkedErr } = await supabase
+        .from('payment_transactions')
+        .insert({
+          booking_id: null,
+          transaction_id: paymentDetails.transactionId,
+          payment_provider: provider === 'gohighlevel' ? 'gohighlevel' : 'fastpaydirect',
+          amount: paymentDetails.amount,
+          currency: paymentDetails.currency,
+          status: 'completed',
+          payment_method: paymentDetails.paymentMethod,
+          customer_email: contact.email,
+          metadata: {
+            ...payload.metadata,
+            contact,
+            resolution: 'unlinked_payment_no_booking_id',
+            provider,
+            event_type: paymentDetails.eventType
+          },
+          webhook_payload: payload,
+          webhook_received_at: new Date().toISOString()
+        })
+      if (unlinkedErr) {
+        console.error('Failed to record unlinked payment:', unlinkedErr)
+      }
+      console.warn('Payment received without resolvable booking_id; recorded as unlinked', {
+        transactionId: paymentDetails.transactionId,
+        provider
+      })
+      return
+    }
   }
   
   console.log(`Processing ${provider} payment completion for booking:`, bookingId)
@@ -501,13 +627,32 @@ async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
 
 // Handle failed payment (supports both formats)
 async function handlePaymentFailed(payload: PaymentWebhookPayload) {
-  const bookingId = extractBookingId(payload)
+  let bookingId = extractBookingId(payload)
   const paymentDetails = extractPaymentDetails(payload)
   const provider = determineWebhookProvider(payload, {})
   
   if (!bookingId) {
-    console.error('No booking_id in failed payment webhook', { provider })
-    return
+    const contact = extractCustomerContact(payload)
+    bookingId = await tryResolveBookingIdByContact(contact, paymentDetails.amount)
+    if (!bookingId) {
+      await supabase
+        .from('payment_transactions')
+        .insert({
+          booking_id: null,
+          transaction_id: paymentDetails.transactionId,
+          payment_provider: provider === 'gohighlevel' ? 'gohighlevel' : 'fastpaydirect',
+          amount: paymentDetails.amount,
+          currency: paymentDetails.currency,
+          status: 'failed',
+          payment_method: paymentDetails.paymentMethod,
+          customer_email: contact.email,
+          metadata: { ...payload.metadata, contact, provider, event_type: paymentDetails.eventType },
+          webhook_payload: payload,
+          webhook_received_at: new Date().toISOString()
+        })
+      console.warn('Failed payment without booking_id recorded as unlinked')
+      return
+    }
   }
   
   console.log(`Processing ${provider} payment failure for booking:`, bookingId)
@@ -547,13 +692,32 @@ async function handlePaymentFailed(payload: PaymentWebhookPayload) {
 
 // Handle refunded payment (supports both formats)
 async function handlePaymentRefunded(payload: PaymentWebhookPayload) {
-  const bookingId = extractBookingId(payload)
+  let bookingId = extractBookingId(payload)
   const paymentDetails = extractPaymentDetails(payload)
   const provider = determineWebhookProvider(payload, {})
   
   if (!bookingId) {
-    console.error('No booking_id in refund webhook', { provider })
-    return
+    const contact = extractCustomerContact(payload)
+    bookingId = await tryResolveBookingIdByContact(contact, paymentDetails.amount)
+    if (!bookingId) {
+      await supabase
+        .from('payment_transactions')
+        .insert({
+          booking_id: null,
+          transaction_id: `${paymentDetails.transactionId}_refund`,
+          payment_provider: provider === 'gohighlevel' ? 'gohighlevel' : 'fastpaydirect',
+          amount: paymentDetails.amount,
+          currency: paymentDetails.currency,
+          status: 'refunded',
+          payment_method: paymentDetails.paymentMethod,
+          customer_email: contact.email,
+          metadata: { ...payload.metadata, contact, provider, event_type: paymentDetails.eventType },
+          webhook_payload: payload,
+          webhook_received_at: new Date().toISOString()
+        })
+      console.warn('Refund webhook without booking_id recorded as unlinked')
+      return
+    }
   }
   
   console.log(`Processing ${provider} payment refund for booking:`, bookingId)
