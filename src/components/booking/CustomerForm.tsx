@@ -45,7 +45,8 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
     register,
     handleSubmit,
     formState: { errors, isValid, touchedFields },
-    watch
+    watch,
+    setValue
   } = useForm<CustomerFormData>({
     resolver: zodResolver(customerFormSchema),
     defaultValues: {
@@ -242,32 +243,44 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
           </p>
         </div>
 
-        {/* Customer Status Checkbox - More Prominent */}
+        {/* Customer Status - Yes/No Selection */}
         <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-5 rounded-xl border-2 border-amber-300 shadow-sm">
-          <div className="flex items-start space-x-3">
-            <input
-              type="checkbox"
-              id="isNewCustomer"
-              className="mt-1.5 w-5 h-5 text-amber-600 bg-white border-2 border-amber-400 rounded focus:ring-amber-500 focus:ring-2 cursor-pointer"
-              {...register('isNewCustomer')}
-            />
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <Label htmlFor="isNewCustomer" className="text-base font-semibold text-gray-900 cursor-pointer">
-                  This is my first visit to Dermal Skin Clinic
-                </Label>
-              </div>
-              <div className="bg-white/70 rounded-lg p-3 border border-amber-200">
-                <p className="text-sm text-gray-800 font-medium">
-                  ⚠️ <span className="font-bold text-amber-700">New customers require a $30 deposit</span> to secure their booking.
-                </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Existing customers can book without a deposit.
-                </p>
-              </div>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <Label className="text-base font-semibold text-gray-900">
+                Is this your first visit to Dermal Skin Clinic?
+              </Label>
+            </div>
+            <div className="flex gap-4">
+              <label className="flex-1">
+                <input
+                  type="radio"
+                  name="isNewCustomer"
+                  value="true"
+                  checked={formData.isNewCustomer === true}
+                  onChange={() => setValue('isNewCustomer', true)}
+                  className="sr-only peer"
+                />
+                <div className="py-3 px-4 bg-white rounded-lg border-2 border-gray-300 cursor-pointer text-center font-medium hover:bg-gray-50 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-700 transition-all">
+                  Yes
+                </div>
+              </label>
+              <label className="flex-1">
+                <input
+                  type="radio"
+                  name="isNewCustomer"
+                  value="false"
+                  checked={formData.isNewCustomer === false}
+                  onChange={() => setValue('isNewCustomer', false)}
+                  className="sr-only peer"
+                />
+                <div className="py-3 px-4 bg-white rounded-lg border-2 border-gray-300 cursor-pointer text-center font-medium hover:bg-gray-50 peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:text-green-700 transition-all">
+                  No
+                </div>
+              </label>
             </div>
           </div>
         </div>
