@@ -108,7 +108,13 @@ class GHLWebhookSender {
     bookingId: string,
     customer: CustomerData,
     booking: BookingData,
-    ghlContactId?: string
+    ghlContactId?: string,
+    paymentDetails?: {
+      verified: boolean
+      transaction_id: string
+      payment_method: string
+      payment_provider: string
+    }
   ): Promise<WebhookResponse> {
     try {
       // Format normalized date and time
@@ -150,11 +156,14 @@ class GHLWebhookSender {
           phone: BUSINESS_CONFIG.phone
         },
         payment: {
-          method: 'online_payment',
+          method: paymentDetails?.payment_method || 'online_payment',
           amount: booking.price,
           currency: PAYMENT_CONFIG.currency,
-          status: 'paid',
-          transaction_id: `txn_${Date.now()}`
+          status: paymentDetails?.verified ? 'verified_paid' : 'pending_verification',
+          transaction_id: paymentDetails?.transaction_id || `pending_${Date.now()}`,
+          provider: paymentDetails?.payment_provider || 'unknown',
+          verified: paymentDetails?.verified || false,
+          verified_at: paymentDetails?.verified ? new Date().toISOString() : null
         },
         system_data: {
           created_at: new Date().toISOString(),
