@@ -267,4 +267,49 @@ Located at `/src/app/admin/payment-links/page.tsx`:
 #### Future Scalability
 - **Easy Expansion**: Simple process to add new payment links
 - **System Ready**: Infrastructure supports unlimited service payment links
-- **Configuration Driven**: All payment options managed through central configuration 
+- **Configuration Driven**: All payment options managed through central configuration
+
+## User Interface Theme System
+
+### Dark Mode Implementation (Added August 15, 2025)
+
+#### Theme Management Rules
+1. **Customer Interface**:
+   - Full dark mode support across all booking pages
+   - Theme toggle available in header for customer preference
+   - localStorage persistence maintains theme choice across sessions
+   - Default theme: Light mode (not system preference)
+
+2. **Admin Interface**:
+   - **Intentionally Light Mode Only**: Admin panel excludes dark mode
+   - Maintains operational consistency for staff
+   - Ensures standardized interface for all administrative functions
+   - Professional business software appearance maintained
+
+#### Theme System Configuration
+1. **Storage Key**: 'spa-theme' in localStorage
+2. **Implementation**: Class-based dark mode using Tailwind CSS
+3. **Transitions**: 300ms smooth transitions between themes
+4. **SSR Compatibility**: Proper hydration handling prevents theme flash
+5. **Accessibility**: WCAG AA compliance maintained in both themes
+
+#### Dark Mode Color Scheme
+- **Background**: #1a1a1a (main), #2a2a2a (cards)
+- **Primary**: #E8B3C0 (enhanced spa pink for dark mode contrast)
+- **Text**: #f5f5f5 (primary), #e0e0e0 (secondary)
+- **Borders**: #333333 (subtle separations)
+- **Status Colors**: Maintained high contrast for success, error, warning states
+
+#### Business Rules for Theme Usage
+1. **Customer Experience**: Theme choice empowers customer comfort
+2. **Brand Consistency**: Spa aesthetic maintained in both light and dark themes
+3. **Operational Standards**: Admin functions remain in light mode for consistency
+4. **Accessibility Leadership**: Demonstrates commitment to inclusive design
+5. **Modern Standards**: Meets contemporary web application expectations
+
+#### Technical Implementation Rules
+- **Performance**: Class-based switching for optimal speed
+- **Persistence**: Theme preference saved and restored automatically
+- **Compatibility**: Cross-browser support maintained
+- **Mobile Optimization**: Touch-friendly theme toggle interface
+- **SEO Friendly**: Proper SSR handling maintains search optimization 

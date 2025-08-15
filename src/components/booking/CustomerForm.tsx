@@ -100,15 +100,15 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
   const isFormValid = isValid && formData.name && formData.email && formData.phone
 
   return (
-    <Card className="p-6">
-      <h2 className="text-xl font-semibold text-primary-dark mb-6">
+    <Card className="p-6 dark:bg-gray-800 dark:border-gray-700">
+      <h2 className="text-xl font-semibold text-primary-dark dark:text-primary-light mb-6">
         Customer Information
       </h2>
 
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         {/* Customer Name */}
         <div className="space-y-2">
-          <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="name" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Full Name *
           </Label>
           <div className="relative">
@@ -142,7 +142,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
 
         {/* Customer Email */}
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="email" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Email Address *
           </Label>
           <div className="relative">
@@ -172,14 +172,14 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
               Valid email address
             </p>
           )}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             We&apos;ll send your booking confirmation to this email
           </p>
         </div>
 
         {/* Customer Phone */}
         <div className="space-y-2">
-          <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+          <Label htmlFor="phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Phone Number *
           </Label>
           <div className="relative">
@@ -209,7 +209,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
               Valid phone number
             </p>
           )}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             We may contact you if there are any changes to your appointment
           </p>
         </div>
@@ -238,7 +238,7 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
               {errors.specialRequests.message}
             </p>
           )}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Maximum 500 characters
           </p>
         </div>

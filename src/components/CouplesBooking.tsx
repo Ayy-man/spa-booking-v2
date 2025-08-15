@@ -86,13 +86,13 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
       {/* No header needed - it's in the modal */}
 
       {/* Selected Service Display */}
-      <div className="mb-6 p-4 bg-accent/10 rounded-lg">
-        <h3 className="font-medium text-primary-dark mb-2">Selected Service</h3>
+      <div className="mb-6 p-4 bg-accent/10 dark:bg-gray-700/50 rounded-lg">
+        <h3 className="font-medium text-primary-dark dark:text-primary-light mb-2">Selected Service</h3>
         <div className="flex justify-between items-center">
-          <span className="text-gray-700">{selectedService.name}</span>
+          <span className="text-gray-700 dark:text-gray-300">{selectedService.name}</span>
           <div className="text-right">
-            <span className="text-xl font-semibold text-primary">${selectedService.price}</span>
-            <span className="text-sm text-gray-500 ml-2">{selectedService.duration} mins</span>
+            <span className="text-xl font-semibold text-primary dark:text-primary-light">${selectedService.price}</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">{selectedService.duration} mins</span>
           </div>
         </div>
       </div>
@@ -101,20 +101,20 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
       <div className="mb-6">
         <div className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${
           isCouplesBooking 
-            ? 'border-primary bg-primary/10 shadow-md' 
-            : 'border-gray-400 bg-white hover:border-primary/70 hover:bg-primary/5 hover:shadow-sm'
+            ? 'border-primary bg-primary/10 dark:bg-primary/20 shadow-md' 
+            : 'border-gray-400 bg-white dark:bg-gray-700 hover:border-primary/70 hover:bg-primary/5 dark:hover:bg-primary/10 hover:shadow-sm'
         }`}
         onClick={() => setIsCouplesBooking(!isCouplesBooking)}>
           <div className="cursor-pointer flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg font-medium text-primary-dark">Book as a couple</span>
+              <span className="text-lg font-medium text-primary-dark dark:text-primary-light">Book as a couple</span>
               {!isCouplesBooking && (
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
                   Available
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Enjoy your spa experience together
             </p>
           </div>
@@ -132,7 +132,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
         <div className="space-y-6 animate-in slide-in-from-top-2 duration-300">
           {/* Same/Different Service Selection */}
           <div className="space-y-3">
-            <Label className="text-base font-medium text-primary-dark">
+            <Label className="text-base font-medium text-primary-dark dark:text-primary-light">
               Service Selection for Second Person
             </Label>
             <div className="grid grid-cols-1 gap-3">
@@ -140,8 +140,8 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
                 onClick={() => setSameService(true)}
                 className={`p-4 rounded-lg border-2 transition-all ${
                   sameService 
-                    ? 'border-primary bg-accent/20 text-primary-dark' 
-                    : 'border-gray-300 hover:border-primary/50'
+                    ? 'border-primary bg-accent/20 dark:bg-primary/20 text-primary-dark dark:text-primary-light' 
+                    : 'border-gray-300 dark:border-gray-600 hover:border-primary/50 dark:hover:border-primary/70'
                 }`}
               >
                 <span className="font-medium">Same Service</span>
@@ -153,8 +153,8 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
                 onClick={() => setSameService(false)}
                 className={`p-4 rounded-lg border-2 transition-all ${
                   !sameService 
-                    ? 'border-primary bg-accent/20 text-primary-dark' 
-                    : 'border-gray-300 hover:border-primary/50'
+                    ? 'border-primary bg-accent/20 dark:bg-primary/20 text-primary-dark dark:text-primary-light' 
+                    : 'border-gray-300 dark:border-gray-600 hover:border-primary/50 dark:hover:border-primary/70'
                 }`}
               >
                 <span className="font-medium">Different Service</span>
@@ -168,7 +168,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
           {/* Different Service Selection */}
           {!sameService && (
             <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
-              <Label className="text-base font-medium text-primary-dark">
+              <Label className="text-base font-medium text-primary-dark dark:text-primary-light">
                 Select Service for Second Person
               </Label>
               

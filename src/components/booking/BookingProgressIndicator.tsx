@@ -183,7 +183,7 @@ export function BookingProgressIndicator({
   }
 
   return (
-    <div className={`w-full bg-white border-b border-gray-100 shadow-sm ${className}`}>
+    <div className={`w-full bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 shadow-sm ${className}`}>
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           {steps.map((step, index) => (
@@ -207,14 +207,14 @@ export function BookingProgressIndicator({
                 <div className="hidden sm:flex flex-col items-center mt-3">
                   <span className={`text-sm font-semibold ${
                     getStepStatus(step) === 'current' 
-                      ? 'text-primary' 
+                      ? 'text-primary dark:text-primary-light' 
                       : getStepStatus(step) === 'completed'
-                      ? 'text-success'
-                      : 'text-gray-500'
+                      ? 'text-success dark:text-green-400'
+                      : 'text-gray-500 dark:text-gray-400'
                   }`}>
                     {step.title}
                   </span>
-                  <span className="text-xs text-gray-400 mt-1">
+                  <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                     {step.subtitle}
                   </span>
                 </div>
@@ -230,13 +230,13 @@ export function BookingProgressIndicator({
         
         {/* Mobile Step Labels - Show current step info */}
         <div className="sm:hidden mt-4 text-center">
-          <div className="text-lg font-semibold text-primary">
+          <div className="text-lg font-semibold text-primary dark:text-primary-light">
             {steps.find(s => s.order === currentStep)?.title}
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
             {steps.find(s => s.order === currentStep)?.subtitle}
           </div>
-          <div className="text-xs text-gray-400 mt-1">
+          <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             Step {currentStep} of {steps.length}
           </div>
         </div>

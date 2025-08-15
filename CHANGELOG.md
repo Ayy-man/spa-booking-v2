@@ -7,6 +7,85 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2025-08-15
+
+### 🌙 Dark Mode Feature Added
+- **Comprehensive Dark Mode Implementation**: Complete dark mode support for customer-facing booking system
+- **Theme Provider Context**: Advanced theme management with localStorage persistence and smooth transitions
+- **Dual Theme Support**: Toggle between light and dark themes with sun/moon icon interface
+- **Enhanced User Experience**: 300ms smooth transitions and no flash-on-load implementation
+- **Accessibility Compliant**: WCAG AA contrast ratios maintained in both light and dark modes
+
+### 🎨 Theme System Features
+- **ThemeProvider Component**: Centralized theme state management with React Context
+- **ThemeToggle Component**: Intuitive UI component with sun/moon icons for theme switching
+- **localStorage Persistence**: Theme preference saved and restored across sessions
+- **Class-based Implementation**: Tailwind CSS class-based dark mode for optimal performance
+- **Suppressed Hydration Warning**: Proper SSR handling preventing theme mismatches
+
+### 🎯 Dark Mode Color Scheme
+- **Background Colors**: #1a1a1a (main), #2a2a2a (cards/sections)
+- **Primary Color**: #E8B3C0 (enhanced spa pink for better dark mode contrast)
+- **Text Colors**: #f5f5f5 (primary), #e0e0e0 (secondary)
+- **Border Colors**: #333333 for subtle separations
+- **Maintained Branding**: Spa aesthetic preserved in both themes
+
+### 📱 Comprehensive Page Support
+- **Customer Booking Flow**: Full dark mode support across all booking pages
+  - Homepage (/) - Theme toggle integration
+  - Service selection (/booking)
+  - Date & time selection (/booking/date-time)
+  - Staff selection (/booking/staff and /booking/staff-couples)
+  - Customer information (/booking/customer-info)
+  - Waiver form (/booking/waiver)
+  - Confirmation pages (/booking/confirmation and /booking/confirmation-couples)
+- **Components Enhanced**: BookingProgressIndicator, CouplesBooking, CustomerForm with dark mode classes
+
+### 🔧 Technical Implementation
+- **Tailwind Configuration**: Added `darkMode: 'class'` for class-based theme switching
+- **CSS Variables**: Dark mode CSS variables in globals.css for consistent theming
+- **Root Layout Integration**: ThemeProvider wrapped around entire application
+- **Theme Context**: Centralized theme state management with TypeScript support
+
+### 🚫 Admin Panel Exclusion
+- **Intentional Design Decision**: Admin panel remains light mode only for consistency
+- **Operational Clarity**: Maintains professional, standardized interface for staff
+- **No Theme Toggle**: ThemeToggle component excluded from admin layout
+- **Light Mode Enforcement**: All admin pages explicitly use light theme
+
+### 🛠️ Files Created/Modified
+**New Components:**
+- `/src/components/providers/theme-provider.tsx` - Theme context and management
+- `/src/components/ui/theme-toggle.tsx` - Theme switching interface
+
+**Modified Files:**
+- `/src/app/globals.css` - Dark mode CSS variables and utility classes
+- `/src/app/layout.tsx` - ThemeProvider integration and hydration settings
+- `/tailwind.config.js` - Dark mode configuration
+- `/src/components/booking/BookingProgressIndicator.tsx` - Dark mode styling
+- `/src/components/CouplesBooking.tsx` - Dark mode class additions
+- `/src/components/booking/CustomerForm.tsx` - Form dark mode support
+- All booking flow pages - Comprehensive dark mode class implementation
+
+### 🎯 User Experience Enhancement
+- **No Flash on Load**: Theme applied before component render
+- **Persistent Preferences**: User's theme choice remembered across sessions
+- **Smooth Transitions**: 300ms transitions between light and dark modes
+- **Mobile Optimized**: Touch-friendly theme toggle for mobile users
+- **Accessibility**: Keyboard navigation and screen reader support
+
+### 🔍 Quality Assurance
+- **Tested Features**: Theme persistence, page navigation, mobile responsiveness
+- **Contrast Verification**: All color combinations meet WCAG AA standards
+- **Cross-browser Compatibility**: Tested in modern browsers
+- **Mobile Testing**: Responsive design verified on various screen sizes
+
+### ⚡ Performance Optimization
+- **Class-based Implementation**: Optimal performance with Tailwind's class-based dark mode
+- **Efficient State Management**: Minimal re-renders with React Context optimization
+- **Fast Theme Switching**: Instant theme changes with CSS class toggles
+- **Lightweight Components**: Minimal bundle size impact
+
 ## [1.2.0] - 2025-08-06
 
 ### 🎉 Major Features Added
