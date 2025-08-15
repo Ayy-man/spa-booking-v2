@@ -32,6 +32,32 @@
   --radius: 0.5rem;
 }
 
+/* Dark mode CSS Variables */
+.dark {
+  --background: 26 26 26; /* Dark background #1a1a1a */
+  --foreground: 245 245 245; /* Light text #f5f5f5 */
+  --card: 42 42 42; /* Dark card background #2a2a2a */
+  --card-foreground: 245 245 245;
+  --popover: 42 42 42;
+  --popover-foreground: 245 245 245;
+  --primary: 232 179 192; /* Lighter spa pink for dark mode #E8B3C0 */
+  --primary-foreground: 26 26 26; /* Dark text on pink buttons */
+  --secondary: 195 102 120; /* Medium pink for dark mode */
+  --secondary-foreground: 245 245 245;
+  --muted: 51 51 51; /* Dark muted #333333 */
+  --muted-foreground: 163 163 163; /* Light muted text #a3a3a3 */
+  --accent: 232 179 192; /* Light pink accent for dark mode */
+  --accent-foreground: 26 26 26;
+  --destructive: 239 68 68;
+  --destructive-foreground: 255 255 255;
+  --border: 51 51 51; /* Dark border #333333 */
+  --input: 51 51 51;
+  --ring: 232 179 192; /* Light spa pink ring */
+  --success: 34 197 151; /* Slightly brighter for dark mode */
+  --warning: 251 191 36; /* Slightly brighter for dark mode */
+  --error: 239 68 68;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
@@ -52,11 +78,13 @@ body {
   color: hsl(var(--foreground));
   background-color: hsl(var(--background)) !important;
   overscroll-behavior: none;
+  transition: background-color 300ms ease, color 300ms ease;
 }
 
 html {
   background-color: hsl(var(--background)) !important;
   overscroll-behavior: none;
+  transition: background-color 300ms ease;
 }
 
 /* Custom scrollbar styling */
