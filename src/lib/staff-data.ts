@@ -87,7 +87,7 @@ export const staffNameMap = {
   'selma': 'Selma Villaver',
   'robyn': 'Robyn Camacho',
   'tanisha': 'Tanisha Harris',  
-  'leonel': 'Leonel Sidon'
+  'leonel': 'Leonel Sidon (Sundays only)'
 } as const
 
 // Helper function to determine service category - updated to match staff capabilities

@@ -24,6 +24,7 @@ WHERE email = 'sidonleonel@gmail.com';
 
 -- Verify the updates
 SELECT 
+    id,
     name,
     email,
     work_days,

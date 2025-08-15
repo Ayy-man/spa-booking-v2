@@ -25,23 +25,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setTheme(savedTheme)
       document.documentElement.classList.toggle('dark', savedTheme === 'dark')
     } else {
-      // Check system preference
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      const systemTheme = mediaQuery.matches ? 'dark' : 'light'
-      setTheme(systemTheme)
-      document.documentElement.classList.toggle('dark', systemTheme === 'dark')
-      
-      // Listen for system theme changes
-      const handleChange = (e: MediaQueryListEvent) => {
-        const newTheme = e.matches ? 'dark' : 'light'
-        if (!localStorage.getItem('spa-theme')) {
-          setTheme(newTheme)
-          document.documentElement.classList.toggle('dark', newTheme === 'dark')
-        }
-      }
-      
-      mediaQuery.addEventListener('change', handleChange)
-      return () => mediaQuery.removeEventListener('change', handleChange)
+      // Default to light mode instead of checking system preference
+      setTheme('light')
+      document.documentElement.classList.remove('dark')
     }
   }, [])
 

@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertCircleIcon, CheckCircleIcon, ArrowLeftIcon } from 'lucide-react'
 import { analytics } from '@/lib/analytics'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 interface Service {
   name: string
@@ -161,10 +162,10 @@ export default function WaiverPage() {
   // Show loading while determining waiver requirement
   if (!selectedService || !waiverType) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center transition-colors duration-300">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4 mx-auto"></div>
-          <p className="text-gray-600">Loading waiver requirements...</p>
+          <p className="text-gray-600 dark:text-gray-300">Loading waiver requirements...</p>
         </div>
       </div>
     )
@@ -175,23 +176,23 @@ export default function WaiverPage() {
     return (
       <>
         <BookingProgressIndicator />
-        <div className="min-h-screen bg-background section-spacing">
+        <div className="min-h-screen bg-background dark:bg-gray-900 section-spacing transition-colors duration-300">
           <div className="container mx-auto px-6 max-w-4xl">
-            <Card className="p-8 text-center">
+            <Card className="p-8 text-center dark:bg-gray-800 dark:border-gray-700">
               <div className="mb-6">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircleIcon className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircleIcon className="w-8 h-8 text-green-600 dark:text-green-400" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   Waiver Completed Successfully!
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   Your waiver for <strong>{selectedService.name}</strong> has been signed and saved.
                 </p>
               </div>
               
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-green-800 text-sm">
+              <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <p className="text-green-800 dark:text-green-300 text-sm">
                   Redirecting you to complete your booking...
                 </p>
               </div>
@@ -205,29 +206,32 @@ export default function WaiverPage() {
   return (
     <>
       <BookingProgressIndicator />
-      <div className="min-h-screen bg-background section-spacing">
+      <div className="min-h-screen bg-background dark:bg-gray-900 section-spacing transition-colors duration-300">
         <div className="container mx-auto px-6 max-w-4xl">
           <div className="mb-8">
             {/* Header */}
             <div className="text-center mb-8">
-              <h1 className="text-4xl md:text-5xl font-heading text-primary mb-4">
+              <div className="flex justify-end mb-6">
+                <ThemeToggle />
+              </div>
+              <h1 className="text-4xl md:text-5xl font-heading text-primary dark:text-primary mb-4">
                 Service Waiver Required
               </h1>
-              <p className="text-xl text-gray-600 mb-2">
+              <p className="text-xl text-gray-600 dark:text-gray-300 mb-2">
                 Please complete the required waiver for your selected service
               </p>
-              <p className="text-gray-500">
+              <p className="text-gray-500 dark:text-gray-400">
                 This waiver is required for <strong>{selectedService.name}</strong> due to the nature of the treatment.
               </p>
             </div>
 
             {/* Important Notice */}
-            <Card className="mb-8 p-6 bg-yellow-50 border-yellow-200">
+            <Card className="mb-8 p-6 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
               <div className="flex items-start space-x-3">
-                <AlertCircleIcon className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <AlertCircleIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-yellow-900 mb-2">Important Notice</h3>
-                  <ul className="text-yellow-800 text-sm space-y-1">
+                  <h3 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-2">Important Notice</h3>
+                  <ul className="text-yellow-800 dark:text-yellow-300 text-sm space-y-1">
                     <li>• Please read all sections carefully before signing</li>
                     <li>• All required fields must be completed</li>
                     <li>• Your digital signature has the same legal effect as a handwritten signature</li>
@@ -239,12 +243,12 @@ export default function WaiverPage() {
 
             {/* Error Display */}
             {error && (
-              <Card className="mb-6 p-4 bg-red-50 border-red-200">
+              <Card className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
                 <div className="flex items-center space-x-2">
-                  <AlertCircleIcon className="w-5 h-5 text-red-600" />
-                  <p className="text-red-600 font-medium">Error submitting waiver:</p>
+                  <AlertCircleIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  <p className="text-red-600 dark:text-red-300 font-medium">Error submitting waiver:</p>
                 </div>
-                <p className="text-red-600 text-sm mt-1">{error}</p>
+                <p className="text-red-600 dark:text-red-300 text-sm mt-1">{error}</p>
                 <Button
                   variant="outline"
                   size="sm"

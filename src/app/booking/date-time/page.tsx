@@ -13,6 +13,7 @@ import { TimeSlotSkeleton } from '@/components/ui/skeleton-loader'
 import { analytics } from '@/lib/analytics'
 import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
 import { validateAndRedirect } from '@/lib/booking-step-validation'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 export default function DateTimePage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -314,29 +315,32 @@ export default function DateTimePage() {
       {/* Progress Indicator */}
       <BookingProgressIndicator />
       
-      <div className="min-h-screen bg-background section-spacing">
+      <div className="min-h-screen bg-background dark:bg-gray-900 section-spacing transition-colors duration-300">
         <div className="container mx-auto px-6 max-w-6xl">
           <div className="max-w-4xl mx-auto">
             <div className="space-y-8">
               {/* Header */}
               <div className="text-center lg:text-left">
-                <Link 
-                  href="/booking" 
-                  className="btn-tertiary !w-auto px-6 mb-6 inline-flex"
-                >
-                  ← Back to Services
-                </Link>
-                <h1 className="text-4xl md:text-5xl font-heading text-primary mb-4">
+                <div className="flex justify-between items-start mb-6">
+                  <Link 
+                    href="/booking" 
+                    className="btn-tertiary !w-auto px-6 inline-flex"
+                  >
+                    ← Back to Services
+                  </Link>
+                  <ThemeToggle className="flex-shrink-0 ml-4" />
+                </div>
+                <h1 className="text-4xl md:text-5xl font-heading text-primary dark:text-primary mb-4">
                   Select Date & Time
                 </h1>
-                <p className="text-xl text-gray-600">
+                <p className="text-xl text-gray-600 dark:text-gray-300">
                   Choose your preferred appointment date and time
                 </p>
               </div>
 
               {/* Date Selection */}
-              <div className="card">
-                <h2 className="text-3xl font-heading font-bold text-primary mb-8">
+              <div className="card dark:bg-gray-800 dark:border-gray-700">
+                <h2 className="text-3xl font-heading font-bold text-primary dark:text-primary mb-8">
                   Select Date
                 </h2>
                 
@@ -348,7 +352,7 @@ export default function DateTimePage() {
                     className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200 ${
                       canGoToPreviousWeek()
                         ? 'bg-primary text-white hover:bg-primary-dark hover:scale-105 active:scale-95'
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                     }`}
                     aria-label="Previous week"
                   >
@@ -356,10 +360,10 @@ export default function DateTimePage() {
                   </button>
                   
                   <div className="text-center">
-                    <div className="text-lg font-semibold text-gray-900">
+                    <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                       {getWeekRangeText()}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
                       Week {weekDates.length > 0 ? `(${weekDates.length} days available)` : '(no dates available)'}
                     </div>
                   </div>
@@ -370,7 +374,7 @@ export default function DateTimePage() {
                     className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200 ${
                       canGoToNextWeek()
                         ? 'bg-primary text-white hover:bg-primary-dark hover:scale-105 active:scale-95'
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                     }`}
                     aria-label="Next week"
                   >
@@ -382,10 +386,10 @@ export default function DateTimePage() {
                 {weekDates.length === 0 ? (
                   <div className="text-center py-8">
                     <div className="text-4xl mb-4">📅</div>
-                    <div className="text-lg text-gray-600 mb-2">
+                    <div className="text-lg text-gray-600 dark:text-gray-300 mb-2">
                       No available dates this week
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
                       Try navigating to a different week
                     </div>
                   </div>
@@ -404,10 +408,10 @@ export default function DateTimePage() {
                             isSelected 
                               ? 'bg-primary text-white shadow-lg scale-105' 
                               : isToday
-                                ? 'bg-blue-50 border-2 border-blue-200 text-blue-800 hover:bg-blue-100'
+                                ? 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-600 text-blue-800 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50'
                                 : isWeekend 
-                                  ? 'bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100'
-                                  : 'bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-primary'
+                                  ? 'bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-600 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50'
+                                  : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:border-primary dark:hover:border-primary'
                           }`}
                         >
                           {isToday && (
@@ -419,7 +423,7 @@ export default function DateTimePage() {
                           <div className={`text-xl font-bold ${isSelected ? 'text-white' : ''}`}>
                             {format(date, 'd')}
                           </div>
-                          <div className={`text-xs ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>
+                          <div className={`text-xs ${isSelected ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
                             {format(date, 'MMM')}
                           </div>
                         </button>
@@ -431,8 +435,8 @@ export default function DateTimePage() {
 
               {/* Time Selection */}
               {selectedDate && (
-                <div className="card">
-                  <h2 className="text-3xl font-heading font-bold text-primary mb-8">
+                <div className="card dark:bg-gray-800 dark:border-gray-700">
+                  <h2 className="text-3xl font-heading font-bold text-primary dark:text-primary mb-8">
                     Select Time for {format(selectedDate, 'EEEE, MMMM d')}
                   </h2>
                   
@@ -448,20 +452,20 @@ export default function DateTimePage() {
                   ) : availableTimes.length === 0 ? (
                     <div className="text-center py-12">
                       <div className="text-6xl mb-4">⏰</div>
-                      <div className="text-xl text-gray-600 mb-2">
+                      <div className="text-xl text-gray-600 dark:text-gray-300 mb-2">
                         No available time slots
                       </div>
-                      <div className="text-gray-500">
+                      <div className="text-gray-500 dark:text-gray-400">
                         Please select a different date
                       </div>
                     </div>
                   ) : (
                     <>
-                      <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                        <p className="text-base text-blue-800 font-medium">
+                      <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-xl border border-blue-100 dark:border-blue-800">
+                        <p className="text-base text-blue-800 dark:text-blue-300 font-medium">
                           📅 {format(selectedDate, 'EEEE, MMMM d')}
                         </p>
-                        <p className="text-sm text-blue-600 mt-1">
+                        <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
                           {availableTimes.length} time slot{availableTimes.length !== 1 ? 's' : ''} available
                         </p>
                       </div>
@@ -491,12 +495,12 @@ export default function DateTimePage() {
 
           {/* Continue Button */}
           {selectedDate && selectedTime && (
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-xl p-6 z-40">
+            <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 shadow-xl p-6 z-40">
               <div className="container mx-auto max-w-6xl">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div className="text-gray-700">
+                  <div className="text-gray-700 dark:text-gray-300">
                     <div className="font-semibold text-lg">Ready to Continue</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
                       {format(selectedDate, 'EEEE, MMMM d')} at {selectedTime}
                     </div>
                   </div>

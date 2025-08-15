@@ -6,6 +6,7 @@ import CouplesBooking from '@/components/CouplesBooking'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import { analytics } from '@/lib/analytics'
 import { saveBookingState } from '@/lib/booking-state-manager'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 export default function BookingPage() {
   const [selectedService, setSelectedService] = useState('')
@@ -113,31 +114,31 @@ export default function BookingPage() {
       {/* Progress Indicator */}
       <BookingProgressIndicator />
       
-      <div className="min-h-screen bg-background section-spacing">
+      <div className="min-h-screen bg-background dark:bg-gray-900 section-spacing">
         <div className="container mx-auto px-6 max-w-7xl">
           {/* Header */}
           <div className="text-center mb-12">
-            <div className="flex justify-center items-center space-x-6 mb-6">
+            <div className="flex justify-between items-center mb-6">
               <Link 
                 href="/" 
-                className="btn-tertiary !w-auto px-6"
+                className="btn-tertiary !w-auto px-6 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
               >
                 ← Back to Home
               </Link>
-              <span className="text-gray-300 hidden sm:block">|</span>
+              <ThemeToggle />
               <a 
                 href="https://dermalskinclinicspa.com/services" 
-                className="btn-tertiary !w-auto px-6"
+                className="btn-tertiary !w-auto px-6 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 🌐 Explore All Services
               </a>
             </div>
-            <h1 className="text-4xl md:text-5xl font-heading text-primary mb-4">
+            <h1 className="text-4xl md:text-5xl font-heading text-primary dark:text-primary-light mb-4">
               Book Your Appointment
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Choose from our premium spa treatments and wellness services
             </p>
           </div>
@@ -145,8 +146,8 @@ export default function BookingPage() {
           {/* Service Categories */}
           <div className="content-spacing">
             {serviceCategories.map((category) => (
-              <div key={category.name} className="card animate-in slide-in-from-bottom-2">
-                <h2 className="text-3xl font-heading font-bold text-primary mb-8">
+              <div key={category.name} className="card dark:bg-gray-800 dark:border-gray-700 animate-in slide-in-from-bottom-2">
+                <h2 className="text-3xl font-heading font-bold text-primary dark:text-primary-light mb-8">
                   {category.name}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -163,14 +164,14 @@ export default function BookingPage() {
                         analytics.serviceSelected(service.name, category.name, service.price)
                       }}
                     >
-                      <h3 className="text-xl font-semibold text-gray-900 mb-4 leading-tight">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
                         {service.name}
                       </h3>
                       <div className="flex justify-between items-center mb-6">
-                        <span className="text-3xl font-bold text-primary">
+                        <span className="text-3xl font-bold text-primary dark:text-primary-light">
                           ${service.price}
                         </span>
-                        <span className="text-base text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                        <span className="text-base text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
                           {service.duration} mins
                         </span>
                       </div>

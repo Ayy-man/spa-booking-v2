@@ -7,6 +7,7 @@ import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 import { validateTimeForDatabase, parseTimeString } from '@/lib/time-utils'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 interface Service {
   id?: string
@@ -361,10 +362,10 @@ export default function CouplesConfirmationPage() {
   // Show loading state while data is being loaded from localStorage
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background py-8">
+      <div className="min-h-screen bg-background dark:bg-gray-900 py-8 transition-colors duration-300">
         <div className="container mx-auto px-4 text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <h1 className="text-2xl font-heading text-primary-dark mb-4">
+          <h1 className="text-2xl font-heading text-primary-dark dark:text-primary mb-4">
             Loading your booking details...
           </h1>
         </div>
@@ -375,12 +376,12 @@ export default function CouplesConfirmationPage() {
   // Show missing information only after loading is complete and data is actually missing
   if (!bookingData || !customerInfo) {
     return (
-      <div className="min-h-screen bg-background py-8">
+      <div className="min-h-screen bg-background dark:bg-gray-900 py-8 transition-colors duration-300">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-2xl font-heading text-primary-dark mb-4">
+          <h1 className="text-2xl font-heading text-primary-dark dark:text-primary mb-4">
             Booking Information Missing
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             It looks like your booking session has expired or the booking data is incomplete.
           </p>
           <Link href="/booking" className="text-primary hover:text-primary-dark">
@@ -393,32 +394,32 @@ export default function CouplesConfirmationPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-background py-8">
+      <div className="min-h-screen bg-background dark:bg-gray-900 py-8 transition-colors duration-300">
         <div className="container mx-auto px-4 max-w-2xl text-center">
-          <div className="bg-white rounded-xl shadow-md p-8">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
             
-            <h1 className="text-3xl font-heading text-primary-dark mb-4">
+            <h1 className="text-3xl font-heading text-primary-dark dark:text-primary mb-4">
               {bookingData.isCouplesBooking ? 'Couples Booking Confirmed!' : 'Booking Confirmed!'}
             </h1>
             
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Your appointment{bookingData.isCouplesBooking ? 's have' : ' has'} been successfully booked. 
               You will receive a confirmation email shortly.
             </p>
             
-            <div className="bg-accent rounded-lg p-6 mb-8 text-left">
-              <h2 className="font-semibold text-primary-dark mb-4">Booking Details</h2>
+            <div className="bg-accent dark:bg-gray-700 rounded-lg p-6 mb-8 text-left">
+              <h2 className="font-semibold text-primary-dark dark:text-primary mb-4">Booking Details</h2>
               
               {bookingData.isCouplesBooking ? (
                 <div className="space-y-4">
-                  <div className="border-b border-gray-200 pb-4">
+                  <div className="border-b border-gray-200 dark:border-gray-600 pb-4">
                     <h3 className="font-medium text-primary mb-2">Person 1</h3>
-                    <div className="space-y-1 text-sm">
+                    <div className="space-y-1 text-sm dark:text-gray-300">
                       <div><span className="font-medium">Service:</span> {bookingData.primaryService.name}</div>
                       <div><span className="font-medium">Staff:</span> {staffNameMap[selectedStaff as keyof typeof staffNameMap]}</div>
                     </div>
@@ -426,13 +427,13 @@ export default function CouplesConfirmationPage() {
                   
                   <div className="pb-4">
                     <h3 className="font-medium text-primary mb-2">Person 2</h3>
-                    <div className="space-y-1 text-sm">
+                    <div className="space-y-1 text-sm dark:text-gray-300">
                       <div><span className="font-medium">Service:</span> {bookingData.secondaryService?.name || bookingData.primaryService.name}</div>
                       <div><span className="font-medium">Staff:</span> {staffNameMap[(secondaryStaff || selectedStaff) as keyof typeof staffNameMap]}</div>
                     </div>
                   </div>
                   
-                  <div className="border-t border-gray-200 pt-4 space-y-1 text-sm">
+                  <div className="border-t border-gray-200 dark:border-gray-600 pt-4 space-y-1 text-sm dark:text-gray-300">
                     <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
                     <div><span className="font-medium">Time:</span> {formatTimeRange(selectedTime, bookingData.primaryService.duration)}</div>
                     <div><span className="font-medium">Room:</span> Couples Room</div>
@@ -441,7 +442,7 @@ export default function CouplesConfirmationPage() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2 text-sm">
+                <div className="space-y-2 text-sm dark:text-gray-300">
                   <div><span className="font-medium">Service:</span> {bookingData.primaryService.name}</div>
                   <div><span className="font-medium">Date:</span> {formatDate(selectedDate)}</div>
                   <div><span className="font-medium">Time:</span> {formatTimeRange(selectedTime, bookingData.primaryService.duration)}</div>
@@ -467,38 +468,41 @@ export default function CouplesConfirmationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
+    <div className="min-h-screen bg-background dark:bg-gray-900 py-8 transition-colors duration-300">
       <div className="container mx-auto px-4 max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/booking/customer-info" className="text-primary hover:text-primary-dark transition-colors">
-            ← Back to Customer Info
-          </Link>
-          <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
+          <div className="flex justify-between items-start mb-6">
+            <Link href="/booking/customer-info" className="text-primary hover:text-primary-dark transition-colors">
+              ← Back to Customer Info
+            </Link>
+            <ThemeToggle />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-heading text-primary-dark dark:text-primary mt-4 mb-2">
             Confirm Your {bookingData?.isCouplesBooking ? 'Couples ' : ''}Booking
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Please review your booking details before confirming
           </p>
         </div>
         
         {/* Booking Summary */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-xl font-heading text-primary-dark mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
+          <h2 className="text-xl font-heading text-primary-dark dark:text-primary mb-6">
             Booking Summary
           </h2>
           
           <div className="space-y-6">
             {/* Service Details */}
             {bookingData.isCouplesBooking ? (
-              <div className="border-b border-gray-200 pb-4">
-                <h3 className="font-semibold text-primary-dark mb-3">Services</h3>
+              <div className="border-b border-gray-200 dark:border-gray-600 pb-4">
+                <h3 className="font-semibold text-primary-dark dark:text-primary mb-3">Services</h3>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="font-medium">Person 1: {bookingData.primaryService.name}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="font-medium dark:text-gray-100">Person 1: {bookingData.primaryService.name}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {bookingData.primaryService.duration} minutes • 
                         {staffNameMap[selectedStaff as keyof typeof staffNameMap]}
                       </p>
@@ -508,10 +512,10 @@ export default function CouplesConfirmationPage() {
                   
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="font-medium">
+                      <p className="font-medium dark:text-gray-100">
                         Person 2: {bookingData.secondaryService?.name || bookingData.primaryService.name}
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
                         {(bookingData.secondaryService?.duration || bookingData.primaryService.duration)} minutes • 
                         {staffNameMap[(secondaryStaff || selectedStaff) as keyof typeof staffNameMap]}
                       </p>
@@ -528,12 +532,12 @@ export default function CouplesConfirmationPage() {
                 </div>
               </div>
             ) : (
-              <div className="border-b border-gray-200 pb-4">
-                <h3 className="font-semibold text-primary-dark mb-2">Service</h3>
+              <div className="border-b border-gray-200 dark:border-gray-600 pb-4">
+                <h3 className="font-semibold text-primary-dark dark:text-primary mb-2">Service</h3>
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-medium">{bookingData.primaryService.name}</p>
-                    <p className="text-sm text-gray-600">{bookingData.primaryService.duration} minutes</p>
+                    <p className="font-medium dark:text-gray-100">{bookingData.primaryService.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{bookingData.primaryService.duration} minutes</p>
                   </div>
                   <p className="text-2xl font-semibold text-primary">${bookingData.primaryService.price}</p>
                 </div>
@@ -541,9 +545,9 @@ export default function CouplesConfirmationPage() {
             )}
 
             {/* Appointment Details */}
-            <div className="border-b border-gray-200 pb-4">
-              <h3 className="font-semibold text-primary-dark mb-2">Appointment</h3>
-              <div className="space-y-1">
+            <div className="border-b border-gray-200 dark:border-gray-600 pb-4">
+              <h3 className="font-semibold text-primary-dark dark:text-primary mb-2">Appointment</h3>
+              <div className="space-y-1 dark:text-gray-300">
                 <p><span className="font-medium">Date:</span> {formatDate(selectedDate)}</p>
                 <p><span className="font-medium">Time:</span> {formatTimeRange(selectedTime, bookingData.primaryService.duration)}</p>
                 {bookingData.isCouplesBooking && (
@@ -554,8 +558,8 @@ export default function CouplesConfirmationPage() {
 
             {/* Customer Details */}
             <div>
-              <h3 className="font-semibold text-primary-dark mb-2">Customer Information</h3>
-              <div className="space-y-1">
+              <h3 className="font-semibold text-primary-dark dark:text-primary mb-2">Customer Information</h3>
+              <div className="space-y-1 dark:text-gray-300">
                 <p><span className="font-medium">Name:</span> {customerInfo.name}</p>
                 <p><span className="font-medium">Email:</span> {customerInfo.email}</p>
                 {customerInfo.phone && (
@@ -571,8 +575,8 @@ export default function CouplesConfirmationPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-600">{error}</p>
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+            <p className="text-red-600 dark:text-red-300">{error}</p>
           </div>
         )}
 

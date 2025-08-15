@@ -7,6 +7,7 @@ import { Database } from '@/types/database'
 import { getServiceCategory, canDatabaseStaffPerformService, isDatabaseStaffAvailableOnDate } from '@/lib/staff-data'
 import { validateServiceSelection } from '@/lib/booking-step-validation'
 import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -194,14 +195,14 @@ export default function CouplesStaffPage() {
     label?: string
   }) => (
     <Card 
-      className={`p-6 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+      className={`p-6 cursor-pointer transition-all duration-200 hover:shadow-lg dark:bg-gray-700 dark:border-gray-600 ${
         member.id === 'any'
           ? isSelected
-            ? 'border-[3px] border-primary bg-gradient-to-br from-primary/10 to-primary/5 ring-2 ring-primary/20 shadow-xl'
-            : 'border-[3px] border-dashed border-primary/50 bg-gradient-to-br from-primary/5 to-transparent hover:border-primary hover:ring-1 hover:ring-primary/30'
+            ? 'border-[3px] border-primary bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 ring-2 ring-primary/20 shadow-xl'
+            : 'border-[3px] border-dashed border-primary/50 dark:border-primary/30 bg-gradient-to-br from-primary/5 to-transparent dark:from-primary/10 dark:to-transparent hover:border-primary hover:ring-1 hover:ring-primary/30'
           : isSelected 
-            ? 'ring-2 ring-primary border-primary bg-accent/20' 
-            : 'hover:border-accent'
+            ? 'ring-2 ring-primary border-primary bg-accent/20 dark:bg-primary/10' 
+            : 'hover:border-accent dark:hover:border-primary'
       }`}
       onClick={() => onSelect(member.id)}
     >
@@ -209,19 +210,19 @@ export default function CouplesStaffPage() {
         <div className="text-xs font-medium text-primary mb-2">{label}</div>
       )}
       <div className="flex items-center space-x-4">
-        <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
-          <span className="text-xl font-semibold text-gray-600">
+        <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-700 rounded-full flex items-center justify-center">
+          <span className="text-xl font-semibold text-gray-600 dark:text-gray-300">
             {member.id === 'any' ? 'AA' : member.name.split(' ').map(n => n[0]).join('')}
           </span>
         </div>
 
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-primary-dark mb-1">
+          <h3 className="text-lg font-semibold text-primary-dark dark:text-primary mb-1">
             {member.id === 'any' ? 'Any Available Staff' : member.name}
           </h3>
           
           {(member as any).capabilities && (member as any).capabilities.length > 0 && (
-            <p className="text-sm text-gray-600 mb-2">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
               {(member as any).capabilities.join(', ')}
             </p>
           )}
@@ -231,7 +232,7 @@ export default function CouplesStaffPage() {
               <Badge 
                 key={index}
                 variant="outline" 
-                className="text-xs border-primary text-primary bg-primary/5"
+                className="text-xs border-primary text-primary bg-primary/5 dark:bg-primary/10 dark:border-primary/50"
               >
                 {serviceType.replace('_', ' ')}
               </Badge>
@@ -251,28 +252,31 @@ export default function CouplesStaffPage() {
   )
 
   return (
-    <div className="min-h-screen bg-background py-8">
+    <div className="min-h-screen bg-background dark:bg-gray-900 py-8 transition-colors duration-300">
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link 
-            href={validateServiceSelection().isValid ? "/booking/date-time" : "/booking"} 
-            className="text-primary hover:text-primary-dark transition-colors"
-            onClick={(e) => {
-              const validation = validateServiceSelection()
-              if (!validation.isValid) {
-                e.preventDefault()
-                console.log('[StaffCouplesPage] Cannot go back: no service selected')
-                window.location.href = '/booking'
-              }
-            }}
-          >
-            ← {validateServiceSelection().isValid ? 'Back to Date & Time' : 'Back to Service Selection'}
-          </Link>
-          <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
+          <div className="flex justify-between items-start mb-6">
+            <Link 
+              href={validateServiceSelection().isValid ? "/booking/date-time" : "/booking"} 
+              className="text-primary hover:text-primary-dark transition-colors"
+              onClick={(e) => {
+                const validation = validateServiceSelection()
+                if (!validation.isValid) {
+                  e.preventDefault()
+                  console.log('[StaffCouplesPage] Cannot go back: no service selected')
+                  window.location.href = '/booking'
+                }
+              }}
+            >
+              ← {validateServiceSelection().isValid ? 'Back to Date & Time' : 'Back to Service Selection'}
+            </Link>
+            <ThemeToggle className="flex-shrink-0 ml-4" />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-heading text-primary-dark dark:text-primary mt-4 mb-2">
             Select Staff Members
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             {bookingData?.isCouplesBooking 
               ? 'Choose staff members for your couples booking'
               : 'Choose your preferred staff member'}
@@ -281,11 +285,11 @@ export default function CouplesStaffPage() {
 
         {/* Booking Summary */}
         {bookingData && (
-          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h2 className="text-xl font-heading text-primary-dark mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
+            <h2 className="text-xl font-heading text-primary-dark dark:text-primary mb-4">
               Booking Summary
             </h2>
-            <div className="space-y-2 text-gray-600">
+            <div className="space-y-2 text-gray-600 dark:text-gray-300">
               {bookingData.isCouplesBooking ? (
                 <>
                   <div>
@@ -309,14 +313,14 @@ export default function CouplesStaffPage() {
         )}
 
         {/* Staff Selection */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-2xl font-heading text-primary-dark mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
+          <h2 className="text-2xl font-heading text-primary-dark dark:text-primary mb-6">
             Available Staff
           </h2>
           
           {loadingStaff ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-gray-500">
+              <div className="text-gray-500 dark:text-gray-400">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4 mx-auto"></div>
                 Checking staff availability...
               </div>
@@ -334,7 +338,7 @@ export default function CouplesStaffPage() {
                 <>
                   {/* Person 1 Staff Selection */}
                   <div>
-                    <h3 className="text-lg font-medium text-primary-dark mb-3">
+                    <h3 className="text-lg font-medium text-primary-dark dark:text-primary mb-3">
                       Staff for Person 1 ({bookingData.primaryService.name})
                     </h3>
                     {primaryServiceStaff.length === 0 ? (
@@ -369,7 +373,7 @@ export default function CouplesStaffPage() {
 
                   {/* Person 2 Staff Selection */}
                   <div className="border-t pt-6">
-                    <h3 className="text-lg font-medium text-primary-dark mb-3">
+                    <h3 className="text-lg font-medium text-primary-dark dark:text-primary mb-3">
                       Staff for Person 2 ({bookingData.secondaryService?.name || bookingData.primaryService.name})
                     </h3>
                     {primaryStaff && primaryStaff !== 'any' && (
@@ -453,10 +457,10 @@ export default function CouplesStaffPage() {
         {/* Continue Button */}
         {((bookingData?.isCouplesBooking && primaryStaff && secondaryStaff) || 
           (!bookingData?.isCouplesBooking && primaryStaff)) && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
+          <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
             <div className="container mx-auto max-w-4xl">
               <div className="flex justify-between items-center mb-4">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
                   {bookingData?.isCouplesBooking ? (
                     <div>
                       <div><span className="font-medium">Person 1:</span> {staffMap[primaryStaff]}</div>

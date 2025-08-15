@@ -10,6 +10,7 @@ import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 import { getGHLServiceCategory } from '@/lib/staff-data'
 import { loadBookingState, recoverBookingBySessionId, clearBookingState } from '@/lib/booking-state-manager'
 import { validateTimeForDatabase, parseTimeString } from '@/lib/time-utils'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 export default function ConfirmationPage() {
   const [bookingData, setBookingData] = useState<any>(null)
@@ -439,10 +440,10 @@ export default function ConfirmationPage() {
   // Show loading state while data is being loaded from localStorage
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background py-8">
+      <div className="min-h-screen bg-background dark:bg-gray-900 py-8 transition-colors duration-300">
         <div className="container mx-auto px-4 text-center">
           <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <h1 className="text-2xl font-heading text-primary-dark mb-4">
+          <h1 className="text-2xl font-heading text-primary-dark dark:text-primary mb-4">
             Loading your booking details...
           </h1>
         </div>
@@ -453,12 +454,12 @@ export default function ConfirmationPage() {
   // Show missing information only after loading is complete and data is actually missing
   if (!bookingData) {
     return (
-      <div className="min-h-screen bg-background py-8">
+      <div className="min-h-screen bg-background dark:bg-gray-900 py-8 transition-colors duration-300">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-2xl font-heading text-primary-dark mb-4">
+          <h1 className="text-2xl font-heading text-primary-dark dark:text-primary mb-4">
             Booking Information Missing
           </h1>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             It looks like your booking session has expired or the booking data is incomplete.
           </p>
           <Link href="/booking" className="text-primary hover:text-primary-dark">
@@ -471,9 +472,9 @@ export default function ConfirmationPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-background py-8">
+      <div className="min-h-screen bg-background dark:bg-gray-900 py-8 transition-colors duration-300">
         <div className="container mx-auto px-4 max-w-2xl text-center">
-          <div className="bg-white rounded-xl shadow-md p-8 relative">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8 relative">
             {/* Confetti Animation */}
             {showConfetti && (
               <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
@@ -514,23 +515,23 @@ export default function ConfirmationPage() {
               </div>
             </div>
             
-            <h1 className="text-3xl font-heading text-primary-dark mb-4">
+            <h1 className="text-3xl font-heading text-primary-dark dark:text-primary mb-4">
               Booking Confirmed!
             </h1>
             
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
               Your appointment has been successfully booked. You will receive a confirmation email shortly.
             </p>
             
             {paymentCompleted && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
                 {paymentType === 'full' ? (
-                  <p className="text-green-800 text-sm">
+                  <p className="text-green-800 dark:text-green-300 text-sm">
                     <strong>Full payment processed:</strong> Your ${bookingData.service.price} payment has been completed. 
                     No additional payment required at your appointment.
                   </p>
                 ) : (
-                  <p className="text-green-800 text-sm">
+                  <p className="text-green-800 dark:text-green-300 text-sm">
                     <strong>Deposit processed:</strong> Your $30 deposit has been applied to this booking. 
                     The remaining balance of ${bookingData.service.price - 30} will be due at your appointment.
                   </p>
@@ -539,17 +540,17 @@ export default function ConfirmationPage() {
             )}
 
             {paymentType === 'location' && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <p className="text-blue-800 text-sm">
+              <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                <p className="text-blue-800 dark:text-blue-300 text-sm">
                   <strong>No payment required now:</strong> Your appointment is confirmed with $0 payment. 
                   Please bring ${bookingData.service.price} to pay at the spa when you arrive for your appointment.
                 </p>
               </div>
             )}
             
-            <div className="bg-accent rounded-lg p-6 mb-8 text-left">
-              <h2 className="font-semibold text-primary-dark mb-4">Booking Details</h2>
-              <div className="space-y-2 text-sm">
+            <div className="bg-accent dark:bg-gray-700 rounded-lg p-6 mb-8 text-left">
+              <h2 className="font-semibold text-primary-dark dark:text-primary mb-4">Booking Details</h2>
+              <div className="space-y-2 text-sm dark:text-gray-300">
                 <div><span className="font-medium">Service:</span> {bookingData.service.name}</div>
                 <div><span className="font-medium">Date:</span> {formatDate(bookingData.date)}</div>
                 <div><span className="font-medium">Time:</span> {formatTimeRange(bookingData.time, bookingData.service.duration)}</div>
@@ -574,36 +575,39 @@ export default function ConfirmationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8">
+    <div className="min-h-screen bg-background dark:bg-gray-900 py-8 transition-colors duration-300">
       <div className="container mx-auto px-4 max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link href="/booking/customer-info" className="text-primary hover:text-primary-dark transition-colors">
-            ← Back to Customer Info
-          </Link>
-          <h1 className="text-3xl md:text-4xl font-heading text-primary-dark mt-4 mb-2">
+          <div className="flex justify-between items-start mb-6">
+            <Link href="/booking/customer-info" className="text-primary hover:text-primary-dark transition-colors">
+              ← Back to Customer Info
+            </Link>
+            <ThemeToggle />
+          </div>
+          <h1 className="text-3xl md:text-4xl font-heading text-primary-dark dark:text-primary mt-4 mb-2">
             Confirm Your Booking
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Please review your booking details before confirming
           </p>
         </div>
 
         {/* Payment Status Banner (if applicable) */}
         {paymentCompleted && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mr-3">
+                <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               <div>
-                <p className="font-medium text-green-900">Payment Successful!</p>
+                <p className="font-medium text-green-900 dark:text-green-200">Payment Successful!</p>
                 {paymentType === 'full' ? (
-                  <p className="text-sm text-green-700">Your full payment of ${bookingData.service.price} has been processed.</p>
+                  <p className="text-sm text-green-700 dark:text-green-300">Your full payment of ${bookingData.service.price} has been processed.</p>
                 ) : (
-                  <p className="text-sm text-green-700">Your $30 deposit has been processed.</p>
+                  <p className="text-sm text-green-700 dark:text-green-300">Your $30 deposit has been processed.</p>
                 )}
               </div>
             </div>
@@ -611,8 +615,8 @@ export default function ConfirmationPage() {
         )}
         
         {/* Booking Summary */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-xl font-heading text-primary-dark mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 mb-8">
+          <h2 className="text-xl font-heading text-primary-dark dark:text-primary mb-6">
             Booking Summary
           </h2>
           
@@ -672,8 +676,8 @@ export default function ConfirmationPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-600">{error}</p>
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+            <p className="text-red-600 dark:text-red-300">{error}</p>
           </div>
         )}
 
