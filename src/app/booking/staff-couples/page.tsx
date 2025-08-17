@@ -117,34 +117,38 @@ export default function CouplesStaffPage() {
       })
       setStaffMap(nameMap)
       
-      
+      setLoadingStaff(false)
     } catch (error: any) {
       // Error fetching staff capabilities, using fallback
       
-      // Log error to database for debugging
+      // Log error to database for debugging via API
       try {
-        await supabaseClient.logBookingError({
-          error_type: 'couples_staff_selection',
-          error_message: error.message || 'Failed to fetch staff capabilities',
-          error_details: {
-            error: error.toString(),
-            stack: error.stack,
-            code: error.code,
-            details: error.details,
-            step: 'couples_staff_selection'
-          },
-          booking_data: {
-            service: bookingData.primaryService, // Assuming primaryService is the selected service
-            date: selectedDate,
-            time: selectedTime,
-            step: 'couples_staff_selection'
-          },
-          service_name: bookingData.primaryService.name,
-          service_id: undefined, // No specific service ID for primaryService
-          appointment_date: selectedDate,
-          appointment_time: selectedTime,
-          is_couples_booking: true,
-          session_id: localStorage.getItem('sessionId') || undefined
+        await fetch('/api/booking-errors', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            error_type: 'couples_staff_selection',
+            error_message: error.message || 'Failed to fetch staff capabilities',
+            error_details: {
+              error: error.toString(),
+              stack: error.stack,
+              code: error.code,
+              details: error.details,
+              step: 'couples_staff_selection'
+            },
+            booking_data: {
+              service: bookingData.primaryService,
+              date: selectedDate,
+              time: selectedTime,
+              step: 'couples_staff_selection'
+            },
+            service_name: bookingData.primaryService.name,
+            service_id: undefined,
+            appointment_date: selectedDate,
+            appointment_time: selectedTime,
+            is_couples_booking: true,
+            session_id: localStorage.getItem('sessionId') || undefined
+          })
         })
       } catch (logError) {
         console.error('Failed to log booking error:', logError)
@@ -172,30 +176,34 @@ export default function CouplesStaffPage() {
       } catch (fallbackError: any) {
         // Both primary and fallback failed, show empty state
         
-        // Log fallback error to database for debugging
+        // Log fallback error to database for debugging via API
         try {
-          await supabaseClient.logBookingError({
-            error_type: 'couples_staff_fallback',
-            error_message: fallbackError.message || 'Fallback staff fetch also failed',
-            error_details: {
-              error: fallbackError.toString(),
-              stack: fallbackError.stack,
-              code: fallbackError.code,
-              details: fallbackError.details,
-              step: 'couples_staff_fallback'
-            },
-            booking_data: {
-              service: bookingData?.primaryService, // Assuming primaryService is the selected service
-              date: selectedDate,
-              time: selectedTime,
-              step: 'couples_staff_fallback'
-            },
-            service_name: bookingData?.primaryService?.name,
-            service_id: undefined, // No specific service ID for primaryService
-            appointment_date: selectedDate,
-            appointment_time: selectedTime,
-            is_couples_booking: true,
-            session_id: localStorage.getItem('sessionId') || undefined
+          await fetch('/api/booking-errors', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              error_type: 'couples_staff_fallback',
+              error_message: fallbackError.message || 'Fallback staff fetch also failed',
+              error_details: {
+                error: fallbackError.toString(),
+                stack: fallbackError.stack,
+                code: fallbackError.code,
+                details: fallbackError.details,
+                step: 'couples_staff_fallback'
+              },
+              booking_data: {
+                service: bookingData?.primaryService,
+                date: selectedDate,
+                time: selectedTime,
+                step: 'couples_staff_fallback'
+              },
+              service_name: bookingData?.primaryService?.name,
+              service_id: undefined,
+              appointment_date: selectedDate,
+              appointment_time: selectedTime,
+              is_couples_booking: true,
+              session_id: localStorage.getItem('sessionId') || undefined
+            })
           })
         } catch (logError) {
           console.error('Failed to log fallback error:', logError)

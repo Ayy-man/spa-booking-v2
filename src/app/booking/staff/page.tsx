@@ -242,31 +242,37 @@ export default function StaffPage() {
       
       // Log error to database for debugging
       try {
-        await supabaseClient.logBookingError({
-          error_type: 'staff_selection',
-          error_message: error.message || 'Failed to fetch available staff',
-          error_details: {
-            error: error.toString(),
-            stack: error.stack,
-            code: error.code,
-            details: error.details,
-            step: 'staff_selection'
+        await fetch('/api/booking-errors', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           },
-          booking_data: {
-            service: selectedService,
-            date: selectedDate,
-            time: selectedTime,
-            step: 'staff_selection'
-          },
-          customer_name: undefined,
-          customer_email: undefined,
-          customer_phone: undefined,
-          service_name: selectedService?.name,
-          service_id: undefined,
-          appointment_date: selectedDate,
-          appointment_time: selectedTime,
-          is_couples_booking: bookingData?.isCouplesBooking || false,
-          session_id: localStorage.getItem('sessionId') || undefined
+          body: JSON.stringify({
+            error_type: 'staff_selection',
+            error_message: error.message || 'Failed to fetch available staff',
+            error_details: {
+              error: error.toString(),
+              stack: error.stack,
+              code: error.code,
+              details: error.details,
+              step: 'staff_selection'
+            },
+            booking_data: {
+              service: selectedService,
+              date: selectedDate,
+              time: selectedTime,
+              step: 'staff_selection'
+            },
+            customer_name: undefined,
+            customer_email: undefined,
+            customer_phone: undefined,
+            service_name: selectedService?.name,
+            service_id: undefined,
+            appointment_date: selectedDate,
+            appointment_time: selectedTime,
+            is_couples_booking: bookingData?.isCouplesBooking || false,
+            session_id: localStorage.getItem('sessionId') || undefined
+          })
         })
       } catch (logError) {
         console.error('Failed to log booking error:', logError)

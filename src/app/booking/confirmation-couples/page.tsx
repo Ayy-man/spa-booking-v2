@@ -298,38 +298,44 @@ export default function CouplesConfirmationPage() {
       
       // Log error to database for debugging
       try {
-        await supabaseClient.logBookingError({
-          error_type: 'couples_booking',
-          error_message: err.message || 'Unknown error',
-          error_details: {
-            error: err.toString(),
-            stack: err.stack,
-            code: err.code,
-            details: err.details
+        await fetch('/api/booking-errors', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           },
-          booking_data: {
-            bookingData,
-            selectedDate,
-            selectedTime,
-            selectedStaff,
-            secondaryStaff,
-            customerInfo
-          },
-          customer_name: customerInfo.name,
-          customer_email: customerInfo.email,
-          customer_phone: customerInfo.phone,
-          service_name: bookingData.primaryService?.name,
-          service_id: bookingData.primaryService?.id,
-          appointment_date: selectedDate,
-          appointment_time: selectedTime,
-          staff_name: selectedStaff,
-          staff_id: selectedStaff,
-          is_couples_booking: true,
-          secondary_service_name: bookingData.secondaryService?.name,
-          secondary_service_id: bookingData.secondaryService?.id,
-          secondary_staff_name: secondaryStaff,
-          secondary_staff_id: secondaryStaff,
-          session_id: localStorage.getItem('sessionId') || undefined
+          body: JSON.stringify({
+            error_type: 'couples_booking',
+            error_message: err.message || 'Unknown error',
+            error_details: {
+              error: err.toString(),
+              stack: err.stack,
+              code: err.code,
+              details: err.details
+            },
+            booking_data: {
+              bookingData,
+              selectedDate,
+              selectedTime,
+              selectedStaff,
+              secondaryStaff,
+              customerInfo
+            },
+            customer_name: customerInfo.name,
+            customer_email: customerInfo.email,
+            customer_phone: customerInfo.phone,
+            service_name: bookingData.primaryService?.name,
+            service_id: bookingData.primaryService?.id,
+            appointment_date: selectedDate,
+            appointment_time: selectedTime,
+            staff_name: selectedStaff,
+            staff_id: selectedStaff,
+            is_couples_booking: true,
+            secondary_service_name: bookingData.secondaryService?.name,
+            secondary_service_id: bookingData.secondaryService?.id,
+            secondary_staff_name: secondaryStaff,
+            secondary_staff_id: secondaryStaff,
+            session_id: localStorage.getItem('sessionId') || undefined
+          })
         })
       } catch (logError) {
         console.error('Failed to log booking error:', logError)

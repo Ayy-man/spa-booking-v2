@@ -404,28 +404,34 @@ export default function ConfirmationPage() {
       
       // Log error to database for debugging
       try {
-        await supabaseClient.logBookingError({
-          error_type: 'single_booking',
-          error_message: err.message || 'Unknown error',
-          error_details: {
-            error: err.toString(),
-            stack: err.stack,
-            code: err.code,
-            details: err.details
+        await fetch('/api/booking-errors', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           },
-          booking_data: bookingData,
-          customer_name: bookingData.customer?.name,
-          customer_email: bookingData.customer?.email,
-          customer_phone: bookingData.customer?.phone,
-          service_name: bookingData.service?.name,
-          service_id: bookingData.service?.id,
-          appointment_date: bookingData.date,
-          appointment_time: bookingData.time,
-          staff_name: bookingData.staff,
-          staff_id: bookingData.staff,
-          room_id: undefined, // roomId is not available in error context
-          is_couples_booking: false,
-          session_id: localStorage.getItem('sessionId') || undefined
+          body: JSON.stringify({
+            error_type: 'single_booking',
+            error_message: err.message || 'Unknown error',
+            error_details: {
+              error: err.toString(),
+              stack: err.stack,
+              code: err.code,
+              details: err.details
+            },
+            booking_data: bookingData,
+            customer_name: bookingData.customer?.name,
+            customer_email: bookingData.customer?.email,
+            customer_phone: bookingData.customer?.phone,
+            service_name: bookingData.service?.name,
+            service_id: bookingData.service?.id,
+            appointment_date: bookingData.date,
+            appointment_time: bookingData.time,
+            staff_name: bookingData.staff,
+            staff_id: bookingData.staff,
+            room_id: undefined, // roomId is not available in error context
+            is_couples_booking: false,
+            session_id: localStorage.getItem('sessionId') || undefined
+          })
         })
       } catch (logError) {
         console.error('Failed to log booking error:', logError)

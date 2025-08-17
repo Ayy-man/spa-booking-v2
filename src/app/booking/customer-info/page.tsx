@@ -201,31 +201,37 @@ export default function CustomerInfoPage() {
               
               // Log room assignment error to database for debugging
               try {
-                await supabaseClient.logBookingError({
-                  error_type: 'room_assignment',
-                  error_message: roomError.message || 'Failed to assign optimal room',
-                  error_details: {
-                    error: roomError.toString(),
-                    stack: roomError.stack,
-                    code: roomError.code,
-                    details: roomError.details,
-                    step: 'room_assignment'
+                await fetch('/api/booking-errors', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
                   },
-                  booking_data: {
-                    service: selectedService,
-                    staff: selectedStaff,
-                    date: selectedDate,
-                    time: selectedTime,
-                    step: 'room_assignment'
-                  },
-                  service_name: selectedService?.name,
-                  service_id: selectedService?.id,
-                  appointment_date: selectedDate,
-                  appointment_time: selectedTime,
-                  staff_name: selectedStaff,
-                  staff_id: selectedStaff,
-                  is_couples_booking: isCouplesBooking,
-                  session_id: localStorage.getItem('sessionId') || undefined
+                  body: JSON.stringify({
+                    error_type: 'room_assignment',
+                    error_message: roomError.message || 'Failed to assign optimal room',
+                    error_details: {
+                      error: roomError.toString(),
+                      stack: roomError.stack,
+                      code: roomError.code,
+                      details: roomError.details,
+                      step: 'room_assignment'
+                    },
+                    booking_data: {
+                      service: selectedService,
+                      staff: selectedStaff,
+                      date: selectedDate,
+                      time: selectedTime,
+                      step: 'room_assignment'
+                    },
+                    service_name: selectedService?.name,
+                    service_id: selectedService?.id,
+                    appointment_date: selectedDate,
+                    appointment_time: selectedTime,
+                    staff_name: selectedStaff,
+                    staff_id: selectedStaff,
+                    is_couples_booking: isCouplesBooking,
+                    session_id: localStorage.getItem('sessionId') || undefined
+                  })
                 })
               } catch (logError) {
                 console.error('Failed to log room assignment error:', logError)
@@ -281,37 +287,42 @@ export default function CustomerInfoPage() {
         
         // Log error to database for debugging
         try {
-          const { supabaseClient } = await import('@/lib/supabase')
-          await supabaseClient.logBookingError({
-            error_type: 'customer_info',
-            error_message: error.message || 'Failed to create booking',
-            error_details: {
-              error: error.toString(),
-              stack: error.stack,
-              code: error.code,
-              details: error.details,
-              step: 'customer_info'
+          await fetch('/api/booking-errors', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
             },
-            booking_data: {
-              customerInfo: data,
-              selectedService,
-              selectedDate,
-              selectedTime,
-              selectedStaff,
-              isCouplesBooking,
-              step: 'customer_info'
-            },
-            customer_name: data.name,
-            customer_email: data.email,
-            customer_phone: data.phone,
-            service_name: selectedService?.name,
-            service_id: selectedService?.id,
-            appointment_date: selectedDate,
-            appointment_time: selectedTime,
-            staff_name: selectedStaff,
-            staff_id: selectedStaff,
-            is_couples_booking: isCouplesBooking,
-            session_id: localStorage.getItem('sessionId') || undefined
+            body: JSON.stringify({
+              error_type: 'customer_info',
+              error_message: error.message || 'Failed to create booking',
+              error_details: {
+                error: error.toString(),
+                stack: error.stack,
+                code: error.code,
+                details: error.details,
+                step: 'customer_info'
+              },
+              booking_data: {
+                customerInfo: data,
+                selectedService,
+                selectedDate,
+                selectedTime,
+                selectedStaff,
+                isCouplesBooking,
+                step: 'customer_info'
+              },
+              customer_name: data.name,
+              customer_email: data.email,
+              customer_phone: data.phone,
+              service_name: selectedService?.name,
+              service_id: selectedService?.id,
+              appointment_date: selectedDate,
+              appointment_time: selectedTime,
+              staff_name: selectedStaff,
+              staff_id: selectedStaff,
+              is_couples_booking: isCouplesBooking,
+              session_id: localStorage.getItem('sessionId') || undefined
+            })
           })
         } catch (logError) {
           console.error('Failed to log booking error:', logError)
