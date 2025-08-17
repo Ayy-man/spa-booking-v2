@@ -226,6 +226,7 @@ export interface Database {
           price: number
           requires_room_3: boolean
           is_couples_service: boolean
+          requires_couples_room: boolean
           is_active: boolean
           service_capabilities: string[]
           ghl_category: string
@@ -244,6 +245,7 @@ export interface Database {
           price: number
           requires_room_3?: boolean
           is_couples_service?: boolean
+          requires_couples_room?: boolean
           is_active?: boolean
           service_capabilities?: string[]
           ghl_category: string
@@ -262,6 +264,7 @@ export interface Database {
           price?: number
           requires_room_3?: boolean
           is_couples_service?: boolean
+          requires_couples_room?: boolean
           is_active?: boolean
           service_capabilities?: string[]
           ghl_category?: string

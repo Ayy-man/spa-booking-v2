@@ -14,6 +14,20 @@ The system uses a normalized PostgreSQL database with comprehensive relationship
 
 ## Complete Table Definitions
 
+### 0. Backup Table (Development Artifact)
+**Purpose**: Backup of services couples configuration (likely from migration)
+
+```sql
+CREATE TABLE public._backup_services_is_couples (
+  id text,
+  name text,
+  is_couples_service boolean,
+  category USER-DEFINED
+);
+```
+
+**Note**: This appears to be a backup table from a database migration and should be considered for removal in production cleanup.
+
 ### 1. Admin Users Table
 **Purpose**: Role-based access control for admin panel authentication
 
@@ -95,6 +109,7 @@ CREATE TABLE public.services (
   price numeric NOT NULL CHECK (price >= 0::numeric),
   requires_room_3 boolean DEFAULT false,
   is_couples_service boolean DEFAULT false,
+  requires_couples_room boolean DEFAULT false,
   is_active boolean DEFAULT true,
   service_capabilities ARRAY DEFAULT '{}'::text[],
   created_at timestamp with time zone DEFAULT now(),
@@ -111,7 +126,7 @@ CREATE TABLE public.services (
 - Text-based IDs for human-readable service references
 - Duration and pricing management
 - Room requirement specifications (Room 3 for body scrubs)
-- Couples service designation
+- Couples service designation with room requirements
 - GoHighLevel integration categories
 - Marketing flags (popular, recommended)
 - Service capabilities array for advanced matching
@@ -154,6 +169,7 @@ CREATE TABLE public.staff (
   specialties text,
   capabilities ARRAY NOT NULL DEFAULT '{}'::service_category[],
   work_days ARRAY NOT NULL DEFAULT '{}'::integer[],
+  service_exclusions ARRAY DEFAULT '{}'::text[],
   default_room_id integer,
   role USER-DEFINED DEFAULT 'therapist'::staff_role,
   initials text,
@@ -171,6 +187,7 @@ CREATE TABLE public.staff (
 - Text-based IDs for staff identification
 - Capabilities array matching service categories
 - Work days as integer array (0-6 for Sunday-Saturday)
+- Service exclusions array for specific services staff cannot perform
 - Default room assignment for efficiency
 - Role-based system for different staff types
 - Hourly rate tracking for payroll
@@ -237,7 +254,7 @@ CREATE TABLE public.bookings (
   waiver_signed boolean DEFAULT false,
   waiver_data jsonb,
   waiver_signed_at timestamp with time zone,
-  payment_option text DEFAULT 'deposit'::text,
+  payment_option text NOT NULL DEFAULT 'deposit'::text CHECK (payment_option = ANY (ARRAY['deposit'::text, 'pay_on_location'::text])),
   CONSTRAINT bookings_pkey PRIMARY KEY (id),
   CONSTRAINT bookings_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customers(id),
   CONSTRAINT bookings_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.services(id),

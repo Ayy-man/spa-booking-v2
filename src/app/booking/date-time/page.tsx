@@ -206,8 +206,17 @@ export default function DateTimePage() {
         return
       }
       
+      // Get existing bookings for the selected date
+      const dateString = format(selectedDate, 'yyyy-MM-dd')
+      const existingBookings = await supabaseClient.getBookingsByDate(dateString)
+      
+      // Get all staff members
+      const allStaff = await supabaseClient.getStaff()
+      
+      // Filter staff who can perform this service
+      const availableStaff = getAvailableStaff(selectedService.name, dateString)
+      
       // Generate time slots based on service duration and buffer
-      // Don't use Supabase RPC as it doesn't account for service duration properly
       const times = []
       
       // For couples bookings, use the total duration of both services
@@ -233,11 +242,79 @@ export default function DateTimePage() {
         
         if (endTime <= closingTime) {
           const timeString = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`
-          times.push(timeString)
           
-          // Move to next slot: add service duration + 15-minute buffer
-          // This ensures proper spacing between appointments
-          currentTime.setMinutes(currentTime.getMinutes() + serviceDuration + bufferMinutes)
+          // Check if at least one staff member is available at this time
+          let hasAvailableStaff = false
+          
+          for (const staff of availableStaff) {
+            // Check if this staff member has any bookings at this time
+            const staffBookings = existingBookings.filter(b => b.staff_id === staff.id)
+            
+            let isStaffAvailable = true
+            for (const booking of staffBookings) {
+              const bookingStart = new Date(`2000-01-01T${booking.start_time}`)
+              const bookingEnd = new Date(`2000-01-01T${booking.end_time}`)
+              const slotStart = new Date(`2000-01-01T${timeString}:00`)
+              const slotEnd = new Date(`2000-01-01T${timeString}:00`)
+              slotEnd.setMinutes(slotEnd.getMinutes() + serviceDuration)
+              
+              // Add buffer time to existing bookings
+              bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
+              bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+              
+              // Check for overlap
+              if (slotStart < bookingEnd && slotEnd > bookingStart) {
+                isStaffAvailable = false
+                break
+              }
+            }
+            
+            if (isStaffAvailable) {
+              // Also check room availability for this staff member
+              // Get the room this service would use (considering staff's default room)
+              const roomId = staff.default_room_id || 1
+              
+              // For body scrub services, must use Room 3
+              const requiresRoom3 = matchingService.requires_room_3 || 
+                                   matchingService.category === 'body_scrub'
+              const actualRoomId = requiresRoom3 ? 3 : roomId
+              
+              // Check if the room is available at this time
+              const roomBookings = existingBookings.filter(b => b.room_id === actualRoomId)
+              
+              let isRoomAvailable = true
+              for (const booking of roomBookings) {
+                const bookingStart = new Date(`2000-01-01T${booking.start_time}`)
+                const bookingEnd = new Date(`2000-01-01T${booking.end_time}`)
+                const slotStart = new Date(`2000-01-01T${timeString}:00`)
+                const slotEnd = new Date(`2000-01-01T${timeString}:00`)
+                slotEnd.setMinutes(slotEnd.getMinutes() + serviceDuration)
+                
+                // Add buffer time to existing bookings
+                bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
+                bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+                
+                // Check for overlap
+                if (slotStart < bookingEnd && slotEnd > bookingStart) {
+                  isRoomAvailable = false
+                  break
+                }
+              }
+              
+              if (isRoomAvailable) {
+                hasAvailableStaff = true
+                break
+              }
+            }
+          }
+          
+          // Only add this time slot if at least one staff member and room is available
+          if (hasAvailableStaff) {
+            times.push(timeString)
+          }
+          
+          // Move to next slot: add 15 minutes (we'll check all possible start times)
+          currentTime.setMinutes(currentTime.getMinutes() + 15)
         } else {
           break
         }
@@ -245,12 +322,13 @@ export default function DateTimePage() {
       
       setAvailableTimes(times)
     } catch (error: any) {
+      console.error('Error fetching available time slots:', error)
       // Fallback to simple time generation
       generateFallbackTimes()
     } finally {
       setLoadingTimes(false)
     }
-  }, [selectedDate, selectedService, generateFallbackTimes])
+  }, [selectedDate, selectedService, bookingData, generateFallbackTimes])
 
   // Generate available times based on selected date using Supabase
   useEffect(() => {

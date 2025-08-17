@@ -83,6 +83,23 @@ export const supabaseClient = {
   },
 
   // Bookings
+  async getBookingsByDate(date: string) {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select(`
+        *,
+        service:services(*),
+        staff:staff(*),
+        room:rooms(*)
+      `)
+      .eq('appointment_date', date)
+      .neq('status', 'cancelled')
+      .order('start_time', { ascending: true })
+    
+    if (error) throw error
+    return data
+  },
+
   async createBooking(booking: {
     service_id: string
     staff_id: string

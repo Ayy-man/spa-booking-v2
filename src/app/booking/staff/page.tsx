@@ -145,18 +145,67 @@ export default function StaffPage() {
         return
       }
       
+      // Get existing bookings for the selected date to check actual availability
+      const existingBookings = await supabaseClient.getBookingsByDate(dateData)
+      
       const date = new Date(dateData)
       const dayOfWeek = date.getDay() // 0 = Sunday, 1 = Monday, etc.
+      const serviceDuration = matchingService.duration || 60
+      const bufferMinutes = 15
       
-      // Filter staff by capability and work day availability using proper functions
+      // Filter staff by capability, work day availability, and actual booking conflicts
       const availableStaffForDay = allStaff.filter(staff => {
         if (!staff.is_active || staff.id === 'any') return false
         
         const hasCapability = canDatabaseStaffPerformService(staff, matchingService.category, matchingService.name)
         const worksOnDay = isDatabaseStaffAvailableOnDate(staff, dateData)
         
+        if (!hasCapability || !worksOnDay) return false
         
-        return hasCapability && worksOnDay
+        // Check if staff is actually available at the selected time
+        const staffBookings = existingBookings.filter(b => b.staff_id === staff.id)
+        
+        const slotStart = new Date(`2000-01-01T${timeData}:00`)
+        const slotEnd = new Date(`2000-01-01T${timeData}:00`)
+        slotEnd.setMinutes(slotEnd.getMinutes() + serviceDuration)
+        
+        for (const booking of staffBookings) {
+          const bookingStart = new Date(`2000-01-01T${booking.start_time}`)
+          const bookingEnd = new Date(`2000-01-01T${booking.end_time}`)
+          
+          // Add buffer time to existing bookings
+          bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
+          bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+          
+          // Check for overlap
+          if (slotStart < bookingEnd && slotEnd > bookingStart) {
+            return false // Staff is not available due to booking conflict
+          }
+        }
+        
+        // Also check room availability for this staff member
+        const roomId = staff.default_room_id || 1
+        const requiresRoom3 = matchingService.requires_room_3 || matchingService.category === 'body_scrub'
+        const actualRoomId = requiresRoom3 ? 3 : roomId
+        
+        // Check if the room is available at this time
+        const roomBookings = existingBookings.filter(b => b.room_id === actualRoomId)
+        
+        for (const booking of roomBookings) {
+          const bookingStart = new Date(`2000-01-01T${booking.start_time}`)
+          const bookingEnd = new Date(`2000-01-01T${booking.end_time}`)
+          
+          // Add buffer time to existing bookings
+          bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
+          bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+          
+          // Check for overlap
+          if (slotStart < bookingEnd && slotEnd > bookingStart) {
+            return false // Room is not available for this staff member
+          }
+        }
+        
+        return true
       })
       
       setAvailableStaff(availableStaffForDay)
