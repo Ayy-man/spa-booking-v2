@@ -97,9 +97,19 @@ export function getServiceRoomRestriction(serviceName: string): string | null {
  * @returns string - Formatted time
  */
 export function formatBookingTime(timeString: string): string {
+  if (!timeString || typeof timeString !== 'string') {
+    return timeString || ''
+  }
+  
   try {
     const [hours, minutes] = timeString.split(':')
+    if (!hours || !minutes) {
+      return timeString
+    }
     const hour = parseInt(hours)
+    if (isNaN(hour)) {
+      return timeString
+    }
     const ampm = hour >= 12 ? 'PM' : 'AM'
     const displayHour = hour % 12 || 12
     return `${displayHour}:${minutes} ${ampm}`

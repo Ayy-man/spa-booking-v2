@@ -4,7 +4,7 @@ import * as React from "react"
 import { useState, useEffect } from "react"
 import { simpleAuth } from "@/lib/simple-auth"
 import { TodaysSchedule } from "@/components/admin/todays-schedule"
-import { RoomTimeline } from "@/components/admin/room-timeline"
+import { ScheduleViewToggle } from "@/components/admin/ScheduleViewToggle"
 import { StaffSchedule } from "@/components/admin/staff-schedule"
 import { WalkInsSection } from "@/components/admin/walk-ins-section"
 import { 
@@ -50,8 +50,8 @@ export default function AdminDashboardPage() {
     },
     {
       value: "timeline" as const,
-      label: "Room Timeline",
-      description: "Room availability and scheduling timeline"
+      label: "Schedule Timeline",
+      description: "Staff and room scheduling views"
     },
     {
       value: "staff" as const,
@@ -136,7 +136,7 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="timeline" activeValue={activeTab}>
-            <RoomTimeline />
+            <ScheduleViewToggle />
           </TabsContent>
 
           <TabsContent value="staff" activeValue={activeTab}>

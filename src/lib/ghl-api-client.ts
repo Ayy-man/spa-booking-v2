@@ -319,7 +319,7 @@ class GHLApiClient {
     }
   ): Promise<GHLApiResponse> {
     if (!this.apiToken) {
-      console.log('GHL API Token not configured - skipping contact sync')
+      // GHL API Token not configured - skipping contact sync
       return { success: false, error: 'API not configured' }
     }
 
@@ -362,14 +362,12 @@ class GHLApiClient {
         tags
       )
 
-      if (result.success) {
-        console.log('Successfully synced booking payment to GHL:', {
-          email: customerEmail,
-          bookingId: bookingData.bookingId,
-          contactId: result.data?.id
-        })
-      } else {
-        console.error('Failed to sync booking payment to GHL:', result.error)
+      if (!result.success) {
+        // Failed to sync booking payment to GHL
+        // Keep error for monitoring but don't expose in production
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to sync booking payment to GHL:', result.error)
+        }
       }
 
       return result

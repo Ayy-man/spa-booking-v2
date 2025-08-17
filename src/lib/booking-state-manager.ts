@@ -104,7 +104,7 @@ class BookingStateManager {
       // Also save individual keys for backward compatibility
       this.saveCompatibilityKeys(newState)
       
-      console.log('[BookingStateManager] State saved:', newState)
+      // State saved successfully
       return newState
       
     } catch (error) {
@@ -179,7 +179,7 @@ class BookingStateManager {
         
         // Check if state has expired
         if (this.isExpired(state.timestamp)) {
-          console.log('[BookingStateManager] State expired, clearing...')
+          // State expired, clearing
           this.clearBookingState()
           return null
         }
@@ -268,7 +268,7 @@ class BookingStateManager {
       
       // If we recovered any data, save it in the new format
       if (Object.keys(state).length > 0) {
-        console.log('[BookingStateManager] Recovered from legacy keys:', state)
+        // Recovered from legacy keys
         state.sessionId = this.generateSessionId()
         state.timestamp = Date.now()
         state.lastUpdated = Date.now()
@@ -318,7 +318,7 @@ class BookingStateManager {
         localStorage.removeItem(key)
       })
       
-      console.log('[BookingStateManager] State cleared')
+      // State cleared
       
     } catch (error) {
       console.error('[BookingStateManager] Error clearing state:', error)
@@ -366,7 +366,7 @@ class BookingStateManager {
       
       // Verify session ID matches
       if (state && state.sessionId === sessionId) {
-        console.log('[BookingStateManager] State recovered by session ID:', sessionId)
+        // State recovered by session ID
         return state
       }
       

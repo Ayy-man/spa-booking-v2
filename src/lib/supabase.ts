@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
 import { validateTimeForDatabase } from '@/lib/time-utils'
+import { logger } from '@/lib/logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -155,7 +156,7 @@ export const supabaseClient = {
         .single()
 
       if (customerError) {
-        console.error('Customer creation error:', customerError)
+        logger.error('Customer creation error', customerError, 'supabase')
         throw new Error(`Failed to create customer record: ${customerError.message}`)
       }
       if (!newCustomer) {

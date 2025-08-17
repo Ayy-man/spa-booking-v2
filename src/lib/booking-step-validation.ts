@@ -192,7 +192,7 @@ export function validateAndRedirect(requiredStep: number): boolean {
   const validation = canAccessStep(requiredStep)
   
   if (!validation.isValid && validation.redirectTo) {
-    console.log(`[StepValidation] Redirecting to ${validation.redirectTo}: ${validation.message}`)
+    // Redirecting based on validation
     window.location.href = validation.redirectTo
     return false
   }

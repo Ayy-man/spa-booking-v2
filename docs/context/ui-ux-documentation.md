@@ -1,15 +1,20 @@
 # Dermal Skin Clinic Booking System - UI/UX Documentation
 
-## Design Philosophy
-- **Elegant & Professional**: Sophisticated spa experience
-- **Mobile-First**: Optimized for mobile booking
-- **Accessibility**: High contrast, clear typography
-- **Calming UX**: Smooth transitions, gentle interactions
+**Last Updated: August 15, 2025**  
+**Current Version: 1.0.2 (with comprehensive dark mode support)**
 
-## Color Palette (Updated July 31, 2025 - WCAG AA Compliant)
+## Design Philosophy
+- **Elegant & Professional**: Sophisticated spa experience with theme customization
+- **Mobile-First**: Optimized for mobile booking with dark mode support
+- **Accessibility**: WCAG AA compliance in both light and dark themes
+- **Calming UX**: Smooth transitions, gentle interactions, and personalized theming
+- **Theme Flexibility**: Complete dark/light mode toggle with localStorage persistence
+
+## Color Palette (Updated August 15, 2025 - Dark Mode Implementation)
+### Light Theme Colors
 ```css
 :root {
-  --primary: #A64D5F; /* Updated from #C36678 for WCAG AA compliance */
+  --primary: #A64D5F; /* WCAG AA compliant */
   --primary-dark: #8B4351;
   --primary-light: #C36678;
   --background: #F8F8F8;
@@ -26,8 +31,48 @@
 }
 ```
 
+### Dark Theme Colors (New in v1.0.2)
+```css
+:root {
+  --primary-dark: #E8B3C0; /* Enhanced spa pink for dark mode */
+  --background-dark: #1a1a1a; /* Main dark background */
+  --surface-dark: #2a2a2a; /* Card/section backgrounds */
+  --text-primary-dark: #f5f5f5; /* Primary text in dark mode */
+  --text-secondary-dark: #e0e0e0; /* Secondary text in dark mode */
+  --border-dark: #333333; /* Subtle borders */
+  --accent-dark: #3a3a3a; /* Accent elements */
+}
+```
+
 ### WCAG AA Compliance
 - **Primary Color**: Changed from #C36678 to #A64D5F for better contrast ratio
+- **Dark Mode Compliance**: All color combinations meet WCAG AA standards in both themes
+- **Enhanced Dark Mode Primary**: #E8B3C0 optimized for better dark background contrast
+
+## Theme System Implementation (v1.0.2)
+
+### Theme Toggle Component
+- **Location**: Available on all customer-facing pages
+- **Design**: Sun/moon icon toggle with smooth animations
+- **Accessibility**: Keyboard navigation and screen reader support
+- **Mobile**: Touch-friendly 48px+ target size
+
+### Theme Persistence
+- **localStorage**: User preference saved across sessions
+- **Default Behavior**: Respects system preference on first visit
+- **No Flash**: Theme applied before component render to prevent flash
+- **SSR Handling**: Proper hydration to prevent mismatches
+
+### Admin Panel Design Decision
+- **Light Mode Only**: Intentionally excluded from dark mode
+- **Professional Interface**: Maintains consistent staff experience
+- **Operational Clarity**: Standardized interface for business operations
+
+### Dark Mode Page Support
+- **Complete Coverage**: All customer booking flow pages
+- **Component Integration**: BookingProgressIndicator, CouplesBooking, CustomerForm
+- **Consistent Styling**: Uniform dark mode implementation across components
+- **Mobile Optimization**: Responsive design maintained in both themes
 - **All Combinations**: Meet or exceed 4.5:1 contrast ratio for normal text
 - **Large Text**: Meets 3:1 contrast ratio requirement
 - **Interactive Elements**: Enhanced focus indicators and hover states
