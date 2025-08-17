@@ -287,6 +287,7 @@ export default function CouplesConfirmationPage() {
       localStorage.removeItem('customerInfo')
       
     } catch (err: any) {
+      console.error('Couples booking error:', err)
       
       // Track booking error
       analytics.bookingError(
@@ -294,6 +295,45 @@ export default function CouplesConfirmationPage() {
         err.message || 'Unknown error',
         'couples_confirmation'
       )
+      
+      // Log error to database for debugging
+      try {
+        await supabaseClient.logBookingError({
+          error_type: 'couples_booking',
+          error_message: err.message || 'Unknown error',
+          error_details: {
+            error: err.toString(),
+            stack: err.stack,
+            code: err.code,
+            details: err.details
+          },
+          booking_data: {
+            bookingData,
+            selectedDate,
+            selectedTime,
+            selectedStaff,
+            secondaryStaff,
+            customerInfo
+          },
+          customer_name: customerInfo.name,
+          customer_email: customerInfo.email,
+          customer_phone: customerInfo.phone,
+          service_name: bookingData.primaryService?.name,
+          service_id: primaryServiceData?.id,
+          appointment_date: selectedDate,
+          appointment_time: selectedTime,
+          staff_name: selectedStaff,
+          staff_id: selectedStaff,
+          is_couples_booking: true,
+          secondary_service_name: bookingData.secondaryService?.name,
+          secondary_service_id: secondaryServiceData?.id,
+          secondary_staff_name: secondaryStaff,
+          secondary_staff_id: secondaryStaff,
+          session_id: localStorage.getItem('sessionId') || undefined
+        })
+      } catch (logError) {
+        console.error('Failed to log booking error:', logError)
+      }
       
       let errorMessage = 'Failed to confirm booking. '
       

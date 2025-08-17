@@ -270,38 +270,69 @@ export default function DateTimePage() {
             }
             
             if (isStaffAvailable) {
-              // Also check room availability for this staff member
-              // Get the room this service would use (considering staff's default room)
-              const roomId = staff.default_room_id || 1
-              
-              // For body scrub services, must use Room 3
+              // Check room availability - try to find ANY available room that can handle this service
               const requiresRoom3 = matchingService.requires_room_3 || 
                                    matchingService.category === 'body_scrub'
-              const actualRoomId = requiresRoom3 ? 3 : roomId
               
-              // Check if the room is available at this time
-              const roomBookings = existingBookings.filter(b => b.room_id === actualRoomId)
+              let roomFound = false
               
-              let isRoomAvailable = true
-              for (const booking of roomBookings) {
-                const bookingStart = new Date(`2000-01-01T${booking.start_time}`)
-                const bookingEnd = new Date(`2000-01-01T${booking.end_time}`)
-                const slotStart = new Date(`2000-01-01T${timeString}:00`)
-                const slotEnd = new Date(`2000-01-01T${timeString}:00`)
-                slotEnd.setMinutes(slotEnd.getMinutes() + serviceDuration)
+              if (requiresRoom3) {
+                // Body scrubs MUST use Room 3
+                const roomBookings = existingBookings.filter(b => b.room_id === 3)
                 
-                // Add buffer time to existing bookings
-                bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
-                bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+                let isRoom3Available = true
+                for (const booking of roomBookings) {
+                  const bookingStart = new Date(`2000-01-01T${booking.start_time}`)
+                  const bookingEnd = new Date(`2000-01-01T${booking.end_time}`)
+                  const slotStart = new Date(`2000-01-01T${timeString}:00`)
+                  const slotEnd = new Date(`2000-01-01T${timeString}:00`)
+                  slotEnd.setMinutes(slotEnd.getMinutes() + serviceDuration)
+                  
+                  // Add buffer time to existing bookings
+                  bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
+                  bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+                  
+                  // Check for overlap
+                  if (slotStart < bookingEnd && slotEnd > bookingStart) {
+                    isRoom3Available = false
+                    break
+                  }
+                }
+                roomFound = isRoom3Available
+              } else {
+                // For non-body-scrub services, check ALL rooms (1, 2, and 3) for availability
+                const roomsToCheck = [1, 2, 3]
                 
-                // Check for overlap
-                if (slotStart < bookingEnd && slotEnd > bookingStart) {
-                  isRoomAvailable = false
-                  break
+                for (const roomId of roomsToCheck) {
+                  const roomBookings = existingBookings.filter(b => b.room_id === roomId)
+                  
+                  let isRoomAvailable = true
+                  for (const booking of roomBookings) {
+                    const bookingStart = new Date(`2000-01-01T${booking.start_time}`)
+                    const bookingEnd = new Date(`2000-01-01T${booking.end_time}`)
+                    const slotStart = new Date(`2000-01-01T${timeString}:00`)
+                    const slotEnd = new Date(`2000-01-01T${timeString}:00`)
+                    slotEnd.setMinutes(slotEnd.getMinutes() + serviceDuration)
+                    
+                    // Add buffer time to existing bookings
+                    bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
+                    bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+                    
+                    // Check for overlap
+                    if (slotStart < bookingEnd && slotEnd > bookingStart) {
+                      isRoomAvailable = false
+                      break
+                    }
+                  }
+                  
+                  if (isRoomAvailable) {
+                    roomFound = true
+                    break // Found an available room, no need to check others
+                  }
                 }
               }
               
-              if (isRoomAvailable) {
+              if (roomFound) {
                 hasAvailableStaff = true
                 break
               }

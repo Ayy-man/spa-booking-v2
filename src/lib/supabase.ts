@@ -371,6 +371,81 @@ export const supabaseClient = {
     return data
   },
 
+  // Booking Errors
+  async logBookingError(error: {
+    error_type: string
+    error_message: string
+    error_details?: any
+    booking_data: any
+    customer_name?: string
+    customer_email?: string
+    customer_phone?: string
+    service_name?: string
+    service_id?: string
+    appointment_date?: string
+    appointment_time?: string
+    staff_name?: string
+    staff_id?: string
+    room_id?: number
+    is_couples_booking?: boolean
+    secondary_service_name?: string
+    secondary_service_id?: string
+    secondary_staff_name?: string
+    secondary_staff_id?: string
+    session_id?: string
+  }) {
+    const { data, error: dbError } = await supabase
+      .from('booking_errors')
+      .insert(error)
+      .select()
+      .single()
+    
+    if (dbError) {
+      console.error('Failed to log booking error:', dbError)
+      return null
+    }
+    
+    return data
+  },
+
+  async getBookingErrors(filters?: {
+    resolved?: boolean
+    error_type?: string
+    date_from?: string
+    date_to?: string
+    limit?: number
+  }) {
+    let query = supabase
+      .from('booking_errors')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (filters?.resolved !== undefined) {
+      query = query.eq('resolved', filters.resolved)
+    }
+    
+    if (filters?.error_type) {
+      query = query.eq('error_type', filters.error_type)
+    }
+    
+    if (filters?.date_from) {
+      query = query.gte('created_at', filters.date_from)
+    }
+    
+    if (filters?.date_to) {
+      query = query.lte('created_at', filters.date_to)
+    }
+    
+    if (filters?.limit) {
+      query = query.limit(filters.limit)
+    }
+    
+    const { data, error } = await query
+    
+    if (error) throw error
+    return data
+  },
+
   // Walk-ins
   async createWalkIn(walkIn: {
     name: string

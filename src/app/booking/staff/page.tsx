@@ -183,29 +183,57 @@ export default function StaffPage() {
           }
         }
         
-        // Also check room availability for this staff member
-        const roomId = staff.default_room_id || 1
+        // Check room availability - try to find ANY available room that can handle this service
         const requiresRoom3 = matchingService.requires_room_3 || matchingService.category === 'body_scrub'
-        const actualRoomId = requiresRoom3 ? 3 : roomId
         
-        // Check if the room is available at this time
-        const roomBookings = existingBookings.filter(b => b.room_id === actualRoomId)
-        
-        for (const booking of roomBookings) {
-          const bookingStart = new Date(`2000-01-01T${booking.start_time}`)
-          const bookingEnd = new Date(`2000-01-01T${booking.end_time}`)
+        if (requiresRoom3) {
+          // Body scrubs MUST use Room 3
+          const roomBookings = existingBookings.filter(b => b.room_id === 3)
           
-          // Add buffer time to existing bookings
-          bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
-          bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
-          
-          // Check for overlap
-          if (slotStart < bookingEnd && slotEnd > bookingStart) {
-            return false // Room is not available for this staff member
+          for (const booking of roomBookings) {
+            const bookingStart = new Date(`2000-01-01T${booking.start_time}`)
+            const bookingEnd = new Date(`2000-01-01T${booking.end_time}`)
+            
+            // Add buffer time to existing bookings
+            bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
+            bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+            
+            // Check for overlap
+            if (slotStart < bookingEnd && slotEnd > bookingStart) {
+              return false // Room 3 is not available
+            }
           }
+          return true // Room 3 is available
+        } else {
+          // For non-body-scrub services, check if ANY room (1, 2, or 3) is available
+          const roomsToCheck = [1, 2, 3]
+          
+          for (const roomId of roomsToCheck) {
+            const roomBookings = existingBookings.filter(b => b.room_id === roomId)
+            
+            let isRoomAvailable = true
+            for (const booking of roomBookings) {
+              const bookingStart = new Date(`2000-01-01T${booking.start_time}`)
+              const bookingEnd = new Date(`2000-01-01T${booking.end_time}`)
+              
+              // Add buffer time to existing bookings
+              bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
+              bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+              
+              // Check for overlap
+              if (slotStart < bookingEnd && slotEnd > bookingStart) {
+                isRoomAvailable = false
+                break
+              }
+            }
+            
+            if (isRoomAvailable) {
+              return true // Found at least one available room
+            }
+          }
+          
+          return false // No rooms available
         }
-        
-        return true
       })
       
       setAvailableStaff(availableStaffForDay)

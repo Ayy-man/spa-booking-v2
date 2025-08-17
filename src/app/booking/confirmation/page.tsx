@@ -198,7 +198,7 @@ export default function ConfirmationPage() {
         bookingResult = { booking_id: bookingId }
       } else {
         // No existing booking, create a new one
-        // First, get optimal room assignment based on service type and staff
+        // Intelligently assign rooms based on availability
         let roomId = 1; // Default fallback to Room 1 (integer)
         
         // Check service type for room assignment
@@ -211,31 +211,61 @@ export default function ConfirmationPage() {
           // Body scrubs MUST be in Room 3 only
           roomId = 3
         } else {
-          // Single services - assign based on staff default room
-          if (bookingData.staff === 'selma') {
-            roomId = 1
-          } else if (bookingData.staff === 'tanisha') {
-            roomId = 2
-          } else if (bookingData.staff === 'robyn') {
-            roomId = 3
-          } else {
-            // Try to get optimal room from database
-            try {
-              const roomAssignment = await supabaseClient.getOptimalRoomAssignment(
-                bookingData.service.id,
-                bookingData.staff,
-                bookingData.date,
-                bookingData.time
-              )
+          // For regular services, find the first available room
+          // First, get existing bookings for the date
+          try {
+            const existingBookings = await supabaseClient.getBookingsByDate(bookingData.date)
+            const serviceDuration = bookingData.service.duration || 60
+            const bufferMinutes = 15
+            
+            const slotStart = new Date(`2000-01-01T${bookingData.time}:00`)
+            const slotEnd = new Date(`2000-01-01T${bookingData.time}:00`)
+            slotEnd.setMinutes(slotEnd.getMinutes() + serviceDuration)
+            
+            // Check each room for availability
+            const roomsToCheck = [1, 2, 3]
+            let foundAvailableRoom = false
+            
+            for (const checkRoomId of roomsToCheck) {
+              const roomBookings = existingBookings.filter(b => b.room_id === checkRoomId)
               
-              if (roomAssignment && roomAssignment.assigned_room_id) {
-                // Convert to integer if needed
-                roomId = typeof roomAssignment.assigned_room_id === 'string' 
-                  ? parseInt(roomAssignment.assigned_room_id) 
-                  : roomAssignment.assigned_room_id
+              let isRoomAvailable = true
+              for (const booking of roomBookings) {
+                const bookingStart = new Date(`2000-01-01T${booking.start_time}`)
+                const bookingEnd = new Date(`2000-01-01T${booking.end_time}`)
+                
+                // Add buffer time to existing bookings
+                bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
+                bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+                
+                // Check for overlap
+                if (slotStart < bookingEnd && slotEnd > bookingStart) {
+                  isRoomAvailable = false
+                  break
+                }
               }
-            } catch (roomError) {
-              // Continue with default room assignment
+              
+              if (isRoomAvailable) {
+                roomId = checkRoomId
+                foundAvailableRoom = true
+                console.log(`Assigned Room ${checkRoomId} for ${bookingData.service.name} at ${bookingData.time}`)
+                break
+              }
+            }
+            
+            if (!foundAvailableRoom) {
+              // This shouldn't happen if availability check worked correctly
+              console.error('No available room found, defaulting to Room 1')
+            }
+          } catch (error) {
+            console.error('Error checking room availability:', error)
+            // Fall back to staff default rooms
+            if (bookingData.staff === 'selma') {
+              roomId = 1
+            } else if (bookingData.staff === 'tanisha') {
+              roomId = 2
+            } else if (bookingData.staff === 'robyn') {
+              roomId = 3
             }
           }
         }
@@ -363,6 +393,7 @@ export default function ConfirmationPage() {
       localStorage.removeItem('paymentType')
       
     } catch (err: any) {
+      console.error('Booking error:', err)
       
       // Track booking error
       analytics.bookingError(
@@ -370,6 +401,35 @@ export default function ConfirmationPage() {
         err.message || 'Unknown error',
         'confirmation'
       )
+      
+      // Log error to database for debugging
+      try {
+        await supabaseClient.logBookingError({
+          error_type: 'single_booking',
+          error_message: err.message || 'Unknown error',
+          error_details: {
+            error: err.toString(),
+            stack: err.stack,
+            code: err.code,
+            details: err.details
+          },
+          booking_data: bookingData,
+          customer_name: bookingData.customer?.name,
+          customer_email: bookingData.customer?.email,
+          customer_phone: bookingData.customer?.phone,
+          service_name: bookingData.service?.name,
+          service_id: bookingData.service?.id,
+          appointment_date: bookingData.date,
+          appointment_time: bookingData.time,
+          staff_name: bookingData.staff,
+          staff_id: bookingData.staff,
+          room_id: roomId,
+          is_couples_booking: false,
+          session_id: localStorage.getItem('sessionId') || undefined
+        })
+      } catch (logError) {
+        console.error('Failed to log booking error:', logError)
+      }
       
       // Show more helpful error messages
       let errorMessage = 'Failed to confirm booking. '
