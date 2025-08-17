@@ -176,8 +176,10 @@ export default function DateTimePage() {
         const timeString = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`
         times.push(timeString)
         
-        // Move to next slot: add service duration + 15-minute buffer
-        currentTime.setMinutes(currentTime.getMinutes() + serviceDuration + bufferMinutes)
+        // Move to next slot: For services 60 minutes or longer, increment by 30 minutes
+        // For shorter services, increment by 15 minutes
+        const incrementMinutes = serviceDuration >= 60 ? 30 : 15
+        currentTime.setMinutes(currentTime.getMinutes() + incrementMinutes)
       } else {
         break
       }
@@ -203,6 +205,7 @@ export default function DateTimePage() {
       if (!matchingService) {
         // Fallback to simple time generation
         generateFallbackTimes()
+        setLoadingTimes(false)
         return
       }
       
@@ -344,14 +347,17 @@ export default function DateTimePage() {
             times.push(timeString)
           }
           
-          // Move to next slot: add 15 minutes (we'll check all possible start times)
-          currentTime.setMinutes(currentTime.getMinutes() + 15)
+          // Move to next slot: For services 60 minutes or longer, increment by 30 minutes
+          // For shorter services, increment by 15 minutes
+          const incrementMinutes = serviceDuration >= 60 ? 30 : 15
+          currentTime.setMinutes(currentTime.getMinutes() + incrementMinutes)
         } else {
           break
         }
       }
       
       setAvailableTimes(times)
+      setLoadingTimes(false)
     } catch (error: any) {
       console.error('Error fetching available time slots:', error)
       
