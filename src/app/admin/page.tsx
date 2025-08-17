@@ -108,6 +108,11 @@ export default function AdminDashboardPage() {
               Monitor Mode
             </Button>
           </Link>
+          <Link href="/admin/failed-bookings">
+            <Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
+              Failed Bookings
+            </Button>
+          </Link>
         </div>
       </div>
 

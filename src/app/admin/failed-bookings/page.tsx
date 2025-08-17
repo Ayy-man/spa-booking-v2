@@ -59,6 +59,7 @@ export default function FailedBookingsPage() {
 
   useEffect(() => {
     fetchErrors()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter])
 
   const fetchErrors = async () => {

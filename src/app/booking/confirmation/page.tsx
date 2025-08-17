@@ -423,7 +423,7 @@ export default function ConfirmationPage() {
           appointment_time: bookingData.time,
           staff_name: bookingData.staff,
           staff_id: bookingData.staff,
-          room_id: roomId,
+          room_id: undefined, // roomId is not available in error context
           is_couples_booking: false,
           session_id: localStorage.getItem('sessionId') || undefined
         })
