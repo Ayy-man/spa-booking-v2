@@ -239,6 +239,38 @@ export default function StaffPage() {
       setAvailableStaff(availableStaffForDay)
     } catch (error: any) {
       
+      // Log error to database for debugging
+      try {
+        await supabaseClient.logBookingError({
+          error_type: 'staff_selection',
+          error_message: error.message || 'Failed to fetch available staff',
+          error_details: {
+            error: error.toString(),
+            stack: error.stack,
+            code: error.code,
+            details: error.details,
+            step: 'staff_selection'
+          },
+          booking_data: {
+            service: selectedService,
+            date: selectedDate,
+            time: selectedTime,
+            step: 'staff_selection'
+          },
+          customer_name: bookingData?.customer?.name,
+          customer_email: bookingData?.customer?.email,
+          customer_phone: bookingData?.customer?.phone,
+          service_name: selectedService?.name,
+          service_id: selectedService?.id,
+          appointment_date: selectedDate,
+          appointment_time: selectedTime,
+          is_couples_booking: bookingData?.isCouplesBooking || false,
+          session_id: localStorage.getItem('sessionId') || undefined
+        })
+      } catch (logError) {
+        console.error('Failed to log booking error:', logError)
+      }
+      
       // Fallback: Show all active staff
       try {
         const allStaff = await supabaseClient.getStaff()

@@ -118,8 +118,38 @@ export default function CouplesStaffPage() {
       setStaffMap(nameMap)
       
       
-    } catch (error) {
+    } catch (error: any) {
       // Error fetching staff capabilities, using fallback
+      
+      // Log error to database for debugging
+      try {
+        await supabaseClient.logBookingError({
+          error_type: 'couples_staff_selection',
+          error_message: error.message || 'Failed to fetch staff capabilities',
+          error_details: {
+            error: error.toString(),
+            stack: error.stack,
+            code: error.code,
+            details: error.details,
+            step: 'couples_staff_selection'
+          },
+          booking_data: {
+            service: bookingData.primaryService, // Assuming primaryService is the selected service
+            date: selectedDate,
+            time: selectedTime,
+            step: 'couples_staff_selection'
+          },
+          service_name: bookingData.primaryService.name,
+          service_id: undefined, // No specific service ID for primaryService
+          appointment_date: selectedDate,
+          appointment_time: selectedTime,
+          is_couples_booking: true,
+          session_id: localStorage.getItem('sessionId') || undefined
+        })
+      } catch (logError) {
+        console.error('Failed to log booking error:', logError)
+      }
+      
       // Final fallback - show all active staff who work on this day
       try {
         const allStaff = await supabaseClient.getStaff()
@@ -139,14 +169,44 @@ export default function CouplesStaffPage() {
           nameMap[staff.id] = staff.name
         })
         setStaffMap(nameMap)
-      } catch (fallbackError) {
+      } catch (fallbackError: any) {
         // Both primary and fallback failed, show empty state
+        
+        // Log fallback error to database for debugging
+        try {
+          await supabaseClient.logBookingError({
+            error_type: 'couples_staff_fallback',
+            error_message: fallbackError.message || 'Fallback staff fetch also failed',
+            error_details: {
+              error: fallbackError.toString(),
+              stack: fallbackError.stack,
+              code: fallbackError.code,
+              details: fallbackError.details,
+              step: 'couples_staff_fallback'
+            },
+            booking_data: {
+              service: bookingData?.primaryService, // Assuming primaryService is the selected service
+              date: selectedDate,
+              time: selectedTime,
+              step: 'couples_staff_fallback'
+            },
+            service_name: bookingData?.primaryService?.name,
+            service_id: undefined, // No specific service ID for primaryService
+            appointment_date: selectedDate,
+            appointment_time: selectedTime,
+            is_couples_booking: true,
+            session_id: localStorage.getItem('sessionId') || undefined
+          })
+        } catch (logError) {
+          console.error('Failed to log fallback error:', logError)
+        }
+        
         setAvailableStaff([])
         setPrimaryServiceStaff([])
         setSecondaryServiceStaff([])
+      } finally {
+        setLoadingStaff(false)
       }
-    } finally {
-      setLoadingStaff(false)
     }
   }, [bookingData, selectedDate, selectedTime])
 

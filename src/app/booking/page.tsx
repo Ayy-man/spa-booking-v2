@@ -6,6 +6,7 @@ import CouplesBooking from '@/components/CouplesBooking'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import { analytics } from '@/lib/analytics'
 import { saveBookingState } from '@/lib/booking-state-manager'
+import { trackBookingAbandonment } from '@/lib/booking-utils'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 export default function BookingPage() {
@@ -15,6 +16,12 @@ export default function BookingPage() {
   // Track page view
   useEffect(() => {
     analytics.pageViewed('service_selection', 1)
+  }, [])
+
+  // Start tracking abandonment when user visits booking page
+  useEffect(() => {
+    const cleanup = trackBookingAbandonment()
+    return cleanup
   }, [])
 
   // Prevent body scroll when modal is open

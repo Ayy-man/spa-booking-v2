@@ -53,28 +53,40 @@ interface BookingError {
 export default function FailedBookingsPage() {
   const [errors, setErrors] = useState<BookingError[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'unresolved' | 'resolved'>('unresolved')
+  const [filter, setFilter] = useState<'all' | 'unresolved' | 'resolved' | 'abandoned'>('unresolved')
   const [expandedErrors, setExpandedErrors] = useState<Set<string>>(new Set())
   const [refreshing, setRefreshing] = useState(false)
+  const [includeAbandoned, setIncludeAbandoned] = useState(true)
 
   useEffect(() => {
     fetchErrors()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter])
+  }, [filter, includeAbandoned])
 
   const fetchErrors = async () => {
     try {
       setLoading(true)
-      const filters: any = {}
       
-      if (filter === 'unresolved') {
-        filters.resolved = false
-      } else if (filter === 'resolved') {
-        filters.resolved = true
+      // Always include abandoned bookings for better visibility
+      const response = await fetch(`/api/booking-errors?include_abandoned=true`)
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          let filteredErrors = result.errors || []
+          
+          // Apply client-side filtering
+          if (filter === 'unresolved') {
+            filteredErrors = filteredErrors.filter((error: BookingError) => !error.resolved)
+          } else if (filter === 'resolved') {
+            filteredErrors = filteredErrors.filter((error: BookingError) => error.resolved)
+          } else if (filter === 'abandoned') {
+            filteredErrors = filteredErrors.filter((error: BookingError) => error.error_type === 'abandoned_booking')
+          }
+          // 'all' shows everything
+          
+          setErrors(filteredErrors)
+        }
       }
-      
-      const data = await supabaseClient.getBookingErrors(filters)
-      setErrors(data || [])
     } catch (error) {
       console.error('Error fetching booking errors:', error)
     } finally {
@@ -216,6 +228,27 @@ export default function FailedBookingsPage() {
               <CheckCircle className="h-4 w-4 mr-1" />
               Resolved
             </Button>
+            <Button
+              variant={filter === 'abandoned' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter('abandoned')}
+            >
+              <Users className="h-4 w-4 mr-1" />
+              Abandoned
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-2 ml-4">
+            <input
+              type="checkbox"
+              id="includeAbandoned"
+              checked={includeAbandoned}
+              onChange={(e) => setIncludeAbandoned(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <label htmlFor="includeAbandoned" className="text-sm text-gray-600">
+              Include abandoned bookings
+            </label>
           </div>
           
           <Button

@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const dateFrom = searchParams.get('date_from')
     const dateTo = searchParams.get('date_to')
     const limit = parseInt(searchParams.get('limit') || '50')
+    const includeAbandoned = searchParams.get('include_abandoned') === 'true'
     
     let query = supabase
       .from('booking_errors')
@@ -40,10 +41,62 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     
+    // If including abandoned bookings, also fetch incomplete booking attempts
+    let abandonedBookings: any[] = []
+    if (includeAbandoned) {
+      try {
+        // Look for incomplete bookings in the last 24 hours
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
+        
+        const { data: incompleteData, error: incompleteError } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('status', 'pending')
+          .gte('created_at', yesterday.toISOString())
+          .order('created_at', { ascending: false })
+        
+        if (!incompleteError && incompleteData) {
+          abandonedBookings = incompleteData.map(booking => ({
+            id: `abandoned_${booking.id}`,
+            error_type: 'abandoned_booking',
+            error_message: 'Booking started but never completed',
+            error_details: {
+              step: 'abandoned',
+              reason: 'User abandoned booking flow',
+              booking_id: booking.id
+            },
+            booking_data: booking,
+            customer_name: booking.customer_name,
+            customer_email: booking.customer_email,
+            customer_phone: booking.customer_phone,
+            service_name: booking.service_name,
+            service_id: booking.service_id,
+            appointment_date: booking.appointment_date,
+            appointment_time: booking.start_time,
+            staff_name: booking.staff_name,
+            staff_id: booking.staff_id,
+            room_id: booking.room_id,
+            is_couples_booking: false, // We'll need to determine this from the data
+            resolved: false,
+            retry_count: 0,
+            created_at: booking.created_at,
+            updated_at: booking.updated_at
+          }))
+        }
+      } catch (abandonedError) {
+        console.error('Error fetching abandoned bookings:', abandonedError)
+      }
+    }
+    
+    // Combine errors with abandoned bookings
+    const allData = [...(data || []), ...abandonedBookings]
+    
     return NextResponse.json({ 
       success: true,
-      errors: data,
-      count: data?.length || 0
+      errors: allData,
+      count: allData.length,
+      abandoned_count: abandonedBookings.length
     })
   } catch (error: any) {
     console.error('Error fetching booking errors:', error)

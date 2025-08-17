@@ -134,3 +134,70 @@ export function getBookingStatusColor(status: string): string {
   
   return statusColors[status] || 'bg-gray-100 text-gray-800'
 }
+
+/**
+ * Track when a user abandons the booking flow
+ * This should be called when the user starts the booking process
+ */
+export function trackBookingAbandonment() {
+  const handleBeforeUnload = async (event: BeforeUnloadEvent) => {
+    // Only track if we have booking data in localStorage
+    const hasBookingData = localStorage.getItem('selectedService') || 
+                          localStorage.getItem('bookingData') ||
+                          localStorage.getItem('customerInfo')
+    
+    if (hasBookingData) {
+      try {
+        // Get current booking state
+        const selectedService = JSON.parse(localStorage.getItem('selectedService') || 'null')
+        const bookingData = JSON.parse(localStorage.getItem('bookingData') || 'null')
+        const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || 'null')
+        const selectedDate = localStorage.getItem('selectedDate')
+        const selectedTime = localStorage.getItem('selectedTime')
+        const selectedStaff = localStorage.getItem('selectedStaff')
+        
+        // Log abandonment to database
+        const { supabaseClient } = await import('./supabase')
+        await supabaseClient.logBookingError({
+          error_type: 'abandoned_booking',
+          error_message: 'User abandoned booking flow',
+          error_details: {
+            step: 'abandoned',
+            reason: 'User left page',
+            timestamp: new Date().toISOString()
+          },
+          booking_data: {
+            selectedService,
+            bookingData,
+            customerInfo,
+            selectedDate,
+            selectedTime,
+            selectedStaff,
+            step: 'abandoned'
+          },
+          customer_name: customerInfo?.name,
+          customer_email: customerInfo?.email,
+          customer_phone: customerInfo?.phone,
+          service_name: selectedService?.name || bookingData?.primaryService?.name,
+          service_id: selectedService?.id || bookingData?.primaryService?.id,
+          appointment_date: selectedDate,
+          appointment_time: selectedTime,
+          staff_name: selectedStaff,
+          staff_id: selectedStaff,
+          is_couples_booking: bookingData?.isCouplesBooking || false,
+          session_id: localStorage.getItem('sessionId') || undefined
+        })
+      } catch (error) {
+        console.error('Failed to log booking abandonment:', error)
+      }
+    }
+  }
+
+  // Add event listener
+  window.addEventListener('beforeunload', handleBeforeUnload)
+  
+  // Return cleanup function
+  return () => {
+    window.removeEventListener('beforeunload', handleBeforeUnload)
+  }
+}

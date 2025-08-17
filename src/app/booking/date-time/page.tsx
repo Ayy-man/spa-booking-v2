@@ -354,6 +354,37 @@ export default function DateTimePage() {
       setAvailableTimes(times)
     } catch (error: any) {
       console.error('Error fetching available time slots:', error)
+      
+      // Log error to database for debugging
+      try {
+        await supabaseClient.logBookingError({
+          error_type: 'date_time_selection',
+          error_message: error.message || 'Failed to fetch available time slots',
+          error_details: {
+            error: error.toString(),
+            stack: error.stack,
+            code: error.code,
+            details: error.details,
+            step: 'date_time_selection'
+          },
+          booking_data: {
+            service: selectedService,
+            date: selectedDate,
+            step: 'date_time_selection'
+          },
+          customer_name: bookingData?.customer?.name,
+          customer_email: bookingData?.customer?.email,
+          customer_phone: bookingData?.customer?.phone,
+          service_name: selectedService?.name,
+          service_id: selectedService?.id,
+          appointment_date: selectedDate?.toISOString(),
+          is_couples_booking: bookingData?.isCouplesBooking || false,
+          session_id: localStorage.getItem('sessionId') || undefined
+        })
+      } catch (logError) {
+        console.error('Failed to log booking error:', logError)
+      }
+      
       // Fallback to simple time generation
       generateFallbackTimes()
     } finally {
