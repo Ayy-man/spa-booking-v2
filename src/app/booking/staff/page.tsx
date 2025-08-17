@@ -93,6 +93,7 @@ export default function StaffPage() {
         window.location.href = '/booking/date-time'
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const fetchAvailableStaff = async () => {
@@ -257,11 +258,11 @@ export default function StaffPage() {
             time: selectedTime,
             step: 'staff_selection'
           },
-          customer_name: bookingData?.customer?.name,
-          customer_email: bookingData?.customer?.email,
-          customer_phone: bookingData?.customer?.phone,
+          customer_name: undefined,
+          customer_email: undefined,
+          customer_phone: undefined,
           service_name: selectedService?.name,
-          service_id: selectedService?.id,
+          service_id: undefined,
           appointment_date: selectedDate,
           appointment_time: selectedTime,
           is_couples_booking: bookingData?.isCouplesBooking || false,

@@ -180,10 +180,10 @@ export function trackBookingAbandonment() {
           customer_phone: customerInfo?.phone,
           service_name: selectedService?.name || bookingData?.primaryService?.name,
           service_id: selectedService?.id || bookingData?.primaryService?.id,
-          appointment_date: selectedDate,
-          appointment_time: selectedTime,
-          staff_name: selectedStaff,
-          staff_id: selectedStaff,
+          appointment_date: selectedDate || undefined,
+          appointment_time: selectedTime || undefined,
+          staff_name: selectedStaff || undefined,
+          staff_id: selectedStaff || undefined,
           is_couples_booking: bookingData?.isCouplesBooking || false,
           session_id: localStorage.getItem('sessionId') || undefined
         })
