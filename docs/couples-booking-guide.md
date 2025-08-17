@@ -21,8 +21,8 @@ The medical spa database now supports comprehensive couples bookings, allowing t
 
 ## Key Functions
 
-### 1. `process_couples_booking()`
-Creates two linked bookings for couples services.
+### 1. `process_couples_booking_v2()`
+Creates two linked bookings for couples services with improved room assignment logic.
 
 **Parameters:**
 - `p_service_id`: The couples service to book
@@ -42,14 +42,23 @@ Creates two linked bookings for couples services.
 - `success`: Boolean success indicator
 - `error_message`: Error details if failed
 
-### 2. `assign_optimal_room()`
-Enhanced to handle couples services by checking room capacity.
+### 2. Room Assignment Logic for Couples Bookings
 
-**Room Assignment Logic:**
-1. Body scrub services → Room 3 (required equipment)
-2. Couples services → Room 3 (preferred) or Room 2
-3. Staff default room (if applicable)
-4. Any available room
+**Updated Room Assignment Priority (v2):**
+1. **Mixed Service Types or Special Equipment Needed:**
+   - Primary choice: Room 3 (has all equipment, capacity 2)
+   - Fallback: Room 2 (if Room 3 is occupied)
+   
+2. **Same Service Types (no special equipment):**
+   - Primary choice: Room 2 (standard couples room)
+   - Fallback: Room 3 (if Room 2 is occupied)
+   
+3. **Special Equipment Requirements:**
+   - Body scrubs → Room 3 (required equipment)
+   - Brazilian wax → Room 3 preferred (specialized setup)
+   - Vajacial services → Room 3 preferred (equipment needs)
+   
+**Important:** Both people in a couples booking always share the same room for a synchronized experience.
 
 ### 3. `get_couples_booking_details()`
 Retrieves all bookings in a couples group.
@@ -149,17 +158,24 @@ ORDER BY b.booking_group_id, b.created_at;
 
 ### Common Issues
 
-1. **"Room does not have capacity for couples service"**
-   - Check room capacity is ≥ 2
-   - Verify room is active
-   - Ensure room is available at requested time
+1. **"Room is already booked at this time" or "No couples room available"**
+   - Both Room 2 and Room 3 are occupied at the selected time
+   - Try selecting a different time slot
+   - Peak hours (10am-2pm) tend to be busiest
+   - For mixed service types (facial + special), Room 3 is prioritized but Room 2 can be used as fallback
 
 2. **"Cannot book the same staff member for both clients"**
    - Assign different staff IDs or leave one NULL for auto-assignment
+   - Exception: Same staff can be assigned for massage services
 
 3. **"Service is not configured for couples bookings"**
    - Update service with `is_couples_service = true`
    - Or use `requires_couples_room = true`
+
+4. **"Failed to create primary/secondary booking"**
+   - Database constraint violation (check service IDs exist)
+   - Staff availability conflict
+   - Room capacity issue
 
 ### Migration Rollback
 

@@ -296,14 +296,25 @@ export default function CouplesConfirmationPage() {
       )
       
       let errorMessage = 'Failed to confirm booking. '
-      if (err.message?.includes('staff_not_available')) {
+      
+      // Parse error message for better user feedback
+      if (err.message?.includes('staff_not_available') || err.message?.includes('staff members are not available')) {
         errorMessage = 'One or more staff members are not available at this time. Please go back and select different staff.'
+      } else if (err.message?.includes('No couples room available')) {
+        errorMessage = 'Both couples rooms (Room 2 and Room 3) are booked at this time. Please select a different time slot.'
+      } else if (err.message?.includes('Room is already booked') || err.message?.includes('Rooms 2 and 3 are both occupied')) {
+        errorMessage = 'The couples rooms are not available at your selected time. This often happens during peak hours. Please try a different time slot.'
       } else if (err.message?.includes('no_couples_room')) {
         errorMessage = 'No couples rooms are available at this time. Please select a different time.'
       } else if (err.message?.includes('duplicate')) {
         errorMessage = 'A booking already exists for this time slot.'
+      } else if (err.message?.includes('Failed to create primary booking')) {
+        errorMessage = 'Unable to create the first booking. The selected time slot may no longer be available. Please try again.'
+      } else if (err.message?.includes('Failed to create secondary booking')) {
+        errorMessage = 'Unable to create the second booking. Please ensure both services can be accommodated at the selected time.'
       } else {
-        errorMessage += err.message || 'Please try again.'
+        // Show the actual error message if it's specific enough
+        errorMessage = err.message || 'An unexpected error occurred. Please try again or contact support if the issue persists.'
       }
       
       setError(errorMessage)
