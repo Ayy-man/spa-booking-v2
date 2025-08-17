@@ -63,7 +63,15 @@ export function StaffScheduleView({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [currentDate, setCurrentDate] = useState<Date>(selectedDate)
-  const [currentTime, setCurrentTime] = useState<Date>(new Date())
+  // Get current time in Guam timezone (UTC+10)
+  const getGuamTime = () => {
+    const now = new Date()
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000)
+    const guamTime = new Date(utc + (3600000 * 10)) // UTC+10 for Guam
+    return guamTime
+  }
+  
+  const [currentTime, setCurrentTime] = useState<Date>(getGuamTime())
   const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [quickAddSlot, setQuickAddSlot] = useState<{ staffId: string; time: string } | null>(null)
@@ -138,10 +146,10 @@ export function StaffScheduleView({
     }
   }, [fetchData, autoRefresh, refreshInterval])
 
-  // Update current time every minute
+  // Update current time every minute (in Guam timezone)
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(new Date())
+      setCurrentTime(getGuamTime())
     }, 60000)
     return () => clearInterval(timer)
   }, [])
@@ -365,7 +373,7 @@ export function StaffScheduleView({
       </Card>
 
       {/* Schedule Grid */}
-      <Card className="overflow-hidden" ref={printRef}>
+      <Card className="overflow-hidden printable-content" ref={printRef}>
         <div className="overflow-x-auto">
           <div className="min-w-[800px] relative">
             {/* Current Time Indicator */}
@@ -377,7 +385,7 @@ export function StaffScheduleView({
                 }}
               >
                 <div className="absolute -left-1 -top-2 bg-red-500 text-white text-xs px-1 rounded">
-                  {format(currentTime, 'h:mm a')}
+                  {format(currentTime, 'h:mm a')} GMT+10
                 </div>
               </div>
             )}
@@ -535,7 +543,7 @@ export function StaffScheduleView({
           {isToday && (
             <div className="flex items-center space-x-2">
               <div className="w-8 h-0.5 bg-red-500" />
-              <span className="text-xs text-gray-600">Current Time</span>
+              <span className="text-xs text-gray-600">Current Time (Guam)</span>
             </div>
           )}
         </div>
@@ -610,11 +618,10 @@ export function StaffScheduleView({
           body * {
             visibility: hidden;
           }
-          #__next ${printRef.current ? `#${printRef.current.id}` : ''}, 
-          #__next ${printRef.current ? `#${printRef.current.id}` : ''} * {
+          .printable-content, .printable-content * {
             visibility: visible;
           }
-          #__next ${printRef.current ? `#${printRef.current.id}` : ''} {
+          .printable-content {
             position: absolute;
             left: 0;
             top: 0;
@@ -622,6 +629,10 @@ export function StaffScheduleView({
           }
           .print\\:hidden {
             display: none !important;
+          }
+          @page {
+            size: landscape;
+            margin: 0.5in;
           }
         }
       `}</style>
