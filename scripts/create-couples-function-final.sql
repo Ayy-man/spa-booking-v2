@@ -1,11 +1,10 @@
--- Fix couples booking room assignment logic for mixed service types
--- This migration fixes the issue where couples bookings with different service types
--- (e.g., facial + special service) fail with "Room is already booked" error
+-- Create the process_couples_booking_v2 function (FINAL VERSION)
+-- This version uses the correct service IDs and categories from your database
 
--- Drop the existing function if it exists
+-- Drop existing function if it exists
 DROP FUNCTION IF EXISTS process_couples_booking_v2 CASCADE;
 
--- Create improved couples booking function
+-- Create the function with correct enum handling
 CREATE OR REPLACE FUNCTION process_couples_booking_v2(
     p_primary_service_id TEXT,
     p_secondary_service_id TEXT,
@@ -38,30 +37,71 @@ DECLARE
     v_end_time TIME;
     v_primary_booking_id UUID;
     v_secondary_booking_id UUID;
-    v_primary_service_category service_category;
-    v_secondary_service_category service_category;
+    v_primary_service_category TEXT;
+    v_secondary_service_category TEXT;
     v_primary_service_name TEXT;
     v_secondary_service_name TEXT;
     v_requires_special_equipment BOOLEAN := FALSE;
     v_error_message TEXT;
+    v_primary_price NUMERIC;
+    v_secondary_price NUMERIC;
 BEGIN
     -- Generate a booking group ID for linking the two bookings
     v_booking_group_id := gen_random_uuid();
     
-    -- Get service details
-    SELECT category, duration, name, 
-           (category = 'body_treatment' OR name ILIKE '%scrub%' OR name ILIKE '%brazilian%' OR name ILIKE '%vajacial%')
-    INTO v_primary_service_category, v_primary_duration, v_primary_service_name, v_requires_special_equipment
-    FROM services 
-    WHERE id = p_primary_service_id;
+    -- Get primary service details
+    SELECT 
+        s.category::text, 
+        s.duration, 
+        s.name, 
+        s.price,
+        -- Check if special equipment is needed
+        (s.category::text = 'body_treatment' OR 
+         s.category::text = 'special' OR
+         s.requires_room_3 = true OR 
+         s.name ILIKE '%scrub%' OR 
+         s.name ILIKE '%brazilian%' OR 
+         s.name ILIKE '%vajacial%')
+    INTO v_primary_service_category, v_primary_duration, v_primary_service_name, v_primary_price, v_requires_special_equipment
+    FROM services s
+    WHERE s.id = p_primary_service_id;
     
-    SELECT category, duration, name
-    INTO v_secondary_service_category, v_secondary_duration, v_secondary_service_name
-    FROM services 
-    WHERE id = p_secondary_service_id;
+    IF NOT FOUND THEN
+        RETURN QUERY
+        SELECT 
+            NULL::UUID,
+            NULL::INTEGER,
+            v_booking_group_id,
+            FALSE,
+            'Primary service not found: ' || p_primary_service_id;
+        RETURN;
+    END IF;
+    
+    -- Get secondary service details
+    SELECT 
+        s.category::text, 
+        s.duration, 
+        s.name, 
+        s.price
+    INTO v_secondary_service_category, v_secondary_duration, v_secondary_service_name, v_secondary_price
+    FROM services s
+    WHERE s.id = p_secondary_service_id;
+    
+    IF NOT FOUND THEN
+        RETURN QUERY
+        SELECT 
+            NULL::UUID,
+            NULL::INTEGER,
+            v_booking_group_id,
+            FALSE,
+            'Secondary service not found: ' || p_secondary_service_id;
+        RETURN;
+    END IF;
     
     -- Check if secondary service also requires special equipment
     IF v_secondary_service_category = 'body_treatment' 
+       OR v_secondary_service_category = 'special'
+       OR EXISTS (SELECT 1 FROM services WHERE id = p_secondary_service_id AND requires_room_3 = true)
        OR v_secondary_service_name ILIKE '%scrub%' 
        OR v_secondary_service_name ILIKE '%brazilian%' 
        OR v_secondary_service_name ILIKE '%vajacial%' THEN
@@ -73,9 +113,9 @@ BEGIN
     v_end_time := p_start_time + (v_max_duration || ' minutes')::INTERVAL;
     
     -- Find or create customer
-    SELECT id INTO v_customer_id
-    FROM customers
-    WHERE email = p_customer_email
+    SELECT c.id INTO v_customer_id
+    FROM customers c
+    WHERE c.email = p_customer_email
     LIMIT 1;
     
     IF v_customer_id IS NULL THEN
@@ -87,8 +127,8 @@ BEGIN
             marketing_consent,
             is_active
         ) VALUES (
-            SPLIT_PART(p_customer_name, ' ', 1),
-            SPLIT_PART(p_customer_name, ' ', 2),
+            COALESCE(SPLIT_PART(p_customer_name, ' ', 1), p_customer_name),
+            COALESCE(NULLIF(SPLIT_PART(p_customer_name, ' ', 2), ''), ''),
             p_customer_email,
             p_customer_phone,
             false,
@@ -98,13 +138,15 @@ BEGIN
     END IF;
     
     -- Room assignment logic for couples
-    -- For couples bookings, both people share the same room
+    -- IMPORTANT: For couples with facials + special services, prioritize Room 3
     BEGIN
-        -- First priority: Room 3 if special equipment is needed or mixed service types
-        IF v_requires_special_equipment OR v_primary_service_category != v_secondary_service_category THEN
-            -- Try Room 3 first (has all equipment and capacity 2)
-            SELECT 3 INTO v_room_id
-            WHERE NOT EXISTS (
+        -- Check if we have mixed service types (facials + special)
+        IF (v_primary_service_category = 'facials' AND v_secondary_service_category = 'special') OR
+           (v_primary_service_category = 'special' AND v_secondary_service_category = 'facials') OR
+           v_requires_special_equipment THEN
+            
+            -- For mixed facials + special or any special equipment needs, try Room 3 first
+            IF NOT EXISTS (
                 SELECT 1 FROM bookings b
                 WHERE b.room_id = 3
                 AND b.appointment_date = p_booking_date
@@ -112,25 +154,13 @@ BEGIN
                 AND (
                     (b.start_time < v_end_time AND b.end_time > p_start_time)
                 )
-            );
-            
-            -- If Room 3 is not available, try Room 2
-            IF v_room_id IS NULL THEN
-                SELECT 2 INTO v_room_id
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM bookings b
-                    WHERE b.room_id = 2
-                    AND b.appointment_date = p_booking_date
-                    AND b.status != 'cancelled'
-                    AND (
-                        (b.start_time < v_end_time AND b.end_time > p_start_time)
-                    )
-                );
+            ) THEN
+                v_room_id := 3;
+                RAISE NOTICE 'Assigned Room 3 for mixed service types or special equipment';
             END IF;
-        ELSE
-            -- For same service types without special equipment, try Room 2 first, then Room 3
-            SELECT 2 INTO v_room_id
-            WHERE NOT EXISTS (
+            
+            -- If Room 3 is not available, try Room 2 as fallback
+            IF v_room_id IS NULL AND NOT EXISTS (
                 SELECT 1 FROM bookings b
                 WHERE b.room_id = 2
                 AND b.appointment_date = p_booking_date
@@ -138,27 +168,45 @@ BEGIN
                 AND (
                     (b.start_time < v_end_time AND b.end_time > p_start_time)
                 )
-            );
+            ) THEN
+                v_room_id := 2;
+                RAISE NOTICE 'Room 3 was occupied, assigned Room 2 as fallback';
+            END IF;
+        ELSE
+            -- For same service types without special equipment, try Room 2 first, then Room 3
+            IF NOT EXISTS (
+                SELECT 1 FROM bookings b
+                WHERE b.room_id = 2
+                AND b.appointment_date = p_booking_date
+                AND b.status != 'cancelled'
+                AND (
+                    (b.start_time < v_end_time AND b.end_time > p_start_time)
+                )
+            ) THEN
+                v_room_id := 2;
+                RAISE NOTICE 'Assigned Room 2 for same service types';
+            END IF;
             
             -- If Room 2 is not available, try Room 3
-            IF v_room_id IS NULL THEN
-                SELECT 3 INTO v_room_id
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM bookings b
-                    WHERE b.room_id = 3
-                    AND b.appointment_date = p_booking_date
-                    AND b.status != 'cancelled'
-                    AND (
-                        (b.start_time < v_end_time AND b.end_time > p_start_time)
-                    )
-                );
+            IF v_room_id IS NULL AND NOT EXISTS (
+                SELECT 1 FROM bookings b
+                WHERE b.room_id = 3
+                AND b.appointment_date = p_booking_date
+                AND b.status != 'cancelled'
+                AND (
+                    (b.start_time < v_end_time AND b.end_time > p_start_time)
+                )
+            ) THEN
+                v_room_id := 3;
+                RAISE NOTICE 'Room 2 was occupied, assigned Room 3 as fallback';
             END IF;
         END IF;
         
-        -- If no room is available, return error
+        -- If no room is available, return detailed error
         IF v_room_id IS NULL THEN
             v_error_message := 'No couples room available at ' || p_start_time::TEXT || ' on ' || p_booking_date::TEXT;
-            v_error_message := v_error_message || '. Rooms 2 and 3 are both occupied during this time.';
+            v_error_message := v_error_message || '. Both Room 2 and Room 3 are occupied during this time slot.';
+            v_error_message := v_error_message || ' Services requested: ' || v_primary_service_name || ' + ' || v_secondary_service_name;
             
             RETURN QUERY
             SELECT 
@@ -171,8 +219,8 @@ BEGIN
         END IF;
     END;
     
-    -- Check staff availability for both staff members
-    IF EXISTS (
+    -- Check staff availability (skip 'any' staff)
+    IF p_primary_staff_id != 'any' AND p_secondary_staff_id != 'any' AND EXISTS (
         SELECT 1 FROM bookings b
         WHERE b.staff_id IN (p_primary_staff_id, p_secondary_staff_id)
         AND b.appointment_date = p_booking_date
@@ -208,6 +256,7 @@ BEGIN
             final_price,
             status,
             payment_status,
+            payment_option,
             notes,
             booking_type,
             booking_group_id
@@ -220,16 +269,19 @@ BEGIN
             p_start_time,
             p_start_time + (v_primary_duration || ' minutes')::INTERVAL,
             v_primary_duration,
-            (SELECT price FROM services WHERE id = p_primary_service_id),
+            v_primary_price,
             0,
-            (SELECT price FROM services WHERE id = p_primary_service_id),
+            v_primary_price,
             'confirmed',
             'pending',
+            'deposit',
             p_special_requests,
             'couple',
             v_booking_group_id
         )
         RETURNING id INTO v_primary_booking_id;
+        
+        RAISE NOTICE 'Created primary booking % for service % in room %', v_primary_booking_id, p_primary_service_id, v_room_id;
     EXCEPTION
         WHEN OTHERS THEN
             v_error_message := 'Failed to create primary booking: ' || SQLERRM;
@@ -259,6 +311,7 @@ BEGIN
             final_price,
             status,
             payment_status,
+            payment_option,
             notes,
             booking_type,
             booking_group_id
@@ -271,16 +324,19 @@ BEGIN
             p_start_time,
             p_start_time + (v_secondary_duration || ' minutes')::INTERVAL,
             v_secondary_duration,
-            (SELECT price FROM services WHERE id = p_secondary_service_id),
+            v_secondary_price,
             0,
-            (SELECT price FROM services WHERE id = p_secondary_service_id),
+            v_secondary_price,
             'confirmed',
             'pending',
+            'deposit',
             p_special_requests,
             'couple',
             v_booking_group_id
         )
         RETURNING id INTO v_secondary_booking_id;
+        
+        RAISE NOTICE 'Created secondary booking % for service % in room %', v_secondary_booking_id, p_secondary_service_id, v_room_id;
     EXCEPTION
         WHEN OTHERS THEN
             -- Rollback the primary booking if secondary fails
@@ -303,14 +359,14 @@ BEGIN
         v_room_id,
         v_booking_group_id,
         TRUE,
-        NULL::TEXT
+        'Booking 1: ' || v_primary_service_name || ' with ' || p_primary_staff_id
     UNION ALL
     SELECT 
         v_secondary_booking_id,
         v_room_id,
         v_booking_group_id,
         TRUE,
-        NULL::TEXT;
+        'Booking 2: ' || v_secondary_service_name || ' with ' || p_secondary_staff_id;
     
 EXCEPTION
     WHEN OTHERS THEN
@@ -327,9 +383,34 @@ EXCEPTION
 END;
 $$;
 
--- Grant execute permission to authenticated and anon users
+-- Grant execute permission
 GRANT EXECUTE ON FUNCTION process_couples_booking_v2 TO authenticated;
 GRANT EXECUTE ON FUNCTION process_couples_booking_v2 TO anon;
 
--- Add helpful comment
-COMMENT ON FUNCTION process_couples_booking_v2 IS 'Creates coupled bookings for two services with the same customer, ensuring they share the same room. Prioritizes Room 3 for mixed service types or services requiring special equipment.';
+-- Add comment
+COMMENT ON FUNCTION process_couples_booking_v2 IS 'Creates coupled bookings for two services. Prioritizes Room 3 for facials+special combinations. Fixed for correct service IDs and categories.';
+
+-- Test the function with the actual service IDs
+SELECT 'Testing with actual service IDs from your database...' as test_status;
+
+-- Test booking with the exact services causing issues
+SELECT * FROM process_couples_booking_v2(
+    'deep_cleansing_facial'::TEXT,  -- Deep Cleansing Facial (facials category)
+    'vajacial_brazilian'::TEXT,      -- Basic Vajacial + Brazilian (special category)
+    'any'::TEXT,                     -- Any available staff for person 1
+    'any'::TEXT,                     -- Any available staff for person 2
+    'Test Customer',
+    'test@example.com',
+    '555-1234',
+    '2025-08-22'::DATE,              -- Friday, August 22, 2025
+    '10:15'::TIME,                   -- 10:15 AM
+    'Test couples booking for facial + special service'
+);
+
+-- Verify function was created
+SELECT 
+    'Function created successfully!' as status,
+    proname as function_name,
+    pronargs as num_arguments
+FROM pg_proc 
+WHERE proname = 'process_couples_booking_v2';
