@@ -209,7 +209,13 @@ export default function DateTimePage() {
       // Generate time slots based on service duration and buffer
       // Don't use Supabase RPC as it doesn't account for service duration properly
       const times = []
-      const serviceDuration = matchingService.duration || 60
+      
+      // For couples bookings, use the total duration of both services
+      let serviceDuration = matchingService.duration || 60
+      if (bookingData?.isCouplesBooking && bookingData.secondaryService) {
+        serviceDuration = Math.max(matchingService.duration, bookingData.secondaryService.duration) || 60
+      }
+      
       const bufferMinutes = 15
       
       // Start at 9:00 AM

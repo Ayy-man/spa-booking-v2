@@ -217,8 +217,31 @@ export const getGHLServiceCategory = (serviceName: string): string => {
 export const canStaffPerformService = (staff: StaffMember, serviceCategory: string, serviceName?: string): boolean => {
   if (staff.id === 'any') return true
   
+  // For package services, check if staff can perform the individual components
+  if (serviceCategory === 'packages' && serviceName) {
+    const serviceNameLower = serviceName.toLowerCase()
+    
+    // Check if staff can perform facial services (for packages with facials)
+    if (serviceNameLower.includes('facial') || serviceNameLower.includes('face')) {
+      if (!staff.capabilities.includes('facials')) return false
+    }
+    
+    // Check if staff can perform massage services (for packages with massages)
+    if (serviceNameLower.includes('massage')) {
+      if (!staff.capabilities.includes('massages')) return false
+    }
+    
+    // Check if staff can perform body treatments (for packages with treatments)
+    if (serviceNameLower.includes('treatment') || serviceNameLower.includes('moisturizing')) {
+      if (!staff.capabilities.includes('treatments')) return false
+    }
+    
+    // If staff can perform at least one component, allow the package
+    return true
+  }
+  
   // Check if staff has the required capability
-  const hasCapability = staff.capabilities.includes(serviceCategory) || staff.capabilities.includes('packages')
+  const hasCapability = staff.capabilities.includes(serviceCategory)
   if (!hasCapability) return false
   
   // Check service exclusions if they exist
@@ -289,8 +312,31 @@ export const canDatabaseStaffPerformService = (dbStaff: any, serviceCategory: st
   if (!dbStaff || !dbStaff.capabilities) return false
   if (dbStaff.id === 'any') return true
   
+  // For package services, check if staff can perform the individual components
+  if (serviceCategory === 'packages' && serviceName) {
+    const serviceNameLower = serviceName.toLowerCase()
+    
+    // Check if staff can perform facial services (for packages with facials)
+    if (serviceNameLower.includes('facial') || serviceNameLower.includes('face')) {
+      if (!dbStaff.capabilities.includes('facials')) return false
+    }
+    
+    // Check if staff can perform massage services (for packages with massages)
+    if (serviceNameLower.includes('massage')) {
+      if (!dbStaff.capabilities.includes('massages')) return false
+    }
+    
+    // Check if staff can perform body treatments (for packages with treatments)
+    if (serviceNameLower.includes('treatment') || serviceNameLower.includes('moisturizing')) {
+      if (!dbStaff.capabilities.includes('treatments')) return false
+    }
+    
+    // If staff can perform at least one component, allow the package
+    return true
+  }
+  
   // Check if staff has capability for this service category
-  const hasCapability = dbStaff.capabilities.includes(serviceCategory) || dbStaff.capabilities.includes('packages')
+  const hasCapability = dbStaff.capabilities.includes(serviceCategory)
   if (!hasCapability) return false
   
   // Check service exclusions if they exist

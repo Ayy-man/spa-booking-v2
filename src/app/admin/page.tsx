@@ -7,6 +7,7 @@ import { TodaysSchedule } from "@/components/admin/todays-schedule"
 import { ScheduleViewToggle } from "@/components/admin/ScheduleViewToggle"
 import { StaffSchedule } from "@/components/admin/staff-schedule"
 import { WalkInsSection } from "@/components/admin/walk-ins-section"
+import { DailySummary } from "@/components/admin/DailySummary"
 import { 
   Tabs, 
   TabsList, 
@@ -17,7 +18,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
-type TabValue = "schedule" | "timeline" | "staff" | "walkins"
+type TabValue = "schedule" | "timeline" | "staff" | "walkins" | "reports"
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<TabValue>("schedule")
@@ -57,6 +58,11 @@ export default function AdminDashboardPage() {
       value: "staff" as const,
       label: "Staff Schedule",
       description: "Staff availability and assignments"
+    },
+    {
+      value: "reports" as const,
+      label: "Daily Report",
+      description: "Daily summary and analytics"
     }
   ]
 
@@ -107,7 +113,7 @@ export default function AdminDashboardPage() {
 
       {/* Tab Navigation */}
       <Tabs className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex h-auto p-1">
+        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex h-auto p-1">
           {tabs.map((tab) => (
             <TabsTrigger
               key={tab.value}
@@ -141,6 +147,10 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="staff" activeValue={activeTab}>
             <StaffSchedule />
+          </TabsContent>
+
+          <TabsContent value="reports" activeValue={activeTab}>
+            <DailySummary />
           </TabsContent>
         </div>
       </Tabs>

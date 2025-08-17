@@ -57,7 +57,7 @@ export default function CouplesBooking({ selectedService, serviceCategories, onC
     : selectedService.price
 
   const totalDuration = isCouplesBooking && secondaryService
-    ? Math.max(selectedService.duration, secondaryService.duration)
+    ? selectedService.duration + secondaryService.duration
     : selectedService.duration
 
   const handleContinue = () => {
