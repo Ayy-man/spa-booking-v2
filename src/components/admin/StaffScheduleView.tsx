@@ -8,9 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
-import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react"
+import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 
 // Service category colors (matching existing color scheme)
@@ -74,7 +77,21 @@ export function StaffScheduleView({
   const [currentTime, setCurrentTime] = useState<Date>(getGuamTime())
   const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
-  const [quickAddSlot, setQuickAddSlot] = useState<{ staffId: string; time: string } | null>(null)
+  const [quickAddSlot, setQuickAddSlot] = useState<{ staffId: string; staffName: string; time: string } | null>(null)
+  const [services, setServices] = useState<any[]>([])
+  const [customers, setCustomers] = useState<any[]>([])
+  const [rooms, setRooms] = useState<any[]>([])
+  const [quickAddForm, setQuickAddForm] = useState({
+    serviceId: '',
+    customerId: '',
+    customerFirstName: '',
+    customerLastName: '',
+    customerPhone: '',
+    customerEmail: '',
+    isNewCustomer: false,
+    notes: ''
+  })
+  const [quickAddLoading, setQuickAddLoading] = useState(false)
   const [draggedBooking, setDraggedBooking] = useState<BookingWithRelations | null>(null)
   const [dropTarget, setDropTarget] = useState<{ staffId: string; time: string } | null>(null)
   const printRef = useRef<HTMLDivElement>(null)
@@ -92,6 +109,40 @@ export function StaffScheduleView({
       }
     }
     return slots
+  }, [])
+
+  // Fetch services, customers and rooms for quick add
+  const fetchQuickAddData = useCallback(async () => {
+    try {
+      // Fetch services
+      const { data: servicesData } = await supabase
+        .from('services')
+        .select('*')
+        .eq('is_active', true)
+        .order('category', { ascending: true })
+        .order('name')
+
+      setServices(servicesData || [])
+
+      // Fetch customers
+      const { data: customersData } = await supabase
+        .from('customers')
+        .select('id, first_name, last_name, phone, email')
+        .order('first_name')
+
+      setCustomers(customersData || [])
+
+      // Fetch rooms
+      const { data: roomsData } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('is_active', true)
+        .order('id')
+
+      setRooms(roomsData || [])
+    } catch (error) {
+      console.error('Error fetching quick add data:', error)
+    }
   }, [])
 
   // Fetch data
@@ -143,12 +194,13 @@ export function StaffScheduleView({
   // Auto-refresh
   useEffect(() => {
     fetchData()
+    fetchQuickAddData()
     
     if (autoRefresh) {
       const interval = setInterval(fetchData, refreshInterval)
       return () => clearInterval(interval)
     }
-  }, [fetchData, autoRefresh, refreshInterval])
+  }, [fetchData, fetchQuickAddData, autoRefresh, refreshInterval])
 
   // Update current time every minute (in Guam timezone)
   useEffect(() => {
@@ -237,8 +289,120 @@ export function StaffScheduleView({
     const existingBooking = getBookingForSlot(staffId, timeSlot)
     if (existingBooking) return
     
-    setQuickAddSlot({ staffId, time: timeSlot.timeString })
+    const staffMember = staff.find(s => s.id === staffId)
+    setQuickAddSlot({ staffId, staffName: staffMember?.name || '', time: timeSlot.timeString })
     setShowQuickAdd(true)
+    // Reset form
+    setQuickAddForm({
+      serviceId: '',
+      customerId: '',
+      customerFirstName: '',
+      customerLastName: '',
+      customerPhone: '',
+      customerEmail: '',
+      isNewCustomer: false,
+      notes: ''
+    })
+  }
+
+  // Handle quick add submit
+  const handleQuickAddSubmit = async () => {
+    if (!quickAddSlot) return
+
+    setQuickAddLoading(true)
+    try {
+      const selectedService = services.find(s => s.id === quickAddForm.serviceId)
+      if (!selectedService) {
+        throw new Error('Please select a service')
+      }
+
+      let customerId = quickAddForm.customerId
+
+      // Create new customer if needed
+      if (quickAddForm.isNewCustomer) {
+        if (!quickAddForm.customerFirstName || !quickAddForm.customerLastName || !quickAddForm.customerPhone) {
+          throw new Error('Please fill in all customer fields')
+        }
+
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            first_name: quickAddForm.customerFirstName,
+            last_name: quickAddForm.customerLastName,
+            phone: quickAddForm.customerPhone,
+            email: quickAddForm.customerEmail || null
+          })
+          .select()
+          .single()
+
+        if (customerError) throw customerError
+        customerId = newCustomer.id
+      } else if (!customerId) {
+        throw new Error('Please select a customer')
+      }
+
+      // Calculate end time
+      const [startHour, startMinute] = quickAddSlot.time.split(':').map(Number)
+      const startMinutes = startHour * 60 + startMinute
+      const endMinutes = startMinutes + selectedService.duration
+      const endHour = Math.floor(endMinutes / 60)
+      const endMinute = endMinutes % 60
+      const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`
+
+      // Determine optimal room
+      let roomId = null
+      
+      // Special room requirements
+      if (selectedService.category === 'body_scrub') {
+        // Body scrubs must use Room 3
+        roomId = rooms.find(r => r.id === 3)?.id
+      } else if (selectedService.name.toLowerCase().includes('couples')) {
+        // Couples services prefer Room 2 or 3 (capacity 2)
+        const couplesRoom = rooms.find(r => (r.id === 2 || r.id === 3) && r.capacity >= 2)
+        roomId = couplesRoom?.id || rooms.find(r => r.capacity >= 2)?.id
+      } else {
+        // Regular services can use any available room
+        roomId = rooms.find(r => r.id === 1)?.id || rooms[0]?.id
+      }
+
+      if (!roomId) {
+        throw new Error('No suitable room available')
+      }
+
+      // Create the booking
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          customer_id: customerId,
+          service_id: quickAddForm.serviceId,
+          staff_id: quickAddSlot.staffId,
+          room_id: roomId,
+          appointment_date: currentDate.toISOString().split('T')[0],
+          start_time: quickAddSlot.time,
+          end_time: endTime,
+          status: 'confirmed',
+          notes: quickAddForm.notes || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+
+      if (bookingError) throw bookingError
+
+      // Refresh the schedule
+      await fetchData()
+      
+      // Close the dialog
+      setShowQuickAdd(false)
+      setQuickAddSlot(null)
+      
+      // Show success (you might want to add a toast notification here)
+      console.log('Appointment created successfully')
+    } catch (error: any) {
+      console.error('Error creating appointment:', error)
+      setError(error.message || 'Failed to create appointment')
+    } finally {
+      setQuickAddLoading(false)
+    }
   }
 
   // Drag and drop handlers
@@ -606,21 +770,128 @@ export function StaffScheduleView({
       </Card>
 
       {/* Quick Add Dialog */}
-      <Dialog open={showQuickAdd} onOpenChange={setShowQuickAdd}>
-        <DialogContent>
+      <Dialog open={showQuickAdd} onOpenChange={(open) => {
+        setShowQuickAdd(open)
+        if (!open) setError('') // Clear error when closing
+      }}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Quick Add Appointment</DialogTitle>
             <DialogDescription>
-              Add a new appointment for {quickAddSlot && staff.find(s => s.id === quickAddSlot.staffId)?.name} at {quickAddSlot?.time}
+              Add a new appointment for {quickAddSlot?.staffName} at {quickAddSlot?.time}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            {/* Quick add form would go here */}
-            <p className="text-sm text-gray-600">Quick add functionality coming soon...</p>
+          <div className="space-y-4 py-4">
+            {/* Service Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="service">Service *</Label>
+              <Select
+                value={quickAddForm.serviceId}
+                onValueChange={(value) => setQuickAddForm({ ...quickAddForm, serviceId: value })}
+              >
+                <SelectTrigger id="service">
+                  <SelectValue placeholder="Select a service" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((service) => (
+                    <SelectItem key={service.id} value={service.id}>
+                      {service.name} ({service.duration} min - ${service.price})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Customer Selection or New Customer */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Customer *</Label>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={() => setQuickAddForm({ ...quickAddForm, isNewCustomer: !quickAddForm.isNewCustomer })}
+                >
+                  {quickAddForm.isNewCustomer ? 'Select Existing' : 'New Customer'}
+                </Button>
+              </div>
+              
+              {quickAddForm.isNewCustomer ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="First name *"
+                      value={quickAddForm.customerFirstName}
+                      onChange={(e) => setQuickAddForm({ ...quickAddForm, customerFirstName: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Last name *"
+                      value={quickAddForm.customerLastName}
+                      onChange={(e) => setQuickAddForm({ ...quickAddForm, customerLastName: e.target.value })}
+                    />
+                  </div>
+                  <Input
+                    placeholder="Phone *"
+                    value={quickAddForm.customerPhone}
+                    onChange={(e) => setQuickAddForm({ ...quickAddForm, customerPhone: e.target.value })}
+                  />
+                  <Input
+                    placeholder="Email (optional)"
+                    type="email"
+                    value={quickAddForm.customerEmail}
+                    onChange={(e) => setQuickAddForm({ ...quickAddForm, customerEmail: e.target.value })}
+                  />
+                </div>
+              ) : (
+                <Select
+                  value={quickAddForm.customerId}
+                  onValueChange={(value) => setQuickAddForm({ ...quickAddForm, customerId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        {customer.first_name} {customer.last_name} - {customer.phone}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes (optional)</Label>
+              <Input
+                id="notes"
+                placeholder="Any special instructions..."
+                value={quickAddForm.notes}
+                onChange={(e) => setQuickAddForm({ ...quickAddForm, notes: e.target.value })}
+              />
+            </div>
+
+            {/* Error message */}
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
+                {error}
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowQuickAdd(false)}>
+            <Button variant="outline" onClick={() => setShowQuickAdd(false)} disabled={quickAddLoading}>
               Cancel
+            </Button>
+            <Button onClick={handleQuickAddSubmit} disabled={quickAddLoading}>
+              {quickAddLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Appointment'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
