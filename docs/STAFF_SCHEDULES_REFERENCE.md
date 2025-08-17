@@ -23,9 +23,9 @@ Based on the latest database migrations (019_update_staff_schedules_and_exclusio
 - **Exclusions**: Radio frequency, nano microneedling, derma roller
 
 ### Leonel Sidon
-- **Work Days**: `[0]` - SUNDAY ONLY
-- **Schedule**: Sunday only
-- **Services**: Massage, body treatment (can assist with facials on Sundays)
+- **Work Days**: `[0,3,4,5,6]` - OFF Monday & Tuesday (same as Robyn)
+- **Schedule**: Sunday, Wednesday, Thursday, Friday, Saturday
+- **Services**: Massage, body treatment
 - **Exclusions**: None
 
 ## Important Notes:

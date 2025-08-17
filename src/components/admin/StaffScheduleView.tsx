@@ -109,6 +109,10 @@ export function StaffScheduleView({
         .order('name')
 
       if (staffError) throw staffError
+      
+      // Debug: Log staff data to check work_days
+      console.log('Staff data from database:', staffData)
+      
       setStaff(staffData || [])
 
       // Fetch bookings for the day
@@ -157,6 +161,23 @@ export function StaffScheduleView({
   // Check if staff is working on current day
   const isStaffWorking = (staffMember: StaffMember): boolean => {
     const dayOfWeek = currentDate.getDay()
+    
+    // Fallback schedules if work_days is empty or undefined
+    if (!staffMember.work_days || staffMember.work_days.length === 0) {
+      // Use known schedules as fallback
+      const schedules: Record<string, number[]> = {
+        'Selma Villaver': [0,1,2,3,4,5,6], // All 7 days
+        'Robyn Camacho': [0,3,4,5,6],      // OFF Mon & Tue
+        'Tanisha Harris': [0,1,3,5,6],     // OFF Tue & Thu
+        'Leonel Sidon': [0,3,4,5,6]        // OFF Mon & Tue (same as Robyn)
+      }
+      
+      const fallbackDays = schedules[staffMember.name]
+      if (fallbackDays) {
+        return fallbackDays.includes(dayOfWeek)
+      }
+    }
+    
     return staffMember.work_days.includes(dayOfWeek)
   }
 
@@ -630,9 +651,35 @@ export function StaffScheduleView({
           .print\\:hidden {
             display: none !important;
           }
+          /* Portrait orientation, fit on one page */
           @page {
-            size: landscape;
-            margin: 0.5in;
+            size: portrait;
+            margin: 0.25in;
+          }
+          /* Compact styles for printing */
+          .printable-content .grid > div {
+            height: 20px !important;
+            min-height: 20px !important;
+            padding: 2px !important;
+            font-size: 10px !important;
+          }
+          .printable-content .text-xs {
+            font-size: 9px !important;
+          }
+          .printable-content .p-3 {
+            padding: 4px !important;
+          }
+          .printable-content .p-2 {
+            padding: 2px !important;
+          }
+          /* Hide non-essential elements */
+          .printable-content .border-t-2 {
+            border-top-width: 1px !important;
+          }
+          /* Ensure it fits on one page */
+          .printable-content {
+            transform: scale(0.75);
+            transform-origin: top left;
           }
         }
       `}</style>
