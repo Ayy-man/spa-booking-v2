@@ -1,7 +1,7 @@
 # Daily Reports & Analytics
 
 ## Overview
-The spa booking system includes comprehensive daily reporting functionality with automated email delivery through n8n webhook integration.
+The spa booking system includes comprehensive daily reporting functionality with automated email delivery through n8n webhook integration. Reports are beautifully formatted with the spa's signature pink branding and sent automatically every day at 6pm Guam time.
 
 ## Features
 
@@ -180,6 +180,45 @@ curl -X POST https://primary-production-66f3.up.railway.app/webhook/bcab11df-b41
 - Timezone is fixed to Guam (UTC+10)
 - Email formatting is handled by n8n, not the app
 - App remains lightweight - only sends JSON data
+
+## 📧 Email Template
+
+### Beautiful HTML Emails
+The system includes a professionally designed HTML email template featuring:
+- **Pink gradient header** matching Dermal's branding (#ec407a to #f48fb1)
+- **Soft pink backgrounds** for a spa aesthetic
+- **Color-coded metric cards** for easy reading
+- **Responsive design** that works on all devices
+- **Professional footer** with contact information
+
+### Template Files
+- **`docs/email-template.html`** - Complete HTML email template
+- **`docs/n8n-email-formatter.js`** - JavaScript code for n8n to format the JSON data
+
+### n8n Email Workflow Setup
+
+1. **Add Code Node** after webhook trigger:
+   - Paste contents of `n8n-email-formatter.js`
+   - Set to "Run Once for All Items"
+
+2. **Connect Email Node**:
+   - To: `{{ $json.recipient }}`
+   - Subject: `{{ $json.subject }}`
+   - HTML Content: `{{ $json.htmlBody }}`
+
+3. **Automatic Formatting**:
+   - Currency with proper symbols and commas
+   - Dates in readable format
+   - Timezone conversion to Guam time
+   - Graceful handling of empty data
+
+### Email Color Scheme
+- **Primary Pink**: #ec407a
+- **Dark Pink**: #880e4f  
+- **Light Pink Backgrounds**: #fce4ec, #fff3f7
+- **Success Green**: #43a047
+- **Warning Red**: #e53935
+- **Info Blue**: #1976d2
 
 ## 🔒 Security
 
