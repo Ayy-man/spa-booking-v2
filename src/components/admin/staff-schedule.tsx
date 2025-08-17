@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicator"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations } from "@/types/booking"
 import { 
@@ -13,6 +14,7 @@ import {
   getServiceCategoryColor 
 } from "@/lib/admin-booking-logic"
 import { isSpecialStaffRequest } from "@/lib/booking-utils"
+import { Users } from "lucide-react"
 
 type ViewMode = "day" | "week"
 
@@ -191,6 +193,13 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
                   </svg>
                 </div>
               )}
+              
+              {/* Couples Booking Indicator */}
+              {booking.booking_type === 'couple' && (
+                <div className="absolute -top-2 -left-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                  <Users className="w-3 h-3 text-white" />
+                </div>
+              )}
 
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center space-x-3">
@@ -205,6 +214,10 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
                       Special Request
                     </span>
                   )}
+                  <CouplesBookingIndicator 
+                    bookingType={booking.booking_type || 'single'} 
+                    size="sm"
+                  />
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className={cn(
@@ -323,6 +336,13 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
                           </div>
                         )}
                         
+                        {/* Couples Booking Indicator for Week View */}
+                        {booking.booking_type === 'couple' && (
+                          <div className="absolute -top-1 -left-1 w-2 h-2 bg-purple-500 rounded-full flex items-center justify-center">
+                            <Users className="w-1 h-1 text-white" />
+                          </div>
+                        )}
+                        
                         <div className="font-medium mb-1 flex items-center">
                           {formatTime(booking.start_time)}
                           {isSpecialRequest && (
@@ -340,6 +360,12 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
                         {isSpecialRequest && (
                           <div className="text-amber-700 text-xs mt-1 font-medium">
                             Requested
+                          </div>
+                        )}
+                        {booking.booking_type === 'couple' && (
+                          <div className="text-purple-700 text-xs mt-1 font-medium flex items-center">
+                            <Users className="w-2 h-2 mr-1" />
+                            Couples
                           </div>
                         )}
                       </div>

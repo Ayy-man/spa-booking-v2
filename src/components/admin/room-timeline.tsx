@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicator"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
 import { isSpecialStaffRequest } from "@/lib/booking-utils"
@@ -467,6 +468,13 @@ export function RoomTimeline({
                                         </div>
                                       )}
                                       
+                                      {/* Couples Booking Indicator */}
+                                      {booking.booking_type === 'couple' && (
+                                        <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-purple-500 rounded-full flex items-center justify-center">
+                                          <Users className="h-1.5 w-1.5 text-white" fill="currentColor" />
+                                        </div>
+                                      )}
+                                      
                                       <div className="flex items-start justify-between">
                                         <div className="flex-1 min-w-0">
                                           <div className="text-xs font-medium truncate flex items-center">
@@ -502,6 +510,14 @@ export function RoomTimeline({
                                         <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
                                           <Users className="h-3 w-3 mr-1" />
                                           Walk-In Customer
+                                        </div>
+                                      )}
+                                      
+                                      {/* Couples Booking Badge */}
+                                      {booking.booking_type === 'couple' && (
+                                        <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                                          <Users className="h-3 w-3 mr-1" />
+                                          Couples Booking
                                         </div>
                                       )}
                                       

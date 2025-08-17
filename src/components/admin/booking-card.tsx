@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
+import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicator"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations } from "@/types/booking"
 import { isSpecialStaffRequest } from "@/lib/booking-utils"
@@ -109,11 +110,15 @@ export function BookingCard({
           />
         </div>
 
-        {/* Service Name */}
-        <div>
+        {/* Service Name and Couples Indicator */}
+        <div className="flex items-center justify-between">
           <h3 className={cn(textSizes.service, "text-gray-900 truncate")}>
             {booking.service.name}
           </h3>
+          <CouplesBookingIndicator 
+            bookingType={booking.booking_type} 
+            size={size === 'lg' ? 'md' : 'sm'}
+          />
         </div>
 
         {/* Room and Staff Info */}

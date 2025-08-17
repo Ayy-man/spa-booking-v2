@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { CouplesBookingIndicator } from '@/components/ui/couples-booking-indicator'
 // import { auth } from '@/lib/auth'
 // import { useRouter } from 'next/navigation'
 
@@ -209,8 +210,16 @@ export default function AdminBookingsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{booking.service?.name}</div>
-                      <div className="text-sm text-gray-500">{booking.duration} mins</div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm text-gray-900">{booking.service?.name}</div>
+                          <div className="text-sm text-gray-500">{booking.duration} mins</div>
+                        </div>
+                        <CouplesBookingIndicator 
+                          bookingType={booking.booking_type || 'single'} 
+                          size="sm"
+                        />
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{formatDate(booking.appointment_date)}</div>
