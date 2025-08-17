@@ -13,8 +13,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
-import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2, Users } from "lucide-react"
 import { format } from "date-fns"
+import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicator"
 
 // Service category colors (matching existing color scheme)
 const SERVICE_COLORS: Record<ServiceCategory, { bg: string; border: string; text: string }> = {
@@ -690,12 +691,21 @@ export function StaffScheduleView({
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, booking)}
                                   >
+                                    {/* Couples Booking Indicator */}
+                                    {booking.booking_type === 'couple' && (
+                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center shadow-sm">
+                                        <Users className="w-2 h-2 text-white" />
+                                      </div>
+                                    )}
                                     <div className={cn("text-xs font-medium truncate", "print-customer-name")}>
                                       <span className="hidden print:inline">{formatCustomerName(booking, true)}</span>
                                       <span className="print:hidden">{formatCustomerName(booking)}</span>
                                     </div>
                                     <div className={cn("text-xs truncate mt-1 opacity-90", "print-service-name")}>
                                       {booking.service.name}
+                                      {booking.booking_type === 'couple' && (
+                                        <span className="ml-1 text-purple-700 font-medium">(C)</span>
+                                      )}
                                     </div>
                                     {booking.service.duration > 60 && (
                                       <div className="text-xs mt-1 opacity-75 print:hidden">
@@ -706,11 +716,21 @@ export function StaffScheduleView({
                                 </TooltipTrigger>
                                 <TooltipContent side="right">
                                   <div className="space-y-1">
-                                    <p className="font-medium">{booking.service.name}</p>
+                                    <p className="font-medium">
+                                      {booking.service.name}
+                                      {booking.booking_type === 'couple' && (
+                                        <span className="ml-2 text-purple-600 text-xs">(Couples Booking)</span>
+                                      )}
+                                    </p>
                                     <p>{formatCustomerName(booking)}</p>
                                     <p>{booking.start_time} - {booking.end_time}</p>
                                     <p>Room {booking.room?.name}</p>
                                     {booking.notes && <p className="text-xs">Note: {booking.notes}</p>}
+                                    {booking.booking_type === 'couple' && (
+                                      <div className="pt-1 border-t border-gray-200">
+                                        <CouplesBookingIndicator bookingType="couple" size="sm" />
+                                      </div>
+                                    )}
                                   </div>
                                 </TooltipContent>
                               </Tooltip>
@@ -757,6 +777,10 @@ export function StaffScheduleView({
                   </span>
                 </div>
               ))}
+              <div className="flex items-center space-x-1 ml-4 pl-4 border-l border-gray-300">
+                <div className="w-3 h-3 rounded-full bg-purple-500" />
+                <span className="text-xs text-gray-600">Couples Booking</span>
+              </div>
             </div>
           </div>
           
@@ -907,7 +931,16 @@ export function StaffScheduleView({
             <div className="space-y-3">
               <div>
                 <span className="text-sm text-gray-500">Service:</span>
-                <p className="font-medium">{selectedBooking.service.name}</p>
+                <p className="font-medium">
+                  {selectedBooking.service.name}
+                  {selectedBooking.booking_type === 'couple' && (
+                    <CouplesBookingIndicator 
+                      bookingType="couple" 
+                      size="sm" 
+                      className="ml-2 inline-flex" 
+                    />
+                  )}
+                </p>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Time:</span>
