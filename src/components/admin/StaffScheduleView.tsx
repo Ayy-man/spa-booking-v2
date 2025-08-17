@@ -288,8 +288,11 @@ export function StaffScheduleView({
   }
 
   // Format customer name
-  const formatCustomerName = (booking: BookingWithRelations): string => {
+  const formatCustomerName = (booking: BookingWithRelations, fullName: boolean = false): string => {
     if (booking.customer) {
+      if (fullName) {
+        return `${booking.customer.first_name} ${booking.customer.last_name}`
+      }
       return `${booking.customer.first_name} ${booking.customer.last_name[0]}.`
     }
     return 'Customer'
@@ -395,6 +398,34 @@ export function StaffScheduleView({
 
       {/* Schedule Grid */}
       <Card className="overflow-hidden printable-content" ref={printRef}>
+        {/* Print-only legend */}
+        <div className="hidden print:block print-legend">
+          <div className="print-legend-item">
+            <div className="print-legend-color print-facial"></div>
+            <span>Facial</span>
+          </div>
+          <div className="print-legend-item">
+            <div className="print-legend-color print-massage"></div>
+            <span>Massage</span>
+          </div>
+          <div className="print-legend-item">
+            <div className="print-legend-color print-body_treatment"></div>
+            <span>Body Treatment</span>
+          </div>
+          <div className="print-legend-item">
+            <div className="print-legend-color print-body_scrub"></div>
+            <span>Body Scrub</span>
+          </div>
+          <div className="print-legend-item">
+            <div className="print-legend-color print-waxing"></div>
+            <span>Waxing</span>
+          </div>
+          <div className="print-legend-item">
+            <div className="print-legend-color print-package"></div>
+            <span>Package</span>
+          </div>
+        </div>
+        
         <div className="overflow-x-auto">
           <div className="min-w-[800px] relative">
             {/* Current Time Indicator */}
@@ -486,20 +517,24 @@ export function StaffScheduleView({
                                       serviceColors.border,
                                       serviceColors.text,
                                       "border-2",
-                                      draggedBooking?.id === booking.id && "opacity-50"
+                                      draggedBooking?.id === booking.id && "opacity-50",
+                                      // Print-specific classes
+                                      "print-appointment",
+                                      `print-${booking.service.category}`
                                     )}
                                     onClick={() => setSelectedBooking(booking)}
                                     draggable
                                     onDragStart={(e) => handleDragStart(e, booking)}
                                   >
-                                    <div className="text-xs font-medium truncate">
-                                      {formatCustomerName(booking)}
+                                    <div className={cn("text-xs font-medium truncate", "print-customer-name")}>
+                                      <span className="hidden print:inline">{formatCustomerName(booking, true)}</span>
+                                      <span className="print:hidden">{formatCustomerName(booking)}</span>
                                     </div>
-                                    <div className="text-xs truncate mt-1 opacity-90">
+                                    <div className={cn("text-xs truncate mt-1 opacity-90", "print-service-name")}>
                                       {booking.service.name}
                                     </div>
                                     {booking.service.duration > 60 && (
-                                      <div className="text-xs mt-1 opacity-75">
+                                      <div className="text-xs mt-1 opacity-75 print:hidden">
                                         {booking.service.duration} min
                                       </div>
                                     )}
@@ -680,6 +715,81 @@ export function StaffScheduleView({
           .printable-content {
             transform: scale(0.75);
             transform-origin: top left;
+          }
+          
+          /* Clean appointment blocks for print */
+          .print-appointment {
+            border: 1px solid #000 !important;
+            border-radius: 0 !important;
+            padding: 2px !important;
+            margin: 1px !important;
+            box-shadow: none !important;
+            background: white !important;
+            overflow: visible !important;
+          }
+          
+          /* Service category colors for print */
+          .print-facial {
+            background: #fce4ec !important;
+            border-left: 3px solid #e91e63 !important;
+          }
+          .print-massage {
+            background: #e3f2fd !important;
+            border-left: 3px solid #2196f3 !important;
+          }
+          .print-body_treatment {
+            background: #e8f5e9 !important;
+            border-left: 3px solid #4caf50 !important;
+          }
+          .print-body_scrub {
+            background: #f3e5f5 !important;
+            border-left: 3px solid #9c27b0 !important;
+          }
+          .print-waxing {
+            background: #fff3e0 !important;
+            border-left: 3px solid #ff9800 !important;
+          }
+          .print-package {
+            background: #fffde7 !important;
+            border-left: 3px solid #ffeb3b !important;
+          }
+          
+          /* Text styles for print */
+          .print-customer-name {
+            font-weight: bold !important;
+            font-size: 10px !important;
+            color: #000 !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+          }
+          
+          .print-service-name {
+            font-size: 9px !important;
+            color: #333 !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+          }
+          
+          /* Legend for print */
+          .print-legend {
+            display: flex !important;
+            justify-content: space-around !important;
+            margin-bottom: 10px !important;
+            padding: 5px !important;
+            border: 1px solid #000 !important;
+            font-size: 10px !important;
+          }
+          
+          .print-legend-item {
+            display: flex !important;
+            align-items: center !important;
+            gap: 3px !important;
+          }
+          
+          .print-legend-color {
+            width: 15px !important;
+            height: 10px !important;
+            border: 1px solid #000 !important;
           }
         }
       `}</style>
