@@ -334,11 +334,11 @@ export default function BookingDiagnosticsPage() {
             </p>
             <p>
               <strong>Couples Availability:</strong> Enter service IDs and staff IDs to check if a couples 
-              booking can be made. Use "any" for staff IDs to allow any available staff member.
+              booking can be made. Use &quot;any&quot; for staff IDs to allow any available staff member.
             </p>
             <p>
               <strong>Service IDs:</strong> You can find service IDs in the Services management page. 
-              They typically look like "deep-cleansing-facial" or "swedish-massage".
+              They typically look like &quot;deep-cleansing-facial&quot; or &quot;swedish-massage&quot;.
             </p>
           </div>
         </Card>
