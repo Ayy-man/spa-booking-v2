@@ -113,6 +113,11 @@ export default function AdminDashboardPage() {
               Failed Bookings
             </Button>
           </Link>
+          <Link href="/admin/booking-diagnostics">
+            <Button variant="outline" className="border-yellow-300 text-yellow-600 hover:bg-yellow-50">
+              Booking Diagnostics
+            </Button>
+          </Link>
         </div>
       </div>
 

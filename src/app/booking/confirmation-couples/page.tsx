@@ -104,29 +104,85 @@ export default function CouplesConfirmationPage() {
           throw new Error('Secondary service not found in database')
         }
 
-        // Use process_couples_booking function
-        const couplesResult = await supabaseClient.processCouplesBooking({
-          primary_service_id: primaryServiceData.id,
-          secondary_service_id: secondaryServiceData.id,
-          primary_staff_id: selectedStaff,
-          secondary_staff_id: secondaryStaff || selectedStaff,
-          customer_name: customerInfo.name,
-          customer_email: customerInfo.email,
-          customer_phone: customerInfo.phone,
-          appointment_date: selectedDate,
-          start_time: validateTimeForDatabase(selectedTime, 'start_time'),
-          notes: customerInfo.specialRequests
-        })
+        // Check availability first
+        try {
+          const availabilityCheck = await supabaseClient.checkCouplesAvailability({
+            primary_service_id: primaryServiceData.id,
+            secondary_service_id: secondaryServiceData.id,
+            primary_staff_id: selectedStaff,
+            secondary_staff_id: secondaryStaff || selectedStaff,
+            booking_date: selectedDate,
+            start_time: validateTimeForDatabase(selectedTime, 'start_time')
+          })
 
-        
-        if (!couplesResult || couplesResult.length === 0) {
-          throw new Error('Couples booking failed - no bookings created')
+          if (availabilityCheck && availabilityCheck[0] && !availabilityCheck[0].is_available) {
+            console.error('Availability check failed:', availabilityCheck[0])
+            throw new Error(availabilityCheck[0].error_message || 'Time slot is not available')
+          }
+        } catch (availError) {
+          console.warn('Availability check failed or not available:', availError)
+          // Continue anyway - the booking function will do its own checks
         }
 
-        // Check if any booking failed 
-        const failedBooking = couplesResult.find((result: any) => result.success === false)
-        if (failedBooking) {
-          throw new Error(failedBooking.error_message || 'Booking failed')
+        // Try to create the booking with retry logic
+        let couplesResult = null
+        let attempts = 0
+        const maxAttempts = 3
+        
+        while (attempts < maxAttempts && !couplesResult) {
+          attempts++
+          try {
+            console.log(`Attempting couples booking (attempt ${attempts}/${maxAttempts})...`)
+            
+            couplesResult = await supabaseClient.processCouplesBooking({
+              primary_service_id: primaryServiceData.id,
+              secondary_service_id: secondaryServiceData.id,
+              primary_staff_id: selectedStaff,
+              secondary_staff_id: secondaryStaff || selectedStaff,
+              customer_name: customerInfo.name,
+              customer_email: customerInfo.email,
+              customer_phone: customerInfo.phone,
+              appointment_date: selectedDate,
+              start_time: validateTimeForDatabase(selectedTime, 'start_time'),
+              notes: customerInfo.specialRequests
+            })
+            
+            if (!couplesResult || couplesResult.length === 0) {
+              throw new Error('Couples booking failed - no bookings created')
+            }
+
+            // Check if any booking failed 
+            const failedBooking = couplesResult.find((result: any) => result.success === false)
+            if (failedBooking) {
+              // If it's a staff availability issue and we have more attempts, wait and retry
+              if (failedBooking.error_message?.includes('staff') && attempts < maxAttempts) {
+                console.log(`Staff conflict detected, waiting before retry...`)
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempts)) // Exponential backoff
+                couplesResult = null // Reset to trigger retry
+                continue
+              }
+              throw new Error(failedBooking.error_message || 'Booking failed')
+            }
+            
+            console.log('Couples booking succeeded!')
+            break // Success!
+            
+          } catch (error: any) {
+            console.error(`Booking attempt ${attempts} failed:`, error)
+            
+            if (attempts === maxAttempts) {
+              // Final attempt failed
+              throw error
+            }
+            
+            // Wait before retry with exponential backoff
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempts))
+            couplesResult = null // Reset for retry
+          }
+        }
+        
+        if (!couplesResult || couplesResult.length === 0) {
+          throw new Error('Couples booking failed after all retry attempts')
         }
 
         // Filter successful bookings and format them

@@ -332,24 +332,88 @@ export const supabaseClient = {
     start_time: string
     notes?: string
   }) {
-    const { data, error } = await supabase.rpc('process_couples_booking_v2', {
-      p_primary_service_id: booking.primary_service_id,
-      p_secondary_service_id: booking.secondary_service_id,
-      p_primary_staff_id: booking.primary_staff_id,
-      p_secondary_staff_id: booking.secondary_staff_id,
-      p_customer_name: booking.customer_name,
-      p_customer_email: booking.customer_email,
-      p_customer_phone: booking.customer_phone,
-      p_booking_date: booking.appointment_date,
-      p_start_time: booking.start_time,
-      p_special_requests: booking.notes
+    // First try v3 (new bulletproof version)
+    try {
+      const { data, error } = await supabase.rpc('process_couples_booking_v3', {
+        p_primary_service_id: booking.primary_service_id,
+        p_secondary_service_id: booking.secondary_service_id,
+        p_primary_staff_id: booking.primary_staff_id,
+        p_secondary_staff_id: booking.secondary_staff_id,
+        p_customer_name: booking.customer_name,
+        p_customer_email: booking.customer_email,
+        p_customer_phone: booking.customer_phone,
+        p_booking_date: booking.appointment_date,
+        p_start_time: booking.start_time,
+        p_special_requests: booking.notes
+      })
+
+      if (error) {
+        console.error('Couples booking v3 error:', error)
+        throw error
+      }
+      
+      return data
+    } catch (v3Error: any) {
+      // If v3 doesn't exist, fallback to v2
+      if (v3Error.message?.includes('function') && v3Error.message?.includes('does not exist')) {
+        console.warn('v3 function not found, falling back to v2')
+        const { data, error } = await supabase.rpc('process_couples_booking_v2', {
+          p_primary_service_id: booking.primary_service_id,
+          p_secondary_service_id: booking.secondary_service_id,
+          p_primary_staff_id: booking.primary_staff_id,
+          p_secondary_staff_id: booking.secondary_staff_id,
+          p_customer_name: booking.customer_name,
+          p_customer_email: booking.customer_email,
+          p_customer_phone: booking.customer_phone,
+          p_booking_date: booking.appointment_date,
+          p_start_time: booking.start_time,
+          p_special_requests: booking.notes
+        })
+
+        if (error) {
+          console.error('Couples booking v2 error:', error)
+          throw error
+        }
+        
+        return data
+      }
+      
+      // Re-throw if it's not a "function doesn't exist" error
+      throw v3Error
+    }
+  },
+
+  // Check couples booking availability
+  async checkCouplesAvailability(params: {
+    primary_service_id: string
+    secondary_service_id: string
+    primary_staff_id: string
+    secondary_staff_id: string
+    booking_date: string
+    start_time: string
+  }) {
+    const { data, error } = await supabase.rpc('check_couples_booking_availability', {
+      p_primary_service_id: params.primary_service_id,
+      p_secondary_service_id: params.secondary_service_id,
+      p_primary_staff_id: params.primary_staff_id,
+      p_secondary_staff_id: params.secondary_staff_id,
+      p_booking_date: params.booking_date,
+      p_start_time: params.start_time
     })
 
-    if (error) {
-      // Couples booking error - re-throw for proper handling
-      throw error
-    }
-    
+    if (error) throw error
+    return data
+  },
+
+  // Diagnose booking conflicts
+  async diagnoseBookingConflicts(date: string, startTime: string, duration: number) {
+    const { data, error } = await supabase.rpc('diagnose_booking_conflicts', {
+      p_date: date,
+      p_start_time: startTime,
+      p_duration: duration
+    })
+
+    if (error) throw error
     return data
   },
 
