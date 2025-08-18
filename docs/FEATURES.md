@@ -1,4 +1,4 @@
-# Complete Feature List - Dermal Spa Booking System v1.1.0
+# Complete Feature List - Dermal Spa Booking System v1.2.0
 
 ## 🎯 Core Booking Features
 
@@ -53,6 +53,15 @@
 - **Customer Details**: View complete customer information
 - **Payment Tracking**: Monitor payment status
 - **Bulk Operations**: Update multiple bookings at once
+
+### Enhanced Booking Management (v1.2.0)
+- **Standardized Details Modal**: Click any booking card to view/manage
+- **Cancel Functionality**: Soft delete with reason tracking
+- **Delete Functionality**: Admin-only permanent removal
+- **Automatic Timestamps**: cancelled_at, completed_at auto-set
+- **Cancellation Reasons**: Track why bookings were cancelled
+- **Audit Trail**: Complete history of all status changes
+- **Confirmation Dialogs**: Prevent accidental cancellations
 
 ### Monitor Mode (`/admin/monitor`)
 - **Real-time Display**: Live booking updates
@@ -226,6 +235,15 @@
 - **Error Messages**: Helpful error guidance
 - **Mobile-First**: Optimized for phones
 - **Fast Performance**: Quick page loads
+
+### Enhanced Phone Input (v1.2.0)
+- **Auto-Formatting**: Guam format `(671) XXX-XXXX` applied as you type
+- **Smart Validation**: Only accepts valid Guam phone numbers
+- **Paste Support**: Automatically formats pasted numbers
+- **Mobile Optimized**: Numeric keyboard on mobile devices
+- **Visual Indicators**: Green check for valid, red for invalid
+- **7-Digit Support**: Accepts local numbers (auto-adds 671)
+- **Real-time Feedback**: Instant validation messages
 
 ## 📈 Analytics & Reporting
 

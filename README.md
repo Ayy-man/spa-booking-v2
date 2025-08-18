@@ -2,18 +2,25 @@
 
 A comprehensive medical spa booking system built for Dermal Skin Clinic and Spa Guam. This production-ready application provides online booking, staff management, room assignment, and administrative tools.
 
-## 🎉 **PRODUCTION v1.1.0 - READY FOR DEPLOYMENT**
+## 🎉 **PRODUCTION v1.2.0 - READY FOR DEPLOYMENT**
 
-**Status**: ✅ **Production Ready with Couples Booking & Enhanced Admin Features**  
-**Version**: v1.1.0 (Couples Booking System & Visual Indicators)  
-**Last Updated**: August 17, 2025  
+**Status**: ✅ **Production Ready with Enhanced Phone Input & Complete Booking Management**  
+**Version**: v1.2.0 (Phone Formatting & Booking Cancellation System)  
+**Last Updated**: August 19, 2025  
 **Deployment Status**: Ready for immediate live deployment  
-**New Features**: 
-- 💑 **Couples Booking System** - Fixed single-slot implementation preventing double-booking errors
-- 📊 **Daily Reports & Analytics** - Automated daily summaries with email delivery
-- ⚡ **Quick Add Appointments** - Fast appointment creation from staff schedule view
-- 🟣 **Couples Visual Indicators** - Purple badges across all admin views for easy identification
-- 🌙 **Complete Dark Mode Support** - Full theme toggle with accessibility  
+**New Features in v1.2.0**: 
+- 📱 **Enhanced Phone Input** - Auto-formatting for Guam (671) with real-time validation
+- ❌ **Complete Cancellation System** - Proper tracking with timestamps and reasons
+- 🎯 **Booking Details Modal** - Standardized management interface across all views
+- ✅ **Quick Add Fixed** - Resolved duration constraint errors
+- 🔧 **Optional Last Names** - Support for single-name customers
+
+**Previous v1.1.0 Features**:
+- 💑 **Couples Booking System** - Fixed single-slot implementation
+- 📊 **Daily Reports & Analytics** - Automated daily summaries
+- ⚡ **Quick Add Appointments** - Fast appointment creation
+- 🟣 **Couples Visual Indicators** - Purple badges across admin views
+- 🌙 **Complete Dark Mode Support** - Full theme toggle  
 **Security Status**: ✅ **Secured** - Comprehensive security assessment completed  
 **Test Coverage**: ✅ **70%+** - Meeting all coverage requirements
 
@@ -25,10 +32,12 @@ This booking system handles complex spa scheduling with:
 - **4 Staff Members**: Each with specific capabilities and schedules
 - **Smart Room Assignment**: Automatic room allocation based on service type
 - **Mobile-First Design**: Optimized for mobile booking experience with dark mode
+- **📱 Smart Phone Input**: Auto-formatting for Guam (671) with real-time validation
 - **🌙 Dark Mode Support**: Complete light/dark theme toggle with accessibility compliance
 - **Theme Persistence**: User preferences saved across sessions
 - **💑 Couples Booking**: Single-slot implementation for simultaneous bookings (prevents room conflicts)
 - **Enhanced Admin Panel**: Professional light-mode interface for staff
+- **❌ Complete Cancellation System**: Proper tracking with timestamps and reasons
 - **Real-time Monitoring**: Live booking tracking and management
 - **WCAG AA Accessibility**: Compliant in both light and dark themes
 - **Advanced Security**: Comprehensive security measures and monitoring

@@ -67,6 +67,7 @@ CREATE TABLE public.booking_errors (
   customer_name text,
   customer_email text,
   customer_phone text,
+  customer_phone_formatted text,  -- Display format: (671) XXX-XXXX
   service_name text,
   service_id text,
   appointment_date date,
@@ -112,13 +113,15 @@ CREATE TABLE public.customers (
   first_name text NOT NULL,
   last_name text,  -- OPTIONAL: Supports single-name customers
   email text UNIQUE,
-  phone text NOT NULL,
+  phone text NOT NULL,  -- Normalized format: 671XXXXXXX
+  phone_formatted text,  -- Display format: (671) XXX-XXXX
   date_of_birth date,
   address text,
   city text,
   postal_code text,
   emergency_contact_name text,
   emergency_contact_phone text,
+  emergency_contact_phone_formatted text,  -- Display format: (671) XXX-XXXX
   medical_conditions text,
   allergies text,
   skin_type text,
@@ -430,7 +433,8 @@ CREATE TABLE public.walk_ins (
   booking_id uuid,
   customer_name text NOT NULL,
   customer_email text,
-  customer_phone text NOT NULL,
+  customer_phone text NOT NULL,  -- Normalized format: 671XXXXXXX
+  customer_phone_formatted text,  -- Display format: (671) XXX-XXXX
   service_name text NOT NULL,
   service_category text NOT NULL,
   scheduling_type text NOT NULL DEFAULT 'immediate'::text,
@@ -650,6 +654,13 @@ This schema represents the current production database structure and includes:
 - ✅ Audit and compliance features
 - ✅ Couples booking single-slot implementation (v1.1.0)
 
-**Last Schema Verification**: August 18, 2025
+**Last Schema Verification**: August 19, 2025
 **Production Status**: Active and Deployed
-**Latest Migration**: 039_make_last_name_optional.sql (Single-name customer support)
+**Latest Migration**: 042_add_phone_formatted_column.sql (Enhanced phone formatting for Guam)
+
+## Recent Migrations
+
+- **039_make_last_name_optional.sql**: Makes the last_name field optional throughout the system
+- **040_add_booking_status_triggers.sql**: Automatic timestamp management for cancelled_at, completed_at, checked_in_at
+- **041_add_cancel_booking_function.sql**: RPC functions for proper booking cancellation with all fields
+- **042_add_phone_formatted_column.sql**: Phone formatting for Guam (671) with auto-format triggers

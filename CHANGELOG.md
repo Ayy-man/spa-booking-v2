@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-08-19
+
+### Added
+- **Enhanced Phone Number Input System for Guam (671)**
+  - Auto-formatting mask: `(671) XXX-XXXX` applied as user types
+  - Custom PhoneInput component with real-time validation
+  - Smart paste handling with automatic formatting
+  - Mobile-optimized with numeric keyboard (`inputMode="numeric"`)
+  - Visual feedback indicators (green check for valid, red for invalid)
+  - Support for 7-digit local, 10-digit with area code, and 11-digit formats
+  - Database stores both raw (`671XXXXXXX`) and formatted versions
+  - Auto-format triggers ensure consistency across all tables
+  - Components: CustomerForm, WalkInForm, StaffScheduleView Quick Add
+
+- **Complete Booking Cancellation System**
+  - Database triggers for automatic timestamp management
+  - RPC functions: `cancel_booking()`, `complete_booking()`, `checkin_booking()`
+  - Proper tracking of `cancelled_at`, `cancellation_reason` fields
+  - Admin-only delete functionality in BookingDetailsModal
+  - Soft delete (cancel) vs hard delete (remove) patterns
+  - Complete audit trail for all status changes
+
+- **Standardized Booking Management Modal**
+  - New `BookingDetailsModal` component for consistent booking management
+  - Integrated with TodaysSchedule and all admin views
+  - Cancel and Delete functionality with confirmation dialogs
+  - Comprehensive booking information display
+
+### Fixed
+- **Quick Add Duration Constraint Error**
+  - Issue: "null value in column 'duration' violates not-null constraint"
+  - Root Cause: Missing required fields (duration, total_price, discount, final_price)
+  - Solution: Added all required fields to Quick Add booking creation
+  - Added validation for service data before submission
+  - Improved error messages for better user experience
+
+- **Multiple TypeScript Build Errors**
+  - Fixed optional `last_name` handling in test-reminder-query route
+  - Fixed `simpleAuth.getRole()` method (changed to `isAuthenticated()`)
+  - Fixed BookingDetailsModal customer property typo
+  - Fixed booking cancellation field type mismatches
+  - All builds now pass successfully on Vercel
+
+- **Database Schema Type Mismatches**
+  - Issue: TypeScript Update types didn't include timestamp fields
+  - Solution: Implemented database triggers for automatic field management
+  - Created RPC functions to bypass TypeScript limitations
+
+### Changed
+- **Phone Validation**: Updated all schemas to validate specifically for Guam numbers
+- **Customer last_name**: Now optional throughout the entire system
+- **Booking Cancellation**: Now uses RPC functions for complete field tracking
+
+### Technical Details
+- **New Utilities**: `phone-utils.ts` with comprehensive formatting functions
+- **New Components**: `PhoneInput`, `BookingDetailsModal`
+- **Migrations Added**:
+  - 039: Make last_name optional
+  - 040: Add booking status triggers
+  - 041: Add cancel booking RPC function
+  - 042: Add phone_formatted columns
+- **Files Modified**: 15+ components and utilities
+- **Database Enhancements**: 4 new triggers, 3 RPC functions, 4 new columns
+
 ## [1.1.0] - 2025-08-17
 
 ### Added
