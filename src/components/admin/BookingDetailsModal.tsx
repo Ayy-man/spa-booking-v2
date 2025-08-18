@@ -19,7 +19,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicator"
 import { BookingWithRelations } from "@/types/booking"
-import { cancelBooking, deleteBooking } from "@/lib/admin-booking-logic"
+import { deleteBooking } from "@/lib/admin-booking-logic"
+import { cancelBookingRPC } from "@/lib/admin-booking-rpc"
 import { format } from "date-fns"
 import { 
   Calendar, 
@@ -64,7 +65,8 @@ export function BookingDetailsModal({
     setError(null)
     
     try {
-      const result = await cancelBooking(booking.id, cancellationReason)
+      // Use RPC function for proper cancellation with all fields
+      const result = await cancelBookingRPC(booking.id, cancellationReason)
       if (result.success) {
         setShowCancelDialog(false)
         setCancellationReason("")

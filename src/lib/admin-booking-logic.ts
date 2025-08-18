@@ -60,18 +60,29 @@ export async function cancelBooking(
   cancellationReason?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    // First, get the current booking to preserve existing internal notes
+    const { data: currentBooking, error: fetchError } = await supabase
+      .from('bookings')
+      .select('internal_notes')
+      .eq('id', bookingId)
+      .single()
+    
+    if (fetchError) throw fetchError
+    
+    // Prepare the update data
     const updateData: BookingUpdate = {
       status: 'cancelled',
-      // Note: cancelled_at field is not in the Update type, only in Row type
-      // It would need to be handled by a database trigger or stored procedure
-      // cancellation_reason field also doesn't exist in Update type
-      internal_notes: `Cancelled: ${cancellationReason || 'Cancelled by admin'}`,
+      // The database trigger will automatically set cancelled_at and extract cancellation_reason
+      // We store it in internal_notes with "Cancelled:" prefix for the trigger to extract
+      internal_notes: cancellationReason 
+        ? `Cancelled: ${cancellationReason}`
+        : 'Cancelled: Cancelled by admin',
       updated_at: new Date().toISOString()
     }
-
-    // If there's a specific reason, also add it to internal notes
-    if (cancellationReason) {
-      updateData.internal_notes = `Cancelled: ${cancellationReason}`
+    
+    // If there were existing internal notes, append them
+    if (currentBooking?.internal_notes && !currentBooking.internal_notes.startsWith('Cancelled:')) {
+      updateData.internal_notes = `${updateData.internal_notes}\n\nPrevious notes: ${currentBooking.internal_notes}`
     }
 
     const { error } = await supabase
