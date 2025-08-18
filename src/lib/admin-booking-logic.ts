@@ -62,8 +62,10 @@ export async function cancelBooking(
   try {
     const updateData: BookingUpdate = {
       status: 'cancelled',
-      cancelled_at: new Date().toISOString(),
-      cancellation_reason: cancellationReason || 'Cancelled by admin',
+      // Note: cancelled_at field is not in the Update type, only in Row type
+      // It would need to be handled by a database trigger or stored procedure
+      // cancellation_reason field also doesn't exist in Update type
+      internal_notes: `Cancelled: ${cancellationReason || 'Cancelled by admin'}`,
       updated_at: new Date().toISOString()
     }
 

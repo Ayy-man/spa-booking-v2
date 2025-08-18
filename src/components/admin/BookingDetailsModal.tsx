@@ -55,7 +55,7 @@ export function BookingDetailsModal({
   const [error, setError] = useState<string | null>(null)
 
   // Check if user is admin for delete functionality
-  const isAdmin = simpleAuth.getRole() === 'admin'
+  const isAdmin = simpleAuth.isAuthenticated()
 
   if (!booking) return null
 
@@ -113,7 +113,7 @@ export function BookingDetailsModal({
   }
 
   // Get customer details
-  const customer = booking.customers || booking.customer
+  const customer = booking.customer
   const customerName = customer 
     ? (customer.last_name 
       ? `${customer.first_name} ${customer.last_name}`
