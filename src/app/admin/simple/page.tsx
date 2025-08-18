@@ -22,6 +22,7 @@ interface Booking {
 
 export default function SimpleAdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
+  const [cancelledBookings, setCancelledBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -62,7 +63,12 @@ export default function SimpleAdminPage() {
         room_name: booking.room?.name
       })) || []
 
-      setBookings(formattedBookings)
+      // Separate active and cancelled bookings
+      const activeBookings = formattedBookings.filter(b => b.status !== 'cancelled')
+      const cancelledBookings = formattedBookings.filter(b => b.status === 'cancelled')
+
+      setBookings(activeBookings)
+      setCancelledBookings(cancelledBookings)
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -160,6 +166,28 @@ export default function SimpleAdminPage() {
     }
   }
 
+  const restoreBooking = async (booking: Booking) => {
+    try {
+      // Update booking status back to confirmed
+      const { error } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'confirmed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', booking.id)
+
+      if (error) throw error
+
+      alert(`✅ Successfully restored ${booking.customer.first_name}'s booking to CONFIRMED status!`)
+      
+      // Refresh bookings
+      loadBookings()
+    } catch (err: any) {
+      alert('Error restoring booking: ' + err.message)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
@@ -205,7 +233,7 @@ export default function SimpleAdminPage() {
             </h2>
             
             {bookings.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No bookings for today</p>
+              <p className="text-gray-500 text-center py-8">No active bookings for today</p>
             ) : (
               <div className="space-y-4">
                 {bookings.map((booking) => (
@@ -252,6 +280,50 @@ export default function SimpleAdminPage() {
             )}
           </div>
         </div>
+
+        {/* Cancelled Bookings Section */}
+        {cancelledBookings.length > 0 && (
+          <div className="bg-white rounded-lg shadow mt-6">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-4 text-red-600">
+                Cancelled Bookings ({cancelledBookings.length})
+              </h2>
+              
+              <div className="space-y-4">
+                {cancelledBookings.map((booking) => (
+                  <div key={booking.id} className="border border-red-200 rounded-lg p-4 bg-red-50">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg text-red-800">
+                          {booking.customer.first_name} {booking.customer.last_name}
+                        </h3>
+                        <p className="text-red-600">{booking.customer.email}</p>
+                        {booking.customer.phone && (
+                          <p className="text-red-600">{booking.customer.phone}</p>
+                        )}
+                        <div className="mt-2 text-sm text-red-700">
+                          <p><strong>Service:</strong> {booking.service_name}</p>
+                          <p><strong>Staff:</strong> {booking.staff_name}</p>
+                          <p><strong>Room:</strong> {booking.room_name}</p>
+                          <p><strong>Time:</strong> {booking.start_time}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-col items-end">
+                        <button
+                          onClick={() => restoreBooking(booking)}
+                          className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors"
+                        >
+                          🔄 Restore Booking
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

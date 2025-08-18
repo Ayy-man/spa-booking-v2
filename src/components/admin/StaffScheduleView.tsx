@@ -10,8 +10,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { PhoneInput } from "@/components/ui/phone-input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { normalizePhoneForDB } from "@/lib/phone-utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
 import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2, Users } from "lucide-react"
 import { format } from "date-fns"
@@ -338,7 +340,7 @@ export function StaffScheduleView({
           .insert({
             first_name: quickAddForm.customerFirstName,
             last_name: quickAddForm.customerLastName,
-            phone: quickAddForm.customerPhone,
+            phone: normalizePhoneForDB(quickAddForm.customerPhone),
             email: quickAddForm.customerEmail || null
           })
           .select()
@@ -885,10 +887,14 @@ export function StaffScheduleView({
                       onChange={(e) => setQuickAddForm({ ...quickAddForm, customerLastName: e.target.value })}
                     />
                   </div>
-                  <Input
+                  <PhoneInput
                     placeholder="Phone *"
                     value={quickAddForm.customerPhone}
-                    onChange={(e) => setQuickAddForm({ ...quickAddForm, customerPhone: e.target.value })}
+                    onChange={(rawValue, formatted) => {
+                      setQuickAddForm({ ...quickAddForm, customerPhone: formatted })
+                    }}
+                    returnRawValue={false}
+                    autoFormat={true}
                   />
                   <Input
                     placeholder="Email (optional)"

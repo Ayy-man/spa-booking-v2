@@ -8,8 +8,10 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PhoneInput } from '@/components/ui/phone-input'
 import { CheckCircleIcon, AlertCircleIcon } from 'lucide-react'
 import { ButtonLoading } from '@/components/ui/loading-spinner'
+import { validateGuamPhone, normalizePhoneForDB } from '@/lib/phone-utils'
 
 const customerFormSchema = z.object({
   name: z.string()
@@ -21,8 +23,9 @@ const customerFormSchema = z.object({
     .max(100, 'Email must be less than 100 characters'),
   phone: z.string()
     .min(1, 'Phone number is required')
-    .refine((val) => /^\+?[\d\s\-\(\)]{10,15}$/.test(val), {
-      message: 'Please enter a valid phone number'
+    .transform((val) => normalizePhoneForDB(val))
+    .refine((val) => validateGuamPhone(val), {
+      message: 'Please enter a valid Guam phone number'
     }),
   specialRequests: z.string()
     .max(500, 'Special requests must be less than 500 characters')
@@ -46,7 +49,8 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
     handleSubmit,
     formState: { errors, isValid, touchedFields },
     watch,
-    setValue
+    setValue,
+    trigger
   } = useForm<CustomerFormData>({
     resolver: zodResolver(customerFormSchema),
     defaultValues: {
@@ -182,33 +186,23 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
           <Label htmlFor="phone" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Phone Number *
           </Label>
-          <div className="relative">
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="Enter your phone number"
-              className={getInputClasses('phone')}
-              {...register('phone')}
-            />
-            {getFieldStatus('phone') === 'success' && (
-              <CheckCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-success" />
-            )}
-            {getFieldStatus('phone') === 'error' && (
-              <AlertCircleIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-error" />
-            )}
-          </div>
-          {errors.phone && (
-            <p className="text-sm text-error mt-1 flex items-center gap-1">
-              <AlertCircleIcon className="w-4 h-4" />
-              {errors.phone.message}
-            </p>
-          )}
-          {getFieldStatus('phone') === 'success' && (
-            <p className="text-sm text-success mt-1 flex items-center gap-1">
-              <CheckCircleIcon className="w-4 h-4" />
-              Valid phone number
-            </p>
-          )}
+          <PhoneInput
+            id="phone"
+            value={watch('phone') || ''}
+            onChange={(rawValue, formatted, isValid) => {
+              setValue('phone', rawValue, { 
+                shouldValidate: true,
+                shouldDirty: true,
+                shouldTouch: true 
+              })
+            }}
+            onBlur={() => trigger('phone')}
+            error={!!errors.phone}
+            showError={true}
+            errorMessage={errors.phone?.message}
+            returnRawValue={true}
+            className={getInputClasses('phone')}
+          />
           <p className="text-xs text-gray-500 dark:text-gray-400">
             We may contact you if there are any changes to your appointment
           </p>
