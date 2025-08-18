@@ -17,6 +17,7 @@ interface BookingCardProps {
   showStaff?: boolean
   showDuration?: boolean
   className?: string
+  onClick?: () => void
 }
 
 export function BookingCard({ 
@@ -25,7 +26,8 @@ export function BookingCard({
   showRoom = true, 
   showStaff = true, 
   showDuration = true,
-  className 
+  className,
+  onClick
 }: BookingCardProps) {
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':')
@@ -73,13 +75,17 @@ export function BookingCard({
   const isSpecialRequest = isSpecialStaffRequest(booking)
 
   return (
-    <Card className={cn(
-      "bg-white border border-gray-200 hover:shadow-md transition-shadow relative",
-      getCardPadding(),
-      // Special request styling
-      isSpecialRequest && "ring-2 ring-amber-300 border-amber-300 bg-gradient-to-br from-amber-50 to-white",
-      className
-    )}>
+    <Card 
+      onClick={onClick}
+      className={cn(
+        "bg-white border border-gray-200 hover:shadow-md transition-shadow relative",
+        getCardPadding(),
+        // Special request styling
+        isSpecialRequest && "ring-2 ring-amber-300 border-amber-300 bg-gradient-to-br from-amber-50 to-white",
+        // Add cursor pointer and hover effect if clickable
+        onClick && "cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all",
+        className
+      )}>
       {/* Special Request Indicator */}
       {isSpecialRequest && (
         <div className="absolute -top-2 -right-2 z-10">
@@ -186,10 +192,12 @@ export function BookingCard({
           </div>
         )}
 
-        {/* Display-Only Notice */}
+        {/* Display-Only Notice or Click to View */}
         <div className="pt-2 border-t border-gray-100">
           <p className="text-xs text-gray-400 italic">
-            {size === 'lg' ? 'Customer details hidden for privacy • Display only' : 'Display only'}
+            {onClick 
+              ? 'Click to view details and manage booking' 
+              : (size === 'lg' ? 'Customer details hidden for privacy • Display only' : 'Display only')}
           </p>
         </div>
       </div>

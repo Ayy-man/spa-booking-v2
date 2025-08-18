@@ -84,7 +84,9 @@ export default function SimpleAdminPage() {
       const webhookResult = await ghlWebhookSender.sendShowNoShowWebhook(
         booking.id,
         {
-          name: booking.customer.first_name + ' ' + booking.customer.last_name,
+          name: booking.customer.last_name 
+            ? `${booking.customer.first_name} ${booking.customer.last_name}`
+            : booking.customer.first_name,
           email: booking.customer.email,
           phone: booking.customer.phone
         },
@@ -127,7 +129,9 @@ export default function SimpleAdminPage() {
       const webhookResult = await ghlWebhookSender.sendShowNoShowWebhook(
         booking.id,
         {
-          name: booking.customer.first_name + ' ' + booking.customer.last_name,
+          name: booking.customer.last_name 
+            ? `${booking.customer.first_name} ${booking.customer.last_name}`
+            : booking.customer.first_name,
           email: booking.customer.email,
           phone: booking.customer.phone
         },

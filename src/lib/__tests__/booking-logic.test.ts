@@ -26,25 +26,23 @@ import { Service, Staff, Room, Booking } from '@/types/booking'
 // Mock data based on actual seed data
 const mockRooms: Room[] = [
   {
-    id: '11111111-1111-1111-1111-111111111111',
+    id: 1,
     name: 'Room 1',
-    room_number: 1,
     capacity: 1,
     capabilities: ['facial', 'massage', 'waxing', 'body_treatment'],
-    has_body_scrub_equipment: false,
-    is_couples_room: false,
+    equipment: [],
+    features: [],
     is_active: true,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   },
   {
-    id: '22222222-2222-2222-2222-222222222222',
+    id: 2,
     name: 'Room 2',
-    room_number: 2,
     capacity: 2,
     capabilities: ['facial', 'massage', 'waxing', 'body_treatment'],
-    has_body_scrub_equipment: false,
-    is_couples_room: true,
+    equipment: [],
+    features: ['couples_room'],
     is_active: true,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'

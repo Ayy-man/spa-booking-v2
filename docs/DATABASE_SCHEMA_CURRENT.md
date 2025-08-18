@@ -54,14 +54,63 @@ CREATE TABLE public.admin_users (
 - Tracks creation and updates with audit trail
 - Self-referencing for admin user management
 
-### 2. Customers Table
+### 2. Booking Errors Table
+**Purpose**: Error tracking and resolution for failed bookings
+
+```sql
+CREATE TABLE public.booking_errors (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  error_type text NOT NULL,
+  error_message text NOT NULL,
+  error_details jsonb,
+  booking_data jsonb NOT NULL,
+  customer_name text,
+  customer_email text,
+  customer_phone text,
+  service_name text,
+  service_id text,
+  appointment_date date,
+  appointment_time time without time zone,
+  staff_name text,
+  staff_id text,
+  room_id integer,
+  secondary_service_name text,
+  secondary_service_id text,
+  secondary_staff_name text,
+  secondary_staff_id text,
+  user_agent text,
+  ip_address inet,
+  session_id text,
+  resolved_at timestamp with time zone,
+  resolved_by uuid,
+  resolution_notes text,
+  last_retry_at timestamp with time zone,
+  is_couples_booking boolean DEFAULT false,
+  resolved boolean DEFAULT false,
+  retry_count integer DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT booking_errors_pkey PRIMARY KEY (id)
+);
+```
+
+**Key Features**:
+- Comprehensive error tracking for failed booking attempts
+- Stores complete booking data for retry attempts
+- Resolution tracking with timestamps and notes
+- Couples booking error handling
+- Retry mechanism with count tracking
+- Session and IP tracking for debugging
+- Staff assignment error tracking
+
+### 3. Customers Table
 **Purpose**: Comprehensive customer profiles and contact management
 
 ```sql
 CREATE TABLE public.customers (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   first_name text NOT NULL,
-  last_name text NOT NULL,
+  last_name text,  -- OPTIONAL: Supports single-name customers
   email text UNIQUE,
   phone text NOT NULL,
   date_of_birth date,
@@ -90,13 +139,14 @@ CREATE TABLE public.customers (
 
 **Key Features**:
 - Comprehensive customer profile including medical information
+- **Optional last_name field** - Supports single-name customers (v1.1.1)
 - Marketing consent tracking for GDPR compliance
 - Visit and spending analytics
 - Emergency contact information for safety
 - Flexible preferences stored as JSONB
 - Integration with authentication system
 
-### 3. Services Table
+### 4. Services Table
 **Purpose**: Complete spa service catalog with categorization
 
 ```sql
@@ -104,7 +154,7 @@ CREATE TABLE public.services (
   id text NOT NULL,
   name text NOT NULL,
   description text,
-  category USER-DEFINED NOT NULL,
+  category service_category NOT NULL,
   duration integer NOT NULL CHECK (duration > 0),
   price numeric NOT NULL CHECK (price >= 0::numeric),
   requires_room_3 boolean DEFAULT false,
@@ -131,7 +181,7 @@ CREATE TABLE public.services (
 - Marketing flags (popular, recommended)
 - Service capabilities array for advanced matching
 
-### 4. Rooms Table
+### 5. Rooms Table
 **Purpose**: Treatment room management with equipment and capacity tracking
 
 ```sql
@@ -157,7 +207,7 @@ CREATE TABLE public.rooms (
 - Features array for room amenities
 - Active/inactive status management
 
-### 5. Staff Table
+### 6. Staff Table
 **Purpose**: Staff member profiles, capabilities, and scheduling
 
 ```sql
@@ -193,7 +243,7 @@ CREATE TABLE public.staff (
 - Hourly rate tracking for payroll
 - Integration with authentication system
 
-### 6. Staff Schedules Table
+### 7. Staff Schedules Table
 **Purpose**: Daily staff schedule and availability management
 
 ```sql
@@ -221,7 +271,7 @@ CREATE TABLE public.staff_schedules (
 - Notes for special scheduling needs
 - Date-specific scheduling
 
-### 7. Bookings Table (Core Entity)
+### 8. Bookings Table (Core Entity)
 **Purpose**: Central booking management with comprehensive tracking
 
 ```sql
@@ -273,7 +323,7 @@ CREATE TABLE public.bookings (
 - Internal notes separate from customer-visible notes
 - Flexible payment options
 
-### 8. Payments Table
+### 9. Payments Table
 **Purpose**: Payment transaction tracking and management
 
 ```sql
@@ -300,7 +350,7 @@ CREATE TABLE public.payments (
 - Payment status lifecycle management
 - Processing timestamp for reconciliation
 
-### 9. Service Packages Table
+### 10. Service Packages Table
 **Purpose**: Service bundling and package deal management
 
 ```sql
@@ -328,7 +378,7 @@ CREATE TABLE public.service_packages (
 - Total duration calculation for scheduling
 - Package pricing vs individual pricing
 
-### 10. Waivers Table
+### 11. Waivers Table
 **Purpose**: Digital waiver management and liability protection
 
 ```sql
@@ -370,7 +420,7 @@ CREATE TABLE public.waivers (
 - Pregnancy and medical condition tracking
 - Previous treatment history
 
-### 11. Walk-ins Table
+### 12. Walk-ins Table
 **Purpose**: Walk-in customer management and immediate booking
 
 ```sql
@@ -559,6 +609,36 @@ CREATE INDEX idx_staff_schedules_date_staff ON staff_schedules(date, staff_id);
 - Status change timestamps (checked_in_at, completed_at, etc.)
 - Internal notes for staff communications
 
+## Database Functions
+
+### process_couples_booking_single_slot
+**Purpose**: Creates a single booking record for couples services to prevent room double-booking
+
+```sql
+CREATE OR REPLACE FUNCTION process_couples_booking_single_slot(
+  p_customer1_id uuid,
+  p_customer2_id uuid,
+  p_primary_service_id text,
+  p_secondary_service_id text,
+  p_staff1_id text,
+  p_staff2_id text,
+  p_room_id integer,
+  p_appointment_date date,
+  p_start_time time,
+  p_end_time time,
+  p_booking_group_id uuid,
+  p_notes text DEFAULT NULL
+) RETURNS jsonb AS $$
+```
+
+**Key Features**:
+- Creates ONE booking record instead of two to prevent constraint violations
+- Stores both services in `internal_notes` as JSON
+- Maintains couples booking tracking via `booking_type` and `booking_group_id`
+- Prevents "Room already booked" errors for couples bookings
+
+**Migration**: Added in `038_couples_single_slot_fix.sql`
+
 ## Production Readiness
 
 This schema represents the current production database structure and includes:
@@ -568,6 +648,8 @@ This schema represents the current production database structure and includes:
 - ✅ Performance optimization support
 - ✅ Integration with external systems
 - ✅ Audit and compliance features
+- ✅ Couples booking single-slot implementation (v1.1.0)
 
-**Last Schema Verification**: January 2025
+**Last Schema Verification**: August 18, 2025
 **Production Status**: Active and Deployed
+**Latest Migration**: 039_make_last_name_optional.sql (Single-name customer support)

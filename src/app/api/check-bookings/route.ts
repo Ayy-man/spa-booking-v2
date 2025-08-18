@@ -29,7 +29,9 @@ export async function GET() {
       bookings: bookings || [],
       summary: bookings?.map(b => ({
         id: b.id,
-        customer: b.customer?.first_name + ' ' + b.customer?.last_name,
+        customer: b.customer?.last_name 
+          ? `${b.customer?.first_name} ${b.customer?.last_name}`
+          : b.customer?.first_name || 'Unknown',
         service: b.service?.name,
         staff: b.staff?.name,
         room: b.room?.name,

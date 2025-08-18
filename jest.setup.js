@@ -53,31 +53,22 @@ const localStorageMock = {
 }
 global.localStorage = localStorageMock
 
-// Mock window.location only if not already defined
-if (!window.location) {
-  Object.defineProperty(window, 'location', {
-    value: {
-      href: 'http://localhost:3000',
-      hostname: 'localhost',
-      pathname: '/',
-      search: '',
-      hash: '',
-      reload: jest.fn(),
-      assign: jest.fn(),
-    },
-    writable: true,
-    configurable: true
-  })
-} else {
-  // Update existing location mock
-  window.location.href = 'http://localhost:3000'
-  window.location.hostname = 'localhost'
-  window.location.pathname = '/'
-  window.location.search = ''
-  window.location.hash = ''
-  if (!window.location.reload) window.location.reload = jest.fn()
-  if (!window.location.assign) window.location.assign = jest.fn()
-}
+// Mock window.location properly for JSDOM
+Object.defineProperty(window, 'location', {
+  value: {
+    href: 'http://localhost:3000',
+    hostname: 'localhost',
+    pathname: '/',
+    search: '',
+    hash: '',
+    reload: jest.fn(),
+    assign: jest.fn(),
+    replace: jest.fn(),
+    toString: jest.fn(() => 'http://localhost:3000'),
+  },
+  writable: true,
+  configurable: true
+})
 
 // Mock fetch globally
 global.fetch = jest.fn()

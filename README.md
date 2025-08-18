@@ -2,15 +2,17 @@
 
 A comprehensive medical spa booking system built for Dermal Skin Clinic and Spa Guam. This production-ready application provides online booking, staff management, room assignment, and administrative tools.
 
-## 🎉 **PRODUCTION v1.0.3 - READY FOR DEPLOYMENT**
+## 🎉 **PRODUCTION v1.1.0 - READY FOR DEPLOYMENT**
 
-**Status**: ✅ **Production Ready with Daily Reports & Analytics**  
-**Version**: v1.0.3 (Daily Reports & Quick Add Features)  
+**Status**: ✅ **Production Ready with Couples Booking & Enhanced Admin Features**  
+**Version**: v1.1.0 (Couples Booking System & Visual Indicators)  
 **Last Updated**: August 17, 2025  
 **Deployment Status**: Ready for immediate live deployment  
 **New Features**: 
+- 💑 **Couples Booking System** - Fixed single-slot implementation preventing double-booking errors
 - 📊 **Daily Reports & Analytics** - Automated daily summaries with email delivery
 - ⚡ **Quick Add Appointments** - Fast appointment creation from staff schedule view
+- 🟣 **Couples Visual Indicators** - Purple badges across all admin views for easy identification
 - 🌙 **Complete Dark Mode Support** - Full theme toggle with accessibility  
 **Security Status**: ✅ **Secured** - Comprehensive security assessment completed  
 **Test Coverage**: ✅ **70%+** - Meeting all coverage requirements
@@ -25,7 +27,7 @@ This booking system handles complex spa scheduling with:
 - **Mobile-First Design**: Optimized for mobile booking experience with dark mode
 - **🌙 Dark Mode Support**: Complete light/dark theme toggle with accessibility compliance
 - **Theme Persistence**: User preferences saved across sessions
-- **Couples Booking**: Book appointments for two people simultaneously
+- **💑 Couples Booking**: Single-slot implementation for simultaneous bookings (prevents room conflicts)
 - **Enhanced Admin Panel**: Professional light-mode interface for staff
 - **Real-time Monitoring**: Live booking tracking and management
 - **WCAG AA Accessibility**: Compliant in both light and dark themes
@@ -177,12 +179,15 @@ The system includes a comprehensive admin panel with authentication:
 3. **Single Services**: Any available room
 4. **Staff Default Rooms**: Selma (Room 1), Tanisha (Room 2), Robyn (Room 3)
 
-### Couples Booking Feature
+### Couples Booking Feature (v1.1.0 - Enhanced)
+- **Single-Slot Implementation**: Prevents "Room already booked" errors
 - Toggle between single and couples booking modes
 - Select same or different services for each person
 - Choose same or different staff members
-- Automatic assignment to couples-capable rooms
+- Automatic assignment to couples-capable rooms (Room 2 or 3)
 - Synchronized booking management with group tracking
+- **Visual Indicators**: Purple badges with Users icon across all admin views
+- **Database Fix**: Migration 038 resolves duplicate booking conflicts
 
 ### Staff Capabilities
 - **Selma**: All facials except dermaplaning
@@ -336,6 +341,8 @@ Run migrations in order from `/supabase/migrations/`:
 -- 6. Couples booking (006_couples_booking_support.sql)
 -- 7. Fix couples function (007_fix_couples_booking_function.sql)
 -- 8. Admin users table (008_admin_users_table.sql)
+-- ... (additional migrations up to)
+-- 38. Couples single slot fix (038_couples_single_slot_fix.sql)
 ```
 
 #### 3. Security Configuration
@@ -476,7 +483,9 @@ This project is proprietary software for medical spa services.
 
 ## Recent Feature Highlights
 
-### 🎉 New Features Added
+### 🎉 New Features Added (v1.1.0)
+- **💑 Couples Booking Fix**: Single-slot implementation prevents room double-booking errors
+- **🟣 Couples Visual Indicators**: Purple badges across all admin views (dashboard, timeline, schedules)
 - **Daily Reports & Analytics**: Comprehensive business metrics with automated email delivery
 - **Quick Add Appointments**: Fast appointment creation from staff schedule view
 - **n8n Integration**: Webhook-based email automation for daily reports
@@ -485,6 +494,8 @@ This project is proprietary software for medical spa services.
 - **Advanced Payment Tracking**: Comprehensive payment system with multiple payment methods
 - **Debug Tools**: Administrative debug tools for booking conflict resolution
 - **Enhanced Admin Layout**: Improved admin panel with better navigation and functionality
+- **Time Slot Frequency Fix**: 30-minute intervals for 60+ minute services (massages)
+- **Error Tracking System**: Comprehensive failed booking tracking with RLS policies
 
 ### 🔒 Security Enhancements
 - **Comprehensive Security Assessment**: Full security review completed with 95% rating
@@ -496,6 +507,37 @@ This project is proprietary software for medical spa services.
 For complete change history, see [`CHANGELOG.md`](./CHANGELOG.md)
 
 ## Technical Changelog
+
+### v1.1.0 - Couples Booking System Enhancement (August 17, 2025)
+
+#### Critical Issues Resolved
+1. **Couples Booking Room Conflict**
+   - **Issue**: "Room is already booked at this time" error when creating couples bookings
+   - **Root Cause**: System was creating TWO booking records for same room/time
+   - **Resolution**: Single-slot implementation - one booking record represents both services
+   - **Migration**: `038_couples_single_slot_fix.sql`
+   - **Impact**: Couples bookings now work without constraint violations
+
+2. **Time Slot Display Frequency**
+   - **Issue**: 15-minute slots too frequent for longer services like massages
+   - **Resolution**: Dynamic intervals - 30 minutes for 60+ minute services
+   - **Impact**: Better user experience, less overwhelming time selection
+
+3. **Visual Identification**
+   - **Issue**: Hard to identify couples bookings in admin views
+   - **Resolution**: Added purple badges with Users icon across all admin components
+   - **Impact**: Easy visual identification of couples bookings
+
+#### Technical Implementation
+- **Database Changes**:
+  - Migration 038: `process_couples_booking_single_slot` function
+  - Stores both services in `internal_notes` as JSON
+  - Single booking record prevents constraint violations
+
+- **Component Updates**:
+  - `CouplesBookingIndicator` component for consistent visual markers
+  - Added to: BookingCard, StaffSchedule, RoomTimeline, StaffScheduleView
+  - Purple color scheme (bg-purple-500) for brand consistency
 
 ### v1.2.0 - Major Database Schema Fixes and Security Enhancements (August 6, 2025)
 

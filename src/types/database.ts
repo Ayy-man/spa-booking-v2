@@ -11,6 +11,107 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      booking_errors: {
+        Row: {
+          id: string
+          error_type: string
+          error_message: string
+          error_details: Json | null
+          booking_data: Json
+          customer_name: string | null
+          customer_email: string | null
+          customer_phone: string | null
+          service_name: string | null
+          service_id: string | null
+          appointment_date: string | null
+          appointment_time: string | null
+          staff_name: string | null
+          staff_id: string | null
+          room_id: number | null
+          secondary_service_name: string | null
+          secondary_service_id: string | null
+          secondary_staff_name: string | null
+          secondary_staff_id: string | null
+          user_agent: string | null
+          ip_address: string | null
+          session_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resolution_notes: string | null
+          last_retry_at: string | null
+          is_couples_booking: boolean
+          resolved: boolean
+          retry_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          error_type: string
+          error_message: string
+          error_details?: Json | null
+          booking_data: Json
+          customer_name?: string | null
+          customer_email?: string | null
+          customer_phone?: string | null
+          service_name?: string | null
+          service_id?: string | null
+          appointment_date?: string | null
+          appointment_time?: string | null
+          staff_name?: string | null
+          staff_id?: string | null
+          room_id?: number | null
+          secondary_service_name?: string | null
+          secondary_service_id?: string | null
+          secondary_staff_name?: string | null
+          secondary_staff_id?: string | null
+          user_agent?: string | null
+          ip_address?: string | null
+          session_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolution_notes?: string | null
+          last_retry_at?: string | null
+          is_couples_booking?: boolean
+          resolved?: boolean
+          retry_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          error_type?: string
+          error_message?: string
+          error_details?: Json | null
+          booking_data?: Json
+          customer_name?: string | null
+          customer_email?: string | null
+          customer_phone?: string | null
+          service_name?: string | null
+          service_id?: string | null
+          appointment_date?: string | null
+          appointment_time?: string | null
+          staff_name?: string | null
+          staff_id?: string | null
+          room_id?: number | null
+          secondary_service_name?: string | null
+          secondary_service_id?: string | null
+          secondary_staff_name?: string | null
+          secondary_staff_id?: string | null
+          user_agent?: string | null
+          ip_address?: string | null
+          session_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolution_notes?: string | null
+          last_retry_at?: string | null
+          is_couples_booking?: boolean
+          resolved?: boolean
+          retry_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
       bookings: {
         Row: {
           id: string
@@ -102,7 +203,7 @@ export interface Database {
         Row: {
           id: string
           first_name: string
-          last_name: string
+          last_name: string | null
           email: string | null
           phone: string
           date_of_birth: string | null
@@ -129,7 +230,7 @@ export interface Database {
         Insert: {
           id?: string
           first_name: string
-          last_name: string
+          last_name?: string | null
           email?: string | null
           phone: string
           date_of_birth?: string | null
@@ -156,7 +257,7 @@ export interface Database {
         Update: {
           id?: string
           first_name?: string
-          last_name?: string
+          last_name?: string | null
           email?: string | null
           phone?: string
           date_of_birth?: string | null

@@ -54,6 +54,74 @@ export async function markAsNoShow(
   return updateBookingStatus(bookingId, 'no_show', internalNotes)
 }
 
+// Cancel booking function
+export async function cancelBooking(
+  bookingId: string,
+  cancellationReason?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const updateData: BookingUpdate = {
+      status: 'cancelled',
+      cancelled_at: new Date().toISOString(),
+      cancellation_reason: cancellationReason || 'Cancelled by admin',
+      updated_at: new Date().toISOString()
+    }
+
+    // If there's a specific reason, also add it to internal notes
+    if (cancellationReason) {
+      updateData.internal_notes = `Cancelled: ${cancellationReason}`
+    }
+
+    const { error } = await supabase
+      .from('bookings')
+      .update(updateData)
+      .eq('id', bookingId)
+
+    if (error) throw error
+
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
+// Delete booking function (permanent removal)
+export async function deleteBooking(
+  bookingId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // First delete any related payments
+    await supabase
+      .from('payments')
+      .delete()
+      .eq('booking_id', bookingId)
+
+    // Delete any related walk-ins
+    await supabase
+      .from('walk_ins')
+      .delete()
+      .eq('booking_id', bookingId)
+
+    // Delete any related waivers
+    await supabase
+      .from('waivers')
+      .delete()
+      .eq('booking_id', bookingId)
+
+    // Finally delete the booking itself
+    const { error } = await supabase
+      .from('bookings')
+      .delete()
+      .eq('id', bookingId)
+
+    if (error) throw error
+
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
+  }
+}
+
 // Walk-in booking creation
 export async function createWalkInBooking(
   serviceId: string,
@@ -127,13 +195,13 @@ export async function createWalkInBooking(
       // Create new customer
       const nameParts = customerName.trim().split(' ')
       const firstName = nameParts[0] || ''
-      const lastName = nameParts.slice(1).join(' ') || ''
+      const lastName = nameParts.slice(1).join(' ') || null // Allow null for single-name customers
       
       const { data: newCustomer, error: customerError } = await supabase
         .from('customers')
         .insert({
           first_name: firstName,
-          last_name: lastName,
+          last_name: lastName, // Can be null for single-name customers
           email: finalCustomerEmail,
           phone: customerPhone.trim() || null,
           marketing_consent: false,

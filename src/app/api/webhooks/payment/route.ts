@@ -589,7 +589,9 @@ async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
       await ghlWebhookSender.sendBookingConfirmationWebhook(
         bookingId,
         {
-          name: `${booking.customers.first_name} ${booking.customers.last_name}`,
+          name: booking.customers.last_name 
+            ? `${booking.customers.first_name} ${booking.customers.last_name}`
+            : booking.customers.first_name,
           email: booking.customers.email,
           phone: booking.customers.phone,
           isNewCustomer: false

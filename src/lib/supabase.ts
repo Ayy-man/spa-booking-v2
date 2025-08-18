@@ -127,7 +127,7 @@ export const supabaseClient = {
     // Split customer name into first and last name
     const nameParts = booking.customer_name.trim().split(' ')
     const firstName = nameParts[0] || ''
-    const lastName = nameParts.slice(1).join(' ') || ''
+    const lastName = nameParts.slice(1).join(' ') || null // Allow null for single-name customers
 
     // Create or find customer
     let customerId: string
@@ -163,7 +163,7 @@ export const supabaseClient = {
         .from('customers')
         .insert({
           first_name: firstName,
-          last_name: lastName,
+          last_name: lastName, // Can be null for single-name customers
           email: booking.customer_email,
           phone: booking.customer_phone || null,
           marketing_consent: false,

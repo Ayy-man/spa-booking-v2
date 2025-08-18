@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-08-17
+
+### Added
+- **Couples Booking Visual Indicators**: Purple badges with Users icon across all admin views
+  - Added to BookingCard, StaffSchedule, RoomTimeline, StaffScheduleView components
+  - Consistent purple color scheme (bg-purple-500) for brand identity
+  - Clear visual differentiation from regular bookings
+- **Daily Reports & Analytics**: Comprehensive business metrics with automated email delivery
+- **Quick Add Appointments**: Fast appointment creation from staff schedule view
+- **n8n Integration**: Webhook-based email automation for daily reports
+- **Enhanced Documentation**: 
+  - USER_FEATURES_GUIDE.md - Comprehensive non-technical feature guide
+  - Updated all documentation to reflect v1.1.0 features
+
+### Fixed
+- **Critical: Couples Booking Room Conflict** 
+  - Issue: "Room is already booked at this time" error when creating couples bookings
+  - Root Cause: System was creating TWO booking records for same room/time
+  - Solution: Implemented single-slot approach - one booking record represents both services
+  - Migration: `038_couples_single_slot_fix.sql`
+  - Impact: Couples bookings now work without database constraint violations
+  
+- **Time Slot Display Frequency**
+  - Issue: 15-minute slots too frequent for longer services like massages
+  - Solution: Dynamic intervals - 30 minutes for 60+ minute services
+  - Impact: Better user experience, less overwhelming time selection
+
+- **Staff Availability Loading**
+  - Fixed infinite loading state on couples booking staff selection page
+  - Improved error handling and state management
+
+### Changed
+- **Database Function**: `process_couples_booking_single_slot`
+  - Stores both services in `internal_notes` as JSON
+  - Single booking record prevents constraint violations
+  - Maintains backward compatibility with existing bookings
+
+### Technical Details
+- Migration 038: Complete rewrite of couples booking function
+- Components updated: 5 admin panel components
+- Database schema documentation updated
+- Test coverage maintained at 70%+
+
 ## [1.0.2] - 2025-08-15
 
 ### 🌙 Dark Mode Feature Added

@@ -67,8 +67,10 @@ export async function GET() {
           id: b.id,
           date: b.appointment_date,
           time: b.start_time,
-          customer: b.customer && typeof b.customer === 'object' && 'first_name' in b.customer && 'last_name' in b.customer
-            ? `${b.customer.first_name} ${b.customer.last_name}` 
+          customer: b.customer && typeof b.customer === 'object' && 'first_name' in b.customer
+            ? (b.customer.last_name 
+              ? `${b.customer.first_name} ${b.customer.last_name}` 
+              : b.customer.first_name)
             : 'Unknown',
           service: (b.service && typeof b.service === 'object' && 'name' in b.service) ? b.service.name : 'Unknown',
           reminder_sent: b.reminder_sent_at ? format(new Date(b.reminder_sent_at), 'yyyy-MM-dd HH:mm:ss') : 'Not sent'

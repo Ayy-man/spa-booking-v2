@@ -19,7 +19,7 @@ export async function GET(
       )
     }
 
-    // Fetch booking details from database with service info
+    // Fetch booking details from database with service and customer info
     const { data: booking, error } = await supabase
       .from('bookings')
       .select(`
@@ -30,9 +30,24 @@ export async function GET(
           price,
           duration,
           category
+        ),
+        customers (
+          id,
+          first_name,
+          last_name,
+          email,
+          phone
+        ),
+        staff (
+          id,
+          name
+        ),
+        rooms (
+          id,
+          name
         )
       `)
-      .eq('booking_id', bookingId)
+      .eq('id', bookingId)
       .single()
 
     if (error || !booking) {
@@ -43,18 +58,25 @@ export async function GET(
       )
     }
 
-    // Format the response - the booking already includes service details
+    // Format the response - the booking already includes joined details
     const formattedBooking = {
-      booking_id: booking.booking_id,
+      booking_id: booking.id,
       service_id: booking.service_id,
       service_name: booking.services?.name,
       service_price: booking.services?.price,
       service_duration: booking.services?.duration,
       staff_id: booking.staff_id,
+      staff_name: booking.staff?.name,
       room_id: booking.room_id,
-      customer_name: booking.customer_name,
-      customer_email: booking.customer_email,
-      customer_phone: booking.customer_phone,
+      room_name: booking.rooms?.name,
+      customer_id: booking.customer_id,
+      customer_name: booking.customers 
+        ? (booking.customers.last_name 
+          ? `${booking.customers.first_name} ${booking.customers.last_name}` 
+          : booking.customers.first_name) 
+        : null,
+      customer_email: booking.customers?.email,
+      customer_phone: booking.customers?.phone,
       appointment_date: booking.appointment_date,
       start_time: booking.start_time,
       end_time: booking.end_time,

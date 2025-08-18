@@ -1,4 +1,4 @@
-# Complete Feature List - Dermal Spa Booking System v1.0.3
+# Complete Feature List - Dermal Spa Booking System v1.1.0
 
 ## 🎯 Core Booking Features
 
@@ -12,19 +12,22 @@
 ### Appointment Booking
 - **Online Booking**: 24/7 customer self-service booking
 - **Date Selection**: Calendar with 30-day advance booking
-- **Time Slot Management**: 15-minute intervals with availability checking
+- **Time Slot Management**: Smart intervals (15-min for short services, 30-min for massages 60+ min)
 - **Staff Selection**: Choose preferred staff or "Any Available"
 - **Smart Room Assignment**: Automatic room allocation based on service type
 - **Buffer Time**: 15-minute buffer between appointments
 - **Conflict Prevention**: Real-time double-booking prevention
 
-### Couples Booking
+### Couples Booking (Enhanced v1.1.0)
+- **Single-Slot Implementation**: Prevents room double-booking errors
 - **Toggle Mode**: Switch between single and couples booking
 - **Synchronized Booking**: Book two people simultaneously
 - **Different Services**: Each person can select different services
 - **Staff Flexibility**: Same or different staff members
-- **Room Coordination**: Automatic assignment to couples-capable rooms
+- **Room Coordination**: Automatic assignment to couples-capable rooms (Room 2 or 3)
 - **Group Tracking**: Bookings linked with group ID
+- **Visual Indicators**: Purple badges with Users icon across all admin views
+- **Database Optimization**: Single record prevents constraint violations
 
 ## 👨‍💼 Admin Dashboard
 
@@ -36,7 +39,7 @@
 - **Staff Schedule**: Grid view of staff availability
 - **Daily Report**: Business analytics and metrics
 
-### Quick Add Appointments (NEW v1.0.3)
+### Quick Add Appointments
 - **One-Click Creation**: Add appointments directly from schedule
 - **Service Selection**: Quick dropdown for all services
 - **Customer Management**: Select existing or create new customers
@@ -58,7 +61,7 @@
 - **Staff Performance**: Monitor staff bookings
 - **Auto-refresh**: Updates every 30 seconds
 
-## 📊 Daily Reports & Analytics (NEW v1.0.3)
+## 📊 Daily Reports & Analytics
 
 ### Daily Summary Dashboard
 - **Date Navigation**: View any day's report
@@ -93,6 +96,12 @@
 - **Custom Branding**: Matches spa's visual identity
 
 ## 🎨 User Experience
+
+### Visual Indicators (NEW v1.1.0)
+- **Couples Booking Badges**: Purple indicators with Users icon
+- **Consistent Design**: Same indicator across all admin views
+- **Staff Request Stars**: Gold stars for special staff requests
+- **Status Badges**: Color-coded booking status indicators
 
 ### Theme Support
 - **Dark Mode**: Complete dark theme implementation

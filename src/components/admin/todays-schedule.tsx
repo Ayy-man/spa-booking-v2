@@ -4,6 +4,7 @@ import * as React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { supabase } from "@/lib/supabase"
 import { BookingCard } from "./booking-card"
+import { BookingDetailsModal } from "./BookingDetailsModal"
 import { FilterBar } from "./filter-bar"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -32,6 +33,10 @@ export function TodaysSchedule({
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null)
   const [selectedStaff, setSelectedStaff] = useState<string | null>(null)
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
+  
+  // Modal state
+  const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
 
   const fetchTodaysSchedule = useCallback(async () => {
     try {
@@ -273,6 +278,10 @@ export function TodaysSchedule({
               size={getCardSize()}
               showRoom={true}
               showStaff={true}
+              onClick={() => {
+                setSelectedBooking(booking)
+                setModalOpen(true)
+              }}
               showDuration={true}
             />
           ))}
@@ -322,6 +331,17 @@ export function TodaysSchedule({
           </div>
         </Card>
       )}
+
+      {/* Booking Details Modal */}
+      <BookingDetailsModal
+        booking={selectedBooking}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onActionComplete={() => {
+          fetchTodaysSchedule()
+          setSelectedBooking(null)
+        }}
+      />
     </div>
   )
 }

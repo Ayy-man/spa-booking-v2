@@ -157,7 +157,9 @@ export async function POST(request: NextRequest) {
           await ghlWebhookSender.sendShowNoShowWebhook(
             appointment.id,
             {
-              name: `${appointment.customer.first_name} ${appointment.customer.last_name}`,
+              name: appointment.customer.last_name 
+                ? `${appointment.customer.first_name} ${appointment.customer.last_name}`
+                : appointment.customer.first_name,
               email: appointment.customer.email || '',
               phone: appointment.customer.phone,
               isNewCustomer: false
@@ -262,7 +264,9 @@ export async function POST(request: NextRequest) {
 
         console.log('Checking appointment:', {
           id: apt.id,
-          customerName: `${customer.first_name} ${customer.last_name}`,
+          customerName: customer.last_name 
+            ? `${customer.first_name} ${customer.last_name}`
+            : customer.first_name,
           customerEmail: customer.email,
           customerPhone: customer.phone,
           searchTerm: searchTerm
@@ -323,7 +327,9 @@ export async function POST(request: NextRequest) {
       if (filteredAppointments.length > 0) {
         console.log('Filtered appointments details:', filteredAppointments.map(apt => ({
           id: apt.id,
-          customerName: `${apt.customer.first_name} ${apt.customer.last_name}`,
+          customerName: apt.customer.last_name 
+            ? `${apt.customer.first_name} ${apt.customer.last_name}`
+            : apt.customer.first_name,
           customerEmail: apt.customer.email,
           customerPhone: apt.customer.phone
         })))
@@ -349,7 +355,9 @@ export async function POST(request: NextRequest) {
       end_time: apt.end_time,
       staff_name: apt.staff.name,
       room_name: apt.room.name,
-      customer_name: `${apt.customer.first_name} ${apt.customer.last_name}`,
+      customer_name: apt.customer.last_name 
+        ? `${apt.customer.first_name} ${apt.customer.last_name}`
+        : apt.customer.first_name,
       status: apt.status,
       checked_in_at: apt.checked_in_at
     }))

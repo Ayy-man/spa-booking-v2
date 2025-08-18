@@ -317,6 +317,14 @@ export function StaffScheduleView({
         throw new Error('Please select a service')
       }
 
+      // Validate service has required data
+      if (!selectedService.duration || selectedService.duration <= 0) {
+        throw new Error('Invalid service duration. Please select a different service.')
+      }
+      if (selectedService.price === undefined || selectedService.price === null) {
+        throw new Error('Invalid service price. Please select a different service.')
+      }
+
       let customerId = quickAddForm.customerId
 
       // Create new customer if needed
@@ -370,7 +378,7 @@ export function StaffScheduleView({
         throw new Error('No suitable room available')
       }
 
-      // Create the booking
+      // Create the booking with all required fields
       const { error: bookingError } = await supabase
         .from('bookings')
         .insert({
@@ -381,7 +389,13 @@ export function StaffScheduleView({
           appointment_date: currentDate.toISOString().split('T')[0],
           start_time: quickAddSlot.time,
           end_time: endTime,
+          duration: selectedService.duration, // REQUIRED: Add duration
+          total_price: selectedService.price, // REQUIRED: Add total price
+          discount: 0, // REQUIRED: Add discount (default 0)
+          final_price: selectedService.price, // REQUIRED: Add final price
           status: 'confirmed',
+          payment_status: 'pending', // Add payment status
+          payment_option: 'pay_on_location', // Default payment option for quick add
           notes: quickAddForm.notes || null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -396,11 +410,24 @@ export function StaffScheduleView({
       setShowQuickAdd(false)
       setQuickAddSlot(null)
       
-      // Show success (you might want to add a toast notification here)
+      // Show success message
+      setError('') // Clear any previous errors
       console.log('Appointment created successfully')
+      // TODO: Add toast notification for success
     } catch (error: any) {
       console.error('Error creating appointment:', error)
-      setError(error.message || 'Failed to create appointment')
+      // Provide more user-friendly error messages
+      let errorMessage = 'Failed to create appointment'
+      if (error.message.includes('duplicate') || error.message.includes('unique')) {
+        errorMessage = 'This time slot is already booked. Please refresh and try again.'
+      } else if (error.message.includes('foreign key') || error.message.includes('violates foreign key')) {
+        errorMessage = 'Invalid data selection. Please refresh and try again.'
+      } else if (error.message.includes('null value')) {
+        errorMessage = 'Missing required information. Please ensure all fields are filled.'
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      setError(errorMessage)
     } finally {
       setQuickAddLoading(false)
     }
@@ -456,9 +483,13 @@ export function StaffScheduleView({
   const formatCustomerName = (booking: BookingWithRelations, fullName: boolean = false): string => {
     if (booking.customer) {
       if (fullName) {
-        return `${booking.customer.first_name} ${booking.customer.last_name}`
+        return booking.customer.last_name 
+          ? `${booking.customer.first_name} ${booking.customer.last_name}`
+          : booking.customer.first_name
       }
-      return `${booking.customer.first_name} ${booking.customer.last_name[0]}.`
+      return booking.customer.last_name 
+        ? `${booking.customer.first_name} ${booking.customer.last_name[0]}.`
+        : booking.customer.first_name
     }
     return 'Customer'
   }
