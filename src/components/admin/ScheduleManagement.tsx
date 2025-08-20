@@ -440,11 +440,6 @@ export function ScheduleManagement() {
         reason: formData.reason || null
       }
       
-      // Add created_by field if creating new block
-      if (!editingBlock) {
-        blockData.created_by = 'admin' // You might want to get actual user ID
-      }
-      
       let result
       if (editingBlock) {
         result = await supabase
@@ -975,41 +970,88 @@ export function ScheduleManagement() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
               <div>
                 <Label className="text-sm font-medium">Start Date *</Label>
-                <Input 
-                  type="date" 
-                  value={formData.startDate}
-                  min={getTodayForInput()}
-                  onChange={(e) => {
-                    setFormData({...formData, startDate: e.target.value})
-                    // Clear validation errors when user starts fixing them
-                    if (validationErrors.length > 0) {
-                      setValidationErrors([])
-                    }
-                  }}
-                  className="w-full"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">Cannot be in the past</p>
+                <div className="flex gap-2">
+                  <Input 
+                    type="date" 
+                    value={formData.startDate}
+                    min={getTodayForInput()}
+                    onChange={(e) => {
+                      setFormData({...formData, startDate: e.target.value})
+                      // Clear validation errors when user starts fixing them
+                      if (validationErrors.length > 0) {
+                        setValidationErrors([])
+                      }
+                    }}
+                    className="flex-1 cursor-pointer"
+                    style={{ colorScheme: 'light' }}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFormData({...formData, startDate: getTodayForInput()})
+                      if (validationErrors.length > 0) {
+                        setValidationErrors([])
+                      }
+                    }}
+                    className="text-xs"
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const tomorrow = new Date()
+                      tomorrow.setDate(tomorrow.getDate() + 1)
+                      setFormData({...formData, startDate: format(tomorrow, 'yyyy-MM-dd')})
+                      if (validationErrors.length > 0) {
+                        setValidationErrors([])
+                      }
+                    }}
+                    className="text-xs"
+                  >
+                    Tomorrow
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Select the date to block</p>
               </div>
+              
               <div>
-                <Label className="text-sm font-medium">End Date</Label>
-                <Input 
-                  type="date" 
-                  value={formData.endDate}
-                  min={formData.startDate || getTodayForInput()}
-                  onChange={(e) => {
-                    setFormData({...formData, endDate: e.target.value})
-                    if (validationErrors.length > 0) {
-                      setValidationErrors([])
-                    }
-                  }}
-                  className="w-full"
-                  placeholder="Leave empty for single day"
-                />
-                <p className="text-xs text-gray-500 mt-1">Optional - for multi-day blocks</p>
+                <Label className="text-sm font-medium">End Date (optional)</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    type="date" 
+                    value={formData.endDate}
+                    min={formData.startDate || getTodayForInput()}
+                    onChange={(e) => {
+                      setFormData({...formData, endDate: e.target.value})
+                      if (validationErrors.length > 0) {
+                        setValidationErrors([])
+                      }
+                    }}
+                    className="flex-1 cursor-pointer"
+                    style={{ colorScheme: 'light' }}
+                    placeholder="Leave empty for single day"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFormData({...formData, endDate: ''})}
+                    className="text-xs"
+                    disabled={!formData.endDate}
+                  >
+                    Clear
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">For multi-day blocks only</p>
               </div>
             </div>
 
@@ -1027,7 +1069,8 @@ export function ScheduleManagement() {
                           setValidationErrors([])
                         }
                       }}
-                      className="w-full"
+                      className="w-full cursor-pointer"
+                      style={{ colorScheme: 'light' }}
                       required
                     />
                   </div>
@@ -1043,9 +1086,53 @@ export function ScheduleManagement() {
                           setValidationErrors([])
                         }
                       }}
-                      className="w-full"
+                      className="w-full cursor-pointer"
+                      style={{ colorScheme: 'light' }}
                       required
                     />
+                  </div>
+                </div>
+                
+                {/* Quick time presets */}
+                <div>
+                  <p className="text-xs text-gray-600 mb-2">Quick presets:</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({...formData, startTime: '12:00', endTime: '13:00'})
+                        if (validationErrors.length > 0) setValidationErrors([])
+                      }}
+                      className="text-xs"
+                    >
+                      Lunch (12-1pm)
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({...formData, startTime: '09:00', endTime: '10:00'})
+                        if (validationErrors.length > 0) setValidationErrors([])
+                      }}
+                      className="text-xs"
+                    >
+                      Morning (9-10am)
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFormData({...formData, startTime: '15:00', endTime: '16:00'})
+                        if (validationErrors.length > 0) setValidationErrors([])
+                      }}
+                      className="text-xs"
+                    >
+                      Afternoon (3-4pm)
+                    </Button>
                   </div>
                 </div>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
