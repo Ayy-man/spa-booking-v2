@@ -20,6 +20,15 @@ interface WalkInResponse {
     notes: string | null
     status: string
     created_at: string
+    isCouplesBooking?: boolean
+    secondPerson?: {
+      id: string
+      name: string
+      phone: string
+      service: string
+      price: number
+    }
+    totalPrice?: number
   }
   error?: string
 }
@@ -163,12 +172,16 @@ export default function CheckinPage() {
                 <CheckCircleIcon className={`w-8 h-8 ${isAppointmentCompletion ? 'text-green-600' : 'text-blue-600'}`} />
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                {isAppointmentCompletion ? 'Appointment Check-In Complete!' : 'Walk-In Check-In Complete!'}
+                {isAppointmentCompletion ? 'Appointment Check-In Complete!' : 
+                 submittedWalkInData?.isCouplesBooking ? 'Couples Walk-In Check-In Complete!' : 
+                 'Walk-In Check-In Complete!'}
               </h1>
               <p className="text-gray-600">
                 {isAppointmentCompletion 
                   ? 'Welcome! You have been successfully checked in for your appointment.'
-                  : 'Thank you for visiting Dermal Skin Clinic. Your information has been recorded.'
+                  : submittedWalkInData?.isCouplesBooking 
+                    ? 'Thank you both for visiting Dermal Skin Clinic. Your couples booking has been recorded.'
+                    : 'Thank you for visiting Dermal Skin Clinic. Your information has been recorded.'
                 }
               </p>
             </div>
@@ -205,6 +218,7 @@ export default function CheckinPage() {
                   </>
                 ) : submittedWalkInData ? (
                   <>
+                    {/* First Person Details */}
                     <div className="flex justify-between">
                       <span className="text-gray-600">Name:</span>
                       <span className="font-medium">{submittedWalkInData.name}</span>
@@ -223,6 +237,38 @@ export default function CheckinPage() {
                       <span className="text-gray-600">Service:</span>
                       <span className="font-medium">{submittedWalkInData.service}</span>
                     </div>
+                    
+                    {/* Second Person Details for Couples Booking */}
+                    {submittedWalkInData.isCouplesBooking && submittedWalkInData.secondPerson && (
+                      <>
+                        <div className="border-t pt-2 mt-2">
+                          <div className="text-sm font-semibold text-[#C36678] mb-2">Second Person</div>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Name:</span>
+                          <span className="font-medium">{submittedWalkInData.secondPerson.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Phone:</span>
+                          <span className="font-medium">{submittedWalkInData.secondPerson.phone}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Service:</span>
+                          <span className="font-medium">{submittedWalkInData.secondPerson.service}</span>
+                        </div>
+                      </>
+                    )}
+                    
+                    {/* Total Price for Couples */}
+                    {submittedWalkInData.isCouplesBooking && submittedWalkInData.totalPrice && (
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 font-semibold">Total Price:</span>
+                          <span className="font-bold text-lg text-[#C36678]">${submittedWalkInData.totalPrice}</span>
+                        </div>
+                      </div>
+                    )}
+                    
                     {submittedWalkInData.notes && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Notes:</span>
@@ -235,6 +281,15 @@ export default function CheckinPage() {
                         Waiting
                       </span>
                     </div>
+                    
+                    {/* Couples Booking Indicator */}
+                    {submittedWalkInData.isCouplesBooking && (
+                      <div className="mt-2 pt-2 border-t">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#C36678]/10 text-[#C36678] border border-[#C36678]/20">
+                          Couples Booking - Room 2 or 3
+                        </span>
+                      </div>
+                    )}
                   </>
                 ) : null}
               </div>

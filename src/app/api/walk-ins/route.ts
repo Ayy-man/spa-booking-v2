@@ -9,6 +9,11 @@ interface WalkInRequest {
   service: string  // This is the service ID
   notes?: string
   marketingConsent?: boolean
+  // Couples booking fields
+  isCouplesBooking?: boolean
+  secondPersonName?: string
+  secondPersonPhone?: string
+  secondService?: string
 }
 
 interface Service {
@@ -31,6 +36,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Validate couples booking fields if applicable
+    if (body.isCouplesBooking) {
+      if (!body.secondPersonName || !body.secondService) {
+        return NextResponse.json(
+          { error: 'Second person name and service are required for couples booking' },
+          { status: 400 }
+        )
+      }
+    }
+
     // Get service details
     const { data: service, error: serviceError } = await supabase
       .from('services')
@@ -45,7 +60,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create walk-in entry in database
+    // Get second service details if couples booking
+    let secondService: Service | null = null
+    if (body.isCouplesBooking && body.secondService) {
+      const { data: secondSvc, error: secondServiceError } = await supabase
+        .from('services')
+        .select('id, name, duration, price, category')
+        .eq('id', body.secondService)
+        .single()
+
+      if (secondServiceError || !secondSvc) {
+        return NextResponse.json(
+          { error: 'Invalid second service selection' },
+          { status: 400 }
+        )
+      }
+      secondService = secondSvc
+    }
+
+    // Generate a couples booking ID if this is a couples booking
+    const couplesBookingId = body.isCouplesBooking ? 
+      `couples_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : null
+
+    // Create first walk-in entry
+    const walkInNotes = body.isCouplesBooking ? 
+      `[COUPLES BOOKING] ${body.notes || ''}`.trim() : 
+      body.notes || null
+
     const { data: walkIn, error: walkInError } = await supabase
       .from('walk_ins')
       .insert({
@@ -54,10 +95,12 @@ export async function POST(request: NextRequest) {
         customer_email: body.email || null,
         service_name: service.name,
         service_category: service.category,
-        notes: body.notes || null,
+        notes: walkInNotes,
         status: 'waiting',
         scheduling_type: 'walk_in',
-        checked_in_at: new Date().toISOString()
+        checked_in_at: new Date().toISOString(),
+        couples_booking_id: couplesBookingId,
+        is_couples_booking: body.isCouplesBooking || false
       })
       .select()
       .single()
@@ -70,11 +113,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Create second walk-in entry for couples booking
+    let secondWalkIn = null
+    if (body.isCouplesBooking && secondService) {
+      const secondWalkInNotes = `[COUPLES BOOKING - Linked with ${body.name}]`
+      
+      const { data: secondEntry, error: secondWalkInError } = await supabase
+        .from('walk_ins')
+        .insert({
+          customer_name: body.secondPersonName!,
+          customer_phone: body.secondPersonPhone || body.phone, // Use primary phone if second not provided
+          customer_email: null,
+          service_name: secondService.name,
+          service_category: secondService.category,
+          notes: secondWalkInNotes,
+          status: 'waiting',
+          scheduling_type: 'walk_in',
+          checked_in_at: new Date().toISOString(),
+          couples_booking_id: couplesBookingId,
+          is_couples_booking: true
+        })
+        .select()
+        .single()
+
+      if (secondWalkInError) {
+        console.error('Second walk-in database error:', secondWalkInError)
+        // Consider rolling back the first entry here if needed
+        return NextResponse.json(
+          { error: 'Failed to create second walk-in entry for couples booking' },
+          { status: 500 }
+        )
+      }
+      
+      secondWalkIn = secondEntry
+    }
+
     // Send GHL webhook for walk-in notification
     try {
       const currentDate = new Date().toISOString().split('T')[0]
       const currentTime = new Date().toTimeString().split(' ')[0].substring(0, 5)
 
+      // Send webhook for first customer
       await ghlWebhookSender.sendWalkInWebhook(
         walkIn.id,
         {
@@ -93,13 +172,42 @@ export async function POST(request: NextRequest) {
           time: currentTime,
           duration: service.duration,
           price: service.price,
-          staff: 'TBD',
+          staff: body.isCouplesBooking ? 'TBD (Couples Booking)' : 'TBD',
           staffId: '',
-          room: 'TBD',
+          room: body.isCouplesBooking ? 'Couples Room (Room 2 or 3)' : 'TBD',
           roomId: ''
         },
         true // isImmediate = true for walk-ins
       )
+
+      // Send webhook for second customer if couples booking
+      if (body.isCouplesBooking && secondWalkIn && secondService) {
+        await ghlWebhookSender.sendWalkInWebhook(
+          secondWalkIn.id,
+          {
+            name: body.secondPersonName!,
+            email: '',
+            phone: body.secondPersonPhone || body.phone,
+            isNewCustomer: true,
+            marketingConsent: false
+          },
+          {
+            service: secondService.name,
+            serviceId: secondService.id,
+            serviceCategory: secondService.category,
+            ghlCategory: secondService.category,
+            date: currentDate,
+            time: currentTime,
+            duration: secondService.duration,
+            price: secondService.price,
+            staff: 'TBD (Couples Booking)',
+            staffId: '',
+            room: 'Couples Room (Room 2 or 3)',
+            roomId: ''
+          },
+          true
+        )
+      }
     } catch (webhookError) {
       console.error('Walk-in webhook failed:', webhookError)
       // Don't fail the request if webhook fails
@@ -115,7 +223,18 @@ export async function POST(request: NextRequest) {
         service: walkIn.service_name,
         notes: walkIn.notes,
         status: walkIn.status,
-        created_at: walkIn.created_at
+        created_at: walkIn.created_at,
+        isCouplesBooking: body.isCouplesBooking || false,
+        secondPerson: body.isCouplesBooking && secondWalkIn ? {
+          id: secondWalkIn.id,
+          name: secondWalkIn.customer_name,
+          phone: secondWalkIn.customer_phone,
+          service: secondWalkIn.service_name,
+          price: secondService?.price || 0
+        } : undefined,
+        totalPrice: body.isCouplesBooking ? 
+          (service.price + (secondService?.price || 0)) : 
+          service.price
       }
     })
 

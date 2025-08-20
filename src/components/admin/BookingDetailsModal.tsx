@@ -96,16 +96,23 @@ export function BookingDetailsModal({
     setLoading(true)
     setError(null)
     
+    console.log('[BookingDetailsModal] Starting delete for booking:', booking.id)
+    
     try {
       const result = await deleteBooking(booking.id)
+      console.log('[BookingDetailsModal] Delete result:', result)
+      
       if (result.success) {
+        console.log('[BookingDetailsModal] Delete successful, closing dialogs')
         setShowDeleteDialog(false)
         onOpenChange(false)
         onActionComplete?.()
       } else {
+        console.error('[BookingDetailsModal] Delete failed:', result.error)
         setError(result.error || "Failed to delete booking")
       }
     } catch (err) {
+      console.error('[BookingDetailsModal] Delete error:', err)
       setError("An unexpected error occurred")
     } finally {
       setLoading(false)

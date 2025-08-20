@@ -102,33 +102,55 @@ export async function cancelBooking(
 export async function deleteBooking(
   bookingId: string
 ): Promise<{ success: boolean; error?: string }> {
+  console.log('[deleteBooking] Starting delete for booking:', bookingId)
+  
   try {
     // First delete any related payments
-    await supabase
+    console.log('[deleteBooking] Deleting related payments...')
+    const { error: paymentError } = await supabase
       .from('payments')
       .delete()
       .eq('booking_id', bookingId)
+    
+    if (paymentError) {
+      console.error('[deleteBooking] Payment delete error:', paymentError)
+    }
 
     // Delete any related walk-ins
-    await supabase
+    console.log('[deleteBooking] Deleting related walk-ins...')
+    const { error: walkInError } = await supabase
       .from('walk_ins')
       .delete()
       .eq('booking_id', bookingId)
+    
+    if (walkInError) {
+      console.error('[deleteBooking] Walk-in delete error:', walkInError)
+    }
 
     // Delete any related waivers
-    await supabase
+    console.log('[deleteBooking] Deleting related waivers...')
+    const { error: waiverError } = await supabase
       .from('waivers')
       .delete()
       .eq('booking_id', bookingId)
+    
+    if (waiverError) {
+      console.error('[deleteBooking] Waiver delete error:', waiverError)
+    }
 
     // Finally delete the booking itself
+    console.log('[deleteBooking] Deleting booking record...')
     const { error } = await supabase
       .from('bookings')
       .delete()
       .eq('id', bookingId)
 
-    if (error) throw error
+    if (error) {
+      console.error('[deleteBooking] Booking delete error:', error)
+      throw error
+    }
 
+    console.log('[deleteBooking] Delete successful!')
     return { success: true }
   } catch (error: any) {
     return { success: false, error: error.message }
