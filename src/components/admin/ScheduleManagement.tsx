@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CalendarIcon, ClockIcon, PlusIcon, TrashIcon, EditIcon, SaveIcon, XIcon } from 'lucide-react'
-import { format, parseISO, addDays, startOfWeek } from 'date-fns'
+import { CalendarIcon, ClockIcon, PlusIcon, TrashIcon, EditIcon, SaveIcon, XIcon, AlertCircleIcon } from 'lucide-react'
+import { format, parseISO, addDays, startOfWeek, isValid, isBefore, isAfter } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { Staff, StaffSchedule, ScheduleBlock } from '@/types/booking'
 
@@ -78,6 +78,8 @@ export function ScheduleManagement() {
   })
   
   const [editingBlock, setEditingBlock] = useState<ScheduleBlock | null>(null)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Fetch staff members and schedules on mount
   useEffect(() => {
@@ -349,49 +351,146 @@ export function ScheduleManagement() {
   }
 
 
+  // Validation helper function
+  const validateBlockForm = (): string[] => {
+    const errors: string[] = []
+    
+    if (!formData.staffId) {
+      errors.push('Please select a staff member')
+    }
+    
+    if (!formData.startDate) {
+      errors.push('Please select a start date')
+    } else {
+      // Validate date format
+      const startDate = new Date(formData.startDate)
+      if (!isValid(startDate)) {
+        errors.push('Invalid start date format')
+      } else {
+        // Check if start date is in the past (allow today)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        if (isBefore(startDate, today)) {
+          errors.push('Start date cannot be in the past')
+        }
+      }
+    }
+    
+    // Validate end date if provided
+    if (formData.endDate) {
+      const endDate = new Date(formData.endDate)
+      if (!isValid(endDate)) {
+        errors.push('Invalid end date format')
+      } else if (formData.startDate) {
+        const startDate = new Date(formData.startDate)
+        if (isValid(startDate) && isBefore(endDate, startDate)) {
+          errors.push('End date cannot be before start date')
+        }
+      }
+    }
+    
+    // Validate time range requirements
+    if (formData.blockType === 'time_range') {
+      if (!formData.startTime) {
+        errors.push('Please select a start time for time range blocks')
+      }
+      if (!formData.endTime) {
+        errors.push('Please select an end time for time range blocks')
+      }
+      if (formData.startTime && formData.endTime) {
+        // Validate time format and order
+        const [startHour, startMin] = formData.startTime.split(':').map(Number)
+        const [endHour, endMin] = formData.endTime.split(':').map(Number)
+        const startMinutes = startHour * 60 + startMin
+        const endMinutes = endHour * 60 + endMin
+        
+        if (startMinutes >= endMinutes) {
+          errors.push('End time must be after start time')
+        }
+      }
+    }
+    
+    return errors
+  }
+
   // Schedule block (time off) functions
   const handleAddBlock = async () => {
-    // Validate form
-    if (!formData.staffId || !formData.startDate) {
-      showNotification('Validation Error', 'Please fill in all required fields', 'error')
-      return
-    }
-    
-    if (formData.blockType === 'time_range' && (!formData.startTime || !formData.endTime)) {
-      showNotification('Validation Error', 'Time range blocks require start and end times', 'error')
-      return
-    }
-    
-    // Create the schedule block
-    const blockData = {
-      staff_id: formData.staffId,
-      block_type: formData.blockType,
-      start_date: formData.startDate,
-      end_date: formData.endDate || null,
-      start_time: formData.blockType === 'time_range' ? formData.startTime : null,
-      end_time: formData.blockType === 'time_range' ? formData.endTime : null,
-      reason: formData.reason || null
-    }
-    
-    const { error } = editingBlock
-      ? await supabase
+    try {
+      setIsSubmitting(true)
+      
+      // Clear previous validation errors
+      setValidationErrors([])
+      
+      // Validate form
+      const errors = validateBlockForm()
+      if (errors.length > 0) {
+        setValidationErrors(errors)
+        showNotification('Validation Error', errors[0], 'error')
+        return
+      }
+      
+      // Create the schedule block data
+      const blockData: any = {
+        staff_id: formData.staffId,
+        block_type: formData.blockType,
+        start_date: formData.startDate,
+        end_date: formData.endDate || null,
+        start_time: formData.blockType === 'time_range' ? formData.startTime : null,
+        end_time: formData.blockType === 'time_range' ? formData.endTime : null,
+        reason: formData.reason || null
+      }
+      
+      // Add created_by field if creating new block
+      if (!editingBlock) {
+        blockData.created_by = 'admin' // You might want to get actual user ID
+      }
+      
+      let result
+      if (editingBlock) {
+        result = await supabase
           .from('schedule_blocks')
           .update(blockData)
           .eq('id', editingBlock.id)
-      : await supabase
+          .select()
+      } else {
+        result = await supabase
           .from('schedule_blocks')
           .insert([blockData])
-    
-    if (error) {
-      console.error('Error saving schedule block:', error)
-      showNotification('Error', 'Failed to save schedule block', 'error')
-    } else {
-      showNotification('Success', editingBlock ? 'Time block updated' : 'Time block added successfully')
+          .select()
+      }
+      
+      const { data, error } = result
+      
+      if (error) {
+        console.error('Error saving schedule block:', error)
+        let errorMessage = 'Failed to save schedule block'
+        
+        // Provide more specific error messages
+        if (error.message?.includes('foreign key constraint')) {
+          errorMessage = 'Invalid staff member selected'
+        } else if (error.message?.includes('check constraint')) {
+          errorMessage = 'Invalid data format - please check your inputs'
+        } else if (error.code === '23505') {
+          errorMessage = 'A similar schedule block already exists for this time period'
+        }
+        
+        showNotification('Error', errorMessage, 'error')
+        return
+      }
+      
+      // Success
+      showNotification('Success', editingBlock ? 'Time block updated successfully' : 'Time block added successfully')
       
       // Reset form and refresh data
       resetBlockForm()
       setShowBlockModal(false)
-      fetchScheduleBlocks()
+      await fetchScheduleBlocks()
+      
+    } catch (error: any) {
+      console.error('Unexpected error saving schedule block:', error)
+      showNotification('Error', 'An unexpected error occurred. Please try again.', 'error')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -419,12 +518,14 @@ export function ScheduleManagement() {
     setFormData({
       staffId: block.staff_id,
       blockType: block.block_type,
-      startDate: block.start_date,
-      endDate: block.end_date || '',
+      startDate: formatDateForInput(block.start_date),
+      endDate: block.end_date ? formatDateForInput(block.end_date) : '',
       startTime: block.start_time || '',
       endTime: block.end_time || '',
       reason: block.reason || ''
     })
+    setValidationErrors([])
+    setIsSubmitting(false)
     setShowBlockModal(true)
   }
 
@@ -439,6 +540,25 @@ export function ScheduleManagement() {
       reason: ''
     })
     setEditingBlock(null)
+    setValidationErrors([])
+    setIsSubmitting(false)
+  }
+
+  // Helper function to format date for input
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return ''
+    try {
+      const date = new Date(dateString)
+      if (!isValid(date)) return ''
+      return format(date, 'yyyy-MM-dd')
+    } catch {
+      return ''
+    }
+  }
+
+  // Helper function to get today's date in YYYY-MM-DD format
+  const getTodayForInput = () => {
+    return format(new Date(), 'yyyy-MM-dd')
   }
 
   const getStaffName = (staffId: string) => {
@@ -791,13 +911,35 @@ export function ScheduleManagement() {
       </Tabs>
 
       {/* Add/Edit Time Block Modal */}
-      <Dialog open={showBlockModal} onOpenChange={setShowBlockModal}>
+      <Dialog open={showBlockModal} onOpenChange={(open) => {
+        if (!open) {
+          resetBlockForm()
+        }
+        setShowBlockModal(open)
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-[#AA3B50]">
               {editingBlock ? 'Edit Time Block' : 'Add Time Block'}
             </DialogTitle>
           </DialogHeader>
+          
+          {/* Validation Errors */}
+          {validationErrors.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="flex items-start space-x-2">
+                <AlertCircleIcon className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-red-800">Please fix the following errors:</h4>
+                  <ul className="mt-1 text-sm text-red-700 list-disc list-inside space-y-1">
+                    {validationErrors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div className="space-y-4">
             <div>
@@ -835,68 +977,145 @@ export function ScheduleManagement() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label>Start Date</Label>
+                <Label className="text-sm font-medium">Start Date *</Label>
                 <Input 
                   type="date" 
                   value={formData.startDate}
-                  onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                  min={getTodayForInput()}
+                  onChange={(e) => {
+                    setFormData({...formData, startDate: e.target.value})
+                    // Clear validation errors when user starts fixing them
+                    if (validationErrors.length > 0) {
+                      setValidationErrors([])
+                    }
+                  }}
+                  className="w-full"
+                  required
                 />
+                <p className="text-xs text-gray-500 mt-1">Cannot be in the past</p>
               </div>
               <div>
-                <Label>End Date (optional)</Label>
+                <Label className="text-sm font-medium">End Date</Label>
                 <Input 
                   type="date" 
                   value={formData.endDate}
-                  onChange={(e) => setFormData({...formData, endDate: e.target.value})}
-                  placeholder="Single day"
+                  min={formData.startDate || getTodayForInput()}
+                  onChange={(e) => {
+                    setFormData({...formData, endDate: e.target.value})
+                    if (validationErrors.length > 0) {
+                      setValidationErrors([])
+                    }
+                  }}
+                  className="w-full"
+                  placeholder="Leave empty for single day"
                 />
+                <p className="text-xs text-gray-500 mt-1">Optional - for multi-day blocks</p>
               </div>
             </div>
 
             {formData.blockType === 'time_range' && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Start Time</Label>
-                  <Input 
-                    type="time" 
-                    value={formData.startTime}
-                    onChange={(e) => setFormData({...formData, startTime: e.target.value})}
-                  />
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm font-medium">Start Time *</Label>
+                    <Input 
+                      type="time" 
+                      value={formData.startTime}
+                      onChange={(e) => {
+                        setFormData({...formData, startTime: e.target.value})
+                        if (validationErrors.length > 0) {
+                          setValidationErrors([])
+                        }
+                      }}
+                      className="w-full"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">End Time *</Label>
+                    <Input 
+                      type="time" 
+                      value={formData.endTime}
+                      min={formData.startTime || undefined}
+                      onChange={(e) => {
+                        setFormData({...formData, endTime: e.target.value})
+                        if (validationErrors.length > 0) {
+                          setValidationErrors([])
+                        }
+                      }}
+                      className="w-full"
+                      required
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label>End Time</Label>
-                  <Input 
-                    type="time" 
-                    value={formData.endTime}
-                    onChange={(e) => setFormData({...formData, endTime: e.target.value})}
-                  />
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-start space-x-2">
+                    <ClockIcon className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-blue-700">
+                      <p className="font-medium">Time Range Block</p>
+                      <p className="text-xs mt-1">This will block the selected time period only. Staff will be available outside these hours.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
             <div>
-              <Label>Reason (optional)</Label>
+              <Label className="text-sm font-medium">Reason</Label>
               <Textarea 
                 value={formData.reason}
                 onChange={(e) => setFormData({...formData, reason: e.target.value})}
                 placeholder="e.g., Lunch break, Meeting, Doctor's appointment, Personal time, Vacation"
                 rows={2}
+                className="resize-none"
               />
+              <p className="text-xs text-gray-500 mt-1">Optional - helps with scheduling coordination</p>
             </div>
+            
+            {/* Summary of what will be blocked */}
+            {formData.staffId && formData.startDate && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <h4 className="text-sm font-medium text-gray-800 mb-2">Block Summary</h4>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p><strong>Staff:</strong> {getStaffName(formData.staffId)}</p>
+                  <p><strong>Date:</strong> {formData.startDate}{formData.endDate && formData.endDate !== formData.startDate ? ` to ${formData.endDate}` : ''}</p>
+                  <p><strong>Type:</strong> {formData.blockType === 'full_day' ? 'Full Day Block' : 'Time Range Block'}</p>
+                  {formData.blockType === 'time_range' && formData.startTime && formData.endTime && (
+                    <p><strong>Time:</strong> {formData.startTime} - {formData.endTime}</p>
+                  )}
+                  {formData.reason && (
+                    <p><strong>Reason:</strong> {formData.reason}</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setShowBlockModal(false)
-              resetBlockForm()
-            }}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowBlockModal(false)
+                resetBlockForm()
+              }}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
               Cancel
             </Button>
             <Button 
               onClick={handleAddBlock}
-              className="bg-black text-white hover:bg-gray-900"
+              disabled={isSubmitting || !formData.staffId || !formData.startDate}
+              className="bg-black text-white hover:bg-gray-900 w-full sm:w-auto"
             >
-              {editingBlock ? 'Update' : 'Save'}
+              {isSubmitting ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>{editingBlock ? 'Updating...' : 'Saving...'}</span>
+                </div>
+              ) : (
+                editingBlock ? 'Update Block' : 'Save Block'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
