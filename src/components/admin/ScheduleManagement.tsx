@@ -22,7 +22,7 @@ const showNotification = (title: string, description: string, type: 'success' | 
 export function ScheduleManagement() {
   const [staff, setStaff] = useState<Staff[]>([])
   const [scheduleBlocks, setScheduleBlocks] = useState<ScheduleBlock[]>([])
-  const [selectedStaff, setSelectedStaff] = useState<string>('')
+  const [selectedStaff, setSelectedStaff] = useState<string>('all')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showConflictWarning, setShowConflictWarning] = useState(false)
   const [conflictingBookings, setConflictingBookings] = useState<Booking[]>([])
@@ -311,7 +311,7 @@ export function ScheduleManagement() {
             <Label>Filter by Staff:</Label>
             <Select value={selectedStaff} onValueChange={(value) => {
               setSelectedStaff(value)
-              if (value) {
+              if (value && value !== 'all') {
                 fetchStaffScheduleBlocks(value)
               } else {
                 fetchAllScheduleBlocks()
@@ -321,7 +321,7 @@ export function ScheduleManagement() {
                 <SelectValue placeholder="All Staff" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Staff</SelectItem>
+                <SelectItem value="all">All Staff</SelectItem>
                 {staff.map(s => (
                   <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                 ))}
