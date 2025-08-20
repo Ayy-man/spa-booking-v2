@@ -8,6 +8,7 @@ interface WalkInRequest {
   email?: string
   service: string  // This is the service ID
   notes?: string
+  marketingConsent?: boolean
 }
 
 interface Service {
@@ -80,7 +81,8 @@ export async function POST(request: NextRequest) {
           name: body.name,
           email: body.email || '',
           phone: body.phone,
-          isNewCustomer: true
+          isNewCustomer: true,
+          marketingConsent: body.marketingConsent || false
         },
         {
           service: service.name,

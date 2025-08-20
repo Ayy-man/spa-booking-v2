@@ -30,6 +30,7 @@ interface CustomerInfo {
   phone?: string
   isNewCustomer?: boolean
   specialRequests?: string
+  marketingConsent?: boolean
 }
 
 export default function CouplesConfirmationPage() {
