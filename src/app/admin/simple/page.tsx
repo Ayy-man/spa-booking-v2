@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
+import { formatPhoneNumber } from '@/lib/phone-utils'
 
 interface Booking {
   id: string
@@ -243,7 +244,7 @@ export default function SimpleAdminPage() {
                         <h3 className="font-semibold text-lg">{booking.customer.first_name} {booking.customer.last_name}</h3>
                         <p className="text-gray-600">{booking.customer.email}</p>
                         {booking.customer.phone && (
-                          <p className="text-gray-600">{booking.customer.phone}</p>
+                          <p className="text-gray-600">{formatPhoneNumber(booking.customer.phone)}</p>
                         )}
                         <div className="mt-2 text-sm text-gray-500">
                           <p><strong>Service:</strong> {booking.service_name}</p>
@@ -299,7 +300,7 @@ export default function SimpleAdminPage() {
                         </h3>
                         <p className="text-red-600">{booking.customer.email}</p>
                         {booking.customer.phone && (
-                          <p className="text-red-600">{booking.customer.phone}</p>
+                          <p className="text-red-600">{formatPhoneNumber(booking.customer.phone)}</p>
                         )}
                         <div className="mt-2 text-sm text-red-700">
                           <p><strong>Service:</strong> {booking.service_name}</p>

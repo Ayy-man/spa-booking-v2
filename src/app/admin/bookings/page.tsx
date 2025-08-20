@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CouplesBookingIndicator } from '@/components/ui/couples-booking-indicator'
+import { formatPhoneNumber } from '@/lib/phone-utils'
 // import { auth } from '@/lib/auth'
 // import { useRouter } from 'next/navigation'
 
@@ -174,6 +175,9 @@ export default function AdminBookingsPage() {
                     Customer
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Phone
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Service
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -208,6 +212,9 @@ export default function AdminBookingsPage() {
                           {booking.customer?.email}
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{formatPhoneNumber(booking.customer?.phone)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center justify-between">

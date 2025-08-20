@@ -30,6 +30,7 @@ import {
 } from '@/lib/walk-in-logic'
 import { cn } from '@/lib/utils'
 import { WalkInAssignmentForm } from './walk-in-assignment-form'
+import { formatPhoneNumber } from '@/lib/phone-utils'
 
 interface WalkInsSectionProps {
   className?: string
@@ -135,7 +136,7 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
         <div className="space-y-2 mb-4">
           <div className="flex items-center space-x-2 text-sm text-gray-600">
             <PhoneIcon className="w-4 h-4" />
-            <span>{walkIn.customer_phone}</span>
+            <span>{formatPhoneNumber(walkIn.customer_phone)}</span>
           </div>
           
           {walkIn.customer_email && (

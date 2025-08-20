@@ -22,6 +22,7 @@ import { BookingWithRelations } from "@/types/booking"
 import { deleteBooking } from "@/lib/admin-booking-logic"
 import { cancelBookingRPC } from "@/lib/admin-booking-rpc"
 import { format } from "date-fns"
+import { formatPhoneNumber } from "@/lib/phone-utils"
 import { 
   Calendar, 
   Clock, 
@@ -219,7 +220,7 @@ export function BookingDetailsModal({
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span>{customerPhone}</span>
+                  <span>{formatPhoneNumber(customerPhone)}</span>
                 </div>
               </div>
             </div>

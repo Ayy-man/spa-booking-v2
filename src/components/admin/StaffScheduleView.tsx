@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { PhoneInput } from "@/components/ui/phone-input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { normalizePhoneForDB } from "@/lib/phone-utils"
+import { normalizePhoneForDB, formatPhoneNumber } from "@/lib/phone-utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
 import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2, Users } from "lucide-react"
 import { format } from "date-fns"
@@ -914,7 +914,7 @@ export function StaffScheduleView({
                   <SelectContent>
                     {customers.map((customer) => (
                       <SelectItem key={customer.id} value={customer.id}>
-                        {customer.first_name} {customer.last_name} - {customer.phone}
+                        {customer.first_name} {customer.last_name} - {formatPhoneNumber(customer.phone)}
                       </SelectItem>
                     ))}
                   </SelectContent>
