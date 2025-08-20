@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { getServiceCategory, canDatabaseStaffPerformService, isDatabaseStaffAvailableOnDate } from '@/lib/staff-data'
-import { supabaseClient } from '@/lib/supabase'
+import { supabaseClient, supabase } from '@/lib/supabase'
 import { Database } from '@/types/database'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -42,6 +42,67 @@ export default function StaffPage() {
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [availableStaff, setAvailableStaff] = useState<Staff[]>([])
   const [loadingStaff, setLoadingStaff] = useState<boolean>(true)
+
+  // Function to check if staff has a schedule block
+  const checkStaffScheduleBlock = async (staffId: string, date: string, time: string, duration: number) => {
+    try {
+      // Query schedule blocks for this staff member on this date
+      const { data: blocks, error } = await supabase
+        .from('schedule_blocks')
+        .select('*')
+        .eq('staff_id', staffId)
+        .lte('start_date', date)
+        .or(`end_date.is.null,end_date.gte.${date}`)
+
+      if (error) {
+        console.error('Error fetching schedule blocks:', error)
+        return false // Don't block if there's an error
+      }
+
+      if (!blocks || blocks.length === 0) {
+        return false // No blocks found
+      }
+
+      // Check each block
+      for (const block of blocks) {
+        // Check if the date falls within the block period
+        const blockStartDate = new Date(block.start_date)
+        const blockEndDate = block.end_date ? new Date(block.end_date) : blockStartDate
+        const checkDate = new Date(date)
+        
+        if (checkDate < blockStartDate || checkDate > blockEndDate) {
+          continue // Date is outside this block's range
+        }
+
+        // If it's a full day block, staff is not available
+        if (block.block_type === 'full_day') {
+          console.log(`Staff ${staffId} has full day block on ${date}`)
+          return true
+        }
+
+        // If it's a time range block, check if times overlap
+        if (block.block_type === 'time_range' && block.start_time && block.end_time) {
+          const slotStart = new Date(`2000-01-01T${time}:00`)
+          const slotEnd = new Date(`2000-01-01T${time}:00`)
+          slotEnd.setMinutes(slotEnd.getMinutes() + duration)
+          
+          const blockStart = new Date(`2000-01-01T${block.start_time}`)
+          const blockEnd = new Date(`2000-01-01T${block.end_time}`)
+          
+          // Check for overlap
+          if (slotStart < blockEnd && slotEnd > blockStart) {
+            console.log(`Staff ${staffId} has time block from ${block.start_time} to ${block.end_time}`)
+            return true
+          }
+        }
+      }
+
+      return false // No blocking conflicts found
+    } catch (error) {
+      console.error('Error in checkStaffScheduleBlock:', error)
+      return false
+    }
+  }
 
   // Remove duplicate function - using imported one from staff-data.ts
 
@@ -154,14 +215,21 @@ export default function StaffPage() {
       const serviceDuration = matchingService.duration || 60
       const bufferMinutes = 15
       
-      // Filter staff by capability, work day availability, and actual booking conflicts
-      const availableStaffForDay = allStaff.filter(staff => {
-        if (!staff.is_active || staff.id === 'any') return false
+      // Filter staff by capability, work day availability, schedule blocks, and actual booking conflicts
+      const availableStaffPromises = allStaff.map(async (staff) => {
+        if (!staff.is_active || staff.id === 'any') return null
         
         const hasCapability = canDatabaseStaffPerformService(staff, matchingService.category, matchingService.name)
         const worksOnDay = isDatabaseStaffAvailableOnDate(staff, dateData)
         
-        if (!hasCapability || !worksOnDay) return false
+        if (!hasCapability || !worksOnDay) return null
+        
+        // Check for schedule blocks FIRST
+        const hasScheduleBlock = await checkStaffScheduleBlock(staff.id, dateData, timeData, serviceDuration)
+        if (hasScheduleBlock) {
+          console.log(`Staff ${staff.name} has schedule block on ${dateData} at ${timeData}`)
+          return null // Staff is blocked during this time
+        }
         
         // Check if staff is actually available at the selected time
         const staffBookings = existingBookings.filter(b => b.staff_id === staff.id)
@@ -180,7 +248,7 @@ export default function StaffPage() {
           
           // Check for overlap
           if (slotStart < bookingEnd && slotEnd > bookingStart) {
-            return false // Staff is not available due to booking conflict
+            return null // Staff is not available due to booking conflict
           }
         }
         
@@ -201,10 +269,10 @@ export default function StaffPage() {
             
             // Check for overlap
             if (slotStart < bookingEnd && slotEnd > bookingStart) {
-              return false // Room 3 is not available
+              return null // Room 3 is not available
             }
           }
-          return true // Room 3 is available
+          return staff // Room 3 is available, return the staff object
         } else {
           // For non-body-scrub services, check if ANY room (1, 2, or 3) is available
           const roomsToCheck = [1, 2, 3]
@@ -229,13 +297,17 @@ export default function StaffPage() {
             }
             
             if (isRoomAvailable) {
-              return true // Found at least one available room
+              return staff // Found at least one available room, return the staff object
             }
           }
           
-          return false // No rooms available
+          return null // No rooms available
         }
       })
+      
+      // Wait for all promises to resolve and filter out null values
+      const availableStaffResults = await Promise.all(availableStaffPromises)
+      const availableStaffForDay = availableStaffResults.filter(staff => staff !== null)
       
       setAvailableStaff(availableStaffForDay)
     } catch (error: any) {
