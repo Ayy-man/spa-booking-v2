@@ -18,6 +18,7 @@ import { BookingWithRelations, ServiceCategory } from "@/types/booking"
 import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2, Users } from "lucide-react"
 import { format } from "date-fns"
 import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicator"
+import { BookingDetailsModal } from "@/components/admin/BookingDetailsModal"
 
 // Service category colors (matching existing color scheme)
 const SERVICE_COLORS: Record<ServiceCategory, { bg: string; border: string; text: string }> = {
@@ -958,56 +959,20 @@ export function StaffScheduleView({
         </DialogContent>
       </Dialog>
 
-      {/* Selected Booking Dialog */}
-      <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBooking(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Appointment Details</DialogTitle>
-          </DialogHeader>
-          {selectedBooking && (
-            <div className="space-y-3">
-              <div>
-                <span className="text-sm text-gray-500">Service:</span>
-                <p className="font-medium">
-                  {selectedBooking.service.name}
-                  {selectedBooking.booking_type === 'couple' && (
-                    <CouplesBookingIndicator 
-                      bookingType="couple" 
-                      size="sm" 
-                      className="ml-2 inline-flex" 
-                    />
-                  )}
-                </p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-500">Time:</span>
-                <p className="font-medium">
-                  {selectedBooking.start_time} - {selectedBooking.end_time} ({selectedBooking.service.duration} min)
-                </p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-500">Staff:</span>
-                <p className="font-medium">{selectedBooking.staff?.name}</p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-500">Room:</span>
-                <p className="font-medium">Room {selectedBooking.room?.name}</p>
-              </div>
-              {selectedBooking.notes && (
-                <div>
-                  <span className="text-sm text-gray-500">Notes:</span>
-                  <p className="font-medium">{selectedBooking.notes}</p>
-                </div>
-              )}
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedBooking(null)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Booking Details Modal */}
+      {selectedBooking && (
+        <BookingDetailsModal
+          booking={selectedBooking}
+          open={!!selectedBooking}
+          onOpenChange={(open) => {
+            if (!open) setSelectedBooking(null)
+          }}
+          onActionComplete={() => {
+            fetchData()
+            setSelectedBooking(null)
+          }}
+        />
+      )}
 
       {/* Print Styles */}
       <style jsx global>{`
