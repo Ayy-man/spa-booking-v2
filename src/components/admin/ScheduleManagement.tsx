@@ -61,7 +61,7 @@ export function ScheduleManagement() {
   const [staff, setStaff] = useState<Staff[]>([])
   const [staffSchedules, setStaffSchedules] = useState<StaffScheduleState[]>([])
   const [scheduleBlocks, setScheduleBlocks] = useState<ScheduleBlock[]>([])
-  const [selectedStaffId, setSelectedStaffId] = useState<string>('')
+  const [selectedStaffId, setSelectedStaffId] = useState<string>('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'schedules' | 'blocks'>('schedules')
@@ -468,7 +468,7 @@ export function ScheduleManagement() {
   }
 
   // Filter schedule blocks by selected staff if any
-  const filteredScheduleBlocks = selectedStaffId 
+  const filteredScheduleBlocks = selectedStaffId && selectedStaffId !== 'all'
     ? scheduleBlocks.filter(block => block.staff_id === selectedStaffId)
     : scheduleBlocks
 
@@ -754,7 +754,7 @@ export function ScheduleManagement() {
                   <SelectValue placeholder="All Staff" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Staff</SelectItem>
+                  <SelectItem value="all">All Staff</SelectItem>
                   {staff.map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                   ))}
