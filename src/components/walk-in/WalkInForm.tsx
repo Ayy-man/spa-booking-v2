@@ -45,9 +45,6 @@ const walkInFormSchema = z.object({
     .regex(/^[a-zA-Z\s'-]+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes')
     .optional()
     .or(z.literal('')),
-  secondPersonPhone: z.string()
-    .optional()
-    .or(z.literal('')),
   secondService: z.string().optional().or(z.literal(''))
 })
 
@@ -92,7 +89,6 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
       marketingConsent: false,
       isCouplesBooking: false,
       secondPersonName: '',
-      secondPersonPhone: '',
       secondService: ''
     },
     mode: 'onChange'
@@ -182,7 +178,6 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
         ...data,
         isCouplesBooking,
         secondPersonName: isCouplesBooking ? data.secondPersonName : undefined,
-        secondPersonPhone: isCouplesBooking ? data.secondPersonPhone : undefined,
         secondService: isCouplesBooking ? data.secondService : undefined
       }
       await onSubmit(submissionData)
@@ -404,30 +399,6 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
                   {errors.secondPersonName.message}
                 </p>
               )}
-            </div>
-
-            {/* Second Person Phone */}
-            <div className="space-y-2">
-              <Label htmlFor="secondPersonPhone" className="text-sm font-medium text-gray-700">
-                Second Person&apos;s Phone <span className="text-gray-400">(Optional)</span>
-              </Label>
-              <PhoneInput
-                id="secondPersonPhone"
-                value={watch('secondPersonPhone') || ''}
-                onChange={(rawValue, formatted, isValid) => {
-                  setValue('secondPersonPhone', rawValue, { 
-                    shouldValidate: true,
-                    shouldDirty: true,
-                    shouldTouch: true 
-                  })
-                }}
-                onBlur={() => trigger('secondPersonPhone')}
-                error={!!errors.secondPersonPhone}
-                showError={true}
-                errorMessage={errors.secondPersonPhone?.message}
-                returnRawValue={true}
-                className={getInputClasses('secondPersonPhone')}
-              />
             </div>
 
             {/* Second Person Service */}

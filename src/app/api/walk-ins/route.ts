@@ -12,7 +12,6 @@ interface WalkInRequest {
   // Couples booking fields
   isCouplesBooking?: boolean
   secondPersonName?: string
-  secondPersonPhone?: string
   secondService?: string
 }
 
@@ -122,7 +121,7 @@ export async function POST(request: NextRequest) {
         .from('walk_ins')
         .insert({
           customer_name: body.secondPersonName!,
-          customer_phone: body.secondPersonPhone || body.phone, // Use primary phone if second not provided
+          customer_phone: body.phone, // Use primary phone for both
           customer_email: null,
           service_name: secondService.name,
           service_category: secondService.category,
@@ -187,7 +186,7 @@ export async function POST(request: NextRequest) {
           {
             name: body.secondPersonName!,
             email: '',
-            phone: body.secondPersonPhone || body.phone,
+            phone: body.phone,
             isNewCustomer: true,
             marketingConsent: false
           },
