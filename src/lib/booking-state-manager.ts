@@ -29,6 +29,7 @@ export interface BookingState {
     phone?: string
     isNewCustomer: boolean
     specialRequests?: string
+    marketingConsent?: boolean
   }
   
   // Payment

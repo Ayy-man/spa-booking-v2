@@ -30,7 +30,8 @@ const customerFormSchema = z.object({
   specialRequests: z.string()
     .max(500, 'Special requests must be less than 500 characters')
     .optional(),
-  isNewCustomer: z.boolean().default(false)
+  isNewCustomer: z.boolean().default(false),
+  marketingConsent: z.boolean().default(false)
 })
 
 export type CustomerFormData = z.infer<typeof customerFormSchema>
@@ -58,7 +59,8 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
       email: initialData?.email || '',
       phone: initialData?.phone || '',
       specialRequests: initialData?.specialRequests || '',
-      isNewCustomer: initialData?.isNewCustomer || false
+      isNewCustomer: initialData?.isNewCustomer || false,
+      marketingConsent: initialData?.marketingConsent || false
     },
     mode: 'onChange'
   })
@@ -276,6 +278,28 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
           </div>
         </div>
 
+        {/* Marketing Consent */}
+        <div className="space-y-3">
+          <div className="flex items-start space-x-3">
+            <input
+              type="checkbox"
+              id="marketingConsent"
+              checked={formData.marketingConsent}
+              onChange={(e) => setValue('marketingConsent', e.target.checked)}
+              className="mt-1 h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary focus:ring-2"
+            />
+            <div className="flex-1">
+              <label htmlFor="marketingConsent" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Marketing Communications
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                I would like to receive promotional offers, special discounts, and updates about new services via email. 
+                You can unsubscribe at any time.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Privacy Notice */}
         <div className="bg-gray-50 rounded-lg p-4">
           <h3 className="text-sm font-medium text-gray-800 mb-2">
@@ -285,6 +309,12 @@ export default function CustomerForm({ onSubmit, loading = false, initialData }:
             Your personal information will be used solely for booking management and 
             service delivery. We respect your privacy and will never share your details 
             with third parties. You can request data deletion at any time by contacting us.
+            {formData.marketingConsent && (
+              <span className="block mt-2 text-xs text-gray-500">
+                With your consent, we may also send you promotional communications about our services, 
+                special offers, and wellness tips. You can withdraw this consent at any time.
+              </span>
+            )}
           </p>
         </div>
 

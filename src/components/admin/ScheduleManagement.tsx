@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CalendarIcon, ClockIcon, PlusIcon, TrashIcon, EditIcon, SaveIcon, XIcon, CopyIcon, RotateCcwIcon } from 'lucide-react'
+import { CalendarIcon, ClockIcon, PlusIcon, TrashIcon, EditIcon, SaveIcon, XIcon } from 'lucide-react'
 import { format, parseISO, addDays, startOfWeek } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { Staff, StaffSchedule, ScheduleBlock } from '@/types/booking'
@@ -348,35 +348,6 @@ export function ScheduleManagement() {
     ))
   }
 
-  const copyScheduleToWeek = async (staffId: string) => {
-    // This would open a dialog to select a week to copy this schedule to
-    // For now, just show a notification
-    showNotification('Info', 'Copy schedule feature will be implemented in next update')
-  }
-
-  const applyDefaultSchedule = (staffId: string) => {
-    const staffMember = staff.find(s => s.id === staffId)
-    if (!staffMember) return
-
-    const defaultSchedule: WeeklySchedule = {}
-    DAYS_OF_WEEK.forEach(day => {
-      const isWorkingDay = staffMember.work_days.includes(day.value)
-      defaultSchedule[day.value] = {
-        isWorking: isWorkingDay,
-        start_time: DEFAULT_WORK_HOURS.start_time,
-        end_time: DEFAULT_WORK_HOURS.end_time,
-        break_start: null,
-        break_end: null,
-        notes: null
-      }
-    })
-
-    setStaffSchedules(prev => prev.map(schedule => 
-      schedule.staff.id === staffId
-        ? { ...schedule, weeklySchedule: defaultSchedule }
-        : schedule
-    ))
-  }
 
   // Schedule block (time off) functions
   const handleAddBlock = async () => {
@@ -591,35 +562,15 @@ export function ScheduleManagement() {
                     </CardTitle>
                     <div className="flex gap-2">
                       {!scheduleState.isEditing ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleStaffEditing(scheduleState.staff.id)}
-                            className="border-[#C36678] text-[#C36678] hover:bg-[#F6C7CF]"
-                          >
-                            <EditIcon className="w-4 h-4 mr-1" />
-                            Edit
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => copyScheduleToWeek(scheduleState.staff.id)}
-                            className="border-[#C36678] text-[#C36678] hover:bg-[#F6C7CF]"
-                          >
-                            <CopyIcon className="w-4 h-4 mr-1" />
-                            Copy
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => applyDefaultSchedule(scheduleState.staff.id)}
-                            className="border-[#C36678] text-[#C36678] hover:bg-[#F6C7CF]"
-                          >
-                            <RotateCcwIcon className="w-4 h-4 mr-1" />
-                            Reset
-                          </Button>
-                        </>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleStaffEditing(scheduleState.staff.id)}
+                          className="border-[#C36678] text-[#C36678] hover:bg-[#F6C7CF]"
+                        >
+                          <EditIcon className="w-4 h-4 mr-1" />
+                          Edit
+                        </Button>
                       ) : (
                         <>
                           <Button

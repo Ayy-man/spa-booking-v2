@@ -80,7 +80,8 @@ export default function CustomerInfoPage() {
         email: data.email,
         phone: data.phone,
         isNewCustomer: data.isNewCustomer,
-        specialRequests: data.specialRequests
+        specialRequests: data.specialRequests,
+        marketingConsent: data.marketingConsent
       }
     })
     
@@ -94,7 +95,8 @@ export default function CustomerInfoPage() {
             name: data.name,
             email: data.email,
             phone: data.phone || '',
-            isNewCustomer: true
+            isNewCustomer: true,
+            marketingConsent: data.marketingConsent
           },
           {
             service: selectedService.name,

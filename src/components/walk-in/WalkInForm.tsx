@@ -34,7 +34,8 @@ const walkInFormSchema = z.object({
     .min(1, 'Please select a service'),
   notes: z.string()
     .max(500, 'Notes must be less than 500 characters')
-    .optional()
+    .optional(),
+  marketingConsent: z.boolean().default(false)
 })
 
 export type WalkInFormData = z.infer<typeof walkInFormSchema>
@@ -72,7 +73,8 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
       phone: '',
       email: '',
       service: '',
-      notes: ''
+      notes: '',
+      marketingConsent: false
     },
     mode: 'onChange'
   })
@@ -312,6 +314,26 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
           <p className="text-xs text-gray-500">
             Maximum 500 characters
           </p>
+        </div>
+
+        {/* Marketing Consent */}
+        <div className="flex items-start space-x-3">
+          <input
+            type="checkbox"
+            id="marketingConsent"
+            checked={formData.marketingConsent}
+            onChange={(e) => setValue('marketingConsent', e.target.checked)}
+            className="mt-1 h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded"
+          />
+          <div className="flex-1">
+            <label htmlFor="marketingConsent" className="text-sm font-medium text-gray-700">
+              Marketing Communications
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              I would like to receive promotional offers, special discounts, and updates about new services via email. 
+              You can unsubscribe at any time.
+            </p>
+          </div>
         </div>
 
         {/* Info Notice */}

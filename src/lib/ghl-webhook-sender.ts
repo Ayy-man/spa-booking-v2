@@ -8,6 +8,7 @@ interface CustomerData {
   email: string
   phone?: string
   isNewCustomer?: boolean
+  marketingConsent?: boolean
 }
 
 interface BookingData {
@@ -70,7 +71,7 @@ class GHLWebhookSender {
         },
         preferences: {
           communication_preference: 'email',
-          marketing_consent: true,
+          marketing_consent: customer.marketingConsent || false,
           special_requests: ''
         },
         system_data: {
