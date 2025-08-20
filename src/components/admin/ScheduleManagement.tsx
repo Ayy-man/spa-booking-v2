@@ -121,7 +121,7 @@ export function ScheduleManagement() {
       const scheduleStates = await Promise.all(
         staffData.map(async (staffMember) => ({
           staff: staffMember,
-          weeklySchedule: await fetchStaffWeeklySchedule(staffMember.id),
+          weeklySchedule: await fetchStaffWeeklySchedule(staffMember),
           isEditing: false
         }))
       )
@@ -134,12 +134,15 @@ export function ScheduleManagement() {
   }
 
   // Fetch staff weekly schedule from work_days and create default schedule
-  const fetchStaffWeeklySchedule = async (staffId: string): Promise<WeeklySchedule> => {
+  const fetchStaffWeeklySchedule = async (staffMember: Staff): Promise<WeeklySchedule> => {
     try {
-      const staffMember = staff.find(s => s.id === staffId)
       if (!staffMember) {
+        console.warn('No staff member provided to fetchStaffWeeklySchedule')
         return createEmptyWeeklySchedule()
       }
+
+      // Debug: Log staff member data
+      console.log('Fetching schedule for staff:', staffMember.name, 'work_days:', staffMember.work_days)
 
       // Get existing schedule records for this week
       const weekStart = format(weekStartDate, 'yyyy-MM-dd')
@@ -148,13 +151,16 @@ export function ScheduleManagement() {
       const { data: scheduleData, error } = await supabase
         .from('staff_schedules')
         .select('*')
-        .eq('staff_id', staffId)
+        .eq('staff_id', staffMember.id)
         .gte('date', weekStart)
         .lte('date', weekEnd)
 
       if (error) {
         console.error('Error fetching staff schedule:', error)
       }
+
+      // Debug: Log schedule data found
+      console.log('Schedule data for', staffMember.name, ':', scheduleData?.length || 0, 'records')
 
       // Create weekly schedule based on staff work_days and existing schedule records
       const weeklySchedule: WeeklySchedule = {}
@@ -167,6 +173,7 @@ export function ScheduleManagement() {
 
         if (scheduleRecord) {
           // Use existing schedule record
+          console.log(`Using schedule record for ${staffMember.name} on ${day.label}:`, scheduleRecord.is_available)
           weeklySchedule[day.value] = {
             isWorking: scheduleRecord.is_available,
             start_time: scheduleRecord.start_time,
@@ -176,8 +183,11 @@ export function ScheduleManagement() {
             notes: scheduleRecord.notes
           }
         } else {
-          // Use default based on staff work_days
-          const isWorkingDay = staffMember.work_days.includes(day.value)
+          // Use default based on staff work_days - ensure work_days exists and is an array
+          const workDays = staffMember.work_days || []
+          const isWorkingDay = workDays.includes(day.value)
+          console.log(`Using work_days for ${staffMember.name} on ${day.label}: ${isWorkingDay} (work_days: [${workDays.join(', ')}])`)
+          
           weeklySchedule[day.value] = {
             isWorking: isWorkingDay,
             start_time: isWorkingDay ? DEFAULT_WORK_HOURS.start_time : '09:00',
@@ -325,8 +335,14 @@ export function ScheduleManagement() {
   }
 
   const cancelStaffScheduleEdit = async (staffId: string) => {
-    // Reload the original schedule
-    const freshSchedule = await fetchStaffWeeklySchedule(staffId)
+    // Find the staff member and reload the original schedule
+    const staffMember = staff.find(s => s.id === staffId)
+    if (!staffMember) {
+      console.error('Staff member not found for cancel edit:', staffId)
+      return
+    }
+    
+    const freshSchedule = await fetchStaffWeeklySchedule(staffMember)
     setStaffSchedules(prev => prev.map(schedule => 
       schedule.staff.id === staffId
         ? { ...schedule, weeklySchedule: freshSchedule, isEditing: false }
