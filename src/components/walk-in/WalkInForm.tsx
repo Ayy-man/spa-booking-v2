@@ -43,14 +43,12 @@ const walkInFormSchema = z.object({
     .min(2, 'Name must be at least 2 characters')
     .max(50, 'Name must be less than 50 characters')
     .regex(/^[a-zA-Z\s'-]+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes')
-    .optional(),
+    .optional()
+    .or(z.literal('')),
   secondPersonPhone: z.string()
-    .transform((val) => val ? normalizePhoneForDB(val) : '')
-    .refine((val) => !val || validatePhoneNumber(val), {
-      message: 'Please enter a valid phone number'
-    })
-    .optional(),
-  secondService: z.string().optional()
+    .optional()
+    .or(z.literal('')),
+  secondService: z.string().optional().or(z.literal(''))
 })
 
 export type WalkInFormData = z.infer<typeof walkInFormSchema>
@@ -193,7 +191,7 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
     }
   }
 
-  const isFormValid = isValid && formData.name && formData.phone && formData.service &&
+  const isFormValid = formData.name && formData.phone && formData.service &&
     (!isCouplesBooking || (formData.secondPersonName && formData.secondService))
 
   return (
