@@ -132,7 +132,7 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
         setValue('isCouplesBooking', false)
       }
     }
-  }, [formData.service, services])
+  }, [formData.service, services, setValue])
 
   // Update second selected service when it changes
   useEffect(() => {
@@ -391,7 +391,7 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
             {/* Second Person Name */}
             <div className="space-y-2">
               <Label htmlFor="secondPersonName" className="text-sm font-medium text-gray-700">
-                Second Person's Name *
+                Second Person&apos;s Name *
               </Label>
               <div className="relative">
                 <Input
@@ -419,7 +419,7 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
             {/* Second Person Phone */}
             <div className="space-y-2">
               <Label htmlFor="secondPersonPhone" className="text-sm font-medium text-gray-700">
-                Second Person's Phone <span className="text-gray-400">(Optional)</span>
+                Second Person&apos;s Phone <span className="text-gray-400">(Optional)</span>
               </Label>
               <PhoneInput
                 id="secondPersonPhone"
