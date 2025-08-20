@@ -78,6 +78,19 @@ export const staffMembers: StaffMember[] = [
     default_room_id: null,
     defaultRoom: undefined,
     service_exclusions: []
+  },
+  {
+    id: 'phuong',
+    name: 'Phuong Bosque',
+    email: 'phuong.bosque@dermalskin.com',
+    phone: '(671) 555-0123',
+    specialties: 'Body Massages (All Types)',
+    initials: 'PB',
+    capabilities: ['massages'],  // Massage services only
+    work_days: [0, 1, 2, 3, 4, 5, 6], // Available all days (Sunday through Saturday)
+    default_room_id: null,
+    defaultRoom: undefined,
+    service_exclusions: []
   }
 ]
 
@@ -87,7 +100,8 @@ export const staffNameMap = {
   'selma': 'Selma Villaver',
   'robyn': 'Robyn Camacho',
   'tanisha': 'Tanisha Harris',  
-  'leonel': 'Leonel Sidon (Sundays only)'
+  'leonel': 'Leonel Sidon (Sundays only)',
+  'phuong': 'Phuong Bosque'
 } as const
 
 // Helper function to determine service category - updated to match staff capabilities
