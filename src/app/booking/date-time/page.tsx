@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import BookingProgressIndicator from '@/components/booking/BookingProgressIndicator'
 import { getAvailableStaff } from '@/lib/staff-data'
 import { processTimeSlots, formatTimeToHHMM } from '@/lib/time-utils'
+import { isTimeSlotBookable, createGuamDateTime } from '@/lib/timezone-utils'
 
 import { InlineLoading } from '@/components/ui/loading-spinner'
 import { TimeSlotSkeleton } from '@/components/ui/skeleton-loader'
@@ -174,7 +175,12 @@ export default function DateTimePage() {
       
       if (endTime <= closingTime) {
         const timeString = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`
-        times.push(timeString)
+        
+        // Check if this time slot meets the 2-hour advance booking requirement
+        const slotDateTime = createGuamDateTime(format(selectedDate!, 'yyyy-MM-dd'), timeString)
+        if (isTimeSlotBookable(slotDateTime)) {
+          times.push(timeString)
+        }
         
         // Move to next slot: For services 60 minutes or longer, increment by 30 minutes
         // For shorter services, increment by 15 minutes
@@ -245,6 +251,15 @@ export default function DateTimePage() {
         
         if (endTime <= closingTime) {
           const timeString = `${currentTime.getHours().toString().padStart(2, '0')}:${currentTime.getMinutes().toString().padStart(2, '0')}`
+          
+          // Check if this time slot meets the 2-hour advance booking requirement
+          const slotDateTime = createGuamDateTime(format(selectedDate, 'yyyy-MM-dd'), timeString)
+          if (!isTimeSlotBookable(slotDateTime)) {
+            // Skip this slot as it doesn't meet the 2-hour advance requirement
+            const incrementMinutes = serviceDuration >= 60 ? 30 : 15
+            currentTime.setMinutes(currentTime.getMinutes() + incrementMinutes)
+            continue
+          }
           
           // Check if at least one staff member is available at this time
           let hasAvailableStaff = false
@@ -612,7 +627,9 @@ export default function DateTimePage() {
                         No available time slots
                       </div>
                       <div className="text-gray-500 dark:text-gray-400">
-                        Please select a different date
+                        {isSameDay(selectedDate, new Date()) 
+                          ? 'Appointments must be booked at least 2 hours in advance'
+                          : 'Please select a different date'}
                       </div>
                     </div>
                   ) : (
