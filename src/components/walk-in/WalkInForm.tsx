@@ -144,13 +144,9 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
 
   // Check if a service is couples-compatible
   const isCouplesCompatible = (service: Service) => {
-    // Couples-compatible services typically include massages, facials, and packages
-    // Exclude body scrubs from couples booking as they require special equipment
-    const couplesCategories = ['massages', 'facials', 'packages']
-    const excludedServices = ['body scrub', 'body wrap']
-    
-    return couplesCategories.includes(service.category.toLowerCase()) &&
-           !excludedServices.some(excluded => service.name.toLowerCase().includes(excluded))
+    // All services are couples-compatible according to business requirements
+    // Database categories: facial, massage, body_treatment, body_scrub, waxing, package, membership
+    return true
   }
 
   // Helper function to get field validation status
