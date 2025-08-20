@@ -9,27 +9,66 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-// Using window.confirm instead of AlertDialog for simplicity
-import { CalendarIcon, ClockIcon, PlusIcon, TrashIcon, EditIcon } from 'lucide-react'
-import { format, parseISO } from 'date-fns'
+import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { CalendarIcon, ClockIcon, PlusIcon, TrashIcon, EditIcon, SaveIcon, XIcon, CopyIcon, RotateCcwIcon } from 'lucide-react'
+import { format, parseISO, addDays, startOfWeek } from 'date-fns'
 import { supabase } from '@/lib/supabase'
-import { Staff, ScheduleBlock, Booking } from '@/types/booking'
+import { Staff, StaffSchedule, ScheduleBlock } from '@/types/booking'
+
 // Simple notification function
 const showNotification = (title: string, description: string, type: 'success' | 'error' = 'success') => {
   alert(`${title}: ${description}`)
 }
 
+// Days of the week for schedule display
+const DAYS_OF_WEEK = [
+  { value: 0, label: 'Sunday', short: 'Sun' },
+  { value: 1, label: 'Monday', short: 'Mon' },
+  { value: 2, label: 'Tuesday', short: 'Tue' },
+  { value: 3, label: 'Wednesday', short: 'Wed' },
+  { value: 4, label: 'Thursday', short: 'Thu' },
+  { value: 5, label: 'Friday', short: 'Fri' },
+  { value: 6, label: 'Saturday', short: 'Sat' }
+]
+
+// Default working hours
+const DEFAULT_WORK_HOURS = {
+  start_time: '09:00',
+  end_time: '17:00',
+  break_start: '12:00',
+  break_end: '13:00'
+}
+
+interface WeeklySchedule {
+  [key: number]: {
+    isWorking: boolean
+    start_time: string
+    end_time: string
+    break_start: string | null
+    break_end: string | null
+    notes: string | null
+  }
+}
+
+interface StaffScheduleState {
+  staff: Staff
+  weeklySchedule: WeeklySchedule
+  isEditing: boolean
+}
+
 export function ScheduleManagement() {
   const [staff, setStaff] = useState<Staff[]>([])
+  const [staffSchedules, setStaffSchedules] = useState<StaffScheduleState[]>([])
   const [scheduleBlocks, setScheduleBlocks] = useState<ScheduleBlock[]>([])
-  const [selectedStaff, setSelectedStaff] = useState<string>('all')
-  const [showAddModal, setShowAddModal] = useState(false)
-  const [showConflictWarning, setShowConflictWarning] = useState(false)
-  const [conflictingBookings, setConflictingBookings] = useState<Booking[]>([])
+  const [selectedStaffId, setSelectedStaffId] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'schedules' | 'blocks'>('schedules')
+  const [weekStartDate, setWeekStartDate] = useState<Date>(startOfWeek(new Date()))
   
-  // Form state for adding/editing blocks
+  // Form state for adding schedule blocks (time off)
+  const [showBlockModal, setShowBlockModal] = useState(false)
   const [formData, setFormData] = useState({
     staffId: '',
     blockType: 'full_day' as 'full_day' | 'time_range',
@@ -42,11 +81,25 @@ export function ScheduleManagement() {
   
   const [editingBlock, setEditingBlock] = useState<ScheduleBlock | null>(null)
 
-  // Fetch staff members on mount
+  // Fetch staff members and schedules on mount
   useEffect(() => {
-    fetchStaff().catch(console.error)
-    fetchAllScheduleBlocks().catch(console.error)
-  }, [])
+    initializeData()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const initializeData = async () => {
+    try {
+      setLoading(true)
+      await Promise.all([
+        fetchStaff(),
+        fetchScheduleBlocks()
+      ])
+    } catch (error) {
+      console.error('Error initializing data:', error)
+      setError('Failed to load schedule data')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const fetchStaff = async () => {
     try {
@@ -58,19 +111,108 @@ export function ScheduleManagement() {
       
       if (error) {
         console.error('Error fetching staff:', error)
-        showNotification('Error', 'Failed to load staff members', 'error')
-      } else {
-        setStaff(data || [])
+        throw new Error('Failed to load staff members')
       }
+
+      const staffData = data || []
+      setStaff(staffData)
+      
+      // Initialize staff schedule states
+      const scheduleStates = await Promise.all(
+        staffData.map(async (staffMember) => ({
+          staff: staffMember,
+          weeklySchedule: await fetchStaffWeeklySchedule(staffMember.id),
+          isEditing: false
+        }))
+      )
+      
+      setStaffSchedules(scheduleStates)
     } catch (error) {
       console.error('Error in fetchStaff:', error)
-      showNotification('Error', 'Failed to load staff members', 'error')
+      throw error
     }
   }
 
-  const fetchAllScheduleBlocks = async () => {
+  // Fetch staff weekly schedule from work_days and create default schedule
+  const fetchStaffWeeklySchedule = async (staffId: string): Promise<WeeklySchedule> => {
     try {
-      setLoading(true)
+      const staffMember = staff.find(s => s.id === staffId)
+      if (!staffMember) {
+        return createEmptyWeeklySchedule()
+      }
+
+      // Get existing schedule records for this week
+      const weekStart = format(weekStartDate, 'yyyy-MM-dd')
+      const weekEnd = format(addDays(weekStartDate, 6), 'yyyy-MM-dd')
+      
+      const { data: scheduleData, error } = await supabase
+        .from('staff_schedules')
+        .select('*')
+        .eq('staff_id', staffId)
+        .gte('date', weekStart)
+        .lte('date', weekEnd)
+
+      if (error) {
+        console.error('Error fetching staff schedule:', error)
+      }
+
+      // Create weekly schedule based on staff work_days and existing schedule records
+      const weeklySchedule: WeeklySchedule = {}
+      
+      DAYS_OF_WEEK.forEach(day => {
+        const scheduleRecord = scheduleData?.find(s => {
+          const scheduleDate = new Date(s.date)
+          return scheduleDate.getDay() === day.value
+        })
+
+        if (scheduleRecord) {
+          // Use existing schedule record
+          weeklySchedule[day.value] = {
+            isWorking: scheduleRecord.is_available,
+            start_time: scheduleRecord.start_time,
+            end_time: scheduleRecord.end_time,
+            break_start: scheduleRecord.break_start,
+            break_end: scheduleRecord.break_end,
+            notes: scheduleRecord.notes
+          }
+        } else {
+          // Use default based on staff work_days
+          const isWorkingDay = staffMember.work_days.includes(day.value)
+          weeklySchedule[day.value] = {
+            isWorking: isWorkingDay,
+            start_time: isWorkingDay ? DEFAULT_WORK_HOURS.start_time : '09:00',
+            end_time: isWorkingDay ? DEFAULT_WORK_HOURS.end_time : '17:00',
+            break_start: isWorkingDay ? DEFAULT_WORK_HOURS.break_start : null,
+            break_end: isWorkingDay ? DEFAULT_WORK_HOURS.break_end : null,
+            notes: null
+          }
+        }
+      })
+
+      return weeklySchedule
+    } catch (error) {
+      console.error('Error in fetchStaffWeeklySchedule:', error)
+      return createEmptyWeeklySchedule()
+    }
+  }
+
+  const createEmptyWeeklySchedule = (): WeeklySchedule => {
+    const schedule: WeeklySchedule = {}
+    DAYS_OF_WEEK.forEach(day => {
+      schedule[day.value] = {
+        isWorking: false,
+        start_time: DEFAULT_WORK_HOURS.start_time,
+        end_time: DEFAULT_WORK_HOURS.end_time,
+        break_start: null,
+        break_end: null,
+        notes: null
+      }
+    })
+    return schedule
+  }
+
+  const fetchScheduleBlocks = async () => {
+    try {
       const { data, error } = await supabase
         .from('schedule_blocks')
         .select('*')
@@ -78,7 +220,6 @@ export function ScheduleManagement() {
       
       if (error) {
         console.error('Error fetching schedule blocks:', error)
-        // Check if the error is because the table doesn't exist
         if (error.message?.includes('schedule_blocks') && error.message?.includes('does not exist')) {
           setError('Schedule blocks table not found. Please run the database migration first.')
         } else {
@@ -86,78 +227,145 @@ export function ScheduleManagement() {
         }
       } else {
         setScheduleBlocks(data || [])
-        setError(null)
       }
     } catch (error: any) {
-      console.error('Error in fetchAllScheduleBlocks:', error)
+      console.error('Error in fetchScheduleBlocks:', error)
       setError('Failed to load schedule blocks: ' + (error.message || 'Unknown error'))
-    } finally {
-      setLoading(false)
     }
   }
 
-  const fetchStaffScheduleBlocks = async (staffId: string) => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('schedule_blocks')
-      .select('*')
-      .eq('staff_id', staffId)
-      .order('start_date', { ascending: false })
-    
-    if (error) {
-      console.error('Error fetching schedule blocks:', error)
-      showNotification('Error', 'Failed to load schedule blocks', 'error')
-    } else {
-      setScheduleBlocks(data || [])
-    }
-    setLoading(false)
+  // Schedule editing functions
+  const toggleStaffEditing = (staffId: string) => {
+    setStaffSchedules(prev => prev.map(schedule => 
+      schedule.staff.id === staffId 
+        ? { ...schedule, isEditing: !schedule.isEditing }
+        : schedule
+    ))
   }
 
-  const checkForConflicts = async (): Promise<boolean> => {
-    // Check for booking conflicts
-    const { data: bookings, error } = await supabase
-      .from('bookings')
-      .select('*')
-      .eq('staff_id', formData.staffId)
-      .gte('appointment_date', formData.startDate)
-      .lte('appointment_date', formData.endDate || formData.startDate)
-      .neq('status', 'cancelled')
-    
-    if (error) {
-      console.error('Error checking conflicts:', error)
-      return false
-    }
-    
-    if (bookings && bookings.length > 0) {
-      // For time range blocks, filter further by time
-      if (formData.blockType === 'time_range' && formData.startTime && formData.endTime) {
-        const conflictingWithTime = bookings.filter(booking => {
-          const bookingStart = booking.start_time
-          const bookingEnd = booking.end_time
-          
-          // Check if times overlap
-          return (
-            (bookingStart < formData.endTime && bookingEnd > formData.startTime) ||
-            (bookingStart === formData.startTime) ||
-            (bookingEnd === formData.endTime)
-          )
-        })
+  const updateStaffSchedule = (staffId: string, dayOfWeek: number, field: string, value: any) => {
+    setStaffSchedules(prev => prev.map(schedule => 
+      schedule.staff.id === staffId
+        ? {
+            ...schedule,
+            weeklySchedule: {
+              ...schedule.weeklySchedule,
+              [dayOfWeek]: {
+                ...schedule.weeklySchedule[dayOfWeek],
+                [field]: value
+              }
+            }
+          }
+        : schedule
+    ))
+  }
+
+  const saveStaffSchedule = async (staffId: string) => {
+    try {
+      const scheduleState = staffSchedules.find(s => s.staff.id === staffId)
+      if (!scheduleState) return
+
+      // Prepare schedule records for the week
+      const scheduleRecords = DAYS_OF_WEEK.map(day => {
+        const currentDate = addDays(weekStartDate, day.value)
+        const daySchedule = scheduleState.weeklySchedule[day.value]
         
-        if (conflictingWithTime.length > 0) {
-          setConflictingBookings(conflictingWithTime)
-          return true
+        return {
+          staff_id: staffId,
+          date: format(currentDate, 'yyyy-MM-dd'),
+          start_time: daySchedule.start_time,
+          end_time: daySchedule.end_time,
+          is_available: daySchedule.isWorking,
+          break_start: daySchedule.break_start,
+          break_end: daySchedule.break_end,
+          notes: daySchedule.notes
         }
-      } else if (formData.blockType === 'full_day') {
-        // Full day blocks conflict with any bookings on those dates
-        setConflictingBookings(bookings)
-        return true
+      })
+
+      // Delete existing records for this week and staff member
+      const weekStart = format(weekStartDate, 'yyyy-MM-dd')
+      const weekEnd = format(addDays(weekStartDate, 6), 'yyyy-MM-dd')
+      
+      await supabase
+        .from('staff_schedules')
+        .delete()
+        .eq('staff_id', staffId)
+        .gte('date', weekStart)
+        .lte('date', weekEnd)
+
+      // Insert new records
+      const { error } = await supabase
+        .from('staff_schedules')
+        .insert(scheduleRecords)
+
+      if (error) {
+        console.error('Error saving staff schedule:', error)
+        showNotification('Error', 'Failed to save schedule', 'error')
+        return
       }
+
+      // Update staff work_days in the staff table
+      const workDays = DAYS_OF_WEEK
+        .filter(day => scheduleState.weeklySchedule[day.value].isWorking)
+        .map(day => day.value)
+
+      await supabase
+        .from('staff')
+        .update({ work_days: workDays })
+        .eq('id', staffId)
+
+      // Toggle editing mode off
+      toggleStaffEditing(staffId)
+      showNotification('Success', 'Schedule saved successfully')
+      
+    } catch (error) {
+      console.error('Error in saveStaffSchedule:', error)
+      showNotification('Error', 'Failed to save schedule', 'error')
     }
-    
-    return false
   }
 
-  const handleAddBlock = async (proceedWithConflicts = false) => {
+  const cancelStaffScheduleEdit = async (staffId: string) => {
+    // Reload the original schedule
+    const freshSchedule = await fetchStaffWeeklySchedule(staffId)
+    setStaffSchedules(prev => prev.map(schedule => 
+      schedule.staff.id === staffId
+        ? { ...schedule, weeklySchedule: freshSchedule, isEditing: false }
+        : schedule
+    ))
+  }
+
+  const copyScheduleToWeek = async (staffId: string) => {
+    // This would open a dialog to select a week to copy this schedule to
+    // For now, just show a notification
+    showNotification('Info', 'Copy schedule feature will be implemented in next update')
+  }
+
+  const applyDefaultSchedule = (staffId: string) => {
+    const staffMember = staff.find(s => s.id === staffId)
+    if (!staffMember) return
+
+    const defaultSchedule: WeeklySchedule = {}
+    DAYS_OF_WEEK.forEach(day => {
+      const isWorkingDay = staffMember.work_days.includes(day.value)
+      defaultSchedule[day.value] = {
+        isWorking: isWorkingDay,
+        start_time: DEFAULT_WORK_HOURS.start_time,
+        end_time: DEFAULT_WORK_HOURS.end_time,
+        break_start: isWorkingDay ? DEFAULT_WORK_HOURS.break_start : null,
+        break_end: isWorkingDay ? DEFAULT_WORK_HOURS.break_end : null,
+        notes: null
+      }
+    })
+
+    setStaffSchedules(prev => prev.map(schedule => 
+      schedule.staff.id === staffId
+        ? { ...schedule, weeklySchedule: defaultSchedule }
+        : schedule
+    ))
+  }
+
+  // Schedule block (time off) functions
+  const handleAddBlock = async () => {
     // Validate form
     if (!formData.staffId || !formData.startDate) {
       showNotification('Validation Error', 'Please fill in all required fields', 'error')
@@ -167,17 +375,6 @@ export function ScheduleManagement() {
     if (formData.blockType === 'time_range' && (!formData.startTime || !formData.endTime)) {
       showNotification('Validation Error', 'Time range blocks require start and end times', 'error')
       return
-    }
-    
-    // Check for conflicts if not already proceeding with them
-    if (!proceedWithConflicts) {
-      const hasConflicts = await checkForConflicts()
-      if (hasConflicts) {
-        const confirmMessage = `This schedule block conflicts with ${conflictingBookings.length} existing booking(s). Do you want to proceed anyway?`
-        if (!window.confirm(confirmMessage)) {
-          return
-        }
-      }
     }
     
     // Create the schedule block
@@ -204,22 +401,17 @@ export function ScheduleManagement() {
       console.error('Error saving schedule block:', error)
       showNotification('Error', 'Failed to save schedule block', 'error')
     } else {
-      showNotification('Success', editingBlock ? 'Schedule block updated' : 'Schedule block added successfully')
+      showNotification('Success', editingBlock ? 'Time off updated' : 'Time off added successfully')
       
       // Reset form and refresh data
-      resetForm()
-      setShowAddModal(false)
-      
-      if (selectedStaff) {
-        fetchStaffScheduleBlocks(selectedStaff)
-      } else {
-        fetchAllScheduleBlocks()
-      }
+      resetBlockForm()
+      setShowBlockModal(false)
+      fetchScheduleBlocks()
     }
   }
 
   const handleDeleteBlock = async (blockId: string) => {
-    if (!window.confirm('Are you sure you want to delete this schedule block? This action cannot be undone.')) {
+    if (!window.confirm('Are you sure you want to delete this time off? This action cannot be undone.')) {
       return
     }
     
@@ -230,15 +422,10 @@ export function ScheduleManagement() {
     
     if (error) {
       console.error('Error deleting schedule block:', error)
-      showNotification('Error', 'Failed to delete schedule block', 'error')
+      showNotification('Error', 'Failed to delete time off', 'error')
     } else {
-      showNotification('Success', 'Schedule block deleted')
-      
-      if (selectedStaff) {
-        fetchStaffScheduleBlocks(selectedStaff)
-      } else {
-        fetchAllScheduleBlocks()
-      }
+      showNotification('Success', 'Time off deleted')
+      fetchScheduleBlocks()
     }
   }
 
@@ -253,10 +440,10 @@ export function ScheduleManagement() {
       endTime: block.end_time || '',
       reason: block.reason || ''
     })
-    setShowAddModal(true)
+    setShowBlockModal(true)
   }
 
-  const resetForm = () => {
+  const resetBlockForm = () => {
     setFormData({
       staffId: '',
       blockType: 'full_day',
@@ -267,7 +454,6 @@ export function ScheduleManagement() {
       reason: ''
     })
     setEditingBlock(null)
-    setConflictingBookings([])
   }
 
   const getStaffName = (staffId: string) => {
@@ -275,168 +461,404 @@ export function ScheduleManagement() {
     return staffMember?.name || 'Unknown'
   }
 
-  // Group blocks by staff for display
-  const blocksByStaff = scheduleBlocks.reduce((acc, block) => {
-    if (!acc[block.staff_id]) {
-      acc[block.staff_id] = []
-    }
-    acc[block.staff_id].push(block)
-    return acc
-  }, {} as Record<string, ScheduleBlock[]>)
+  // Helper function to get week date range string
+  const getWeekDateRange = () => {
+    const weekEnd = addDays(weekStartDate, 6)
+    return `${format(weekStartDate, 'MMM dd')} - ${format(weekEnd, 'MMM dd, yyyy')}`
+  }
+
+  // Filter schedule blocks by selected staff if any
+  const filteredScheduleBlocks = selectedStaffId 
+    ? scheduleBlocks.filter(block => block.staff_id === selectedStaffId)
+    : scheduleBlocks
 
   return (
     <div className="space-y-6">
-      {/* Header with Add Button */}
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Schedule Management</h2>
-          <p className="text-gray-600">Manage staff availability and schedule blocks</p>
+          <h2 className="text-2xl font-bold text-[#AA3B50]">Staff Schedule Management</h2>
+          <p className="text-gray-600">Manage staff working schedules and time off</p>
         </div>
-        <Button 
-          onClick={() => {
-            resetForm()
-            setShowAddModal(true)
-          }}
-          className="bg-primary text-white hover:bg-primary-dark"
-        >
-          <PlusIcon className="w-4 h-4 mr-2" />
-          Add Schedule Block
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setWeekStartDate(startOfWeek(addDays(weekStartDate, -7)))}
+            variant="outline"
+            size="sm"
+          >
+            Previous Week
+          </Button>
+          <Button 
+            onClick={() => setWeekStartDate(startOfWeek(addDays(weekStartDate, 7)))}
+            variant="outline"
+            size="sm"
+          >
+            Next Week
+          </Button>
+          <Button 
+            onClick={() => setWeekStartDate(startOfWeek(new Date()))}
+            variant="outline"
+            size="sm"
+          >
+            Current Week
+          </Button>
+        </div>
       </div>
 
-      {/* Staff Filter */}
-      <Card>
+      {/* Week Display */}
+      <Card className="bg-[#F8F8F8] border-[#F6C7CF]">
         <CardContent className="pt-6">
-          <div className="flex items-center space-x-4">
-            <Label>Filter by Staff:</Label>
-            <Select value={selectedStaff} onValueChange={(value) => {
-              setSelectedStaff(value)
-              if (value && value !== 'all') {
-                fetchStaffScheduleBlocks(value)
-              } else {
-                fetchAllScheduleBlocks()
-              }
-            }}>
-              <SelectTrigger className="w-[250px]">
-                <SelectValue placeholder="All Staff" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Staff</SelectItem>
-                {staff.map(s => (
-                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center justify-center">
+            <h3 className="text-lg font-medium text-[#AA3B50]">
+              Week of {getWeekDateRange()}
+            </h3>
           </div>
         </CardContent>
       </Card>
 
-      {/* Schedule Blocks List */}
-      {error ? (
-        <Card>
-          <CardContent className="text-center py-8">
-            <div className="text-red-600 mb-4">
-              <h3 className="font-medium">Error Loading Schedule Blocks</h3>
-              <p className="text-sm mt-2">{error}</p>
+      {/* Tabs for Schedules vs Time Off */}
+      <Tabs className="w-full">
+        <TabsList className="bg-white border border-[#F6C7CF]">
+          <TabsTrigger 
+            value="schedules"
+            active={activeTab === 'schedules'}
+            onClick={() => setActiveTab('schedules')}
+            className={activeTab === 'schedules' ? 'bg-[#C36678] text-white' : ''}
+          >
+            <CalendarIcon className="w-4 h-4 mr-2" />
+            Working Schedules
+          </TabsTrigger>
+          <TabsTrigger 
+            value="blocks"
+            active={activeTab === 'blocks'}
+            onClick={() => setActiveTab('blocks')}
+            className={activeTab === 'blocks' ? 'bg-[#C36678] text-white' : ''}
+          >
+            <ClockIcon className="w-4 h-4 mr-2" />
+            Time Off
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Working Schedules Tab */}
+        <TabsContent value="schedules" activeValue={activeTab} className="space-y-4">
+          {loading ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C36678]"></div>
             </div>
-            {error.includes('migration') && (
-              <div className="text-sm text-gray-600 mt-4">
-                <p>To fix this issue:</p>
-                <ol className="list-decimal list-inside mt-2 space-y-1">
-                  <li>Run the database migration: <code className="bg-gray-100 px-2 py-1 rounded">supabase db push</code></li>
-                  <li>Or apply migration 043 manually in your Supabase SQL editor</li>
-                </ol>
-              </div>
-            )}
-            <Button 
-              onClick={() => fetchAllScheduleBlocks().catch(console.error)}
-              className="mt-4"
-              variant="outline"
-            >
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
-      ) : loading ? (
-        <div className="flex justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : Object.keys(blocksByStaff).length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-8">
-            <p className="text-gray-500">No schedule blocks found</p>
-          </CardContent>
-        </Card>
-      ) : (
-        Object.entries(blocksByStaff).map(([staffId, blocks]) => (
-          <Card key={staffId}>
-            <CardHeader>
-              <CardTitle className="text-lg">{getStaffName(staffId)}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {blocks.map(block => (
-                  <div key={block.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <Badge variant={block.block_type === 'full_day' ? 'default' : 'secondary'}>
-                          {block.block_type === 'full_day' ? 'Full Day' : 'Time Range'}
-                        </Badge>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <CalendarIcon className="w-4 h-4 mr-1" />
-                          {(() => {
-                            try {
-                              const startDate = format(parseISO(block.start_date), 'MMM dd, yyyy')
-                              const endDateDisplay = block.end_date && block.end_date !== block.start_date 
-                                ? ` - ${format(parseISO(block.end_date), 'MMM dd, yyyy')}`
-                                : ''
-                              return startDate + endDateDisplay
-                            } catch (error) {
-                              return block.start_date + (block.end_date ? ` - ${block.end_date}` : '')
-                            }
-                          })()}
-                        </div>
-                        {block.block_type === 'time_range' && block.start_time && block.end_time && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <ClockIcon className="w-4 h-4 mr-1" />
-                            {block.start_time} - {block.end_time}
-                          </div>
-                        )}
-                      </div>
-                      {block.reason && (
-                        <p className="text-sm text-gray-700">Reason: {block.reason}</p>
+          ) : error ? (
+            <Card className="border-red-200">
+              <CardContent className="text-center py-8">
+                <div className="text-red-600 mb-4">
+                  <h3 className="font-medium">Error Loading Schedules</h3>
+                  <p className="text-sm mt-2">{error}</p>
+                </div>
+                <Button 
+                  onClick={() => initializeData()}
+                  className="mt-4"
+                  variant="outline"
+                >
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          ) : staffSchedules.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <p className="text-gray-500">No staff members found</p>
+              </CardContent>
+            </Card>
+          ) : (
+            staffSchedules.map((scheduleState) => (
+              <Card key={scheduleState.staff.id} className="border-[#F6C7CF] hover:shadow-md transition-shadow">
+                <CardHeader className="bg-[#F8F8F8]">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-[#AA3B50]">
+                      {scheduleState.staff.name}
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      {!scheduleState.isEditing ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleStaffEditing(scheduleState.staff.id)}
+                            className="border-[#C36678] text-[#C36678] hover:bg-[#F6C7CF]"
+                          >
+                            <EditIcon className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyScheduleToWeek(scheduleState.staff.id)}
+                            className="border-[#C36678] text-[#C36678] hover:bg-[#F6C7CF]"
+                          >
+                            <CopyIcon className="w-4 h-4 mr-1" />
+                            Copy
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => applyDefaultSchedule(scheduleState.staff.id)}
+                            className="border-[#C36678] text-[#C36678] hover:bg-[#F6C7CF]"
+                          >
+                            <RotateCcwIcon className="w-4 h-4 mr-1" />
+                            Reset
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => saveStaffSchedule(scheduleState.staff.id)}
+                            className="bg-black text-white hover:bg-gray-900"
+                          >
+                            <SaveIcon className="w-4 h-4 mr-1" />
+                            Save
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => cancelStaffScheduleEdit(scheduleState.staff.id)}
+                          >
+                            <XIcon className="w-4 h-4 mr-1" />
+                            Cancel
+                          </Button>
+                        </>
                       )}
                     </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEditBlock(block)}
-                      >
-                        <EditIcon className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteBlock(block.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </Button>
-                    </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))
-      )}
+                </CardHeader>
+                <CardContent className="p-6">
+                  {/* Weekly Schedule Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+                    {DAYS_OF_WEEK.map((day) => {
+                      const daySchedule = scheduleState.weeklySchedule[day.value]
+                      return (
+                        <div
+                          key={day.value}
+                          className={`p-4 rounded-lg border transition-colors ${
+                            daySchedule.isWorking 
+                              ? 'bg-[#F6C7CF] border-[#C36678]' 
+                              : 'bg-gray-50 border-gray-200'
+                          }`}
+                        >
+                          <div className="text-center mb-3">
+                            <h4 className="font-medium text-sm text-[#AA3B50]">
+                              {day.label}
+                            </h4>
+                            <p className="text-xs text-gray-600">
+                              {format(addDays(weekStartDate, day.value), 'MMM dd')}
+                            </p>
+                          </div>
+                          
+                          {scheduleState.isEditing ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-center">
+                                <Switch
+                                  checked={daySchedule.isWorking}
+                                  onCheckedChange={(checked) => 
+                                    updateStaffSchedule(scheduleState.staff.id, day.value, 'isWorking', checked)
+                                  }
+                                />
+                              </div>
+                              {daySchedule.isWorking && (
+                                <>
+                                  <div>
+                                    <Label className="text-xs">Start</Label>
+                                    <Input
+                                      type="time"
+                                      value={daySchedule.start_time}
+                                      onChange={(e) => 
+                                        updateStaffSchedule(scheduleState.staff.id, day.value, 'start_time', e.target.value)
+                                      }
+                                      className="h-8 text-xs"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs">End</Label>
+                                    <Input
+                                      type="time"
+                                      value={daySchedule.end_time}
+                                      onChange={(e) => 
+                                        updateStaffSchedule(scheduleState.staff.id, day.value, 'end_time', e.target.value)
+                                      }
+                                      className="h-8 text-xs"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs">Break Start</Label>
+                                    <Input
+                                      type="time"
+                                      value={daySchedule.break_start || ''}
+                                      onChange={(e) => 
+                                        updateStaffSchedule(scheduleState.staff.id, day.value, 'break_start', e.target.value || null)
+                                      }
+                                      className="h-8 text-xs"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs">Break End</Label>
+                                    <Input
+                                      type="time"
+                                      value={daySchedule.break_end || ''}
+                                      onChange={(e) => 
+                                        updateStaffSchedule(scheduleState.staff.id, day.value, 'break_end', e.target.value || null)
+                                      }
+                                      className="h-8 text-xs"
+                                    />
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-center space-y-1">
+                              {daySchedule.isWorking ? (
+                                <>
+                                  <Badge variant="default" className="bg-[#C36678] text-white text-xs">
+                                    Working
+                                  </Badge>
+                                  <p className="text-xs font-medium">
+                                    {daySchedule.start_time} - {daySchedule.end_time}
+                                  </p>
+                                  {daySchedule.break_start && daySchedule.break_end && (
+                                    <p className="text-xs text-gray-600">
+                                      Break: {daySchedule.break_start} - {daySchedule.break_end}
+                                    </p>
+                                  )}
+                                </>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">
+                                  Off
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </TabsContent>
 
-      {/* Add/Edit Schedule Block Modal */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+        {/* Time Off Tab */}
+        <TabsContent value="blocks" activeValue={activeTab} className="space-y-4">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div className="flex items-center space-x-4">
+              <Label>Filter by Staff:</Label>
+              <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
+                <SelectTrigger className="w-[250px]">
+                  <SelectValue placeholder="All Staff" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Staff</SelectItem>
+                  {staff.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              onClick={() => {
+                resetBlockForm()
+                setShowBlockModal(true)
+              }}
+              className="bg-black text-white hover:bg-gray-900"
+            >
+              <PlusIcon className="w-4 h-4 mr-2" />
+              Add Time Off
+            </Button>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C36678]"></div>
+            </div>
+          ) : filteredScheduleBlocks.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <p className="text-gray-500">No time off scheduled</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {filteredScheduleBlocks.map(block => (
+                <Card key={block.id} className="border-[#F6C7CF]">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <Badge 
+                            variant={block.block_type === 'full_day' ? 'default' : 'secondary'}
+                            className={block.block_type === 'full_day' ? 'bg-[#C36678] text-white' : ''}
+                          >
+                            {block.block_type === 'full_day' ? 'Full Day' : 'Time Range'}
+                          </Badge>
+                          <span className="font-medium text-[#AA3B50]">
+                            {getStaffName(block.staff_id)}
+                          </span>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <CalendarIcon className="w-4 h-4 mr-1" />
+                            {(() => {
+                              try {
+                                const startDate = format(parseISO(block.start_date), 'MMM dd, yyyy')
+                                const endDateDisplay = block.end_date && block.end_date !== block.start_date 
+                                  ? ` - ${format(parseISO(block.end_date), 'MMM dd, yyyy')}`
+                                  : ''
+                                return startDate + endDateDisplay
+                              } catch (error) {
+                                return block.start_date + (block.end_date ? ` - ${block.end_date}` : '')
+                              }
+                            })()}
+                          </div>
+                          {block.block_type === 'time_range' && block.start_time && block.end_time && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <ClockIcon className="w-4 h-4 mr-1" />
+                              {block.start_time} - {block.end_time}
+                            </div>
+                          )}
+                        </div>
+                        {block.reason && (
+                          <p className="text-sm text-gray-700">Reason: {block.reason}</p>
+                        )}
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditBlock(block)}
+                          className="border-[#C36678] text-[#C36678] hover:bg-[#F6C7CF]"
+                        >
+                          <EditIcon className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteBlock(block.id)}
+                          className="text-red-600 hover:text-red-700 border-red-300 hover:bg-red-50"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* Add/Edit Time Off Modal */}
+      <Dialog open={showBlockModal} onOpenChange={setShowBlockModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingBlock ? 'Edit Schedule Block' : 'Add Schedule Block'}</DialogTitle>
+            <DialogTitle className="text-[#AA3B50]">
+              {editingBlock ? 'Edit Time Off' : 'Add Time Off'}
+            </DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
@@ -458,7 +880,7 @@ export function ScheduleManagement() {
             </div>
 
             <div>
-              <Label>Block Type</Label>
+              <Label>Type</Label>
               <Select 
                 value={formData.blockType} 
                 onValueChange={(value: 'full_day' | 'time_range') => setFormData({...formData, blockType: value})}
@@ -519,7 +941,7 @@ export function ScheduleManagement() {
               <Textarea 
                 value={formData.reason}
                 onChange={(e) => setFormData({...formData, reason: e.target.value})}
-                placeholder="e.g., Vacation, Doctor's appointment, Lunch break"
+                placeholder="e.g., Vacation, Doctor's appointment, Personal leave"
                 rows={2}
               />
             </div>
@@ -527,18 +949,20 @@ export function ScheduleManagement() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => {
-              setShowAddModal(false)
-              resetForm()
+              setShowBlockModal(false)
+              resetBlockForm()
             }}>
               Cancel
             </Button>
-            <Button onClick={() => handleAddBlock(false)}>
+            <Button 
+              onClick={handleAddBlock}
+              className="bg-black text-white hover:bg-gray-900"
+            >
               {editingBlock ? 'Update' : 'Save'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
   )
 }
