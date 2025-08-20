@@ -4,9 +4,9 @@
  */
 
 import { z } from 'zod'
-import { validateGuamPhone, normalizePhoneForDB } from '@/lib/phone-utils'
+import { validatePhoneNumber, normalizePhoneForDB } from '@/lib/phone-utils'
 
-// Phone number validation for Guam (671) area code
+// Phone number validation for any US/Canada area code
 // Accepts formats: (671) XXX-XXXX, 671-XXX-XXXX, 671XXXXXXX, XXXXXXX (7 digits)
 const guamPhoneRegex = /^(\(671\)\s?|671[\-\.]?)?[2-9]\d{2}[\-\.]?\d{4}$/
 const phoneRegex = guamPhoneRegex // Backward compatibility alias
@@ -37,9 +37,9 @@ export const customerInfoSchema = z.object({
   
   phone: z.string()
     .trim()
-    .transform((val) => normalizePhoneForDB(val)) // Normalize to 671XXXXXXX format
-    .refine((val) => val === '' || validateGuamPhone(val), {
-      message: 'Please enter a valid Guam phone number'
+    .transform((val) => normalizePhoneForDB(val)) // Normalize to XXXXXXXX format (area code + local number)
+    .refine((val) => val === '' || validatePhoneNumber(val), {
+      message: 'Please enter a valid phone number'
     })
     .optional()
     .or(z.literal('')),
@@ -122,8 +122,8 @@ export const walkInRequestSchema = z.object({
   customerPhone: z.string()
     .trim()
     .transform((val) => normalizePhoneForDB(val))
-    .refine((val) => validateGuamPhone(val), {
-      message: 'Please enter a valid Guam phone number'
+    .refine((val) => validatePhoneNumber(val), {
+      message: 'Please enter a valid phone number'
     }),
   customerEmail: emailSchema.optional(),
   serviceName: safeStringSchema,
@@ -172,8 +172,8 @@ export const waiverFormSchema = z.object({
   emergencyContactPhone: z.string()
     .trim()
     .transform((val) => normalizePhoneForDB(val))
-    .refine((val) => validateGuamPhone(val), {
-      message: 'Please enter a valid Guam emergency contact phone'
+    .refine((val) => validatePhoneNumber(val), {
+      message: 'Please enter a valid emergency contact phone'
     })
 })
 

@@ -35,9 +35,7 @@ const DAYS_OF_WEEK = [
 // Default working hours
 const DEFAULT_WORK_HOURS = {
   start_time: '09:00',
-  end_time: '17:00',
-  break_start: '12:00',
-  break_end: '13:00'
+  end_time: '17:00'
 }
 
 interface WeeklySchedule {
@@ -192,8 +190,8 @@ export function ScheduleManagement() {
             isWorking: isWorkingDay,
             start_time: isWorkingDay ? DEFAULT_WORK_HOURS.start_time : '09:00',
             end_time: isWorkingDay ? DEFAULT_WORK_HOURS.end_time : '17:00',
-            break_start: isWorkingDay ? DEFAULT_WORK_HOURS.break_start : null,
-            break_end: isWorkingDay ? DEFAULT_WORK_HOURS.break_end : null,
+            break_start: null,
+            break_end: null,
             notes: null
           }
         }
@@ -367,8 +365,8 @@ export function ScheduleManagement() {
         isWorking: isWorkingDay,
         start_time: DEFAULT_WORK_HOURS.start_time,
         end_time: DEFAULT_WORK_HOURS.end_time,
-        break_start: isWorkingDay ? DEFAULT_WORK_HOURS.break_start : null,
-        break_end: isWorkingDay ? DEFAULT_WORK_HOURS.break_end : null,
+        break_start: null,
+        break_end: null,
         notes: null
       }
     })
@@ -417,7 +415,7 @@ export function ScheduleManagement() {
       console.error('Error saving schedule block:', error)
       showNotification('Error', 'Failed to save schedule block', 'error')
     } else {
-      showNotification('Success', editingBlock ? 'Time off updated' : 'Time off added successfully')
+      showNotification('Success', editingBlock ? 'Time block updated' : 'Time block added successfully')
       
       // Reset form and refresh data
       resetBlockForm()
@@ -427,7 +425,7 @@ export function ScheduleManagement() {
   }
 
   const handleDeleteBlock = async (blockId: string) => {
-    if (!window.confirm('Are you sure you want to delete this time off? This action cannot be undone.')) {
+    if (!window.confirm('Are you sure you want to delete this time block? This action cannot be undone.')) {
       return
     }
     
@@ -438,9 +436,9 @@ export function ScheduleManagement() {
     
     if (error) {
       console.error('Error deleting schedule block:', error)
-      showNotification('Error', 'Failed to delete time off', 'error')
+      showNotification('Error', 'Failed to delete time block', 'error')
     } else {
-      showNotification('Success', 'Time off deleted')
+      showNotification('Success', 'Time block deleted')
       fetchScheduleBlocks()
     }
   }
@@ -551,7 +549,7 @@ export function ScheduleManagement() {
             className={activeTab === 'blocks' ? 'bg-[#C36678] text-white' : ''}
           >
             <ClockIcon className="w-4 h-4 mr-2" />
-            Time Off
+            Time Blocks
           </TabsTrigger>
         </TabsList>
 
@@ -702,28 +700,6 @@ export function ScheduleManagement() {
                                       className="h-8 text-xs"
                                     />
                                   </div>
-                                  <div>
-                                    <Label className="text-xs">Break Start</Label>
-                                    <Input
-                                      type="time"
-                                      value={daySchedule.break_start || ''}
-                                      onChange={(e) => 
-                                        updateStaffSchedule(scheduleState.staff.id, day.value, 'break_start', e.target.value || null)
-                                      }
-                                      className="h-8 text-xs"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label className="text-xs">Break End</Label>
-                                    <Input
-                                      type="time"
-                                      value={daySchedule.break_end || ''}
-                                      onChange={(e) => 
-                                        updateStaffSchedule(scheduleState.staff.id, day.value, 'break_end', e.target.value || null)
-                                      }
-                                      className="h-8 text-xs"
-                                    />
-                                  </div>
                                 </>
                               )}
                             </div>
@@ -737,11 +713,6 @@ export function ScheduleManagement() {
                                   <p className="text-xs font-medium">
                                     {daySchedule.start_time} - {daySchedule.end_time}
                                   </p>
-                                  {daySchedule.break_start && daySchedule.break_end && (
-                                    <p className="text-xs text-gray-600">
-                                      Break: {daySchedule.break_start} - {daySchedule.break_end}
-                                    </p>
-                                  )}
                                 </>
                               ) : (
                                 <Badge variant="secondary" className="text-xs">
@@ -760,7 +731,7 @@ export function ScheduleManagement() {
           )}
         </TabsContent>
 
-        {/* Time Off Tab */}
+        {/* Time Blocks Tab */}
         <TabsContent value="blocks" activeValue={activeTab} className="space-y-4">
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
             <div className="flex items-center space-x-4">
@@ -785,7 +756,7 @@ export function ScheduleManagement() {
               className="bg-black text-white hover:bg-gray-900"
             >
               <PlusIcon className="w-4 h-4 mr-2" />
-              Add Time Off
+              Add Time Block
             </Button>
           </div>
 
@@ -796,7 +767,7 @@ export function ScheduleManagement() {
           ) : filteredScheduleBlocks.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
-                <p className="text-gray-500">No time off scheduled</p>
+                <p className="text-gray-500">No time blocks scheduled</p>
               </CardContent>
             </Card>
           ) : (
@@ -868,12 +839,12 @@ export function ScheduleManagement() {
         </TabsContent>
       </Tabs>
 
-      {/* Add/Edit Time Off Modal */}
+      {/* Add/Edit Time Block Modal */}
       <Dialog open={showBlockModal} onOpenChange={setShowBlockModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-[#AA3B50]">
-              {editingBlock ? 'Edit Time Off' : 'Add Time Off'}
+              {editingBlock ? 'Edit Time Block' : 'Add Time Block'}
             </DialogTitle>
           </DialogHeader>
           
@@ -957,7 +928,7 @@ export function ScheduleManagement() {
               <Textarea 
                 value={formData.reason}
                 onChange={(e) => setFormData({...formData, reason: e.target.value})}
-                placeholder="e.g., Vacation, Doctor's appointment, Personal leave"
+                placeholder="e.g., Lunch break, Meeting, Doctor's appointment, Personal time, Vacation"
                 rows={2}
               />
             </div>

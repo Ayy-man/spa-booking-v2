@@ -1,50 +1,31 @@
 /**
- * Phone number utilities for Guam (671) area code
- * Handles formatting, validation, and conversion for Guam phone numbers
+ * Phone number utilities for general US/Canada phone numbers
+ * Handles formatting, validation, and conversion for any area code
+ * Auto-formats with brackets for readability: (XXX) XXX-XXXX
  */
 
 /**
- * Format a phone number to Guam format: (671) XXX-XXXX
+ * Format a phone number to standard format: (XXX) XXX-XXXX
  * @param value - Raw phone number string
  * @returns Formatted phone number
  */
-export function formatGuamPhone(value: string): string {
+export function formatPhoneNumber(value: string): string {
   // Remove all non-numeric characters
   const cleaned = value.replace(/\D/g, '')
   
-  // If number doesn't start with 671, add it
-  let normalized = cleaned
-  if (!cleaned.startsWith('671') && !cleaned.startsWith('1671')) {
-    // If it's a 7-digit number, prepend 671
-    if (cleaned.length === 7) {
-      normalized = '671' + cleaned
-    } else if (cleaned.length === 10 && cleaned.startsWith('1')) {
-      // Handle 1-671-XXX-XXXX format
-      normalized = cleaned.substring(1)
-    } else if (cleaned.length === 11 && cleaned.startsWith('1671')) {
-      // Handle 1-671-XXX-XXXX format
-      normalized = cleaned.substring(1)
-    }
-  }
-  
-  // Remove country code if present
-  if (normalized.startsWith('1671')) {
-    normalized = normalized.substring(1)
-  }
-  
   // Format based on length
-  if (normalized.length === 0) {
+  if (cleaned.length === 0) {
     return ''
-  } else if (normalized.length <= 3) {
-    return `(${normalized}`
-  } else if (normalized.length <= 6) {
-    return `(${normalized.slice(0, 3)}) ${normalized.slice(3)}`
-  } else if (normalized.length <= 10) {
-    return `(${normalized.slice(0, 3)}) ${normalized.slice(3, 6)}${normalized.length > 6 ? '-' + normalized.slice(6, 10) : ''}`
+  } else if (cleaned.length <= 3) {
+    return `(${cleaned}`
+  } else if (cleaned.length <= 6) {
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`
+  } else if (cleaned.length <= 10) {
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}${cleaned.length > 6 ? '-' + cleaned.slice(6, 10) : ''}`
   }
   
-  // Max length is 10 digits (671 + 7 digits)
-  return `(${normalized.slice(0, 3)}) ${normalized.slice(3, 6)}-${normalized.slice(6, 10)}`
+  // Max length is 10 digits (area code + 7 digits)
+  return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`
 }
 
 /**
@@ -57,27 +38,27 @@ export function unformatPhone(value: string): string {
 }
 
 /**
- * Validate if a phone number is a valid Guam number
+ * Validate if a phone number is a valid US/Canada number
  * @param value - Phone number (formatted or unformatted)
- * @returns True if valid Guam phone number
+ * @returns True if valid phone number
  */
-export function validateGuamPhone(value: string): boolean {
+export function validatePhoneNumber(value: string): boolean {
   const cleaned = unformatPhone(value)
   
   // Valid formats:
-  // 671XXXXXXX (10 digits starting with 671)
-  // 1671XXXXXXX (11 digits starting with 1671)
-  // XXXXXXX (7 digits - will be prefixed with 671)
+  // XXXXXXX (7 digits - local number)
+  // XXXXXXXX (10 digits - area code + local number)
+  // 1XXXXXXXXXX (11 digits - country code + area code + local number)
   
   if (cleaned.length === 7) {
     // 7-digit local number - valid
     return /^[2-9]\d{6}$/.test(cleaned)
   } else if (cleaned.length === 10) {
-    // Must start with 671
-    return /^671[2-9]\d{6}$/.test(cleaned)
+    // 10-digit number with area code
+    return /^[2-9]\d{2}[2-9]\d{6}$/.test(cleaned)
   } else if (cleaned.length === 11) {
-    // Must start with 1671
-    return /^1671[2-9]\d{6}$/.test(cleaned)
+    // 11-digit number starting with 1 (US/Canada country code)
+    return /^1[2-9]\d{2}[2-9]\d{6}$/.test(cleaned)
   }
   
   return false
@@ -103,8 +84,8 @@ export function getPhoneValidationError(value: string): string {
     return 'Phone number is too long'
   }
   
-  if (!validateGuamPhone(value)) {
-    return 'Please enter a valid Guam phone number'
+  if (!validatePhoneNumber(value)) {
+    return 'Please enter a valid phone number'
   }
   
   return ''
@@ -112,26 +93,27 @@ export function getPhoneValidationError(value: string): string {
 
 /**
  * Format phone number for database storage (raw format)
- * Always stores as 10 digits: 671XXXXXXX
+ * Stores as 10 digits: XXXXXXXX (area code + local number)
  * @param value - Phone number in any format
  * @returns Normalized phone number for database
  */
 export function normalizePhoneForDB(value: string): string {
   const cleaned = unformatPhone(value)
   
-  // If it's a 7-digit number, prepend 671
+  // If it's a 7-digit number, we can't determine area code
+  // User must provide area code for 7-digit numbers
   if (cleaned.length === 7) {
-    return '671' + cleaned
+    return cleaned // Return as-is, user needs to add area code
   }
   
-  // If it starts with 1671, remove the 1
-  if (cleaned.startsWith('1671')) {
-    return cleaned.substring(1)
-  }
-  
-  // If it starts with 1 and is 11 digits, assume it's 1-671-XXX-XXXX
+  // If it starts with 1 and is 11 digits, remove the country code
   if (cleaned.length === 11 && cleaned.startsWith('1')) {
     return cleaned.substring(1)
+  }
+  
+  // If it's 10 digits, return as-is
+  if (cleaned.length === 10) {
+    return cleaned
   }
   
   return cleaned
@@ -145,18 +127,18 @@ export function normalizePhoneForDB(value: string): string {
 export function formatPhoneFromDB(value: string | null | undefined): string {
   if (!value) return ''
   
-  // Database should store as 671XXXXXXX (10 digits)
+  // Database should store as XXXXXXXX (10 digits: area code + local number)
   // But handle various formats for backward compatibility
   const cleaned = unformatPhone(value)
   
-  if (cleaned.length === 10 && cleaned.startsWith('671')) {
-    return formatGuamPhone(cleaned)
+  if (cleaned.length === 10) {
+    return formatPhoneNumber(cleaned)
   } else if (cleaned.length === 7) {
-    // Old format without area code
-    return formatGuamPhone('671' + cleaned)
+    // Old format without area code - can't format properly
+    return cleaned
   } else {
     // Fallback - try to format whatever we have
-    return formatGuamPhone(cleaned)
+    return formatPhoneNumber(cleaned)
   }
 }
 
@@ -178,7 +160,7 @@ export function handlePhonePaste(event: React.ClipboardEvent<HTMLInputElement>):
   }
   
   // Format the pasted number
-  return formatGuamPhone(cleaned)
+  return formatPhoneNumber(cleaned)
 }
 
 /**
@@ -202,30 +184,34 @@ export function handlePhoneInputChange(value: string, previousValue: string = ''
   }
   
   // Format on typing
-  return formatGuamPhone(value)
+  return formatPhoneNumber(value)
 }
 
 /**
- * Check if phone number is complete (has all 10 digits)
+ * Check if phone number is complete (has all required digits)
  * @param value - Phone number to check
  * @returns True if phone number is complete
  */
 export function isPhoneComplete(value: string): boolean {
   const cleaned = unformatPhone(value)
-  return cleaned.length === 10 || (cleaned.length === 7 && !cleaned.startsWith('671'))
+  return cleaned.length === 10 || cleaned.length === 7
 }
 
 /**
  * Get international format for phone number
  * @param value - Phone number in any format
- * @returns International format: +1-671-XXX-XXXX
+ * @returns International format: +1-XXX-XXX-XXXX
  */
 export function getInternationalFormat(value: string): string {
   const normalized = normalizePhoneForDB(value)
   
-  if (normalized.length === 10 && normalized.startsWith('671')) {
+  if (normalized.length === 10) {
     return `+1-${normalized.slice(0, 3)}-${normalized.slice(3, 6)}-${normalized.slice(6)}`
   }
   
   return value // Return original if can't format
 }
+
+// Legacy function names for backward compatibility
+export const formatGuamPhone = formatPhoneNumber
+export const validateGuamPhone = validatePhoneNumber

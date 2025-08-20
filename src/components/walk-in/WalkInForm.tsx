@@ -12,7 +12,7 @@ import { PhoneInput } from '@/components/ui/phone-input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CheckCircleIcon, AlertCircleIcon } from 'lucide-react'
 import { ButtonLoading } from '@/components/ui/loading-spinner'
-import { validateGuamPhone, normalizePhoneForDB } from '@/lib/phone-utils'
+import { validatePhoneNumber, normalizePhoneForDB } from '@/lib/phone-utils'
 
 const walkInFormSchema = z.object({
   name: z.string()
@@ -22,8 +22,8 @@ const walkInFormSchema = z.object({
   phone: z.string()
     .min(1, 'Phone number is required')
     .transform((val) => normalizePhoneForDB(val))
-    .refine((val) => validateGuamPhone(val), {
-      message: 'Please enter a valid Guam phone number'
+    .refine((val) => validatePhoneNumber(val), {
+      message: 'Please enter a valid phone number'
     }),
   email: z.string()
     .email('Please enter a valid email address')

@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { CheckCircleIcon, AlertCircleIcon } from 'lucide-react'
 import { ButtonLoading } from '@/components/ui/loading-spinner'
-import { validateGuamPhone, normalizePhoneForDB } from '@/lib/phone-utils'
+import { validatePhoneNumber, normalizePhoneForDB } from '@/lib/phone-utils'
 
 const customerFormSchema = z.object({
   name: z.string()
@@ -24,8 +24,8 @@ const customerFormSchema = z.object({
   phone: z.string()
     .min(1, 'Phone number is required')
     .transform((val) => normalizePhoneForDB(val))
-    .refine((val) => validateGuamPhone(val), {
-      message: 'Please enter a valid Guam phone number'
+    .refine((val) => validatePhoneNumber(val), {
+      message: 'Please enter a valid phone number'
     }),
   specialRequests: z.string()
     .max(500, 'Special requests must be less than 500 characters')

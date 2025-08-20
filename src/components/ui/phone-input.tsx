@@ -3,9 +3,9 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { 
-  formatGuamPhone, 
+  formatPhoneNumber, 
   unformatPhone, 
-  validateGuamPhone,
+  validatePhoneNumber,
   getPhoneValidationError,
   handlePhonePaste as utilHandlePhonePaste,
   handlePhoneInputChange,
@@ -39,7 +39,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     ...props 
   }, ref) => {
     const [internalValue, setInternalValue] = React.useState(() => 
-      autoFormat ? formatGuamPhone(value) : value
+      autoFormat ? formatPhoneNumber(value) : value
     )
     const [previousValue, setPreviousValue] = React.useState(internalValue)
     const [isFocused, setIsFocused] = React.useState(false)
@@ -48,7 +48,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
     // Update internal value when prop value changes
     React.useEffect(() => {
       if (!isFocused) {
-        setInternalValue(autoFormat ? formatGuamPhone(value) : value)
+        setInternalValue(autoFormat ? formatPhoneNumber(value) : value)
       }
     }, [value, autoFormat, isFocused])
 
@@ -77,7 +77,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
       // Determine what value to return
       const rawValue = unformatPhone(formatted)
       const normalizedValue = normalizePhoneForDB(formatted)
-      const isValid = validateGuamPhone(formatted)
+      const isValid = validatePhoneNumber(formatted)
 
       if (onChange) {
         const valueToReturn = returnRawValue ? normalizedValue : formatted
@@ -95,7 +95,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
         
         const rawValue = unformatPhone(formatted)
         const normalizedValue = normalizePhoneForDB(formatted)
-        const isValid = validateGuamPhone(formatted)
+        const isValid = validatePhoneNumber(formatted)
         
         if (onChange) {
           const valueToReturn = returnRawValue ? normalizedValue : formatted
@@ -114,13 +114,13 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
       
       // Final formatting on blur
       if (autoFormat && internalValue) {
-        const formatted = formatGuamPhone(internalValue)
+        const formatted = formatPhoneNumber(internalValue)
         setInternalValue(formatted)
         setPreviousValue(formatted)
         
         const rawValue = unformatPhone(formatted)
         const normalizedValue = normalizePhoneForDB(formatted)
-        const isValid = validateGuamPhone(formatted)
+        const isValid = validatePhoneNumber(formatted)
         
         if (onChange) {
           const valueToReturn = returnRawValue ? normalizedValue : formatted
@@ -149,7 +149,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
           onFocus={handleFocus}
           onBlur={handleBlur}
           disabled={disabled}
-          placeholder={autoFormat ? "(671) XXX-XXXX" : "671XXXXXXX"}
+          placeholder={autoFormat ? "(XXX) XXX-XXXX" : "XXXXXXXXXX"}
           maxLength={autoFormat ? 14 : 10}
           className={cn(
             "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
@@ -185,7 +185,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
         {/* Success message */}
         {isComplete && isValid && !isFocused && !showValidationError && (
           <p className="text-sm text-green-600 mt-1">
-            Valid Guam phone number
+            Valid phone number
           </p>
         )}
       </div>

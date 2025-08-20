@@ -51,14 +51,12 @@ WHERE popularity_score IS NOT NULL
    OR requires_couples_room = true;
 
 -- Backup any newer data that might be important
-CREATE TABLE IF NOT EXISTS public._backup_customers_phone_formatted AS 
+CREATE TABLE IF NOT EXISTS public._backup_customers_emergency_contact_phone_formatted AS 
 SELECT 
     id,
-    phone_formatted,
     emergency_contact_phone_formatted
 FROM public.customers 
-WHERE phone_formatted IS NOT NULL 
-   OR emergency_contact_phone_formatted IS NOT NULL;
+WHERE emergency_contact_phone_formatted IS NOT NULL;
 
 -- Log the backup
 INSERT INTO public._backup_log (backup_type, created_at, notes) VALUES 
@@ -72,7 +70,7 @@ INSERT INTO public._backup_log (backup_type, created_at, notes) VALUES
 -- 2. _backup_bookings_newer_columns - Newer booking data
 -- 3. _backup_staff_newer_columns - Newer staff data  
 -- 4. _backup_services_newer_columns - Newer service data
--- 5. _backup_customers_phone_formatted - Phone formatting data
+-- 5. _backup_customers_emergency_contact_phone_formatted - Emergency contact phone formatting data
 -- 6. _backup_log - Backup tracking
 -- ============================================
 -- Now you can safely run RESET_TO_V1_2_0.sql
