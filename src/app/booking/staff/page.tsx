@@ -67,16 +67,16 @@ export default function StaffPage() {
 
       // Check each block
       for (const block of blocks) {
-        // Check if the date falls within the block period
-        const blockStartDate = new Date(block.start_date)
-        const blockEndDate = block.end_date ? new Date(block.end_date) : blockStartDate
-        const checkDate = new Date(date)
+        // FIXED: Extract just the date part for comparison (ignore time/timezone)
+        const dateOnly = date.split('T')[0] // Get just YYYY-MM-DD part
+        const blockStartDateStr = block.start_date
+        const blockEndDateStr = block.end_date || block.start_date
         
         console.log(`  Block ${block.id}: start=${block.start_date}, end=${block.end_date || 'null'}, type=${block.block_type}`)
-        console.log(`  Checking if ${date} is between ${block.start_date} and ${block.end_date || block.start_date}`)
+        console.log(`  Checking if ${dateOnly} is between ${blockStartDateStr} and ${blockEndDateStr}`)
         
-        // Check if the selected date falls within this block's date range
-        if (checkDate < blockStartDate || checkDate > blockEndDate) {
+        // Compare dates as strings (YYYY-MM-DD format)
+        if (dateOnly < blockStartDateStr || dateOnly > blockEndDateStr) {
           console.log(`  Date is outside block range - skipping`)
           continue // Date is outside this block's range
         }
