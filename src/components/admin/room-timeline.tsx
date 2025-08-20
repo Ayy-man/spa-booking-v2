@@ -621,12 +621,12 @@ export function RoomTimeline({
         {selectedBooking && (
           <BookingDetailsModal
             booking={selectedBooking}
-            isOpen={showBookingModal}
-            onClose={() => {
-              setShowBookingModal(false)
-              setSelectedBooking(null)
+            open={showBookingModal}
+            onOpenChange={(open) => {
+              setShowBookingModal(open)
+              if (!open) setSelectedBooking(null)
             }}
-            onUpdate={fetchData}
+            onActionComplete={fetchData}
           />
         )}
 
