@@ -46,19 +46,21 @@ export default function StaffPage() {
   // Function to check if staff has a schedule block
   const checkStaffScheduleBlock = async (staffId: string, date: string, time: string, duration: number) => {
     try {
-      // Query schedule blocks for this staff member on this date
+      console.log(`Checking schedule blocks for staff ${staffId} on ${date} at ${time}`)
+      
+      // Simplified query - get ALL blocks for this staff member
       const { data: blocks, error } = await supabase
         .from('schedule_blocks')
         .select('*')
         .eq('staff_id', staffId)
-        .lte('start_date', date)
-        .or(`end_date.is.null,end_date.gte.${date}`)
 
       if (error) {
         console.error('Error fetching schedule blocks:', error)
         return false // Don't block if there's an error
       }
 
+      console.log(`Found ${blocks?.length || 0} schedule blocks for ${staffId}:`, blocks)
+      
       if (!blocks || blocks.length === 0) {
         return false // No blocks found
       }
@@ -70,9 +72,16 @@ export default function StaffPage() {
         const blockEndDate = block.end_date ? new Date(block.end_date) : blockStartDate
         const checkDate = new Date(date)
         
+        console.log(`  Block ${block.id}: start=${block.start_date}, end=${block.end_date || 'null'}, type=${block.block_type}`)
+        console.log(`  Checking if ${date} is between ${block.start_date} and ${block.end_date || block.start_date}`)
+        
+        // Check if the selected date falls within this block's date range
         if (checkDate < blockStartDate || checkDate > blockEndDate) {
+          console.log(`  Date is outside block range - skipping`)
           continue // Date is outside this block's range
         }
+        
+        console.log(`  Date IS within block range - checking times...`)
 
         // If it's a full day block, staff is not available
         if (block.block_type === 'full_day') {
@@ -89,10 +98,16 @@ export default function StaffPage() {
           const blockStart = new Date(`2000-01-01T${block.start_time}`)
           const blockEnd = new Date(`2000-01-01T${block.end_time}`)
           
+          console.log(`Checking time overlap for ${staffId}:`)
+          console.log(`  Appointment slot: ${time} - ${slotEnd.toTimeString().slice(0,5)}`)
+          console.log(`  Schedule block: ${block.start_time} - ${block.end_time}`)
+          
           // Check for overlap
           if (slotStart < blockEnd && slotEnd > blockStart) {
-            console.log(`Staff ${staffId} has time block from ${block.start_time} to ${block.end_time}`)
+            console.log(`  ✓ OVERLAP DETECTED - Staff ${staffId} is BLOCKED`)
             return true
+          } else {
+            console.log(`  ✗ No overlap - Staff is available`)
           }
         }
       }
