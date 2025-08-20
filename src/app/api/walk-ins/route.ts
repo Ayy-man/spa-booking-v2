@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
+import { getGuamTime, getGuamDateString, getGuamTimeString, getGuamStartOfDay, getGuamEndOfDay } from '@/lib/timezone-utils'
 
 interface WalkInRequest {
   name: string
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
         notes: walkInNotes,
         status: 'waiting',
         scheduling_type: 'walk_in',
-        checked_in_at: new Date().toISOString(),
+        checked_in_at: getGuamTime().toISOString(),
         couples_booking_id: couplesBookingId,
         is_couples_booking: body.isCouplesBooking || false
       })
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
           notes: secondWalkInNotes,
           status: 'waiting',
           scheduling_type: 'walk_in',
-          checked_in_at: new Date().toISOString(),
+          checked_in_at: getGuamTime().toISOString(),
           couples_booking_id: couplesBookingId,
           is_couples_booking: true
         })
@@ -149,8 +150,8 @@ export async function POST(request: NextRequest) {
 
     // Send GHL webhook for walk-in notification
     try {
-      const currentDate = new Date().toISOString().split('T')[0]
-      const currentTime = new Date().toTimeString().split(' ')[0].substring(0, 5)
+      const currentDate = getGuamDateString()
+      const currentTime = getGuamTimeString(getGuamTime())
 
       // Send webhook for first customer
       await ghlWebhookSender.sendWalkInWebhook(
@@ -264,8 +265,8 @@ export async function GET(request: NextRequest) {
 
     // Filter by date if provided (for today's walk-ins)
     if (date) {
-      const startOfDay = `${date}T00:00:00.000Z`
-      const endOfDay = `${date}T23:59:59.999Z`
+      const startOfDay = getGuamStartOfDay(date)
+      const endOfDay = getGuamEndOfDay(date)
       query = query.gte('created_at', startOfDay).lte('created_at', endOfDay)
     }
 
@@ -305,7 +306,7 @@ export async function PATCH(request: NextRequest) {
     const updateData: any = {}
     if (status) updateData.status = status
     if (notes !== undefined) updateData.notes = notes
-    updateData.updated_at = new Date().toISOString()
+    updateData.updated_at = getGuamTime().toISOString()
 
     const { data: walkIn, error } = await supabase
       .from('walk_ins')

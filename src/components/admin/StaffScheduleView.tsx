@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { supabase } from "@/lib/supabase"
+import { getGuamTime as getGuamTimeUtil, formatGuamTime } from "@/lib/timezone-utils"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -70,12 +71,9 @@ export function StaffScheduleView({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [currentDate, setCurrentDate] = useState<Date>(selectedDate)
-  // Get current time in Guam timezone (UTC+10)
+  // Get current time in Guam timezone
   const getGuamTime = () => {
-    const now = new Date()
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000)
-    const guamTime = new Date(utc + (3600000 * 10)) // UTC+10 for Guam
-    return guamTime
+    return getGuamTimeUtil()
   }
   
   const [currentTime, setCurrentTime] = useState<Date>(getGuamTime())

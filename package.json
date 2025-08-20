@@ -27,6 +27,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
+    "date-fns-tz": "^2.0.1",
     "lucide-react": "^0.294.0",
     "next": "14.0.4",
     "react": "^18",

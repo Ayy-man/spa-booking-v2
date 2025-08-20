@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
 import { validateTimeForDatabase } from '@/lib/time-utils'
 import { logger } from '@/lib/logger'
+import { getGuamStartOfDay, getGuamEndOfDay, getGuamTime } from '@/lib/timezone-utils'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -530,7 +531,7 @@ export const supabaseClient = {
         notes: walkIn.notes || null,
         status: 'waiting',
         scheduling_type: 'walk_in',
-        checked_in_at: new Date().toISOString()
+        checked_in_at: getGuamTime().toISOString()
       })
       .select('*')
       .single()
@@ -553,8 +554,8 @@ export const supabaseClient = {
     }
 
     if (filters?.date) {
-      const startOfDay = `${filters.date}T00:00:00.000Z`
-      const endOfDay = `${filters.date}T23:59:59.999Z`
+      const startOfDay = getGuamStartOfDay(filters.date)
+      const endOfDay = getGuamEndOfDay(filters.date)
       query = query.gte('created_at', startOfDay).lte('created_at', endOfDay)
     }
 
@@ -574,7 +575,7 @@ export const supabaseClient = {
 
     // Set completion timestamp if status is 'served'
     if (status === 'served') {
-      updateData.completed_at = new Date().toISOString()
+      updateData.completed_at = getGuamTime().toISOString()
     }
 
     const { data, error } = await supabase

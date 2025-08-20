@@ -1,6 +1,17 @@
 import { addMinutes, format, isAfter, isBefore, parseISO, isEqual, isWithinInterval } from 'date-fns'
 import { Service, Staff, Room, Booking, BookingConflict, TimeSlot, ScheduleBlock } from '@/types/booking'
 import { supabase } from '@/lib/supabase'
+import { 
+  getGuamTime, 
+  toGuamTime, 
+  isGuamToday, 
+  isTimeSlotBookable,
+  createGuamDateTime,
+  getGuamDateString,
+  formatGuamTime,
+  getMinBookingTime,
+  BUSINESS_HOURS as GUAM_BUSINESS_HOURS
+} from '@/lib/timezone-utils'
 
 // Business constants with enhanced configuration
 export const BUSINESS_HOURS = {
@@ -10,7 +21,7 @@ export const BUSINESS_HOURS = {
   slotDuration: 15, // 15-minute time slots
   bufferTime: 15, // 15 minutes between appointments for cleaning
   maxAdvanceDays: 30, // Maximum days in advance for booking
-  minNoticeHours: 1, // Minimum hours notice for same-day bookings
+  minNoticeHours: GUAM_BUSINESS_HOURS.MINIMUM_ADVANCE_HOURS, // 2 hours minimum advance booking
 }
 
 // Room configuration constants
@@ -62,15 +73,10 @@ export function generateTimeSlots(
   while (isBefore(currentTime, latestStartTime)) {
     const slotTime = format(currentTime, 'HH:mm')
     
-    // For same-day bookings, skip past time slots
-    if (format(date, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')) {
-      const now = new Date()
-      const slotDateTime = parseISO(`${format(date, 'yyyy-MM-dd')}T${slotTime}:00`)
-      
-      if (isAfter(slotDateTime, addMinutes(now, BUSINESS_HOURS.minNoticeHours * 60))) {
-        slots.push(slotTime)
-      }
-    } else {
+    // Check if slot meets 2-hour advance booking requirement
+    const slotDateTime = createGuamDateTime(format(date, 'yyyy-MM-dd'), slotTime)
+    
+    if (isTimeSlotBookable(slotDateTime)) {
       slots.push(slotTime)
     }
     
