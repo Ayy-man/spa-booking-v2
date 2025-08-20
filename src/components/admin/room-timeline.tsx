@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
 import { isSpecialStaffRequest } from "@/lib/booking-utils"
 import { FilterBar } from "@/components/admin/filter-bar"
+import { BookingDetailsModal } from "@/components/admin/BookingDetailsModal"
 import { Clock, RefreshCw, Calendar, Users, TrendingUp, AlertCircle, Star } from "lucide-react"
 
 interface TimeSlot {
@@ -60,6 +61,8 @@ export function RoomTimeline({
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [currentTime, setCurrentTime] = useState<Date>(new Date())
   const [selectedStaff, setSelectedStaff] = useState<string | null>(null)
+  const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null)
+  const [showBookingModal, setShowBookingModal] = useState(false)
 
   // Generate time slots for the timeline
   const timeSlots = useMemo((): TimeSlot[] => {
@@ -443,13 +446,17 @@ export function RoomTimeline({
                                   <TooltipTrigger asChild>
                                     <div 
                                       className={cn(
-                                        "absolute inset-x-0 mx-1 rounded border p-2 transition-all hover:shadow-md z-10 group relative",
+                                        "absolute inset-x-0 mx-1 rounded border p-2 transition-all hover:shadow-md z-10 group relative cursor-pointer",
                                         getServiceColor(booking.service.category).bg,
                                         getServiceColor(booking.service.category).border,
                                         getServiceColor(booking.service.category).text,
                                         // Special request styling
                                         isSpecialStaffRequest(booking) && "ring-1 ring-amber-400 shadow-md"
                                       )}
+                                      onClick={() => {
+                                        setSelectedBooking(booking)
+                                        setShowBookingModal(true)
+                                      }}
                                       style={{
                                         height: `${((booking.service.duration || 60) / BUSINESS_HOURS.slotDuration) * 32}px`,
                                       }}
@@ -609,6 +616,19 @@ export function RoomTimeline({
             </div>
           </Card>
         </div>
+
+        {/* Booking Details Modal */}
+        {selectedBooking && (
+          <BookingDetailsModal
+            booking={selectedBooking}
+            isOpen={showBookingModal}
+            onClose={() => {
+              setShowBookingModal(false)
+              setSelectedBooking(null)
+            }}
+            onUpdate={fetchData}
+          />
+        )}
 
       </div>
     </TooltipProvider>
