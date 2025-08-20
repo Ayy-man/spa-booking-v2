@@ -58,11 +58,11 @@ export default function BookingValidator({
     dayName: string
   } | null>(null)
 
-  const performValidation = useCallback(() => {
+  const performValidation = useCallback(async () => {
     if (!service || !staff || !room || !date || !time) return
 
     // Validate complete booking request
-    const bookingValidation = validateBookingRequest(
+    const bookingValidation = await validateBookingRequest(
       service,
       staff,
       room,
@@ -96,7 +96,7 @@ export default function BookingValidator({
 
   useEffect(() => {
     if (service && staff && room && date && time) {
-      performValidation()
+      performValidation().catch(console.error)
     } else {
       setValidation(null)
       setRoomAssignment(null)

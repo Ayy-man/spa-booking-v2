@@ -1,5 +1,6 @@
-import { addMinutes, format, isAfter, isBefore, parseISO, isEqual } from 'date-fns'
-import { Service, Staff, Room, Booking, BookingConflict, TimeSlot } from '@/types/booking'
+import { addMinutes, format, isAfter, isBefore, parseISO, isEqual, isWithinInterval } from 'date-fns'
+import { Service, Staff, Room, Booking, BookingConflict, TimeSlot, ScheduleBlock } from '@/types/booking'
+import { supabase } from '@/lib/supabase'
 
 // Business constants with enhanced configuration
 export const BUSINESS_HOURS = {
@@ -82,43 +83,47 @@ export function generateTimeSlots(
 /**
  * Generate available time slots for a specific service and staff combination
  */
-export function generateAvailableTimeSlots(
+export async function generateAvailableTimeSlots(
   date: Date,
   service: Service,
   staff?: Staff,
   room?: Room,
   existingBookings: Booking[] = []
-): {
+): Promise<{
   time: string;
   available: boolean;
   reason?: string;
-}[] {
+}[]> {
   const allSlots = generateTimeSlots(date, service.duration)
   
-  return allSlots.map(time => {
-    // Check if this time slot is available
-    if (staff && room) {
-      const validation = validateBookingRequest(
-        service,
-        staff,
-        room,
-        date,
-        time,
-        existingBookings
-      )
+  const slotsWithAvailability = await Promise.all(
+    allSlots.map(async (time) => {
+      // Check if this time slot is available
+      if (staff && room) {
+        const validation = await validateBookingRequest(
+          service,
+          staff,
+          room,
+          date,
+          time,
+          existingBookings
+        )
+        
+        return {
+          time,
+          available: validation.isValid,
+          reason: validation.errors[0] || validation.warnings[0]
+        }
+      }
       
       return {
         time,
-        available: validation.isValid,
-        reason: validation.errors[0] || validation.warnings[0]
+        available: true
       }
-    }
-    
-    return {
-      time,
-      available: true
-    }
-  })
+    })
+  )
+  
+  return slotsWithAvailability
 }
 
 /**
@@ -279,19 +284,19 @@ export function checkBookingConflicts(
 /**
  * Enhanced booking validation with comprehensive business rule checking
  */
-export function validateBookingRequest(
+export async function validateBookingRequest(
   service: Service,
   staff: Staff,
   room: Room,
   date: Date,
   startTime: string,
   existingBookings: Booking[] = []
-): {
+): Promise<{
   isValid: boolean;
   errors: string[];
   warnings: string[];
   conflicts: BookingConflict[];
-} {
+}> {
   const errors: string[] = []
   const warnings: string[] = []
   let conflicts: BookingConflict[] = []
@@ -322,8 +327,8 @@ export function validateBookingRequest(
     errors.push(...staffCapability.reasons)
   }
   
-  // Validate staff availability
-  const staffAvailability = isStaffAvailableAtTime(staff, date, startTime, service.duration)
+  // Validate staff availability (now async due to schedule blocks check)
+  const staffAvailability = await isStaffAvailableAtTime(staff, date, startTime, service.duration)
   if (!staffAvailability.available) {
     errors.push(...staffAvailability.reasons)
   }
@@ -738,14 +743,103 @@ export function getStaffDayAvailability(
 }
 
 /**
+ * Get schedule blocks for a staff member on a specific date
+ */
+export async function getScheduleBlocks(
+  staffId: string,
+  date: Date
+): Promise<ScheduleBlock[]> {
+  try {
+    const dateStr = format(date, 'yyyy-MM-dd')
+    
+    const { data, error } = await supabase
+      .from('schedule_blocks')
+      .select('*')
+      .eq('staff_id', staffId)
+      .or(`and(start_date.lte.${dateStr},or(end_date.is.null,end_date.gte.${dateStr}))`)
+      .order('start_time', { ascending: true })
+    
+    if (error) {
+      console.error('Error fetching schedule blocks:', error)
+      return []
+    }
+    
+    return data || []
+  } catch (error) {
+    console.error('Error in getScheduleBlocks:', error)
+    return []
+  }
+}
+
+/**
+ * Check if a time slot conflicts with schedule blocks
+ */
+export function checkScheduleBlockConflict(
+  blocks: ScheduleBlock[],
+  startTime: string,
+  endTime: string,
+  date: Date
+): { hasConflict: boolean; conflictingBlock?: ScheduleBlock; reason?: string } {
+  const dateStr = format(date, 'yyyy-MM-dd')
+  
+  for (const block of blocks) {
+    // Check if the date falls within the block's date range
+    const blockStartDate = parseISO(block.start_date)
+    const blockEndDate = block.end_date ? parseISO(block.end_date) : blockStartDate
+    const checkDate = parseISO(dateStr)
+    
+    const isDateInBlock = isWithinInterval(checkDate, {
+      start: blockStartDate,
+      end: blockEndDate
+    })
+    
+    if (!isDateInBlock) continue
+    
+    // Check for full day blocks
+    if (block.block_type === 'full_day') {
+      return {
+        hasConflict: true,
+        conflictingBlock: block,
+        reason: block.reason || 'Staff is unavailable for the entire day'
+      }
+    }
+    
+    // Check for time range conflicts
+    if (block.block_type === 'time_range' && block.start_time && block.end_time) {
+      const requestedStart = parseISO(`${dateStr}T${startTime}:00`)
+      const requestedEnd = parseISO(`${dateStr}T${endTime}:00`)
+      const blockStart = parseISO(`${dateStr}T${block.start_time}`)
+      const blockEnd = parseISO(`${dateStr}T${block.end_time}`)
+      
+      // Check if times overlap
+      const hasOverlap = (
+        (isBefore(requestedStart, blockEnd) && isAfter(requestedEnd, blockStart)) ||
+        (requestedStart.getTime() === blockStart.getTime()) ||
+        (requestedEnd.getTime() === blockEnd.getTime())
+      )
+      
+      if (hasOverlap) {
+        return {
+          hasConflict: true,
+          conflictingBlock: block,
+          reason: block.reason || `Staff is unavailable from ${block.start_time} to ${block.end_time}`
+        }
+      }
+    }
+  }
+  
+  return { hasConflict: false }
+}
+
+/**
  * Check if a staff member is available for a specific time slot
  */
-export function isStaffAvailableAtTime(
+export async function isStaffAvailableAtTime(
   staff: Staff,
   date: Date,
   startTime: string,
   duration: number
-): { available: boolean; reasons: string[] } {
+): Promise<{ available: boolean; reasons: string[] }> {
   const reasons: string[] = []
   
   // Check day availability first
@@ -765,6 +859,16 @@ export function isStaffAvailableAtTime(
       reasons.push(`${staff.name} works ${dayAvailability.workStart}-${dayAvailability.workEnd}, but service time is ${startTime}-${format(requestedEnd, 'HH:mm')}`)
       return { available: false, reasons }
     }
+  }
+  
+  // Check for schedule blocks
+  const scheduleBlocks = await getScheduleBlocks(staff.id, date)
+  const endTime = calculateEndTime(startTime, duration)
+  const blockConflict = checkScheduleBlockConflict(scheduleBlocks, startTime, endTime, date)
+  
+  if (blockConflict.hasConflict) {
+    reasons.push(blockConflict.reason || 'Staff has a schedule block during this time')
+    return { available: false, reasons }
   }
   
   return { available: true, reasons: [] }

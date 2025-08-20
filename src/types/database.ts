@@ -664,6 +664,47 @@ export interface Database {
           updated_at?: string
         }
       }
+      schedule_blocks: {
+        Row: {
+          id: string
+          staff_id: string
+          block_type: 'full_day' | 'time_range'
+          start_date: string
+          end_date: string | null
+          start_time: string | null
+          end_time: string | null
+          reason: string | null
+          created_at: string
+          updated_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          staff_id: string
+          block_type: 'full_day' | 'time_range'
+          start_date: string
+          end_date?: string | null
+          start_time?: string | null
+          end_time?: string | null
+          reason?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          staff_id?: string
+          block_type?: 'full_day' | 'time_range'
+          start_date?: string
+          end_date?: string | null
+          start_time?: string | null
+          end_time?: string | null
+          reason?: string | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+      }
       walk_ins: {
         Row: {
           id: string

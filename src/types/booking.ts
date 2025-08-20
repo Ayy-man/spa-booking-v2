@@ -7,6 +7,7 @@ export type Room = Database['public']['Tables']['rooms']['Row']
 export type Booking = Database['public']['Tables']['bookings']['Row']
 export type Customer = Database['public']['Tables']['customers']['Row']
 export type StaffSchedule = Database['public']['Tables']['staff_schedules']['Row']
+export type ScheduleBlock = Database['public']['Tables']['schedule_blocks']['Row']
 export type WalkIn = Database['public']['Tables']['walk_ins']['Row']
 
 // Insert types for creating new records
@@ -16,6 +17,7 @@ export type RoomInsert = Database['public']['Tables']['rooms']['Insert']
 export type BookingInsert = Database['public']['Tables']['bookings']['Insert']
 export type CustomerInsert = Database['public']['Tables']['customers']['Insert']
 export type StaffScheduleInsert = Database['public']['Tables']['staff_schedules']['Insert']
+export type ScheduleBlockInsert = Database['public']['Tables']['schedule_blocks']['Insert']
 
 // Update types for modifying records
 export type ServiceUpdate = Database['public']['Tables']['services']['Update']
