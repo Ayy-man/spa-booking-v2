@@ -230,12 +230,21 @@ export default function StaffPage() {
       const serviceDuration = matchingService.duration || 60
       const bufferMinutes = 15
       
+      console.log(`Date: ${dateData}, Day of week: ${dayOfWeek} (0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat)`)
+      
       // Filter staff by capability, work day availability, schedule blocks, and actual booking conflicts
       const availableStaffPromises = allStaff.map(async (staff) => {
         if (!staff.is_active || staff.id === 'any') return null
         
         const hasCapability = canDatabaseStaffPerformService(staff, matchingService.category, matchingService.name)
         const worksOnDay = isDatabaseStaffAvailableOnDate(staff, dateData)
+        
+        if (!hasCapability) {
+          console.log(`${staff.name} cannot perform ${matchingService.category} services`)
+        }
+        if (!worksOnDay) {
+          console.log(`${staff.name} does not work on day ${dayOfWeek}, their work days are: ${staff.work_days}`)
+        }
         
         if (!hasCapability || !worksOnDay) return null
         
