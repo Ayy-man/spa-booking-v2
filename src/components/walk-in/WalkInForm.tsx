@@ -341,17 +341,13 @@ export default function WalkInForm({ onSubmit, loading = false }: WalkInFormProp
         {selectedService && isCouplesCompatible(selectedService) && (
           <div className="space-y-2">
             <div 
-              className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all duration-200 cursor-pointer ${
+              className={`flex items-center justify-between p-4 border-2 rounded-lg transition-all duration-200 ${
                 isCouplesBooking 
                   ? 'border-[#C36678] bg-[#C36678]/10 shadow-md' 
                   : 'border-gray-300 bg-white hover:border-[#C36678]/70 hover:bg-[#C36678]/5 hover:shadow-sm'
               }`}
-              onClick={() => {
-                setIsCouplesBooking(!isCouplesBooking)
-                setValue('isCouplesBooking', !isCouplesBooking)
-              }}
             >
-              <div className="cursor-pointer flex-1">
+              <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg font-medium text-gray-900">Book as a couple</span>
                   {!isCouplesBooking && (
