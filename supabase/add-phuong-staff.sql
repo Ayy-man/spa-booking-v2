@@ -1,5 +1,18 @@
--- Migration: Add Phuong Bosque as a new staff member
--- Description: Adds Phuong as a massage-only therapist available all days of the week
+-- RUN THIS SCRIPT IN SUPABASE SQL EDITOR TO ADD PHUONG BOSQUE AS STAFF
+-- This script adds Phuong as a massage-only therapist available all days
+
+-- First, check if service_category enum has 'massages' value
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_enum 
+    WHERE enumlabel = 'massages' 
+    AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'service_category')
+  ) THEN
+    -- Add 'massages' to enum if it doesn't exist
+    ALTER TYPE service_category ADD VALUE IF NOT EXISTS 'massages';
+  END IF;
+END $$;
 
 -- Insert Phuong Bosque into the staff table
 INSERT INTO public.staff (
@@ -26,7 +39,7 @@ INSERT INTO public.staff (
   '(671) 555-0123',
   'Body Massages (All Types)',
   'PB',
-  ARRAY['massages']::service_category[],  -- Only massage capability (plural to match system)
+  ARRAY['massages']::service_category[],  -- Massage capability
   ARRAY[0, 1, 2, 3, 4, 5, 6],  -- Available all days (0=Sunday through 6=Saturday)
   'therapist'::staff_role,
   true,
@@ -50,7 +63,6 @@ INSERT INTO public.staff (
   updated_at = now();
 
 -- Add staff schedules for Phuong for the next 90 days
--- This ensures Phuong shows as available in the booking system
 INSERT INTO public.staff_schedules (
   staff_id,
   date,
@@ -78,15 +90,18 @@ FROM generate_series(
   is_available = EXCLUDED.is_available,
   updated_at = now();
 
--- Grant necessary permissions for the new staff member
--- This ensures the booking system can query Phuong's availability
-GRANT SELECT ON public.staff TO anon, authenticated;
-GRANT SELECT ON public.staff_schedules TO anon, authenticated;
+-- Verify Phuong was added successfully
+SELECT 
+  id,
+  name,
+  email,
+  capabilities,
+  work_days,
+  is_active
+FROM public.staff 
+WHERE id = 'phuong';
 
--- Add comment for documentation
-COMMENT ON COLUMN public.staff.id IS 'Staff identifier - phuong added for massage services';
-
--- Verification query to confirm Phuong was added successfully
+-- Show message
 DO $$
 DECLARE
   staff_count integer;
@@ -98,6 +113,7 @@ BEGIN
   IF staff_count = 0 THEN
     RAISE EXCEPTION 'Failed to add Phuong Bosque to staff table';
   ELSE
-    RAISE NOTICE 'Successfully added Phuong Bosque as staff member';
+    RAISE NOTICE 'Successfully added Phuong Bosque as staff member for massage services';
+    RAISE NOTICE 'Phuong is available all 7 days a week for massage appointments';
   END IF;
 END $$;
