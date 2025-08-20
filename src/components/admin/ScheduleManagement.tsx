@@ -27,6 +27,7 @@ export function ScheduleManagement() {
   const [showConflictWarning, setShowConflictWarning] = useState(false)
   const [conflictingBookings, setConflictingBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   
   // Form state for adding/editing blocks
   const [formData, setFormData] = useState({
@@ -43,39 +44,56 @@ export function ScheduleManagement() {
 
   // Fetch staff members on mount
   useEffect(() => {
-    fetchStaff()
-    fetchAllScheduleBlocks()
+    fetchStaff().catch(console.error)
+    fetchAllScheduleBlocks().catch(console.error)
   }, [])
 
   const fetchStaff = async () => {
-    const { data, error } = await supabase
-      .from('staff')
-      .select('*')
-      .eq('is_active', true)
-      .order('name')
-    
-    if (error) {
-      console.error('Error fetching staff:', error)
+    try {
+      const { data, error } = await supabase
+        .from('staff')
+        .select('*')
+        .eq('is_active', true)
+        .order('name')
+      
+      if (error) {
+        console.error('Error fetching staff:', error)
+        showNotification('Error', 'Failed to load staff members', 'error')
+      } else {
+        setStaff(data || [])
+      }
+    } catch (error) {
+      console.error('Error in fetchStaff:', error)
       showNotification('Error', 'Failed to load staff members', 'error')
-    } else {
-      setStaff(data || [])
     }
   }
 
   const fetchAllScheduleBlocks = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('schedule_blocks')
-      .select('*')
-      .order('start_date', { ascending: false })
-    
-    if (error) {
-      console.error('Error fetching schedule blocks:', error)
-      showNotification('Error', 'Failed to load schedule blocks', 'error')
-    } else {
-      setScheduleBlocks(data || [])
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('schedule_blocks')
+        .select('*')
+        .order('start_date', { ascending: false })
+      
+      if (error) {
+        console.error('Error fetching schedule blocks:', error)
+        // Check if the error is because the table doesn't exist
+        if (error.message?.includes('schedule_blocks') && error.message?.includes('does not exist')) {
+          setError('Schedule blocks table not found. Please run the database migration first.')
+        } else {
+          setError('Failed to load schedule blocks: ' + error.message)
+        }
+      } else {
+        setScheduleBlocks(data || [])
+        setError(null)
+      }
+    } catch (error: any) {
+      console.error('Error in fetchAllScheduleBlocks:', error)
+      setError('Failed to load schedule blocks: ' + (error.message || 'Unknown error'))
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const fetchStaffScheduleBlocks = async (staffId: string) => {
@@ -314,7 +332,32 @@ export function ScheduleManagement() {
       </Card>
 
       {/* Schedule Blocks List */}
-      {loading ? (
+      {error ? (
+        <Card>
+          <CardContent className="text-center py-8">
+            <div className="text-red-600 mb-4">
+              <h3 className="font-medium">Error Loading Schedule Blocks</h3>
+              <p className="text-sm mt-2">{error}</p>
+            </div>
+            {error.includes('migration') && (
+              <div className="text-sm text-gray-600 mt-4">
+                <p>To fix this issue:</p>
+                <ol className="list-decimal list-inside mt-2 space-y-1">
+                  <li>Run the database migration: <code className="bg-gray-100 px-2 py-1 rounded">supabase db push</code></li>
+                  <li>Or apply migration 043 manually in your Supabase SQL editor</li>
+                </ol>
+              </div>
+            )}
+            <Button 
+              onClick={() => fetchAllScheduleBlocks().catch(console.error)}
+              className="mt-4"
+              variant="outline"
+            >
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      ) : loading ? (
         <div className="flex justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -341,10 +384,17 @@ export function ScheduleManagement() {
                         </Badge>
                         <div className="flex items-center text-sm text-gray-600">
                           <CalendarIcon className="w-4 h-4 mr-1" />
-                          {format(parseISO(block.start_date), 'MMM dd, yyyy')}
-                          {block.end_date && block.end_date !== block.start_date && (
-                            <> - {format(parseISO(block.end_date), 'MMM dd, yyyy')}</>
-                          )}
+                          {(() => {
+                            try {
+                              const startDate = format(parseISO(block.start_date), 'MMM dd, yyyy')
+                              const endDateDisplay = block.end_date && block.end_date !== block.start_date 
+                                ? ` - ${format(parseISO(block.end_date), 'MMM dd, yyyy')}`
+                                : ''
+                              return startDate + endDateDisplay
+                            } catch (error) {
+                              return block.start_date + (block.end_date ? ` - ${block.end_date}` : '')
+                            }
+                          })()}
                         </div>
                         {block.block_type === 'time_range' && block.start_time && block.end_time && (
                           <div className="flex items-center text-sm text-gray-600">
