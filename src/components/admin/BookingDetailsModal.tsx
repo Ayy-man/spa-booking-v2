@@ -58,6 +58,15 @@ export function BookingDetailsModal({
 
   // Check if user is admin for delete functionality
   const isAdmin = simpleAuth.isAuthenticated()
+  
+  // Debug logging
+  console.log('[BookingDetailsModal] Debug:', {
+    bookingId: booking?.id,
+    bookingStatus: booking?.status,
+    isAdmin,
+    shouldShowButtons: booking?.status !== 'cancelled' && booking?.status !== 'completed',
+    booking
+  })
 
   if (!booking) return null
 
