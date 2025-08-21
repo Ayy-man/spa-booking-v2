@@ -5,6 +5,34 @@
 **Completion Date: August 1, 2025**  
 **System Approach: Next.js with Supabase + Advanced Admin Panel**  
 
+## Production V3.1 Update - August 21, 2025
+
+**VERSION 1.0.3 - TIMEZONE FIXES & STAFF EXPANSION**
+
+Critical timezone inconsistencies have been resolved and new staff member Phuong Bosque has been added to the system.
+
+### Timezone Implementation ✅
+- Centralized timezone-utils.ts module for all Guam time (UTC+10/ChST) operations
+- 2-hour advance booking rule properly enforced across all interfaces
+- All date/time operations consistently use Guam timezone
+- Admin panels display correct Guam time
+- Daily reports scheduled for 6 PM Guam time
+- Walk-in timestamps use Guam time
+- Fixed database queries to use proper day boundaries
+
+### Staff Updates ✅
+- Added Phuong Bosque as massage-only therapist
+- Available all 7 days (9 AM - 7 PM)
+- Properly integrated with database and booking system
+- Shows in admin panel and booking flow for massage services
+
+### Couples Booking Enhancement ✅
+- Walk-in page now supports couples bookings
+- Toggle switch UI with rose color scheme (#C36678)
+- Second person fields (name and service only)
+- Linked bookings with couples_booking_id
+- All services are couples-compatible
+
 ## Production V3.0 Update - August 15, 2025
 
 **VERSION 1.0.2 - DARK MODE IMPLEMENTATION COMPLETE**

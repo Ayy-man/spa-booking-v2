@@ -79,16 +79,19 @@
 ```
 
 ## Staff Availability
-- **Selma**: Mon, Wed, Fri, Sat, Sun (on-call with 30-60min notice)
-- **Tanisha**: Mon, Wed, Fri, Sat, Sun (off Tue/Thu, 2hr notice for on-call)
-- **Robyn**: Full schedule
-- **Leonel**: Sunday only
+- **Selma**: Mon, Wed, Fri, Sat, Sun (on-call with 30-60min notice) - Facials only
+- **Tanisha**: Mon, Wed, Fri, Sat, Sun (off Tue/Thu, 2hr notice for on-call) - Facials & Waxing
+- **Robyn**: Wed, Thu, Fri, Sat, Sun (off Mon/Tue) - All services except some advanced facials
+- **Leonel**: Sunday only - Massages, Treatments, can assist with Facials
+- **Phuong**: All 7 days, 9 AM - 7 PM - Massages only (all types)
 
 ## Booking Constraints
-- Operating hours: 9 AM - 7 PM
+- Operating hours: 9 AM - 7 PM (Guam time UTC+10)
+- Minimum advance booking: 2 hours before appointment
 - Last booking: 1 hour before closing
 - Buffer time: 15 minutes between appointments (IMPLEMENTED)
 - Maximum advance booking: 30 days
+- All times displayed and stored in Guam timezone
 
 ### 15-Minute Buffer Implementation
 The system automatically adds a 15-minute buffer between all appointment slots to ensure:

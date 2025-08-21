@@ -31,7 +31,7 @@
 - ❌ Dermaplaning
 
 **Default Room:** Room 3
-**Schedule:** Full schedule
+**Schedule:** Wed, Thu, Fri, Sat, Sun (off Mon/Tue)
 
 ### Tanisha Harris (misstanishababyy@gmail.com)
 **Can Perform:**
@@ -49,10 +49,26 @@
 **Can Perform:**
 - ✅ All Body Massages
 - ✅ All Body Treatments
+- ✅ Can assist with Facials
 - ✅ Assists with couples treatments
 
 **Default Room:** Any (assistant role)
 **Schedule:** Sunday only
+
+### Phuong Bosque (phuong.bosque@dermalskin.com)
+**Can Perform:**
+- ✅ All Body Massages (all types)
+- ✅ Balinese Body Massage
+- ✅ Deep Tissue Body Massage
+- ✅ Hot Stone Massage
+- ✅ Maternity Massage
+- ✅ Stretching Body Massage
+- ❌ Facials
+- ❌ Waxing
+- ❌ Body Treatments
+
+**Default Room:** Any available
+**Schedule:** All 7 days (Mon-Sun), 9 AM - 7 PM
 
 ## Room Capabilities
 

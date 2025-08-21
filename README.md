@@ -2,13 +2,20 @@
 
 A comprehensive medical spa booking system built for Dermal Skin Clinic and Spa Guam. This production-ready application provides online booking, staff management, room assignment, and administrative tools.
 
-## 🎉 **PRODUCTION v1.2.0 - READY FOR DEPLOYMENT**
+## 🎉 **PRODUCTION v1.3.0 - READY FOR DEPLOYMENT**
 
-**Status**: ✅ **Production Ready with Enhanced Phone Input & Complete Booking Management**  
-**Version**: v1.2.0 (Phone Formatting & Booking Cancellation System)  
-**Last Updated**: August 19, 2025  
+**Status**: ✅ **Production Ready with Timezone Fixes & Staff Expansion**  
+**Version**: v1.3.0 (Timezone Standardization & Phuong Bosque Addition)  
+**Last Updated**: August 21, 2025  
 **Deployment Status**: Ready for immediate live deployment  
-**New Features in v1.2.0**: 
+**New Features in v1.3.0**: 
+- ⏰ **Timezone Standardization** - All operations in Guam time (UTC+10/ChST)
+- ⏳ **2-Hour Advance Booking** - Enforced across all booking interfaces
+- 👩‍⚕️ **New Staff Member** - Phuong Bosque added (massage specialist, 7 days)
+- 💑 **Walk-in Couples Booking** - Toggle UI with linked bookings
+- 📅 **Fixed Time Display** - Consistent Guam timezone throughout
+
+**Previous v1.2.0 Features**: 
 - 📱 **Enhanced Phone Input** - Auto-formatting for Guam (671) with real-time validation
 - ❌ **Complete Cancellation System** - Proper tracking with timestamps and reasons
 - 🎯 **Booking Details Modal** - Standardized management interface across all views
@@ -29,7 +36,7 @@ A comprehensive medical spa booking system built for Dermal Skin Clinic and Spa 
 This booking system handles complex spa scheduling with:
 - **44 Services**: Facials, massages, treatments, waxing, and packages
 - **3 Rooms**: Different capabilities for single/couples services
-- **4 Staff Members**: Each with specific capabilities and schedules
+- **5 Staff Members**: Each with specific capabilities and schedules (including Phuong)
 - **Smart Room Assignment**: Automatic room allocation based on service type
 - **Mobile-First Design**: Optimized for mobile booking experience with dark mode
 - **📱 Smart Phone Input**: Auto-formatting for Guam (671) with real-time validation
@@ -86,6 +93,10 @@ NEXT_PUBLIC_BUSINESS_HOURS_START=09:00
 NEXT_PUBLIC_BUSINESS_HOURS_END=19:00
 NEXT_PUBLIC_MAX_ADVANCE_BOOKING_DAYS=30
 NEXT_PUBLIC_BUFFER_TIME_MINUTES=15
+
+# Timezone Configuration (Guam)
+NEXT_PUBLIC_TIMEZONE="Pacific/Guam"
+TZ="Pacific/Guam"
 
 # Cron Job Security (for automated daily reports)
 CRON_SECRET=your-secure-cron-secret-here
