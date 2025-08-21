@@ -256,10 +256,10 @@ export default function AdminBookingsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{formatDate(booking.appointment_date)}</div>
                       <div className="text-sm text-gray-500">{booking.start_time} - {booking.end_time}</div>
-                      {booking.rescheduled_count > 0 && (
+                      {(booking as any).rescheduled_count > 0 && (
                         <Badge variant="outline" className="mt-1 text-xs">
                           <RefreshCw className="w-3 h-3 mr-1" />
-                          Rescheduled {booking.rescheduled_count}x
+                          Rescheduled {(booking as any).rescheduled_count}x
                         </Badge>
                       )}
                     </td>

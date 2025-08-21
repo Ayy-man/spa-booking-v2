@@ -69,10 +69,10 @@ export async function POST(
       .rpc('can_reschedule_booking', { p_booking_id: bookingId })
       .single()
 
-    if (checkError || !canReschedule?.can_reschedule) {
-      console.error('[RESCHEDULE] Cannot reschedule:', canReschedule?.reason || checkError)
+    if (checkError || !canReschedule || !(canReschedule as any).can_reschedule) {
+      console.error('[RESCHEDULE] Cannot reschedule:', (canReschedule as any)?.reason || checkError)
       return NextResponse.json(
-        { error: canReschedule?.reason || 'Cannot reschedule this booking' },
+        { error: (canReschedule as any)?.reason || 'Cannot reschedule this booking' },
         { status: 400 }
       )
     }
@@ -331,8 +331,8 @@ export async function GET(
       .rpc('get_booking_reschedule_history', { p_booking_id: bookingId })
 
     return NextResponse.json({
-      can_reschedule: result.can_reschedule,
-      reason: result.reason,
+      can_reschedule: (result as any)?.can_reschedule || false,
+      reason: (result as any)?.reason || 'Unknown',
       history: history || []
     })
 

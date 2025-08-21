@@ -71,6 +71,7 @@ export function RescheduleModal({
       setAvailableSlots([])
       checkEligibility()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, booking])
 
   // Check if booking can be rescheduled
@@ -99,7 +100,8 @@ export function RescheduleModal({
     if (selectedDate && booking && eligibility?.can_reschedule) {
       loadAvailableSlots()
     }
-  }, [selectedDate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, booking, eligibility?.can_reschedule])
 
   const loadAvailableSlots = async () => {
     if (!selectedDate || !booking) return

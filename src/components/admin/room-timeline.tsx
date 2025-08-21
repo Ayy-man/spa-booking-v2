@@ -483,7 +483,7 @@ export function RoomTimeline({
                                       )}
                                       
                                       {/* Rescheduled Indicator */}
-                                      {booking.rescheduled_count > 0 && (
+                                      {(booking as any).rescheduled_count > 0 && (
                                         <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center">
                                           <RotateCw className="h-1.5 w-1.5 text-white" />
                                         </div>
@@ -536,10 +536,10 @@ export function RoomTimeline({
                                       )}
                                       
                                       {/* Rescheduled Badge */}
-                                      {booking.rescheduled_count > 0 && (
+                                      {(booking as any).rescheduled_count > 0 && (
                                         <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
                                           <RotateCw className="h-3 w-3 mr-1" />
-                                          Rescheduled {booking.rescheduled_count}x
+                                          Rescheduled {(booking as any).rescheduled_count}x
                                         </div>
                                       )}
                                       

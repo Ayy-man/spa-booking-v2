@@ -193,9 +193,9 @@ export function BookingDetailsModal({
               <h3 className="font-semibold text-lg flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Date & Time
-                {booking.rescheduled_count > 0 && (
+                {(booking as any).rescheduled_count > 0 && (
                   <Badge variant="outline" className="ml-2">
-                    Rescheduled {booking.rescheduled_count}x
+                    Rescheduled {(booking as any).rescheduled_count}x
                   </Badge>
                 )}
               </h3>
@@ -211,14 +211,14 @@ export function BookingDetailsModal({
                   </p>
                 </div>
               </div>
-              {booking.original_appointment_date && booking.original_start_time && (
+              {(booking as any).original_appointment_date && (booking as any).original_start_time && (
                 <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
                   <p className="text-sm text-orange-800">
-                    <span className="font-medium">Originally scheduled:</span> {formatDate(booking.original_appointment_date)} at {formatTime(booking.original_start_time)}
+                    <span className="font-medium">Originally scheduled:</span> {formatDate((booking as any).original_appointment_date)} at {formatTime((booking as any).original_start_time)}
                   </p>
-                  {booking.reschedule_reason && (
+                  {(booking as any).reschedule_reason && (
                     <p className="text-sm text-orange-700 mt-1">
-                      <span className="font-medium">Reason:</span> {booking.reschedule_reason}
+                      <span className="font-medium">Reason:</span> {(booking as any).reschedule_reason}
                     </p>
                   )}
                 </div>
