@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CouplesBookingIndicator } from '@/components/ui/couples-booking-indicator'
 import { formatPhoneNumber } from '@/lib/phone-utils'
+import { BookingDetailsModal } from '@/components/admin/BookingDetailsModal'
+import { BookingWithRelations } from '@/types/booking'
+import { Eye, Trash2 } from 'lucide-react'
 // import { auth } from '@/lib/auth'
 // import { useRouter } from 'next/navigation'
 
@@ -11,6 +14,8 @@ export default function AdminBookingsPage() {
   const [bookings, setBookings] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
+  const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
   // const [authChecked, setAuthChecked] = useState(false)
   // const router = useRouter()
 
@@ -116,6 +121,22 @@ export default function AdminBookingsPage() {
     }
   }
 
+  const handleViewDetails = (booking: any) => {
+    setSelectedBooking(booking as BookingWithRelations)
+    setShowDetailsModal(true)
+  }
+
+  const handleModalClose = () => {
+    setShowDetailsModal(false)
+    setSelectedBooking(null)
+  }
+
+  const handleActionComplete = () => {
+    // Refresh the bookings list after an action (like delete)
+    fetchBookings()
+    handleModalClose()
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -198,6 +219,9 @@ export default function AdminBookingsPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Price
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -261,6 +285,16 @@ export default function AdminBookingsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       ${booking.final_price}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => handleViewDetails(booking)}
+                        className="text-primary hover:text-primary-dark inline-flex items-center gap-1"
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span>View</span>
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -268,6 +302,14 @@ export default function AdminBookingsPage() {
           </div>
         </div>
       )}
+
+      {/* Booking Details Modal */}
+      <BookingDetailsModal
+        booking={selectedBooking}
+        open={showDetailsModal}
+        onOpenChange={handleModalClose}
+        onActionComplete={handleActionComplete}
+      />
     </div>
   )
 }
