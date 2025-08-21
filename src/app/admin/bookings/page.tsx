@@ -6,7 +6,8 @@ import { CouplesBookingIndicator } from '@/components/ui/couples-booking-indicat
 import { formatPhoneNumber } from '@/lib/phone-utils'
 import { BookingDetailsModal } from '@/components/admin/BookingDetailsModal'
 import { BookingWithRelations } from '@/types/booking'
-import { Eye, Trash2 } from 'lucide-react'
+import { Eye, Trash2, RefreshCw } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 // import { auth } from '@/lib/auth'
 // import { useRouter } from 'next/navigation'
 
@@ -255,6 +256,12 @@ export default function AdminBookingsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{formatDate(booking.appointment_date)}</div>
                       <div className="text-sm text-gray-500">{booking.start_time} - {booking.end_time}</div>
+                      {booking.rescheduled_count > 0 && (
+                        <Badge variant="outline" className="mt-1 text-xs">
+                          <RefreshCw className="w-3 h-3 mr-1" />
+                          Rescheduled {booking.rescheduled_count}x
+                        </Badge>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{booking.staff?.name}</div>

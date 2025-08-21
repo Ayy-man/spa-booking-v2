@@ -15,7 +15,7 @@ import { BookingWithRelations, ServiceCategory } from "@/types/booking"
 import { isSpecialStaffRequest } from "@/lib/booking-utils"
 import { FilterBar } from "@/components/admin/filter-bar"
 import { BookingDetailsModal } from "@/components/admin/BookingDetailsModal"
-import { Clock, RefreshCw, Calendar, Users, TrendingUp, AlertCircle, Star } from "lucide-react"
+import { Clock, RefreshCw, Calendar, Users, TrendingUp, AlertCircle, Star, RotateCw } from "lucide-react"
 
 interface TimeSlot {
   hour: number
@@ -482,6 +482,13 @@ export function RoomTimeline({
                                         </div>
                                       )}
                                       
+                                      {/* Rescheduled Indicator */}
+                                      {booking.rescheduled_count > 0 && (
+                                        <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center">
+                                          <RotateCw className="h-1.5 w-1.5 text-white" />
+                                        </div>
+                                      )}
+                                      
                                       <div className="flex items-start justify-between">
                                         <div className="flex-1 min-w-0">
                                           <div className="text-xs font-medium truncate flex items-center">
@@ -525,6 +532,14 @@ export function RoomTimeline({
                                         <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
                                           <Users className="h-3 w-3 mr-1" />
                                           Couples Booking
+                                        </div>
+                                      )}
+                                      
+                                      {/* Rescheduled Badge */}
+                                      {booking.rescheduled_count > 0 && (
+                                        <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 border border-orange-200">
+                                          <RotateCw className="h-3 w-3 mr-1" />
+                                          Rescheduled {booking.rescheduled_count}x
                                         </div>
                                       )}
                                       

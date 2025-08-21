@@ -33,9 +33,12 @@ import {
   DollarSign,
   AlertCircle,
   Trash2,
-  XCircle
+  XCircle,
+  CalendarClock
 } from "lucide-react"
 import { simpleAuth } from "@/lib/simple-auth"
+import { RescheduleModal } from "./RescheduleModal"
+import { Badge } from "@/components/ui/badge"
 
 interface BookingDetailsModalProps {
   booking: BookingWithRelations | null
@@ -53,6 +56,7 @@ export function BookingDetailsModal({
   const [loading, setLoading] = useState(false)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false)
   const [cancellationReason, setCancellationReason] = useState("")
   const [error, setError] = useState<string | null>(null)
 
@@ -189,6 +193,11 @@ export function BookingDetailsModal({
               <h3 className="font-semibold text-lg flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Date & Time
+                {booking.rescheduled_count > 0 && (
+                  <Badge variant="outline" className="ml-2">
+                    Rescheduled {booking.rescheduled_count}x
+                  </Badge>
+                )}
               </h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -202,6 +211,18 @@ export function BookingDetailsModal({
                   </p>
                 </div>
               </div>
+              {booking.original_appointment_date && booking.original_start_time && (
+                <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
+                  <p className="text-sm text-orange-800">
+                    <span className="font-medium">Originally scheduled:</span> {formatDate(booking.original_appointment_date)} at {formatTime(booking.original_start_time)}
+                  </p>
+                  {booking.reschedule_reason && (
+                    <p className="text-sm text-orange-700 mt-1">
+                      <span className="font-medium">Reason:</span> {booking.reschedule_reason}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Staff & Room */}
@@ -317,6 +338,15 @@ export function BookingDetailsModal({
             {booking.status !== 'cancelled' && booking.status !== 'completed' && (
               <>
                 <Button
+                  variant="outline"
+                  onClick={() => setShowRescheduleModal(true)}
+                  className="border-primary text-primary hover:bg-primary hover:text-white"
+                >
+                  <CalendarClock className="w-4 h-4 mr-2" />
+                  Reschedule
+                </Button>
+                
+                <Button
                   variant="destructive"
                   onClick={() => setShowCancelDialog(true)}
                   className="bg-orange-600 hover:bg-orange-700"
@@ -427,6 +457,17 @@ export function BookingDetailsModal({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Reschedule Modal */}
+      <RescheduleModal
+        booking={booking}
+        open={showRescheduleModal}
+        onOpenChange={setShowRescheduleModal}
+        onRescheduleComplete={() => {
+          setShowRescheduleModal(false)
+          onActionComplete?.()
+        }}
+      />
     </>
   )
 }

@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { normalizePhoneForDB, formatPhoneNumber } from "@/lib/phone-utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
-import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2, Users } from "lucide-react"
+import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2, Users, UserCheck } from "lucide-react"
 import { format } from "date-fns"
 import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicator"
 import { BookingDetailsModal } from "@/components/admin/BookingDetailsModal"
@@ -79,7 +79,7 @@ export function StaffScheduleView({
   const [currentTime, setCurrentTime] = useState<Date>(getGuamTime())
   const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null)
   const [showQuickAdd, setShowQuickAdd] = useState(false)
-  const [quickAddSlot, setQuickAddSlot] = useState<{ staffId: string; staffName: string; time: string } | null>(null)
+  const [quickAddSlot, setQuickAddSlot] = useState<{ staffId: string; staffName: string; time: string; isAnyStaff?: boolean } | null>(null)
   const [services, setServices] = useState<any[]>([])
   const [customers, setCustomers] = useState<any[]>([])
   const [rooms, setRooms] = useState<any[]>([])
@@ -256,6 +256,33 @@ export function StaffScheduleView({
     }) || null
   }
 
+  // Get available staff for a specific time slot
+  const getAvailableStaffForSlot = (timeSlot: TimeSlot): {
+    count: number;
+    availableStaff: StaffMember[];
+    totalWorking: number;
+  } => {
+    const workingStaff = staff.filter(isStaffWorking)
+    const available = workingStaff.filter(member => 
+      !getBookingForSlot(member.id, timeSlot)
+    )
+    return {
+      count: available.length,
+      availableStaff: available,
+      totalWorking: workingStaff.length
+    }
+  }
+
+  // Get color for availability indicator
+  const getAvailabilityColor = (available: number, total: number): string => {
+    if (total === 0) return 'bg-gray-100 text-gray-600'
+    if (available === 0) return 'bg-red-100 text-red-800'
+    const percentage = (available / total) * 100
+    if (percentage <= 25) return 'bg-orange-100 text-orange-800'
+    if (percentage <= 50) return 'bg-yellow-100 text-yellow-800'
+    return 'bg-green-100 text-green-800'
+  }
+
   // Calculate booking span (how many 15-minute slots it covers)
   const getBookingSpan = (booking: BookingWithRelations): number => {
     const duration = booking.service.duration || 60
@@ -286,13 +313,20 @@ export function StaffScheduleView({
   }
 
   // Handle quick add appointment click
-  const handleQuickAdd = (staffId: string, timeSlot: TimeSlot) => {
+  const handleQuickAdd = (staffId: string, timeSlot: TimeSlot, isAnyStaff: boolean = false) => {
     // Check if slot is available
-    const existingBooking = getBookingForSlot(staffId, timeSlot)
-    if (existingBooking) return
+    if (!isAnyStaff) {
+      const existingBooking = getBookingForSlot(staffId, timeSlot)
+      if (existingBooking) return
+    }
     
     const staffMember = staff.find(s => s.id === staffId)
-    setQuickAddSlot({ staffId, staffName: staffMember?.name || '', time: timeSlot.timeString })
+    setQuickAddSlot({ 
+      staffId, 
+      staffName: staffMember?.name || '', 
+      time: timeSlot.timeString,
+      isAnyStaff 
+    })
     setShowQuickAdd(true)
     // Reset form
     setQuickAddForm({
@@ -305,6 +339,18 @@ export function StaffScheduleView({
       isNewCustomer: false,
       notes: ''
     })
+  }
+
+  // Handle click on Any Available Staff slot
+  const handleAnyStaffClick = (timeSlot: TimeSlot) => {
+    const availability = getAvailableStaffForSlot(timeSlot)
+    if (availability.count === 0) return
+    
+    // Use the first available staff member
+    const firstAvailable = availability.availableStaff[0]
+    if (firstAvailable) {
+      handleQuickAdd(firstAvailable.id, timeSlot, true)
+    }
   }
 
   // Handle quick add submit
@@ -640,9 +686,19 @@ export function StaffScheduleView({
             )}
             
             {/* Header Row */}
-            <div className="grid grid-cols-[100px_repeat(auto-fit,minmax(150px,1fr))] border-b bg-gray-50 sticky top-0 z-10">
+            <div className="grid grid-cols-[100px_180px_repeat(auto-fit,minmax(150px,1fr))] border-b bg-gray-50 sticky top-0 z-10">
               <div className="p-3 font-medium text-gray-700 border-r bg-white">
                 Time
+              </div>
+              {/* Any Available Staff Column Header */}
+              <div className="p-3 font-medium text-center border-r bg-emerald-50 text-emerald-800">
+                <div className="flex items-center justify-center gap-2">
+                  <UserCheck className="w-4 h-4" />
+                  <span>Any Available Staff</span>
+                </div>
+                <div className="text-xs font-normal mt-1 text-emerald-600">
+                  Click to quick add
+                </div>
               </div>
               {staff.map(member => (
                 <div 
@@ -669,7 +725,7 @@ export function StaffScheduleView({
                   <div 
                     key={slot.timeString}
                     className={cn(
-                      "grid grid-cols-[100px_repeat(auto-fit,minmax(150px,1fr))]",
+                      "grid grid-cols-[100px_180px_repeat(auto-fit,minmax(150px,1fr))]",
                       isHourStart && "border-t-2",
                       !isHourStart && "border-t"
                     )}
@@ -681,6 +737,70 @@ export function StaffScheduleView({
                     )}>
                       {isHourStart ? slot.displayTime : ''}
                     </div>
+                    
+                    {/* Any Available Staff Column */}
+                    {(() => {
+                      const availability = getAvailableStaffForSlot(slot)
+                      const colorClass = getAvailabilityColor(availability.count, availability.totalWorking)
+                      const canAddAppointment = availability.count > 0
+                      
+                      return (
+                        <div className="border-r">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className={cn(
+                                    "h-8 px-2 flex items-center justify-between transition-all",
+                                    colorClass,
+                                    canAddAppointment && "cursor-pointer hover:opacity-80",
+                                    !canAddAppointment && "cursor-not-allowed opacity-60"
+                                  )}
+                                  onClick={() => canAddAppointment && handleAnyStaffClick(slot)}
+                                >
+                                  <div className="flex items-center gap-1">
+                                    {availability.totalWorking === 0 ? (
+                                      <span className="text-xs">No Staff</span>
+                                    ) : availability.count === 0 ? (
+                                      <span className="text-xs font-medium">Fully Booked</span>
+                                    ) : (
+                                      <>
+                                        <span className="text-xs font-medium">
+                                          {availability.count} Available
+                                        </span>
+                                        <span className="text-xs opacity-75">
+                                          ({availability.count}/{availability.totalWorking})
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                  {canAddAppointment && (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="right">
+                                {availability.totalWorking === 0 ? (
+                                  <p className="text-xs">No staff scheduled for today</p>
+                                ) : availability.count === 0 ? (
+                                  <p className="text-xs">All staff are booked at this time</p>
+                                ) : (
+                                  <div className="space-y-1">
+                                    <p className="text-xs font-medium">Available Staff:</p>
+                                    <p className="text-xs">
+                                      {availability.availableStaff.map(s => s.name).join(', ')}
+                                    </p>
+                                    <p className="text-xs text-gray-500 pt-1 border-t">
+                                      Click to add appointment
+                                    </p>
+                                  </div>
+                                )}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      )
+                    })()}
                     
                     {/* Staff Columns */}
                     {staff.map(member => {
@@ -779,7 +899,7 @@ export function StaffScheduleView({
                             !isWorking && "bg-gray-100 cursor-not-allowed hover:bg-gray-100",
                             dropTarget?.staffId === member.id && dropTarget?.time === slot.timeString && "bg-blue-100"
                           )}
-                          onClick={() => isWorking && handleQuickAdd(member.id, slot)}
+                          onClick={() => isWorking && handleQuickAdd(member.id, slot, false)}
                           onDragOver={handleDragOver}
                           onDragEnter={(e) => isWorking && handleDragEnter(e, member.id, slot.timeString)}
                           onDragLeave={handleDragLeave}
@@ -834,10 +954,49 @@ export function StaffScheduleView({
           <DialogHeader>
             <DialogTitle>Quick Add Appointment</DialogTitle>
             <DialogDescription>
-              Add a new appointment for {quickAddSlot?.staffName} at {quickAddSlot?.time}
+              {quickAddSlot?.isAnyStaff ? (
+                <>Add a new appointment at {quickAddSlot?.time} with any available staff</>
+              ) : (
+                <>Add a new appointment for {quickAddSlot?.staffName} at {quickAddSlot?.time}</>
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {/* Staff Selection (only for Any Available) */}
+            {quickAddSlot?.isAnyStaff && (
+              <div className="space-y-2">
+                <Label htmlFor="staff">Select Staff *</Label>
+                <Select
+                  value={quickAddSlot.staffId}
+                  onValueChange={(value) => {
+                    const selectedStaff = staff.find(s => s.id === value)
+                    if (selectedStaff && quickAddSlot) {
+                      setQuickAddSlot({
+                        ...quickAddSlot,
+                        staffId: value,
+                        staffName: selectedStaff.name
+                      })
+                    }
+                  }}
+                >
+                  <SelectTrigger id="staff">
+                    <SelectValue placeholder="Choose available staff" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(() => {
+                      const timeSlot = timeSlots.find(s => s.timeString === quickAddSlot?.time)
+                      if (!timeSlot) return null
+                      const availability = getAvailableStaffForSlot(timeSlot)
+                      return availability.availableStaff.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.name}
+                        </SelectItem>
+                      ))
+                    })()}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             {/* Service Selection */}
             <div className="space-y-2">
               <Label htmlFor="service">Service *</Label>
