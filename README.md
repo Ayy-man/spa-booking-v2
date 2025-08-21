@@ -2,13 +2,22 @@
 
 A comprehensive medical spa booking system built for Dermal Skin Clinic and Spa Guam. This production-ready application provides online booking, staff management, room assignment, and administrative tools.
 
-## 🎉 **PRODUCTION v1.3.0 - READY FOR DEPLOYMENT**
+## 🎉 **PRODUCTION v2.1.0 - READY FOR DEPLOYMENT**
 
-**Status**: ✅ **Production Ready with Timezone Fixes & Staff Expansion**  
-**Version**: v1.3.0 (Timezone Standardization & Phuong Bosque Addition)  
-**Last Updated**: August 21, 2025  
+**Status**: ✅ **Production Ready with Reschedule System & Enhanced Admin Features**  
+**Version**: v2.1.0 (Reschedule Feature & Any Available Staff)  
+**Last Updated**: January 21, 2025  
 **Deployment Status**: Ready for immediate live deployment  
-**New Features in v1.3.0**: 
+
+**New Features in v2.1.0**:
+- 📅 **Complete Reschedule System** - Change appointment dates/times with history tracking
+- 👥 **Any Available Staff Column** - Aggregate availability view in schedule
+- 🔄 **Reschedule Restrictions** - Max 3 reschedules, 2-hour notice required
+- 📊 **Visual Indicators** - Rescheduled appointments clearly marked
+- 🎯 **Quick Booking** - Book with any available staff in one click
+- 🛠️ **Build Fixes** - Resolved all UI component dependencies
+
+**Previous v1.3.0 Features**: 
 - ⏰ **Timezone Standardization** - All operations in Guam time (UTC+10/ChST)
 - ⏳ **2-Hour Advance Booking** - Enforced across all booking interfaces
 - 👩‍⚕️ **New Staff Member** - Phuong Bosque added (massage specialist, 7 days)
