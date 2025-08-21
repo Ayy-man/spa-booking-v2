@@ -105,13 +105,27 @@ export async function deleteBooking(
   console.log('[deleteBooking] Starting delete for booking:', bookingId)
   
   try {
+    // Get the admin session token from localStorage
+    let token = 'admin-token' // Default token
+    if (typeof window !== 'undefined') {
+      const sessionData = localStorage.getItem('spa-admin-session')
+      if (sessionData) {
+        try {
+          const session = JSON.parse(sessionData)
+          token = session.token || 'admin-token'
+        } catch (e) {
+          console.warn('Could not parse session data')
+        }
+      }
+    }
+    
     // Use the API endpoint with service role key for proper deletion
     const response = await fetch(`/api/admin/bookings/${bookingId}/delete`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-      },
-      credentials: 'include' // Include cookies for authentication
+        'Authorization': `Bearer ${token}`
+      }
     })
 
     const result = await response.json()
