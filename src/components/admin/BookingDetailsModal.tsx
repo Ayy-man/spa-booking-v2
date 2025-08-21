@@ -66,11 +66,14 @@ export function BookingDetailsModal({
   // Check if user is admin for delete functionality
   const isAdmin = simpleAuth.isAuthenticated()
   
-  // Debug logging
+  // Debug logging for reassignment button visibility
+  const canReassignStaff = booking?.status !== 'cancelled' && booking?.status !== 'completed' && booking?.status !== 'no_show'
+  
   console.log('[BookingDetailsModal] Debug:', {
     bookingId: booking?.id,
     bookingStatus: booking?.status,
     isAdmin,
+    canReassignStaff,
     shouldShowButtons: booking?.status !== 'cancelled' && booking?.status !== 'completed',
     booking
   })
@@ -235,15 +238,16 @@ export function BookingDetailsModal({
                 <div>
                   <div className="flex items-center justify-between">
                     <Label className="text-muted-foreground">Staff Member</Label>
-                    {booking.status !== 'cancelled' && booking.status !== 'completed' && (
+                    {canReassignStaff && (
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => setShowStaffReassignment(true)}
-                        className="h-auto p-1"
+                        className="h-7 px-2 text-xs"
                         title="Reassign staff"
                       >
-                        <Edit2 className="w-4 h-4 text-primary" />
+                        <Edit2 className="w-3 h-3 mr-1" />
+                        Reassign
                       </Button>
                     )}
                   </div>
@@ -360,6 +364,15 @@ export function BookingDetailsModal({
             
             {booking.status !== 'cancelled' && booking.status !== 'completed' && (
               <>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowStaffReassignment(true)}
+                  className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+                >
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  Reassign Staff
+                </Button>
+
                 <Button
                   variant="outline"
                   onClick={() => setShowRescheduleModal(true)}
