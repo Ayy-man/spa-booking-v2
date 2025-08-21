@@ -105,55 +105,33 @@ export async function deleteBooking(
   console.log('[deleteBooking] Starting delete for booking:', bookingId)
   
   try {
-    // First delete any related payments
-    console.log('[deleteBooking] Deleting related payments...')
-    const { error: paymentError } = await supabase
-      .from('payments')
-      .delete()
-      .eq('booking_id', bookingId)
-    
-    if (paymentError) {
-      console.error('[deleteBooking] Payment delete error:', paymentError)
+    // Use the API endpoint with service role key for proper deletion
+    const response = await fetch(`/api/admin/bookings/${bookingId}/delete`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include' // Include cookies for authentication
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      console.error('[deleteBooking] API error:', result)
+      return { 
+        success: false, 
+        error: result.error || `Failed to delete booking: ${response.statusText}` 
+      }
     }
 
-    // Delete any related walk-ins
-    console.log('[deleteBooking] Deleting related walk-ins...')
-    const { error: walkInError } = await supabase
-      .from('walk_ins')
-      .delete()
-      .eq('booking_id', bookingId)
-    
-    if (walkInError) {
-      console.error('[deleteBooking] Walk-in delete error:', walkInError)
-    }
-
-    // Delete any related waivers
-    console.log('[deleteBooking] Deleting related waivers...')
-    const { error: waiverError } = await supabase
-      .from('waivers')
-      .delete()
-      .eq('booking_id', bookingId)
-    
-    if (waiverError) {
-      console.error('[deleteBooking] Waiver delete error:', waiverError)
-    }
-
-    // Finally delete the booking itself
-    console.log('[deleteBooking] Deleting booking record...')
-    const { error } = await supabase
-      .from('bookings')
-      .delete()
-      .eq('id', bookingId)
-
-    if (error) {
-      console.error('[deleteBooking] Booking delete error:', error)
-      throw error
-    }
-
-    console.log('[deleteBooking] Delete successful!')
+    console.log('[deleteBooking] Delete successful!', result)
     return { success: true }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error('[deleteBooking] Unexpected error:', error)
+    return { 
+      success: false, 
+      error: error.message || 'Failed to delete booking' 
+    }
   }
 }
 
