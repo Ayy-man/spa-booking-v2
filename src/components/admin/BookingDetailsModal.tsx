@@ -34,10 +34,12 @@ import {
   AlertCircle,
   Trash2,
   XCircle,
-  CalendarClock
+  CalendarClock,
+  Edit2
 } from "lucide-react"
 import { simpleAuth } from "@/lib/simple-auth"
 import { RescheduleModal } from "./RescheduleModal"
+import { StaffReassignmentDropdown } from "./StaffReassignmentDropdown"
 import { Badge } from "@/components/ui/badge"
 
 interface BookingDetailsModalProps {
@@ -57,6 +59,7 @@ export function BookingDetailsModal({
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showRescheduleModal, setShowRescheduleModal] = useState(false)
+  const [showStaffReassignment, setShowStaffReassignment] = useState(false)
   const [cancellationReason, setCancellationReason] = useState("")
   const [error, setError] = useState<string | null>(null)
 
@@ -230,8 +233,28 @@ export function BookingDetailsModal({
               <h3 className="font-semibold text-lg">Staff & Room Assignment</h3>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <Label className="text-muted-foreground">Staff Member</Label>
-                  <p className="font-medium">{booking.staff?.name || 'Not Assigned'}</p>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-muted-foreground">Staff Member</Label>
+                    {booking.status !== 'cancelled' && booking.status !== 'completed' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowStaffReassignment(true)}
+                        className="h-auto p-1"
+                        title="Reassign staff"
+                      >
+                        <Edit2 className="w-4 h-4 text-primary" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="font-medium flex items-center">
+                    {booking.staff?.name || 'Not Assigned'}
+                    {(booking as any).staff_change_count > 0 && (
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        Reassigned {(booking as any).staff_change_count}x
+                      </Badge>
+                    )}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Room</Label>
@@ -468,6 +491,28 @@ export function BookingDetailsModal({
           onActionComplete?.()
         }}
       />
+
+      {/* Staff Reassignment Dialog */}
+      <Dialog open={showStaffReassignment} onOpenChange={setShowStaffReassignment}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reassign Staff Member</DialogTitle>
+            <DialogDescription>
+              Select a new staff member for this booking. Only available staff who can perform this service will be shown.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <StaffReassignmentDropdown
+            booking={booking}
+            isOpen={showStaffReassignment}
+            onReassign={async (newStaffId) => {
+              setShowStaffReassignment(false)
+              onActionComplete?.()
+            }}
+            onCancel={() => setShowStaffReassignment(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

@@ -98,6 +98,114 @@ export async function cancelBooking(
   }
 }
 
+// Staff reassignment function
+export async function reassignStaff(
+  bookingId: string, 
+  newStaffId: string,
+  reason?: string
+): Promise<{ success: boolean; error?: string; data?: any }> {
+  console.log('[reassignStaff] Starting reassignment for booking:', bookingId)
+  console.log('[reassignStaff] New staff ID:', newStaffId)
+  
+  try {
+    // Get the admin session token from localStorage
+    let token = 'admin-token' // Default token
+    if (typeof window !== 'undefined') {
+      const sessionData = localStorage.getItem('spa-admin-session')
+      if (sessionData) {
+        try {
+          const session = JSON.parse(sessionData)
+          token = session.token || 'admin-token'
+        } catch (e) {
+          console.warn('Could not parse session data')
+        }
+      }
+    }
+    
+    // Use the API endpoint for staff reassignment
+    const response = await fetch(`/api/admin/bookings/${bookingId}/reassign-staff`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        new_staff_id: newStaffId,
+        reason: reason || 'Staff reassigned by admin'
+      })
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      console.error('[reassignStaff] API error:', result)
+      return { 
+        success: false, 
+        error: result.error || `Failed to reassign staff: ${response.statusText}` 
+      }
+    }
+
+    console.log('[reassignStaff] Reassignment successful!', result)
+    return { success: true, data: result }
+  } catch (error: any) {
+    console.error('[reassignStaff] Unexpected error:', error)
+    return { 
+      success: false, 
+      error: error.message || 'Failed to reassign staff' 
+    }
+  }
+}
+
+// Get available staff for a specific time slot
+export async function getAvailableStaffForSlot(
+  bookingId: string
+): Promise<{ success: boolean; error?: string; data?: any }> {
+  console.log('[getAvailableStaffForSlot] Getting available staff for booking:', bookingId)
+  
+  try {
+    // Get the admin session token from localStorage
+    let token = 'admin-token' // Default token
+    if (typeof window !== 'undefined') {
+      const sessionData = localStorage.getItem('spa-admin-session')
+      if (sessionData) {
+        try {
+          const session = JSON.parse(sessionData)
+          token = session.token || 'admin-token'
+        } catch (e) {
+          console.warn('Could not parse session data')
+        }
+      }
+    }
+    
+    // Use the API endpoint to get available staff
+    const response = await fetch(`/api/admin/bookings/${bookingId}/reassign-staff`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    const result = await response.json()
+
+    if (!response.ok) {
+      console.error('[getAvailableStaffForSlot] API error:', result)
+      return { 
+        success: false, 
+        error: result.error || `Failed to get available staff: ${response.statusText}` 
+      }
+    }
+
+    console.log('[getAvailableStaffForSlot] Successfully retrieved available staff', result)
+    return { success: true, data: result }
+  } catch (error: any) {
+    console.error('[getAvailableStaffForSlot] Unexpected error:', error)
+    return { 
+      success: false, 
+      error: error.message || 'Failed to get available staff' 
+    }
+  }
+}
+
 // Delete booking function (permanent removal)
 export async function deleteBooking(
   bookingId: string

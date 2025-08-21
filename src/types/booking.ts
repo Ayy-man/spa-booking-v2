@@ -38,6 +38,51 @@ export interface StaffWithRoom extends Staff {
   default_room: Room | null
 }
 
+// Staff reassignment types
+export interface StaffAssignmentHistory {
+  id: string
+  booking_id: string
+  old_staff_id: string | null
+  new_staff_id: string
+  changed_by: string
+  changed_at: string
+  reason?: string
+  service_id?: string
+  appointment_date?: string
+  appointment_time?: string
+}
+
+export interface AvailableStaffForReassignment {
+  staff_id: string
+  staff_name: string
+  can_perform: boolean
+  is_available: boolean
+  conflict_reason: string | null
+}
+
+export interface StaffReassignmentRequest {
+  new_staff_id: string
+  reason?: string
+}
+
+export interface StaffReassignmentResponse {
+  success: boolean
+  message: string
+  booking?: BookingWithRelations
+  history?: StaffAssignmentHistory
+  staff_change_count?: number
+}
+
+export interface AvailableStaffResponse {
+  available_staff: AvailableStaffForReassignment[]
+  current_staff_id: string
+  service_name: string
+  appointment_date: string
+  appointment_time: string
+  total_staff: number
+  available_count: number
+}
+
 // Business logic types
 export interface StaffScheduleData {
   [day: string]: {
