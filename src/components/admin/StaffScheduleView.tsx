@@ -16,10 +16,12 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { normalizePhoneForDB, formatPhoneNumber } from "@/lib/phone-utils"
 import { BookingWithRelations, ServiceCategory } from "@/types/booking"
-import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2, Users, UserCheck } from "lucide-react"
-import { format } from "date-fns"
+import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2, Users, UserCheck, AlertCircle } from "lucide-react"
+import { format, addMinutes } from "date-fns"
 import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicator"
 import { BookingDetailsModal } from "@/components/admin/BookingDetailsModal"
+import { rescheduleBooking, checkRescheduleEligibility } from "@/lib/reschedule-logic"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 // Service category colors (matching existing color scheme)
 const SERVICE_COLORS: Record<ServiceCategory, { bg: string; border: string; text: string }> = {
@@ -96,6 +98,10 @@ export function StaffScheduleView({
   const [quickAddLoading, setQuickAddLoading] = useState(false)
   const [draggedBooking, setDraggedBooking] = useState<BookingWithRelations | null>(null)
   const [dropTarget, setDropTarget] = useState<{ staffId: string; time: string } | null>(null)
+  const [showRescheduleConfirm, setShowRescheduleConfirm] = useState(false)
+  const [rescheduleData, setRescheduleData] = useState<{ booking: BookingWithRelations; staffId: string; time: string } | null>(null)
+  const [rescheduleLoading, setRescheduleLoading] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string>('')
   const printRef = useRef<HTMLDivElement>(null)
 
   // Generate time slots
@@ -482,8 +488,34 @@ export function StaffScheduleView({
 
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, booking: BookingWithRelations) => {
+    // Check if this is a couples booking
+    if (booking.booking_type === 'couple') {
+      setError('Couples bookings must be rescheduled using the Reschedule button')
+      e.preventDefault()
+      return
+    }
+    
+    // Check if booking is in a state that can be rescheduled
+    if (booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'no_show') {
+      setError(`Cannot reschedule ${booking.status} bookings`)
+      e.preventDefault()
+      return
+    }
+    
     setDraggedBooking(booking)
     e.dataTransfer.effectAllowed = 'move'
+    
+    // Add visual feedback
+    const dragImage = e.currentTarget as HTMLElement
+    dragImage.style.opacity = '0.5'
+  }
+  
+  const handleDragEnd = (e: React.DragEvent) => {
+    // Reset visual feedback
+    const dragImage = e.currentTarget as HTMLElement
+    dragImage.style.opacity = '1'
+    setDraggedBooking(null)
+    setDropTarget(null)
   }
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -493,7 +525,9 @@ export function StaffScheduleView({
 
   const handleDragEnter = (e: React.DragEvent, staffId: string, time: string) => {
     e.preventDefault()
-    setDropTarget({ staffId, time })
+    if (draggedBooking) {
+      setDropTarget({ staffId, time })
+    }
   }
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -517,13 +551,116 @@ export function StaffScheduleView({
       return
     }
     
-    // Here you would update the booking in the database
-    // For now, just show a message
-    console.log(`Would move booking ${draggedBooking.id} to staff ${staffId} at ${timeSlot.timeString}`)
+    // Check if it's the same slot (no change needed)
+    if (draggedBooking.staff_id === staffId && draggedBooking.start_time === timeSlot.timeString) {
+      setDraggedBooking(null)
+      return
+    }
     
-    // Refresh data to show the update
-    await fetchData()
+    // Store reschedule data and show confirmation
+    setRescheduleData({
+      booking: draggedBooking,
+      staffId,
+      time: timeSlot.timeString
+    })
+    setShowRescheduleConfirm(true)
     setDraggedBooking(null)
+  }
+  
+  // Handle confirmed reschedule
+  const handleConfirmReschedule = async () => {
+    if (!rescheduleData) return
+    
+    setRescheduleLoading(true)
+    setError('')
+    
+    try {
+      const { booking, staffId, time } = rescheduleData
+      const dateStr = currentDate.toISOString().split('T')[0]
+      
+      // Check if we need to reassign staff
+      const isStaffChange = booking.staff_id !== staffId
+      
+      // First check if booking can be rescheduled
+      const eligibility = await checkRescheduleEligibility(booking.id)
+      if (!eligibility.can_reschedule) {
+        setError(eligibility.reason)
+        setShowRescheduleConfirm(false)
+        setRescheduleData(null)
+        setRescheduleLoading(false)
+        return
+      }
+      
+      // Calculate new end time
+      const [startHour, startMinute] = time.split(':').map(Number)
+      const startDateTime = new Date(currentDate)
+      startDateTime.setHours(startHour, startMinute, 0, 0)
+      const endDateTime = addMinutes(startDateTime, booking.service.duration)
+      const endTime = format(endDateTime, 'HH:mm')
+      
+      // Check for conflicts at the new time/staff
+      const { data: conflicts, error: conflictError } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('appointment_date', dateStr)
+        .eq('staff_id', staffId)
+        .neq('status', 'cancelled')
+        .neq('id', booking.id)
+        .or(`and(start_time.lte.${time},end_time.gt.${time}),and(start_time.lt.${endTime},end_time.gte.${endTime})`)
+      
+      if (conflictError || (conflicts && conflicts.length > 0)) {
+        setError('The selected time slot is not available for this staff member')
+        setShowRescheduleConfirm(false)
+        setRescheduleData(null)
+        setRescheduleLoading(false)
+        return
+      }
+      
+      // If this is a staff change, we need to update the staff assignment
+      if (isStaffChange) {
+        // First reassign the staff
+        const reassignResponse = await fetch(`/api/admin/bookings/${booking.id}/reassign-staff`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('spa-admin-session') ? JSON.parse(localStorage.getItem('spa-admin-session')!).token : 'admin-token'}`
+          },
+          body: JSON.stringify({
+            new_staff_id: staffId,
+            reason: 'Drag and drop reassignment'
+          })
+        })
+        
+        if (!reassignResponse.ok) {
+          const errorData = await reassignResponse.json()
+          throw new Error(errorData.error || 'Failed to reassign staff')
+        }
+      }
+      
+      // Now reschedule the booking
+      const result = await rescheduleBooking(
+        booking.id,
+        dateStr,
+        time,
+        `Drag and drop reschedule${isStaffChange ? ' with staff change' : ''}`,
+        false // Don't notify customer for drag-drop changes
+      )
+      
+      if (result.success) {
+        setSuccessMessage(result.message || 'Booking rescheduled successfully')
+        setTimeout(() => setSuccessMessage(''), 5000)
+        await fetchData() // Refresh the schedule
+      } else {
+        setError(result.error || 'Failed to reschedule booking')
+      }
+    } catch (error: any) {
+      console.error('Error rescheduling booking:', error)
+      setError(error.message || 'Failed to reschedule booking')
+    } finally {
+      setRescheduleLoading(false)
+      setShowRescheduleConfirm(false)
+      setRescheduleData(null)
+    }
   }
 
   // Format customer name
@@ -840,8 +977,9 @@ export function StaffScheduleView({
                                       `print-${booking.service.category}`
                                     )}
                                     onClick={() => setSelectedBooking(booking)}
-                                    draggable
+                                    draggable={booking.booking_type !== 'couple' && booking.status !== 'completed' && booking.status !== 'cancelled'}
                                     onDragStart={(e) => handleDragStart(e, booking)}
+                                    onDragEnd={handleDragEnd}
                                   >
                                     {/* Couples Booking Indicator */}
                                     {booking.booking_type === 'couple' && (
@@ -895,16 +1033,22 @@ export function StaffScheduleView({
                         <div 
                           key={member.id}
                           className={cn(
-                            "border-r h-8 hover:bg-gray-50 cursor-pointer transition-colors",
+                            "border-r h-8 hover:bg-gray-50 cursor-pointer transition-colors relative",
                             !isWorking && "bg-gray-100 cursor-not-allowed hover:bg-gray-100",
-                            dropTarget?.staffId === member.id && dropTarget?.time === slot.timeString && "bg-blue-100"
+                            dropTarget?.staffId === member.id && dropTarget?.time === slot.timeString && draggedBooking && "bg-blue-100 border-2 border-blue-400"
                           )}
-                          onClick={() => isWorking && handleQuickAdd(member.id, slot, false)}
+                          onClick={() => isWorking && !draggedBooking && handleQuickAdd(member.id, slot, false)}
                           onDragOver={handleDragOver}
                           onDragEnter={(e) => isWorking && handleDragEnter(e, member.id, slot.timeString)}
                           onDragLeave={handleDragLeave}
                           onDrop={(e) => isWorking && handleDrop(e, member.id, slot)}
-                        />
+                        >
+                          {dropTarget?.staffId === member.id && dropTarget?.time === slot.timeString && draggedBooking && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="text-xs text-blue-600 font-medium">Drop here</div>
+                            </div>
+                          )}
+                        </div>
                       )
                     })}
                   </div>
@@ -1116,6 +1260,18 @@ export function StaffScheduleView({
         </DialogContent>
       </Dialog>
 
+      {/* Success Message */}
+      {successMessage && (
+        <div className="fixed top-4 right-4 z-50">
+          <Alert className="bg-green-50 border-green-200">
+            <AlertCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              {successMessage}
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       {/* Booking Details Modal */}
       {selectedBooking && (
         <BookingDetailsModal
@@ -1130,6 +1286,100 @@ export function StaffScheduleView({
           }}
         />
       )}
+      
+      {/* Reschedule Confirmation Dialog */}
+      <Dialog open={showRescheduleConfirm} onOpenChange={setShowRescheduleConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Reschedule</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reschedule this appointment?
+            </DialogDescription>
+          </DialogHeader>
+          
+          {rescheduleData && (
+            <div className="space-y-3 py-4">
+              <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                <div className="text-sm">
+                  <span className="font-medium">Customer:</span>{' '}
+                  {formatCustomerName(rescheduleData.booking, true)}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">Service:</span>{' '}
+                  {rescheduleData.booking.service.name}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">Current Time:</span>{' '}
+                  {rescheduleData.booking.start_time} - {rescheduleData.booking.end_time}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">Current Staff:</span>{' '}
+                  {rescheduleData.booking.staff?.name}
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-center">
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              </div>
+              
+              <div className="bg-blue-50 p-3 rounded-lg space-y-2">
+                <div className="text-sm">
+                  <span className="font-medium">New Date:</span>{' '}
+                  {format(currentDate, 'MMMM d, yyyy')}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">New Time:</span>{' '}
+                  {rescheduleData.time}
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">New Staff:</span>{' '}
+                  {staff.find(s => s.id === rescheduleData.staffId)?.name}
+                  {rescheduleData.staffId !== rescheduleData.booking.staff_id && (
+                    <span className="text-orange-600 ml-1">(Staff Change)</span>
+                  )}
+                </div>
+              </div>
+              
+              {rescheduleData.booking.rescheduled_count && rescheduleData.booking.rescheduled_count >= 2 && (
+                <Alert className="bg-yellow-50 border-yellow-200">
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                  <AlertDescription className="text-yellow-800 text-sm">
+                    This booking has already been rescheduled {rescheduleData.booking.rescheduled_count} time(s).
+                    Maximum allowed reschedules is 3.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowRescheduleConfirm(false)
+                setRescheduleData(null)
+              }}
+              disabled={rescheduleLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmReschedule}
+              disabled={rescheduleLoading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {rescheduleLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Rescheduling...
+                </>
+              ) : (
+                'Confirm Reschedule'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Print Styles */}
       <style jsx global>{`

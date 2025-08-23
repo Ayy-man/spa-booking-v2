@@ -154,7 +154,7 @@ export function BookingDetailsModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold flex items-center justify-between">
               Booking Details
@@ -166,147 +166,160 @@ export function BookingDetailsModal({
           </DialogHeader>
 
           <div className="space-y-6 py-4">
-            {/* Service Information */}
-            <div className="space-y-3">
-              <h3 className="font-semibold text-lg flex items-center gap-2">
-                Service Information
-                <CouplesBookingIndicator bookingType={booking.booking_type} />
-              </h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <Label className="text-muted-foreground">Service</Label>
-                  <p className="font-medium">{booking.service?.name || 'Unknown Service'}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Duration</Label>
-                  <p className="font-medium">{booking.service?.duration || 0} minutes</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Category</Label>
-                  <p className="font-medium capitalize">
-                    {booking.service?.category?.replace('_', ' ') || 'Unknown'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Price</Label>
-                  <p className="font-medium">${booking.final_price || 0}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Date & Time */}
-            <div className="space-y-3">
-              <h3 className="font-semibold text-lg flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Date & Time
-                {(booking as any).rescheduled_count > 0 && (
-                  <Badge variant="outline" className="ml-2">
-                    Rescheduled {(booking as any).rescheduled_count}x
-                  </Badge>
-                )}
-              </h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <Label className="text-muted-foreground">Date</Label>
-                  <p className="font-medium">{formatDate(booking.appointment_date)}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Time</Label>
-                  <p className="font-medium">
-                    {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-                  </p>
-                </div>
-              </div>
-              {(booking as any).original_appointment_date && (booking as any).original_start_time && (
-                <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
-                  <p className="text-sm text-orange-800">
-                    <span className="font-medium">Originally scheduled:</span> {formatDate((booking as any).original_appointment_date)} at {formatTime((booking as any).original_start_time)}
-                  </p>
-                  {(booking as any).reschedule_reason && (
-                    <p className="text-sm text-orange-700 mt-1">
-                      <span className="font-medium">Reason:</span> {(booking as any).reschedule_reason}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Staff & Room */}
-            <div className="space-y-3">
-              <h3 className="font-semibold text-lg">Staff & Room Assignment</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-muted-foreground">Staff Member</Label>
-                    {canReassignStaff && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowStaffReassignment(true)}
-                        className="h-7 px-2 text-xs"
-                        title="Reassign staff"
-                      >
-                        <Edit2 className="w-3 h-3 mr-1" />
-                        Reassign
-                      </Button>
-                    )}
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-6">
+                {/* Service Information */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    Service Information
+                    <CouplesBookingIndicator bookingType={booking.booking_type} />
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <Label className="text-muted-foreground">Service</Label>
+                      <p className="font-medium">{booking.service?.name || 'Unknown Service'}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Duration</Label>
+                      <p className="font-medium">{booking.service?.duration || 0} minutes</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Category</Label>
+                      <p className="font-medium capitalize">
+                        {booking.service?.category?.replace('_', ' ') || 'Unknown'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Price</Label>
+                      <p className="font-medium">${booking.final_price || 0}</p>
+                    </div>
                   </div>
-                  <p className="font-medium flex items-center">
-                    {booking.staff?.name || 'Not Assigned'}
-                    {(booking as any).staff_change_count > 0 && (
-                      <Badge variant="outline" className="ml-2 text-xs">
-                        Reassigned {(booking as any).staff_change_count}x
+                </div>
+
+                {/* Date & Time */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Date & Time
+                    {(booking as any).rescheduled_count > 0 && (
+                      <Badge variant="outline" className="ml-2">
+                        Rescheduled {(booking as any).rescheduled_count}x
                       </Badge>
                     )}
-                  </p>
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <Label className="text-muted-foreground">Date</Label>
+                      <p className="font-medium">{formatDate(booking.appointment_date)}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Time</Label>
+                      <p className="font-medium">
+                        {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                      </p>
+                    </div>
+                  </div>
+                  {(booking as any).original_appointment_date && (booking as any).original_start_time && (
+                    <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
+                      <p className="text-sm text-orange-800">
+                        <span className="font-medium">Originally scheduled:</span> {formatDate((booking as any).original_appointment_date)} at {formatTime((booking as any).original_start_time)}
+                      </p>
+                      {(booking as any).reschedule_reason && (
+                        <p className="text-sm text-orange-700 mt-1">
+                          <span className="font-medium">Reason:</span> {(booking as any).reschedule_reason}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <Label className="text-muted-foreground">Room</Label>
-                  <p className="font-medium">Room {booking.room?.name || 'Not Assigned'}</p>
+
+                {/* Staff & Room */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg">Staff & Room Assignment</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-muted-foreground">Staff Member</Label>
+                        {canReassignStaff && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowStaffReassignment(true)}
+                            className="h-7 px-2 text-xs"
+                            title="Reassign staff"
+                          >
+                            <Edit2 className="w-3 h-3 mr-1" />
+                            Reassign
+                          </Button>
+                        )}
+                      </div>
+                      <p className="font-medium flex items-center">
+                        {booking.staff?.name || 'Not Assigned'}
+                        {(booking as any).staff_change_count > 0 && (
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            Reassigned {(booking as any).staff_change_count}x
+                          </Badge>
+                        )}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Room</Label>
+                      <p className="font-medium">Room {booking.room?.name || 'Not Assigned'}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Customer Information */}
-            <div className="space-y-3">
-              <h3 className="font-semibold text-lg flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Customer Information
-              </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-medium">{customerName}</span>
+              {/* Right Column */}
+              <div className="space-y-6">
+                {/* Customer Information */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Customer Information
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">{customerName}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
+                      <span>{customerEmail}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span>{formatPhoneNumber(customerPhone)}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-muted-foreground" />
-                  <span>{customerEmail}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span>{formatPhoneNumber(customerPhone)}</span>
-                </div>
-              </div>
-            </div>
 
-            {/* Payment Information */}
-            <div className="space-y-3">
-              <h3 className="font-semibold text-lg flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
-                Payment Information
-              </h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <Label className="text-muted-foreground">Payment Option</Label>
-                  <p className="font-medium capitalize">
-                    {booking.payment_option?.replace('_', ' ') || 'Not specified'}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Payment Status</Label>
-                  <p className="font-medium capitalize">
-                    {booking.payment_status || 'Pending'}
-                  </p>
+                {/* Payment Information */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                    <DollarSign className="w-4 h-4" />
+                    Payment Information
+                  </h3>
+                  <div className="grid grid-cols-1 gap-4 text-sm">
+                    <div>
+                      <Label className="text-muted-foreground">Payment Option</Label>
+                      <p className="font-medium capitalize">
+                        {booking.payment_option?.replace('_', ' ') || 'Not specified'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Payment Status</Label>
+                      <p className="font-medium capitalize">
+                        {booking.payment_status || 'Pending'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Final Price</Label>
+                      <p className="font-medium">${booking.final_price || 0}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -354,54 +367,59 @@ export function BookingDetailsModal({
             )}
           </div>
 
-          <DialogFooter className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Close
-            </Button>
-            
-            {booking.status !== 'cancelled' && booking.status !== 'completed' && (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowStaffReassignment(true)}
-                  className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
-                >
-                  <Edit2 className="w-4 h-4 mr-2" />
-                  Reassign Staff
-                </Button>
+          <DialogFooter className="flex flex-col gap-4 border-t pt-6 mt-6">
+            {/* Action buttons organized for better visibility */}
+            <div className="flex flex-wrap gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="order-last sm:order-first"
+              >
+                Close
+              </Button>
+              
+              {booking.status !== 'cancelled' && booking.status !== 'completed' && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowStaffReassignment(true)}
+                    className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white min-w-[130px]"
+                  >
+                    <Edit2 className="w-4 h-4 mr-2" />
+                    Reassign Staff
+                  </Button>
 
-                <Button
-                  variant="outline"
-                  onClick={() => setShowRescheduleModal(true)}
-                  className="border-primary text-primary hover:bg-primary hover:text-white"
-                >
-                  <CalendarClock className="w-4 h-4 mr-2" />
-                  Reschedule
-                </Button>
-                
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowCancelDialog(true)}
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Cancel Booking
-                </Button>
-                
-                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRescheduleModal(true)}
+                    className="border-primary text-primary hover:bg-primary hover:text-white min-w-[110px]"
+                  >
+                    <CalendarClock className="w-4 h-4 mr-2" />
+                    Reschedule
+                  </Button>
+                  
                   <Button
                     variant="destructive"
-                    onClick={() => setShowDeleteDialog(true)}
+                    onClick={() => setShowCancelDialog(true)}
+                    className="bg-orange-600 hover:bg-orange-700 min-w-[130px]"
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Booking
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Cancel Booking
                   </Button>
-                )}
-              </>
-            )}
+                  
+                  {isAdmin && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="min-w-[130px]"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Booking
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

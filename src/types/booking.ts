@@ -32,6 +32,13 @@ export interface BookingWithRelations extends Booking {
   room: Room
   customer: Customer
   walk_in_origin?: Pick<WalkIn, 'id' | 'customer_name' | 'checked_in_at'> | null
+  // Reschedule tracking fields (optional as they may not be in the base Booking type)
+  rescheduled_count?: number
+  rescheduled_from?: string | null
+  original_appointment_date?: string | null
+  original_start_time?: string | null
+  last_rescheduled_at?: string | null
+  reschedule_reason?: string | null
 }
 
 export interface StaffWithRoom extends Staff {
