@@ -136,10 +136,49 @@ export async function POST(
       }
 
       // Check if staff can perform the service
+      // Map service categories to staff capabilities (handle singular vs plural)
+      const categoryToCapabilityMap: Record<string, string> = {
+        'facial': 'facials',
+        'massage': 'massages',
+        'body_treatment': 'treatments',
+        'body_scrub': 'treatments',
+        'waxing': 'waxing',
+        'package': 'package',
+        'membership': 'membership'
+      }
+      
       const serviceCategory = booking.service?.category
-      if (serviceCategory && !newStaff.capabilities?.includes(serviceCategory)) {
-        // Special check for packages
-        if (serviceCategory !== 'package') {
+      if (serviceCategory) {
+        const requiredCapability = categoryToCapabilityMap[serviceCategory] || serviceCategory
+        
+        // Check if staff has the capability
+        let canPerform = false
+        
+        // Check direct match
+        if (newStaff.capabilities?.includes(requiredCapability)) {
+          canPerform = true
+        }
+        // Also check singular form (backward compatibility)
+        else if (newStaff.capabilities?.includes(serviceCategory)) {
+          canPerform = true
+        }
+        // For packages, check if staff can do facials and/or massages
+        else if (serviceCategory === 'package') {
+          const serviceName = booking.service?.name?.toLowerCase() || ''
+          if (serviceName.includes('facial') && newStaff.capabilities?.includes('facials')) {
+            canPerform = true
+          } else if (serviceName.includes('massage') && newStaff.capabilities?.includes('massages')) {
+            canPerform = true
+          }
+        }
+        
+        if (!canPerform) {
+          console.log('[REASSIGN-STAFF] Staff capability check failed:', {
+            serviceCategory,
+            requiredCapability,
+            staffCapabilities: newStaff.capabilities,
+            serviceName: booking.service?.name
+          })
           return NextResponse.json(
             { error: 'Staff cannot perform this service' },
             { status: 400 }
@@ -385,16 +424,47 @@ export async function GET(
 
     const busyStaffIds = conflicts?.map(c => c.staff_id) || []
 
+    // Map service categories to staff capabilities (handle singular vs plural)
+    const categoryToCapabilityMap: Record<string, string> = {
+      'facial': 'facials',
+      'massage': 'massages',
+      'body_treatment': 'treatments',
+      'body_scrub': 'treatments',
+      'waxing': 'waxing',
+      'package': 'package',
+      'membership': 'membership'
+    }
+
     // Build available staff list with availability status
     const staffList: AvailableStaffResponse[] = allStaff?.map(staff => {
       // Check if staff can perform the service
       let canPerform = false
       if (staff.id === 'any') {
         canPerform = true
-      } else if (booking.service?.category && staff.capabilities?.includes(booking.service.category)) {
-        canPerform = true
+      } else if (booking.service?.category) {
+        const serviceCategory = booking.service.category
+        const requiredCapability = categoryToCapabilityMap[serviceCategory] || serviceCategory
+        
+        // Check direct match
+        if (staff.capabilities?.includes(requiredCapability)) {
+          canPerform = true
+        }
+        // Also check singular form (backward compatibility)
+        else if (staff.capabilities?.includes(serviceCategory)) {
+          canPerform = true
+        }
+        // For packages, check if staff can do facials and/or massages
+        else if (serviceCategory === 'package') {
+          const serviceName = booking.service?.name?.toLowerCase() || ''
+          if (serviceName.includes('facial') && staff.capabilities?.includes('facials')) {
+            canPerform = true
+          } else if (serviceName.includes('massage') && staff.capabilities?.includes('massages')) {
+            canPerform = true
+          }
+        }
+        
         // Check for service exclusions
-        if (staff.service_exclusions?.length > 0) {
+        if (canPerform && staff.service_exclusions?.length > 0) {
           const serviceName = booking.service?.name?.toLowerCase() || ''
           for (const exclusion of staff.service_exclusions) {
             if (serviceName.includes(exclusion.replace('_', ' ')) || 
