@@ -997,8 +997,8 @@ export function StaffScheduleView({
                     {/* Any Available Staff Column */}
                     {(() => {
                       const availability = getAvailableStaffForSlot(slot)
-                      const colorClass = getAvailabilityColor(availability.count, availability.totalWorking)
                       const canAddAppointment = availability.count > 0
+                      const isHourStart = slot.minute === 0
                       
                       return (
                         <div className="border-r">
@@ -1007,31 +1007,23 @@ export function StaffScheduleView({
                               <TooltipTrigger asChild>
                                 <div
                                   className={cn(
-                                    "h-8 px-2 flex items-center justify-between transition-all",
-                                    colorClass,
-                                    canAddAppointment && "cursor-pointer hover:opacity-80",
-                                    !canAddAppointment && "cursor-not-allowed opacity-60"
+                                    "h-8 px-2 flex items-center justify-center transition-all relative",
+                                    "bg-emerald-50/30",
+                                    canAddAppointment && "cursor-pointer hover:bg-emerald-50",
+                                    !canAddAppointment && "cursor-not-allowed opacity-50",
+                                    availability.totalWorking === 0 && "bg-gray-50"
                                   )}
                                   onClick={() => canAddAppointment && handleAnyStaffClick(slot)}
                                 >
-                                  <div className="flex items-center gap-1">
-                                    {availability.totalWorking === 0 ? (
-                                      <span className="text-xs">No Staff</span>
-                                    ) : availability.count === 0 ? (
-                                      <span className="text-xs font-medium">Fully Booked</span>
-                                    ) : (
-                                      <>
-                                        <span className="text-xs font-medium">
-                                          {availability.count} Available
-                                        </span>
-                                        <span className="text-xs opacity-75">
-                                          ({availability.count}/{availability.totalWorking})
-                                        </span>
-                                      </>
-                                    )}
-                                  </div>
+                                  {/* Add subtle timing indicator for 15-minute marks */}
+                                  {!isHourStart && (
+                                    <div className="absolute right-1 top-1 text-[10px] text-gray-400 opacity-60">
+                                      :{slot.minute.toString().padStart(2, '0')}
+                                    </div>
+                                  )}
+                                  {/* Only show a small dot indicator when staff is available */}
                                   {canAddAppointment && (
-                                    <div className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
+                                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
                                   )}
                                 </div>
                               </TooltipTrigger>
@@ -1042,7 +1034,7 @@ export function StaffScheduleView({
                                   <p className="text-xs">All staff are booked at this time</p>
                                 ) : (
                                   <div className="space-y-1">
-                                    <p className="text-xs font-medium">Available Staff:</p>
+                                    <p className="text-xs font-medium">Available Staff: {availability.count}</p>
                                     <p className="text-xs">
                                       {availability.availableStaff.map(s => s.name).join(', ')}
                                     </p>
