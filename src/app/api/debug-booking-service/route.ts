@@ -46,13 +46,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       bookingId: booking?.id,
       serviceId: booking?.service_id,
-      serviceName: booking?.service?.name,
-      serviceCategory: booking?.service?.category,
+      serviceName: (booking?.service as any)?.name,
+      serviceCategory: (booking?.service as any)?.category,
       currentStaffId: booking?.staff_id,
-      currentStaffName: booking?.staff?.name,
-      currentStaffCapabilities: booking?.staff?.capabilities,
-      serviceCategoryType: typeof booking?.service?.category,
-      rawServiceCategory: JSON.stringify(booking?.service?.category)
+      currentStaffName: (booking?.staff as any)?.name,
+      currentStaffCapabilities: (booking?.staff as any)?.capabilities,
+      serviceCategoryType: typeof (booking?.service as any)?.category,
+      rawServiceCategory: JSON.stringify((booking?.service as any)?.category)
     })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
