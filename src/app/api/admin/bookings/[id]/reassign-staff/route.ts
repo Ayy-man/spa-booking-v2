@@ -148,41 +148,79 @@ export async function POST(
       }
       
       const serviceCategory = booking.service?.category
+      console.log('[REASSIGN-STAFF] Service validation details:', {
+        bookingId: booking.id,
+        serviceName: booking.service?.name,
+        serviceCategory: serviceCategory,
+        newStaffName: newStaff.name,
+        newStaffCapabilities: newStaff.capabilities,
+        oldStaffId: booking.staff_id,
+        newStaffId: new_staff_id
+      })
+      
       if (serviceCategory) {
         const requiredCapability = categoryToCapabilityMap[serviceCategory] || serviceCategory
         
         // Check if staff has the capability
         let canPerform = false
         
-        // Check direct match
+        // Check direct match with mapped capability
         if (newStaff.capabilities?.includes(requiredCapability)) {
+          console.log('[REASSIGN-STAFF] Staff has mapped capability:', requiredCapability)
           canPerform = true
         }
         // Also check singular form (backward compatibility)
         else if (newStaff.capabilities?.includes(serviceCategory)) {
+          console.log('[REASSIGN-STAFF] Staff has singular capability:', serviceCategory)
+          canPerform = true
+        }
+        // Special case: if staff has 'massages', allow any massage-related services
+        else if (newStaff.capabilities?.includes('massages') && 
+                (serviceCategory === 'massage' || booking.service?.name?.toLowerCase().includes('massage'))) {
+          console.log('[REASSIGN-STAFF] Staff can do massages, allowing massage service')
+          canPerform = true
+        }
+        // Special case: if staff has 'facials', allow any facial-related services
+        else if (newStaff.capabilities?.includes('facials') && 
+                (serviceCategory === 'facial' || booking.service?.name?.toLowerCase().includes('facial'))) {
+          console.log('[REASSIGN-STAFF] Staff can do facials, allowing facial service')
           canPerform = true
         }
         // For packages, check if staff can do facials and/or massages
         else if (serviceCategory === 'package') {
           const serviceName = booking.service?.name?.toLowerCase() || ''
           if (serviceName.includes('facial') && newStaff.capabilities?.includes('facials')) {
+            console.log('[REASSIGN-STAFF] Package includes facial, staff can do facials')
             canPerform = true
           } else if (serviceName.includes('massage') && newStaff.capabilities?.includes('massages')) {
+            console.log('[REASSIGN-STAFF] Package includes massage, staff can do massages')
             canPerform = true
           }
         }
         
         if (!canPerform) {
-          console.log('[REASSIGN-STAFF] Staff capability check failed:', {
+          console.log('[REASSIGN-STAFF] Staff capability check FAILED - detailed info:', {
             serviceCategory,
-            requiredCapability,
+            requiredCapability: categoryToCapabilityMap[serviceCategory],
             staffCapabilities: newStaff.capabilities,
-            serviceName: booking.service?.name
+            serviceName: booking.service?.name,
+            staffName: newStaff.name,
+            mappingUsed: categoryToCapabilityMap
           })
           return NextResponse.json(
-            { error: 'Staff cannot perform this service' },
+            { 
+              error: 'Staff cannot perform this service',
+              details: {
+                service: booking.service?.name,
+                category: serviceCategory,
+                staffCapabilities: newStaff.capabilities,
+                requiredCapability: categoryToCapabilityMap[serviceCategory] || serviceCategory
+              }
+            },
             { status: 400 }
           )
+        } else {
+          console.log('[REASSIGN-STAFF] Staff capability check PASSED')
         }
       }
 
