@@ -22,6 +22,7 @@ import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicat
 import { BookingDetailsModal } from "@/components/admin/BookingDetailsModal"
 import { rescheduleBooking, checkRescheduleEligibility } from "@/lib/reschedule-logic"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ghlWebhookSender } from "@/lib/ghl-webhook-sender"
 
 // Service category colors (matching existing color scheme)
 const SERVICE_COLORS: Record<ServiceCategory, { bg: string; border: string; text: string }> = {
@@ -432,7 +433,7 @@ export function StaffScheduleView({
       }
 
       // Create the booking with all required fields
-      const { error: bookingError } = await supabase
+      const { data: newBooking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
           customer_id: customerId,
@@ -453,8 +454,76 @@ export function StaffScheduleView({
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
+        .select()
+        .single()
 
       if (bookingError) throw bookingError
+
+      // Send confirmation webhook for new booking created by admin
+      if (newBooking) {
+        try {
+          console.log('[ADMIN QUICK ADD] Sending confirmation webhook for booking:', newBooking.id)
+          
+          // Get customer details for webhook
+          const customerData = quickAddForm.isNewCustomer ? {
+            name: `${quickAddForm.customerFirstName} ${quickAddForm.customerLastName}`,
+            email: quickAddForm.customerEmail || '',
+            phone: quickAddForm.customerPhone || '',
+            isNewCustomer: true
+          } : {
+            name: customers.find(c => c.id === customerId)?.first_name + ' ' + customers.find(c => c.id === customerId)?.last_name || 'Customer',
+            email: customers.find(c => c.id === customerId)?.email || '',
+            phone: customers.find(c => c.id === customerId)?.phone || '',
+            isNewCustomer: false
+          }
+
+          // Get staff name
+          const staffName = quickAddSlot.isAnyStaff 
+            ? staff.find(s => s.id === quickAddSlot.staffId)?.name || 'Staff'
+            : quickAddSlot.staffName
+
+          // Map service category for webhook
+          const getCategoryForWebhook = (category: string) => {
+            const categoryMap: Record<string, string> = {
+              'facial': 'facial',
+              'massage': 'massage',
+              'body_treatment': 'body_treatment',
+              'body_scrub': 'body_treatment',
+              'waxing': 'waxing',
+              'package': 'package'
+            }
+            return categoryMap[category] || category
+          }
+
+          const result = await ghlWebhookSender.sendBookingConfirmationWebhook(
+            newBooking.id,
+            customerData,
+            {
+              service: selectedService.name,
+              serviceId: selectedService.id,
+              serviceCategory: getCategoryForWebhook(selectedService.category),
+              date: currentDate.toISOString().split('T')[0],
+              time: quickAddSlot.time,
+              duration: selectedService.duration,
+              price: selectedService.price,
+              staff: staffName,
+              staffId: quickAddSlot.staffId,
+              room: roomId.toString(),
+              roomId: roomId.toString()
+            }
+          )
+
+          if (result.success) {
+            console.log('[ADMIN QUICK ADD] Confirmation webhook sent successfully')
+          } else {
+            console.error('[ADMIN QUICK ADD] Failed to send webhook:', result.error)
+            // Don't throw error - webhook failure shouldn't stop the booking
+          }
+        } catch (webhookError) {
+          console.error('[ADMIN QUICK ADD] Error sending confirmation webhook:', webhookError)
+          // Don't throw - continue even if webhook fails
+        }
+      }
 
       // Refresh the schedule
       await fetchData()
@@ -466,7 +535,8 @@ export function StaffScheduleView({
       // Show success message
       setError('') // Clear any previous errors
       console.log('Appointment created successfully')
-      // TODO: Add toast notification for success
+      setSuccessMessage('Appointment created and confirmation sent to customer')
+      setTimeout(() => setSuccessMessage(''), 5000)
     } catch (error: any) {
       console.error('Error creating appointment:', error)
       // Provide more user-friendly error messages
@@ -569,7 +639,11 @@ export function StaffScheduleView({
   
   // Handle confirmed reschedule
   const handleConfirmReschedule = async () => {
-    if (!rescheduleData) return
+    console.log('[DRAG-DROP] handleConfirmReschedule called')
+    if (!rescheduleData) {
+      console.log('[DRAG-DROP] No reschedule data available')
+      return
+    }
     
     setRescheduleLoading(true)
     setError('')
@@ -578,12 +652,25 @@ export function StaffScheduleView({
       const { booking, staffId, time } = rescheduleData
       const dateStr = currentDate.toISOString().split('T')[0]
       
+      console.log('[DRAG-DROP] Reschedule details:', {
+        bookingId: booking.id,
+        currentStaff: booking.staff_id,
+        newStaff: staffId,
+        currentTime: booking.start_time,
+        newTime: time,
+        date: dateStr
+      })
+      
       // Check if we need to reassign staff
       const isStaffChange = booking.staff_id !== staffId
       
       // First check if booking can be rescheduled
+      console.log('[DRAG-DROP] Checking reschedule eligibility...')
       const eligibility = await checkRescheduleEligibility(booking.id)
+      console.log('[DRAG-DROP] Eligibility result:', eligibility)
+      
       if (!eligibility.can_reschedule) {
+        console.log('[DRAG-DROP] Cannot reschedule:', eligibility.reason)
         setError(eligibility.reason)
         setShowRescheduleConfirm(false)
         setRescheduleData(null)
@@ -599,6 +686,7 @@ export function StaffScheduleView({
       const endTime = format(endDateTime, 'HH:mm')
       
       // Check for conflicts at the new time/staff
+      console.log('[DRAG-DROP] Checking for conflicts...')
       const { data: conflicts, error: conflictError } = await supabase
         .from('bookings')
         .select('id')
@@ -608,7 +696,10 @@ export function StaffScheduleView({
         .neq('id', booking.id)
         .or(`and(start_time.lte.${time},end_time.gt.${time}),and(start_time.lt.${endTime},end_time.gte.${endTime})`)
       
+      console.log('[DRAG-DROP] Conflict check result:', { conflicts, conflictError })
+      
       if (conflictError || (conflicts && conflicts.length > 0)) {
+        console.log('[DRAG-DROP] Conflict found, aborting')
         setError('The selected time slot is not available for this staff member')
         setShowRescheduleConfirm(false)
         setRescheduleData(null)
@@ -618,12 +709,26 @@ export function StaffScheduleView({
       
       // If this is a staff change, we need to update the staff assignment
       if (isStaffChange) {
+        console.log('[DRAG-DROP] Staff change detected, reassigning staff first...')
+        
+        // Get auth token properly
+        let authToken = 'admin-token'
+        try {
+          const sessionData = localStorage.getItem('spa-admin-session')
+          if (sessionData) {
+            const session = JSON.parse(sessionData)
+            authToken = session.token || 'admin-token'
+          }
+        } catch (e) {
+          console.warn('[DRAG-DROP] Could not parse session data:', e)
+        }
+        
         // First reassign the staff
         const reassignResponse = await fetch(`/api/admin/bookings/${booking.id}/reassign-staff`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('spa-admin-session') ? JSON.parse(localStorage.getItem('spa-admin-session')!).token : 'admin-token'}`
+            'Authorization': `Bearer ${authToken}`
           },
           body: JSON.stringify({
             new_staff_id: staffId,
@@ -631,13 +736,17 @@ export function StaffScheduleView({
           })
         })
         
+        console.log('[DRAG-DROP] Staff reassignment response:', reassignResponse.status)
+        
         if (!reassignResponse.ok) {
           const errorData = await reassignResponse.json()
+          console.error('[DRAG-DROP] Staff reassignment failed:', errorData)
           throw new Error(errorData.error || 'Failed to reassign staff')
         }
       }
       
       // Now reschedule the booking
+      console.log('[DRAG-DROP] Calling rescheduleBooking...')
       const result = await rescheduleBooking(
         booking.id,
         dateStr,
@@ -646,17 +755,23 @@ export function StaffScheduleView({
         false // Don't notify customer for drag-drop changes
       )
       
+      console.log('[DRAG-DROP] Reschedule result:', result)
+      
       if (result.success) {
         setSuccessMessage(result.message || 'Booking rescheduled successfully')
         setTimeout(() => setSuccessMessage(''), 5000)
+        console.log('[DRAG-DROP] Refreshing schedule data...')
         await fetchData() // Refresh the schedule
+        console.log('[DRAG-DROP] Schedule refreshed successfully')
       } else {
+        console.error('[DRAG-DROP] Reschedule failed:', result.error)
         setError(result.error || 'Failed to reschedule booking')
       }
     } catch (error: any) {
-      console.error('Error rescheduling booking:', error)
+      console.error('[DRAG-DROP] Error in handleConfirmReschedule:', error)
       setError(error.message || 'Failed to reschedule booking')
     } finally {
+      console.log('[DRAG-DROP] Cleanup: closing dialog and resetting state')
       setRescheduleLoading(false)
       setShowRescheduleConfirm(false)
       setRescheduleData(null)
@@ -872,7 +987,11 @@ export function StaffScheduleView({
                       "p-2 text-sm border-r bg-gray-50",
                       isHourStart ? "font-medium" : "text-gray-500"
                     )}>
-                      {isHourStart ? slot.displayTime : ''}
+                      {isHourStart ? slot.displayTime : (
+                        <span className="text-xs text-gray-400">
+                          {slot.timeString}
+                        </span>
+                      )}
                     </div>
                     
                     {/* Any Available Staff Column */}
@@ -1046,6 +1165,12 @@ export function StaffScheduleView({
                           {dropTarget?.staffId === member.id && dropTarget?.time === slot.timeString && draggedBooking && (
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div className="text-xs text-blue-600 font-medium">Drop here</div>
+                            </div>
+                          )}
+                          {/* Add subtle timing indicator for 15-minute marks */}
+                          {!isHourStart && isWorking && (
+                            <div className="absolute right-1 top-1 text-[10px] text-gray-400 opacity-60">
+                              :{slot.minute.toString().padStart(2, '0')}
                             </div>
                           )}
                         </div>
