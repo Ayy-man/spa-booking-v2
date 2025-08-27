@@ -10,6 +10,8 @@ interface Service {
   name: string
   duration: number
   price: number
+  allows_addons?: boolean
+  category?: string
 }
 
 interface CouplesBookingProps {

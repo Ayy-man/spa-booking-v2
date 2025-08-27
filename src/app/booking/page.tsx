@@ -225,6 +225,12 @@ export default function BookingPage() {
                           (category.category === 'massages' && service.duration >= 60) ||
                           (category.category === 'facials' && service.duration >= 60)
                         
+                        console.log('Service clicked:', service.name, {
+                          category: category.category,
+                          duration: service.duration,
+                          isCouplesEligible
+                        })
+                        
                         if (isCouplesEligible) {
                           handlePackageSelect(service.id)
                         } else {
@@ -313,8 +319,17 @@ export default function BookingPage() {
                     )
                   }
                   
-                  // Navigate to date/time selection
-                  window.location.href = '/booking/date-time'
+                  // Navigate to add-ons if primary service allows them, otherwise go to date selection
+                  if (bookingData.primaryService?.allows_addons) {
+                    // For couples booking, we need to save the primary service for add-ons
+                    saveBookingState({ 
+                      selectedService: bookingData.primaryService,
+                      currentStep: 2
+                    })
+                    window.location.href = '/booking/addons'
+                  } else {
+                    window.location.href = '/booking/date-time'
+                  }
                 }}
               />
             </div>
