@@ -15,6 +15,7 @@ interface Service {
   name: string
   duration: number
   price: number
+  category?: string
   description?: string
   allows_addons?: boolean
 }
@@ -86,7 +87,10 @@ export default function BookingPage() {
     for (const category of serviceCategories) {
       const service = category.services.find(s => s.id === serviceId)
       if (service) {
-        selectedServiceData = service
+        selectedServiceData = {
+          ...service,
+          category: category.category
+        }
         break
       }
     }
@@ -102,7 +106,11 @@ export default function BookingPage() {
       })
       
       // Track service selection
-      analytics.serviceSelected(selectedServiceData.name)
+      analytics.serviceSelected(
+        selectedServiceData.name, 
+        selectedServiceData.category || '', 
+        selectedServiceData.price
+      )
       
       // Navigate to date selection
       window.location.href = '/booking/date-time'
@@ -115,7 +123,10 @@ export default function BookingPage() {
     for (const category of serviceCategories) {
       const service = category.services.find(s => s.id === serviceId)
       if (service) {
-        selectedServiceData = service
+        selectedServiceData = {
+          ...service,
+          category: category.category
+        }
         break
       }
     }
@@ -251,12 +262,54 @@ export default function BookingPage() {
 
       {/* Couples Booking Modal */}
       {showCouplesOptions && (
-        <CouplesBooking 
-          onClose={() => {
-            setShowCouplesOptions(false)
-            setSelectedService('')
-          }}
-        />
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="modal-header">
+              <h2 className="text-2xl font-heading text-primary">Couples Booking Options</h2>
+              <button
+                onClick={() => {
+                  setShowCouplesOptions(false)
+                  setSelectedService('')
+                }}
+                className="modal-close-btn"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <CouplesBooking
+                selectedService={
+                  serviceCategories
+                    .flatMap(cat => cat.services)
+                    .find(s => s.id === selectedService) || null
+                }
+                serviceCategories={serviceCategories}
+                onContinue={(bookingData) => {
+                  // Store booking data using state manager
+                  saveBookingState({ 
+                    bookingData,
+                    currentStep: 2
+                  })
+                  
+                  // Store in session storage
+                  sessionStorage.setItem('bookingData', JSON.stringify(bookingData))
+                  
+                  // Track couples booking
+                  if (bookingData.isCouplesBooking) {
+                    analytics.couplesBookingStarted(
+                      bookingData.primaryService.name,
+                      bookingData.secondaryService?.name || bookingData.primaryService.name,
+                      bookingData.totalPrice
+                    )
+                  }
+                  
+                  // Navigate to date/time selection
+                  window.location.href = '/booking/date-time'
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </>
   )

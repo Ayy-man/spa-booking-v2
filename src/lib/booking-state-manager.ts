@@ -4,6 +4,9 @@
  */
 
 export interface BookingState {
+  // Navigation
+  currentStep?: number
+  
   // Service selection
   bookingData?: {
     isCouplesBooking: boolean
