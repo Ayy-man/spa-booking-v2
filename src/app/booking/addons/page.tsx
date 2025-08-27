@@ -311,9 +311,6 @@ export default function AddonsPage() {
                             <div className="w-2 h-2 rounded-full bg-white dark:bg-gray-900"></div>
                           )}
                         </div>
-                        <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          {addon.category}
-                        </span>
                       </div>
                     </div>
                   )
