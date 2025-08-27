@@ -124,6 +124,7 @@ DECLARE
   v_addon_count INTEGER;
   v_packages_count INTEGER;
   v_waxing_count INTEGER;
+  r RECORD;
 BEGIN
   -- Count services
   SELECT COUNT(*) INTO v_service_count FROM public.services;

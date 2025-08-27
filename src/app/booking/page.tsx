@@ -8,14 +8,54 @@ import { analytics } from '@/lib/analytics'
 import { saveBookingState } from '@/lib/booking-state-manager'
 import { trackBookingAbandonment } from '@/lib/booking-utils'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { InlineLoading } from '@/components/ui/loading-spinner'
+
+interface Service {
+  id: string
+  name: string
+  duration: number
+  price: number
+  description?: string
+  allows_addons?: boolean
+}
+
+interface ServiceCategory {
+  name: string
+  category: string
+  services: Service[]
+}
 
 export default function BookingPage() {
   const [selectedService, setSelectedService] = useState('')
   const [showCouplesOptions, setShowCouplesOptions] = useState(false)
+  const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Track page view
   useEffect(() => {
     analytics.pageViewed('service_selection', 1)
+  }, [])
+
+  // Fetch services from database
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const response = await fetch('/api/services/grouped')
+        if (!response.ok) {
+          throw new Error('Failed to fetch services')
+        }
+        const data = await response.json()
+        setServiceCategories(data)
+      } catch (err) {
+        console.error('Error fetching services:', err)
+        setError('Failed to load services. Please try again.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchServices()
   }, [])
 
   // Start tracking abandonment when user visits booking page
@@ -38,83 +78,79 @@ export default function BookingPage() {
     }
   }, [showCouplesOptions])
 
-  const serviceCategories = [
-    {
-      name: 'Facials',
-      services: [
-        { id: 'basic_facial', name: 'Basic Facial (For Men & Women)', duration: 30, price: 65 },
-        { id: 'deep_cleansing_facial', name: 'Deep Cleansing Facial (for Men & Women)', duration: 60, price: 79 },
-        { id: 'placenta_collagen_facial', name: 'Placenta | Collagen Facial', duration: 60, price: 90 },
-        { id: 'whitening_kojic_facial', name: 'Whitening Kojic Facial', duration: 60, price: 90 },
-        { id: 'anti_acne_facial', name: 'Anti-Acne Facial (for Men & Women)', duration: 60, price: 90 },
-        { id: 'microderm_facial', name: 'Microderm Facial', duration: 60, price: 99 },
-        { id: 'vitamin_c_facial', name: 'Vitamin C Facial with Extreme Softness', duration: 60, price: 120 },
-        { id: 'acne_vulgaris_facial', name: 'Acne Vulgaris Facial', duration: 60, price: 120 },
-      ]
-    },
-    {
-      name: 'Body Massages',
-      services: [
-        { id: 'balinese_massage', name: 'Balinese Body Massage', duration: 60, price: 80 },
-        { id: 'maternity_massage', name: 'Maternity Massage', duration: 60, price: 85 },
-        { id: 'stretching_massage', name: 'Stretching Body Massage', duration: 60, price: 85 },
-        { id: 'deep_tissue_massage', name: 'Deep Tissue Body Massage', duration: 60, price: 90 },
-        { id: 'hot_stone_massage', name: 'Hot Stone Massage', duration: 60, price: 90 },
-        { id: 'hot_stone_90', name: 'Hot Stone Massage 90 Minutes', duration: 90, price: 120 },
-      ]
-    },
-    {
-      name: 'Body Treatments',
-      services: [
-        { id: 'underarm_cleaning', name: 'Underarm Cleaning', duration: 30, price: 99 },
-        { id: 'back_treatment', name: 'Back Treatment', duration: 30, price: 99 },
-        { id: 'chemical_peel_body', name: 'Chemical Peel (Body) Per Area', duration: 30, price: 85 },
-        { id: 'underarm_whitening', name: 'Underarm or Inguinal Whitening', duration: 30, price: 150 },
-        { id: 'microdermabrasion_body', name: 'Microdermabrasion (Body) Per Area', duration: 30, price: 85 },
-        { id: 'deep_moisturizing', name: 'Deep Moisturizing Body Treatment', duration: 30, price: 65 },
-        { id: 'dead_sea_scrub', name: 'Dead Sea Salt Body Scrub', duration: 30, price: 65 },
-        { id: 'dead_sea_scrub_moisturizing', name: 'Dead Sea Salt Body Scrub + Deep Moisturizing', duration: 30, price: 65 },
-        { id: 'mud_mask_wrap', name: 'Mud Mask Body Wrap + Deep Moisturizing Body Treatment', duration: 30, price: 65 },
-      ]
-    },
-    {
-      name: 'Waxing',
-      services: [
-        { id: 'eyebrow_waxing', name: 'Eyebrow Waxing', duration: 15, price: 20 },
-        { id: 'lip_waxing', name: 'Lip Waxing', duration: 5, price: 10 },
-        { id: 'half_arm_waxing', name: 'Half Arm Waxing', duration: 15, price: 40 },
-        { id: 'full_arm_waxing', name: 'Full Arm Waxing', duration: 30, price: 60 },
-        { id: 'chin_waxing', name: 'Chin Waxing', duration: 5, price: 12 },
-        { id: 'neck_waxing', name: 'Neck Waxing', duration: 15, price: 30 },
-        { id: 'lower_leg_waxing', name: 'Lower Leg Waxing', duration: 30, price: 40 },
-        { id: 'full_leg_waxing', name: 'Full Leg Waxing', duration: 60, price: 80 },
-        { id: 'full_face_waxing', name: 'Full Face Waxing', duration: 30, price: 60 },
-        { id: 'bikini_waxing', name: 'Bikini Waxing', duration: 30, price: 35 },
-        { id: 'underarm_waxing', name: 'Underarm Waxing', duration: 15, price: 20 },
-        { id: 'brazilian_wax_women', name: 'Brazilian Wax ( Women )', duration: 45, price: 60 },
-        { id: 'brazilian_wax_men', name: 'Brazilian Waxing ( Men)', duration: 45, price: 75 },
-        { id: 'chest_wax', name: 'Chest Wax', duration: 30, price: 40 },
-        { id: 'stomach_wax', name: 'Stomach Wax', duration: 30, price: 40 },
-        { id: 'shoulders_wax', name: 'Shoulders', duration: 30, price: 30 },
-        { id: 'feet_wax', name: 'Feet', duration: 5, price: 30 },
-      ]
-    },
-    {
-      name: 'Packages',
-      services: [
-        { id: 'balinese_facial_package', name: 'Balinese Body Massage + Basic Facial', duration: 90, price: 130 },
-        { id: 'deep_tissue_3face', name: 'Deep Tissue Body Massage + 3Face', duration: 120, price: 180 },
-        { id: 'hot_stone_microderm', name: 'Hot Stone Body Massage + Microderm Facial', duration: 150, price: 200 },
-      ]
-    },
-    {
-      name: 'Special Services',
-      services: [
-        { id: 'vajacial_brazilian', name: 'Basic Vajacial Cleaning + Brazilian Wax', duration: 30, price: 90 },
-        { id: 'dermal_vip', name: 'Dermal VIP Card $50 / Year', duration: 30, price: 50 },
-      ]
+  const handleServiceSelect = (serviceId: string) => {
+    setSelectedService(serviceId)
+    
+    // Find the selected service details
+    let selectedServiceData = null
+    for (const category of serviceCategories) {
+      const service = category.services.find(s => s.id === serviceId)
+      if (service) {
+        selectedServiceData = service
+        break
+      }
     }
-  ]
+    
+    if (selectedServiceData) {
+      // Save to session storage for next page
+      sessionStorage.setItem('selectedService', JSON.stringify(selectedServiceData))
+      
+      // Save to booking state
+      saveBookingState({
+        currentStep: 2,
+        selectedService: selectedServiceData
+      })
+      
+      // Track service selection
+      analytics.serviceSelected(selectedServiceData.name)
+      
+      // Navigate to date selection
+      window.location.href = '/booking/date-time'
+    }
+  }
+
+  const handlePackageSelect = (serviceId: string) => {
+    // Find the selected service
+    let selectedServiceData = null
+    for (const category of serviceCategories) {
+      const service = category.services.find(s => s.id === serviceId)
+      if (service) {
+        selectedServiceData = service
+        break
+      }
+    }
+    
+    if (selectedServiceData) {
+      // Check if it's a couples service or can be booked as couples
+      setSelectedService(serviceId)
+      sessionStorage.setItem('tempSelectedService', JSON.stringify(selectedServiceData))
+      setShowCouplesOptions(true)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
+        <InlineLoading />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="btn-primary"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -151,107 +187,77 @@ export default function BookingPage() {
           </div>
 
           {/* Service Categories */}
-          <div className="content-spacing">
-            {serviceCategories.map((category) => (
-              <div key={category.name} className="card dark:bg-gray-800 dark:border-gray-700 animate-in slide-in-from-bottom-2">
-                <h2 className="text-3xl font-heading font-bold text-primary dark:text-primary-light mb-8">
+          <div className="space-y-12">
+            {serviceCategories.map((category, categoryIndex) => (
+              <div key={categoryIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
+                <h2 className="text-3xl font-heading text-primary dark:text-primary-light mb-6">
                   {category.name}
+                  <span className="text-sm ml-3 text-gray-500 dark:text-gray-400">
+                    ({category.services.length} services)
+                  </span>
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {category.services.map((service) => (
                     <div
                       key={service.id}
-                      className={`service-card ${
-                        selectedService === service.id ? 'service-card-selected' : ''
-                      }`}
+                      className="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary dark:hover:border-primary-light transition-all cursor-pointer group"
                       onClick={() => {
-                        setSelectedService(service.id)
-                        setShowCouplesOptions(true)
-                        // Track service selection
-                        analytics.serviceSelected(service.name, category.name, service.price)
+                        // Check if this is a package or couples-eligible service
+                        if (category.category === 'packages' || service.name.toLowerCase().includes('couple')) {
+                          handlePackageSelect(service.id)
+                        } else {
+                          handleServiceSelect(service.id)
+                        }
                       }}
                     >
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
-                        {service.name}
-                      </h3>
-                      <div className="flex justify-between items-center mb-6">
-                        <span className="text-3xl font-bold text-primary dark:text-primary-light">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary dark:group-hover:text-primary-light transition-colors flex-1 pr-2">
+                          {service.name}
+                          {service.allows_addons && (
+                            <span className="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
+                              Add-ons Available
+                            </span>
+                          )}
+                        </h3>
+                        <span className="font-bold text-primary dark:text-primary-light whitespace-nowrap">
                           ${service.price}
                         </span>
-                        <span className="text-base text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                          {service.duration} mins
-                        </span>
                       </div>
-                      <button
-                        className={`w-full py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
-                          selectedService === service.id
-                            ? 'bg-primary text-white shadow-lg'
-                            : 'bg-gray-900 text-white hover:bg-gray-800 shadow-md hover:shadow-lg'
-                        }`}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedService(service.id)
-                          setShowCouplesOptions(true)
-                          // Track service selection
-                          analytics.serviceSelected(service.name, category.name, service.price)
-                        }}
-                      >
-                        {selectedService === service.id ? 'Selected ✓' : 'Select Service'}
-                      </button>
+                      {service.description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          {service.description}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Duration: {service.duration} minutes
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
             ))}
+
+            {serviceCategories.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">
+                  No services available at this time.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Couples Booking Component - Fixed Position Overlay */}
-      {selectedService && showCouplesOptions && (
-        <div className="modal-overlay animate-in fade-in-0 duration-300">
-          <div className="modal-content animate-in slide-in-from-bottom-2 duration-300">
-            <div className="modal-header">
-              <h2 className="text-xl sm:text-2xl font-heading font-bold text-primary">
-                Booking Options
-              </h2>
-              <button
-                onClick={() => {
-                  setShowCouplesOptions(false)
-                  setSelectedService('')
-                }}
-                className="modal-close-btn"
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-body">
-              <CouplesBooking
-                selectedService={
-                  serviceCategories
-                    .flatMap(cat => cat.services)
-                    .find(s => s.id === selectedService) || null
-                }
-                serviceCategories={serviceCategories}
-                onContinue={(bookingData) => {
-                  // Store booking data using state manager
-                  saveBookingState({ bookingData })
-                  
-                  // Track couples booking selection
-                  analytics.track('couples_booking_selected', {
-                    primary_service: bookingData.primaryService.name,
-                    secondary_service: bookingData.secondaryService?.name,
-                    total_price: bookingData.totalPrice
-                  })
-                  
-                  // Navigate to date/time selection
-                  window.location.href = '/booking/date-time'
-                }}
-              />
-            </div>
-          </div>
-        </div>
+      {/* Couples Booking Modal */}
+      {showCouplesOptions && (
+        <CouplesBooking 
+          onClose={() => {
+            setShowCouplesOptions(false)
+            setSelectedService('')
+          }}
+        />
       )}
     </>
   )
-} 
+}
