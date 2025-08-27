@@ -51,19 +51,19 @@ CREATE INDEX IF NOT EXISTS idx_service_addons_active ON public.service_addons(is
 
 -- CONSULTATION SERVICE
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
-('consultation', 'Consultation', 'Professional skin consultation and treatment planning', 'facial', 'FACE TREATMENTS', 30, 25, true, false)
+('consultation', 'Consultation', 'Professional skin consultation and treatment planning', 'facials', 'FACE TREATMENTS', 30, 25, true, false)
 ON CONFLICT (id) DO NOTHING;
 
 -- 3 FACE PACKAGES (90 minutes each)
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
-('3face_basic_micro', '3 Face Basic Facial + Microdermabrasion + Extreme Softness', 'Comprehensive facial package with microdermabrasion', 'package', 'FACE & BODY PACKAGES', 90, 120, true, false),
-('3face_deep_cleansing', '3 Face + Deep Cleansing Facial', 'Triple facial treatment with deep cleansing', 'package', 'FACE & BODY PACKAGES', 90, 140, true, false),
-('3face_placenta', '3 Face + Placenta Collagen/Whitening/Anti-Acne Facial', 'Advanced facial package with specialized treatments', 'package', 'FACE & BODY PACKAGES', 90, 150, true, false),
-('3face_treatment1', '3 Face + Face Treatment #1', 'Triple facial with premium treatment level 1', 'package', 'FACE & BODY PACKAGES', 90, 160, true, false),
-('3face_treatment2', '3 Face + Face Treatment #2', 'Triple facial with premium treatment level 2', 'package', 'FACE & BODY PACKAGES', 90, 175, true, false),
-('3face_vitaminc', '3 Face + Vitamin C/Acne Vulgaris Facial', 'Triple facial with vitamin C treatment', 'package', 'FACE & BODY PACKAGES', 90, 180, true, false),
-('3face_peel', '3 Face + Peel', 'Triple facial with chemical peel', 'package', 'FACE & BODY PACKAGES', 90, 185, true, false),
-('3face_deep_tissue', '3 Face + Deep Tissue', 'Triple facial with deep tissue massage', 'package', 'FACE & BODY PACKAGES', 90, 200, true, false)
+('3face_basic_micro', '3 Face Basic Facial + Microdermabrasion + Extreme Softness', 'Comprehensive facial package with microdermabrasion', 'packages', 'FACE & BODY PACKAGES', 90, 120, true, false),
+('3face_deep_cleansing', '3 Face + Deep Cleansing Facial', 'Triple facial treatment with deep cleansing', 'packages', 'FACE & BODY PACKAGES', 90, 140, true, false),
+('3face_placenta', '3 Face + Placenta Collagen/Whitening/Anti-Acne Facial', 'Advanced facial package with specialized treatments', 'packages', 'FACE & BODY PACKAGES', 90, 150, true, false),
+('3face_treatment1', '3 Face + Face Treatment #1', 'Triple facial with premium treatment level 1', 'packages', 'FACE & BODY PACKAGES', 90, 160, true, false),
+('3face_treatment2', '3 Face + Face Treatment #2', 'Triple facial with premium treatment level 2', 'packages', 'FACE & BODY PACKAGES', 90, 175, true, false),
+('3face_vitaminc', '3 Face + Vitamin C/Acne Vulgaris Facial', 'Triple facial with vitamin C treatment', 'packages', 'FACE & BODY PACKAGES', 90, 180, true, false),
+('3face_peel', '3 Face + Peel', 'Triple facial with chemical peel', 'packages', 'FACE & BODY PACKAGES', 90, 185, true, false),
+('3face_deep_tissue', '3 Face + Deep Tissue', 'Triple facial with deep tissue massage', 'packages', 'FACE & BODY PACKAGES', 90, 200, true, false)
 ON CONFLICT (id) DO NOTHING;
 
 -- ADDITIONAL WAXING SERVICES (beyond what exists)
@@ -83,100 +83,100 @@ ON CONFLICT (id) DO NOTHING;
 -- OTHER BODY TREATMENTS (30/60 minute options)
 -- These services allow add-ons for massage enhancements
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
-('hair_scalp_30', 'Hair and Scalp Treatment (30 min)', 'Relaxing hair and scalp treatment', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
-('hair_scalp_60', 'Hair and Scalp Treatment (60 min)', 'Extended hair and scalp treatment', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
-('headspa_30', 'Headspa (30 min)', 'Rejuvenating head spa treatment', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
-('headspa_60', 'Headspa (60 min)', 'Extended head spa treatment', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
-('face_massage_30', 'Face Massage (30 min)', 'Relaxing facial massage', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
-('face_massage_60', 'Face Massage (60 min)', 'Extended facial massage', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
-('shoulder_face_arms_30', 'Shoulder, Face, Arms and Head Massage (30 min)', 'Multi-area massage treatment', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
-('shoulder_face_arms_60', 'Shoulder, Face, Arms and Head Massage (60 min)', 'Extended multi-area massage', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
-('foot_massage_30', 'Foot Massage (30 min)', 'Relaxing foot massage', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
-('foot_massage_60', 'Foot Massage (60 min)', 'Extended foot massage', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
-('back_massage_30', 'Back Massage (30 min)', 'Targeted back massage', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
-('back_massage_60', 'Back Massage (60 min)', 'Extended back massage', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
-('dry_head_massage_30', 'Dry Head Massage (30 min)', 'Dry technique head massage', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
-('dry_head_massage_60', 'Dry Head Massage (60 min)', 'Extended dry head massage', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
-('deep_moisturizing_body_30', 'Deep Moisturizing Body (30 min)', 'Intensive body moisturizing treatment', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
-('deep_moisturizing_body_60', 'Deep Moisturizing Body (60 min)', 'Extended body moisturizing treatment', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
-('back_arms_scrub_30', 'Back or Arms/Shoulder Scrub (30 min)', 'Exfoliating scrub treatment', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
-('back_arms_scrub_60', 'Back or Arms/Shoulder Scrub (60 min)', 'Extended exfoliating treatment', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true)
+('hair_scalp_30', 'Hair and Scalp Treatment (30 min)', 'Relaxing hair and scalp treatment', 'treatments', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
+('hair_scalp_60', 'Hair and Scalp Treatment (60 min)', 'Extended hair and scalp treatment', 'treatments', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
+('headspa_30', 'Headspa (30 min)', 'Rejuvenating head spa treatment', 'treatments', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
+('headspa_60', 'Headspa (60 min)', 'Extended head spa treatment', 'treatments', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
+('face_massage_30', 'Face Massage (30 min)', 'Relaxing facial massage', 'treatments', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
+('face_massage_60', 'Face Massage (60 min)', 'Extended facial massage', 'treatments', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
+('shoulder_face_arms_30', 'Shoulder, Face, Arms and Head Massage (30 min)', 'Multi-area massage treatment', 'treatments', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
+('shoulder_face_arms_60', 'Shoulder, Face, Arms and Head Massage (60 min)', 'Extended multi-area massage', 'treatments', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
+('foot_massage_30', 'Foot Massage (30 min)', 'Relaxing foot massage', 'treatments', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
+('foot_massage_60', 'Foot Massage (60 min)', 'Extended foot massage', 'treatments', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
+('back_massage_30', 'Back Massage (30 min)', 'Targeted back massage', 'treatments', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
+('back_massage_60', 'Back Massage (60 min)', 'Extended back massage', 'treatments', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
+('dry_head_massage_30', 'Dry Head Massage (30 min)', 'Dry technique head massage', 'treatments', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
+('dry_head_massage_60', 'Dry Head Massage (60 min)', 'Extended dry head massage', 'treatments', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
+('deep_moisturizing_body_30', 'Deep Moisturizing Body (30 min)', 'Intensive body moisturizing treatment', 'treatments', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
+('deep_moisturizing_body_60', 'Deep Moisturizing Body (60 min)', 'Extended body moisturizing treatment', 'treatments', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true),
+('back_arms_scrub_30', 'Back or Arms/Shoulder Scrub (30 min)', 'Exfoliating scrub treatment', 'treatments', 'BODY TREATMENTS & BOOSTERS', 30, 40, true, true),
+('back_arms_scrub_60', 'Back or Arms/Shoulder Scrub (60 min)', 'Extended exfoliating treatment', 'treatments', 'BODY TREATMENTS & BOOSTERS', 60, 75, true, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- FACE TREATMENT #1 (All $70, 30 mins) - These allow facial add-ons
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
-('vitamin_c_treatment', 'Vitamin C Treatment', 'Brightening vitamin C facial treatment', 'facial', 'FACE TREATMENTS', 30, 70, true, true),
-('collagen_treatment', 'Collagen Treatment', 'Firming collagen facial treatment', 'facial', 'FACE TREATMENTS', 30, 70, true, true),
-('microderm_abrasion', 'Microdermabrasion', 'Professional microdermabrasion treatment', 'facial', 'FACE TREATMENTS', 30, 70, true, true),
-('hydrating_glow', 'Hydrating/Instant Glow', 'Hydrating treatment for instant glow', 'facial', 'FACE TREATMENTS', 30, 70, true, true),
-('lightening_treatment', 'Lightening Treatment', 'Skin brightening and lightening treatment', 'facial', 'FACE TREATMENTS', 30, 70, true, true),
-('sunburn_treatment', 'Sunburn Treatment', 'Soothing sunburn recovery treatment', 'facial', 'FACE TREATMENTS', 30, 70, true, true),
-('acne_pimple_treatment', 'Acne/Pimple Treatment', 'Targeted acne and pimple treatment', 'facial', 'FACE TREATMENTS', 30, 70, true, true),
-('extreme_softness', 'Extreme Softness', 'Ultra-softening facial treatment', 'facial', 'FACE TREATMENTS', 30, 70, true, true),
-('oily_skin_treatment', 'Oily Skin Care Treatment', 'Specialized treatment for oily skin', 'facial', 'FACE TREATMENTS', 30, 70, true, true)
+('vitamin_c_treatment', 'Vitamin C Treatment', 'Brightening vitamin C facial treatment', 'facials', 'FACE TREATMENTS', 30, 70, true, true),
+('collagen_treatment', 'Collagen Treatment', 'Firming collagen facial treatment', 'facials', 'FACE TREATMENTS', 30, 70, true, true),
+('microderm_abrasion', 'Microdermabrasion', 'Professional microdermabrasion treatment', 'facials', 'FACE TREATMENTS', 30, 70, true, true),
+('hydrating_glow', 'Hydrating/Instant Glow', 'Hydrating treatment for instant glow', 'facials', 'FACE TREATMENTS', 30, 70, true, true),
+('lightening_treatment', 'Lightening Treatment', 'Skin brightening and lightening treatment', 'facials', 'FACE TREATMENTS', 30, 70, true, true),
+('sunburn_treatment', 'Sunburn Treatment', 'Soothing sunburn recovery treatment', 'facials', 'FACE TREATMENTS', 30, 70, true, true),
+('acne_pimple_treatment', 'Acne/Pimple Treatment', 'Targeted acne and pimple treatment', 'facials', 'FACE TREATMENTS', 30, 70, true, true),
+('extreme_softness', 'Extreme Softness', 'Ultra-softening facial treatment', 'facials', 'FACE TREATMENTS', 30, 70, true, true),
+('oily_skin_treatment', 'Oily Skin Care Treatment', 'Specialized treatment for oily skin', 'facials', 'FACE TREATMENTS', 30, 70, true, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- FACE TREATMENT #2 (All $75, 30 mins) - These allow facial add-ons
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
-('lactic_peel', 'Lactic Peel', 'Gentle lactic acid peel treatment', 'facial', 'FACE TREATMENTS', 30, 75, true, true),
-('salicylic_peel', 'Salicylic Peel', 'Deep-cleaning salicylic acid peel', 'facial', 'FACE TREATMENTS', 30, 75, true, true),
-('glycolic_led', 'Glycolic LED Photo Aging', 'Glycolic peel with LED therapy', 'facial', 'FACE TREATMENTS', 30, 75, true, true),
-('led_photo_aging', 'LED Photo Aging', 'LED light therapy for anti-aging', 'facial', 'FACE TREATMENTS', 30, 75, true, true),
-('obaji_whitening', 'Obaji Infusion Whitening', 'Obaji whitening infusion treatment', 'facial', 'FACE TREATMENTS', 30, 75, true, true),
-('oxygen_face', 'Oxygen Face Treatment', 'Oxygen infusion facial treatment', 'facial', 'FACE TREATMENTS', 30, 75, true, true)
+('lactic_peel', 'Lactic Peel', 'Gentle lactic acid peel treatment', 'facials', 'FACE TREATMENTS', 30, 75, true, true),
+('salicylic_peel', 'Salicylic Peel', 'Deep-cleaning salicylic acid peel', 'facials', 'FACE TREATMENTS', 30, 75, true, true),
+('glycolic_led', 'Glycolic LED Photo Aging', 'Glycolic peel with LED therapy', 'facials', 'FACE TREATMENTS', 30, 75, true, true),
+('led_photo_aging', 'LED Photo Aging', 'LED light therapy for anti-aging', 'facials', 'FACE TREATMENTS', 30, 75, true, true),
+('obaji_whitening', 'Obaji Infusion Whitening', 'Obaji whitening infusion treatment', 'facials', 'FACE TREATMENTS', 30, 75, true, true),
+('oxygen_face', 'Oxygen Face Treatment', 'Oxygen infusion facial treatment', 'facials', 'FACE TREATMENTS', 30, 75, true, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- FACE TREATMENT #3 (All $99, 45 mins) - These allow facial add-ons
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
-('derma_roller', 'Derma Roller', 'Micro-needling with derma roller', 'facial', 'FACE TREATMENTS', 45, 99, true, true),
-('dermaplaning', 'DermaPlaning', 'Professional dermaplaning treatment', 'facial', 'FACE TREATMENTS', 45, 99, true, true),
-('glassy_skin', 'Glassy Skin', 'Korean glassy skin treatment', 'facial', 'FACE TREATMENTS', 45, 99, true, true)
+('derma_roller', 'Derma Roller', 'Micro-needling with derma roller', 'facials', 'FACE TREATMENTS', 45, 99, true, true),
+('dermaplaning', 'DermaPlaning', 'Professional dermaplaning treatment', 'facials', 'FACE TREATMENTS', 45, 99, true, true),
+('glassy_skin', 'Glassy Skin', 'Korean glassy skin treatment', 'facials', 'FACE TREATMENTS', 45, 99, true, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- FACE TREATMENT #4 (All $120, 55 mins) - These allow premium facial add-ons
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
-('microneedling', 'Microneedling', 'Professional microneedling treatment', 'facial', 'FACE TREATMENTS', 55, 120, true, true),
-('vampire_facial', 'Vampire', 'Vampire facial treatment', 'facial', 'FACE TREATMENTS', 55, 120, true, true),
-('radio_frequency', 'Radio Frequency', 'RF skin tightening treatment', 'facial', 'FACE TREATMENTS', 55, 120, true, true),
-('nano_treatment', 'Nano', 'Nano infusion treatment', 'facial', 'FACE TREATMENTS', 55, 120, true, true),
-('hydrafacial', 'HydraFacial', 'HydraFacial deep cleansing treatment', 'facial', 'FACE TREATMENTS', 55, 120, true, true)
+('microneedling', 'Microneedling', 'Professional microneedling treatment', 'facials', 'FACE TREATMENTS', 55, 120, true, true),
+('vampire_facial', 'Vampire', 'Vampire facial treatment', 'facials', 'FACE TREATMENTS', 55, 120, true, true),
+('radio_frequency', 'Radio Frequency', 'RF skin tightening treatment', 'facials', 'FACE TREATMENTS', 55, 120, true, true),
+('nano_treatment', 'Nano', 'Nano infusion treatment', 'facials', 'FACE TREATMENTS', 55, 120, true, true),
+('hydrafacial', 'HydraFacial', 'HydraFacial deep cleansing treatment', 'facials', 'FACE TREATMENTS', 55, 120, true, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- DERMAL SIGNATURE TREATMENTS 1
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
-('hydrafacial_sig', 'HydraFacial Signature', 'Signature HydraFacial treatment', 'facial', 'FACE TREATMENTS', 90, 199, true, false),
-('nano_face_sig', 'Nano Face Treatment Signature', 'Signature nano infusion treatment', 'facial', 'FACE TREATMENTS', 90, 250, true, false),
-('dermaplaning_sig', 'Derma Planning Signature', 'Signature dermaplaning treatment', 'facial', 'FACE TREATMENTS', 90, 230, true, false),
-('rf_package', 'Radio Frequency Package', 'Complete RF treatment package', 'package', 'FACE & BODY PACKAGES', 90, 280, true, false),
-('glassy_skin_sig', 'Glassy Skin Signature', 'Signature glassy skin treatment', 'facial', 'FACE TREATMENTS', 90, 190, true, false),
-('underarm_white_products', 'Underarm Whitening (With Products)', 'Underarm whitening with take-home products', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 60, 150, true, false),
-('underarm_white_no_products', 'Underarm Whitening (Without Products)', 'Underarm whitening treatment only', 'body_treatment', 'BODY TREATMENTS & BOOSTERS', 45, 99, true, false)
+('hydrafacial_sig', 'HydraFacial Signature', 'Signature HydraFacial treatment', 'facials', 'FACE TREATMENTS', 90, 199, true, false),
+('nano_face_sig', 'Nano Face Treatment Signature', 'Signature nano infusion treatment', 'facials', 'FACE TREATMENTS', 90, 250, true, false),
+('dermaplaning_sig', 'Derma Planning Signature', 'Signature dermaplaning treatment', 'facials', 'FACE TREATMENTS', 90, 230, true, false),
+('rf_package', 'Radio Frequency Package', 'Complete RF treatment package', 'packages', 'FACE & BODY PACKAGES', 90, 280, true, false),
+('glassy_skin_sig', 'Glassy Skin Signature', 'Signature glassy skin treatment', 'facials', 'FACE TREATMENTS', 90, 190, true, false),
+('underarm_white_products', 'Underarm Whitening (With Products)', 'Underarm whitening with take-home products', 'treatments', 'BODY TREATMENTS & BOOSTERS', 60, 150, true, false),
+('underarm_white_no_products', 'Underarm Whitening (Without Products)', 'Underarm whitening treatment only', 'treatments', 'BODY TREATMENTS & BOOSTERS', 45, 99, true, false)
 ON CONFLICT (id) DO NOTHING;
 
 -- DERMAL SIGNATURE TREATMENTS 2
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
-('hollywood_facial_sig', 'Hollywood Facial', 'Celebrity-style facial treatment', 'facial', 'FACE TREATMENTS', 75, 150, true, false),
-('led_photo_sig', 'LED Photo Aging Treatment Signature', 'Advanced LED anti-aging treatment', 'facial', 'FACE TREATMENTS', 75, 175, true, false),
-('obaji_whitening_sig', 'Obaji Infusion Whitening Facial Signature', 'Premium Obaji whitening treatment', 'facial', 'FACE TREATMENTS', 75, 180, true, false),
-('acne_vulgaris_sig', 'ACNE Vulgaris Facial Signature', 'Intensive acne treatment', 'facial', 'FACE TREATMENTS', 75, 150, true, false),
-('vampire_lift_sig', 'Vampire Facelift Facial', 'Premium vampire facelift treatment', 'facial', 'FACE TREATMENTS', 90, 200, true, false),
-('microneedling_sig', 'Microneedling Treatment Signature', 'Advanced microneedling treatment', 'facial', 'FACE TREATMENTS', 90, 290, true, false)
+('hollywood_facial_sig', 'Hollywood Facial', 'Celebrity-style facial treatment', 'facials', 'FACE TREATMENTS', 75, 150, true, false),
+('led_photo_sig', 'LED Photo Aging Treatment Signature', 'Advanced LED anti-aging treatment', 'facials', 'FACE TREATMENTS', 75, 175, true, false),
+('obaji_whitening_sig', 'Obaji Infusion Whitening Facial Signature', 'Premium Obaji whitening treatment', 'facials', 'FACE TREATMENTS', 75, 180, true, false),
+('acne_vulgaris_sig', 'ACNE Vulgaris Facial Signature', 'Intensive acne treatment', 'facials', 'FACE TREATMENTS', 75, 150, true, false),
+('vampire_lift_sig', 'Vampire Facelift Facial', 'Premium vampire facelift treatment', 'facials', 'FACE TREATMENTS', 90, 200, true, false),
+('microneedling_sig', 'Microneedling Treatment Signature', 'Advanced microneedling treatment', 'facials', 'FACE TREATMENTS', 90, 290, true, false)
 ON CONFLICT (id) DO NOTHING;
 
 -- MISCELLANEOUS SERVICES
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
 ('vip_membership', 'VIP Card Membership (Annual)', 'Annual VIP membership with benefits', 'membership', 'FACE & BODY PACKAGES', 15, 50, true, false),
-('soothing_facial', 'Soothing Facial', 'Calming and soothing facial treatment', 'facial', 'FACE TREATMENTS', 60, 120, true, false),
-('deep_blackheads', 'Deep Blackheads Extraction', 'Professional blackhead extraction', 'facial', 'FACE TREATMENTS', 15, 10, true, false),
-('whiteheads', 'Whiteheads Extraction', 'Professional whitehead extraction', 'facial', 'FACE TREATMENTS', 15, 10, true, false),
-('milia_removal', 'Milia Removal', 'Professional milia removal treatment', 'facial', 'FACE TREATMENTS', 15, 10, true, false),
-('eye_area', 'Eye Area Treatment', 'Specialized eye area treatment', 'facial', 'FACE TREATMENTS', 20, 20, true, false)
+('soothing_facial', 'Soothing Facial', 'Calming and soothing facial treatment', 'facials', 'FACE TREATMENTS', 60, 120, true, false),
+('deep_blackheads', 'Deep Blackheads Extraction', 'Professional blackhead extraction', 'facials', 'FACE TREATMENTS', 15, 10, true, false),
+('whiteheads', 'Whiteheads Extraction', 'Professional whitehead extraction', 'facials', 'FACE TREATMENTS', 15, 10, true, false),
+('milia_removal', 'Milia Removal', 'Professional milia removal treatment', 'facials', 'FACE TREATMENTS', 15, 10, true, false),
+('eye_area', 'Eye Area Treatment', 'Specialized eye area treatment', 'facials', 'FACE TREATMENTS', 20, 20, true, false)
 ON CONFLICT (id) DO NOTHING;
 
 -- Update existing massage services to allow add-ons
 UPDATE public.services 
 SET allows_addons = true 
-WHERE category = 'massage' AND id IN (
+WHERE category = 'massages' AND id IN (
   'balinese_massage', 
   'deep_tissue_massage', 
   'hot_stone_massage', 
@@ -191,9 +191,9 @@ WHERE category = 'massage' AND id IN (
 
 -- Body Massage Add-ons
 INSERT INTO public.service_addons (id, name, description, price, duration, category, applies_to_categories, max_quantity) VALUES
-('addon_hot_stone_back', 'Hot Stone Back', 'Add hot stone therapy to back massage', 15, 30, 'massage_addon', ARRAY['massage']::service_category[], 1),
-('addon_deep_moisturizing', 'Deep Moisturizing', 'Add deep moisturizing treatment', 25, 30, 'massage_addon', ARRAY['massage', 'body_treatment']::service_category[], 1),
-('addon_30min_massage', '30 Minutes Extra Massage', 'Extend massage by 30 minutes', 40, 30, 'massage_addon', ARRAY['massage']::service_category[], 1)
+('addon_hot_stone_back', 'Hot Stone Back', 'Add hot stone therapy to back massage', 15, 30, 'massage_addon', ARRAY['massages']::service_category[], 1),
+('addon_deep_moisturizing', 'Deep Moisturizing', 'Add deep moisturizing treatment', 25, 30, 'massage_addon', ARRAY['massages', 'treatments']::service_category[], 1),
+('addon_30min_massage', '30 Minutes Extra Massage', 'Extend massage by 30 minutes', 40, 30, 'massage_addon', ARRAY['massages']::service_category[], 1)
 ON CONFLICT (id) DO NOTHING;
 
 -- Face Treatment Level 1 Add-on
@@ -331,7 +331,7 @@ BEGIN
     EXISTS (
       SELECT 1 FROM public.services s
       WHERE s.id = service_id_param
-      AND s.category = ANY(sa.applies_to_categories)
+      AND s.category::text = ANY(sa.applies_to_categories::text[])
     )
   )
   ORDER BY sa.category, sa.price;
