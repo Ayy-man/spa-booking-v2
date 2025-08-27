@@ -36,7 +36,7 @@ export interface BookingWithRelations extends Booking {
   room: Room
   customer: Customer
   walk_in_origin?: Pick<WalkIn, 'id' | 'customer_name' | 'checked_in_at'> | null
-  addons?: BookingAddonWithDetails[]
+  booking_addons?: BookingAddonWithDetails[]  // Changed from 'addons' to 'booking_addons' to match database query
   // Reschedule tracking fields (optional as they may not be in the base Booking type)
   rescheduled_count?: number
   rescheduled_from?: string | null
@@ -47,7 +47,7 @@ export interface BookingWithRelations extends Booking {
 }
 
 export interface BookingAddonWithDetails extends BookingAddon {
-  addon: ServiceAddon
+  service_addon?: ServiceAddon  // Changed from 'addon' to 'service_addon' to match database query
 }
 
 export interface StaffWithRoom extends Staff {
