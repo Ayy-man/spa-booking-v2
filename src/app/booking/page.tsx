@@ -218,12 +218,12 @@ export default function BookingPage() {
                       key={service.id}
                       className="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary dark:hover:border-primary-light transition-all cursor-pointer group"
                       onClick={() => {
-                        // Show couples modal for packages, massages 60min+, and services with "couple" in name
+                        // Show couples modal for packages, ALL facials, massages 60min+, and services with "couple" in name
                         const isCouplesEligible = 
                           category.category === 'packages' || 
+                          category.category === 'facials' ||  // ALL facials can be booked as couples
                           service.name.toLowerCase().includes('couple') ||
-                          (category.category === 'massages' && service.duration >= 60) ||
-                          (category.category === 'facials' && service.duration >= 60)
+                          (category.category === 'massages' && service.duration >= 60)
                         
                         console.log('Service clicked:', service.name, {
                           category: category.category,
@@ -279,7 +279,7 @@ export default function BookingPage() {
       {/* Couples Booking Modal */}
       {showCouplesOptions && (
         <div className="modal-overlay">
-          <div className="modal-container">
+          <div className="modal-content">
             <div className="modal-header">
               <h2 className="text-2xl font-heading text-primary">Couples Booking Options</h2>
               <button
