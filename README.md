@@ -2,19 +2,27 @@
 
 A comprehensive medical spa booking system built for Dermal Skin Clinic and Spa Guam. This production-ready application provides online booking, staff management, room assignment, and administrative tools.
 
-## 🎉 **PRODUCTION v2.1.0 - READY FOR DEPLOYMENT**
+## 🎉 **PRODUCTION v2.2.0 - READY FOR DEPLOYMENT**
 
-**Status**: ✅ **Production Ready with Reschedule System & Enhanced Admin Features**  
-**Version**: v2.1.0 (Reschedule Feature & Any Available Staff)  
-**Last Updated**: January 21, 2025  
-**Deployment Status**: Ready for immediate live deployment  
+**Status**: ✅ **Production Ready with 150+ Services & Add-on System**  
+**Version**: v2.2.0 (Extended Service Catalog & Add-ons)  
+**Last Updated**: January 27, 2025  
+**Deployment Status**: Database migration ready, UI implementation pending  
 
-**New Features in v2.1.0**:
-- 📅 **Complete Reschedule System** - Change appointment dates/times with history tracking
-- 👥 **Any Available Staff Column** - Aggregate availability view in schedule
+**New Features in v2.2.0**:
+- 🎯 **150+ Services Added** - Comprehensive service catalog expansion
+- ➕ **Add-on System** - Flexible service enhancements with 25+ add-on options
+- 💆 **Extended Service Categories** - Face treatments #1-4, signature treatments, body treatments
+- 💅 **Complete Waxing Menu** - Full range of waxing services with automatic waiver requirements
+- 📋 **Enhanced Waiver Detection** - Automatic waiver triggers for all applicable services
+
+**Previous v2.1.0 Features**:
+- 📅 **Complete Reschedule System** - Change appointment dates/times through booking details modal
+- 👩‍⚕️ **Staff Reassignment** - Reassign appointments to different staff members through booking details modal
+- ✉️ **Admin Confirmation Emails** - Automatic confirmation emails sent when admin creates appointments
 - 🔄 **Reschedule Restrictions** - Max 3 reschedules, 2-hour notice required
-- 📊 **Visual Indicators** - Rescheduled appointments clearly marked
-- 🎯 **Quick Booking** - Book with any available staff in one click
+- 📊 **Visual Indicators** - Rescheduled appointments clearly marked with timing indicators
+- ⏰ **15-Minute Intervals** - Improved scheduling with 15-minute interval timing indicators
 - 🛠️ **Build Fixes** - Resolved all UI component dependencies
 
 **Previous v1.3.0 Features**: 
@@ -43,7 +51,8 @@ A comprehensive medical spa booking system built for Dermal Skin Clinic and Spa 
 ## 🎯 Project Overview
 
 This booking system handles complex spa scheduling with:
-- **44 Services**: Facials, massages, treatments, waxing, and packages
+- **150+ Services**: Comprehensive menu including facials, massages, treatments, waxing, packages, and signature services
+- **Add-on System**: Flexible service enhancements with 25+ add-on options
 - **3 Rooms**: Different capabilities for single/couples services
 - **5 Staff Members**: Each with specific capabilities and schedules (including Phuong)
 - **Smart Room Assignment**: Automatic room allocation based on service type

@@ -329,6 +329,7 @@ export interface Database {
           is_couples_service: boolean
           requires_couples_room: boolean
           is_active: boolean
+          allows_addons: boolean
           service_capabilities: string[]
           ghl_category: string
           popularity_score: number
@@ -348,6 +349,7 @@ export interface Database {
           is_couples_service?: boolean
           requires_couples_room?: boolean
           is_active?: boolean
+          allows_addons?: boolean
           service_capabilities?: string[]
           ghl_category: string
           popularity_score?: number
@@ -367,6 +369,7 @@ export interface Database {
           is_couples_service?: boolean
           requires_couples_room?: boolean
           is_active?: boolean
+          allows_addons?: boolean
           service_capabilities?: string[]
           ghl_category?: string
           popularity_score?: number
@@ -374,6 +377,79 @@ export interface Database {
           is_popular?: boolean
           created_at?: string
           updated_at?: string
+        }
+      }
+      service_addons: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          price: number
+          duration: number
+          category: string
+          applies_to_services: string[] | null
+          applies_to_categories: string[] | null
+          max_quantity: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          price: number
+          duration: number
+          category: string
+          applies_to_services?: string[] | null
+          applies_to_categories?: string[] | null
+          max_quantity?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          price?: number
+          duration?: number
+          category?: string
+          applies_to_services?: string[] | null
+          applies_to_categories?: string[] | null
+          max_quantity?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      booking_addons: {
+        Row: {
+          id: string
+          booking_id: string
+          addon_id: string
+          quantity: number
+          price_at_booking: number
+          duration_at_booking: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          booking_id: string
+          addon_id: string
+          quantity?: number
+          price_at_booking: number
+          duration_at_booking: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          booking_id?: string
+          addon_id?: string
+          quantity?: number
+          price_at_booking?: number
+          duration_at_booking?: number
+          created_at?: string
         }
       }
       staff: {

@@ -1,7 +1,7 @@
 # Dermal Skin Clinic Booking System - UI/UX Documentation
 
-**Last Updated: August 15, 2025**  
-**Current Version: 1.0.2 (with comprehensive dark mode support)**
+**Last Updated: August 27, 2025**  
+**Current Version: 2.1.0 (with comprehensive dark mode support, staff reassignment, and modal-based management)**
 
 ## Design Philosophy
 - **Elegant & Professional**: Sophisticated spa experience with theme customization
@@ -1086,7 +1086,53 @@ The implemented design system and component library provides a solid foundation 
 </div>
 ```
 
-### 8. Admin Payment Links Dashboard ✅ IMPLEMENTED (August 4, 2025)
+### 8. Admin Booking Management System ✅ IMPLEMENTED (August 27, 2025)
+
+**Purpose**: Provide comprehensive booking management through modal-based interface
+
+**Layout**:
+- Booking details modal with all management options
+- Reschedule functionality through calendar interface
+- Staff reassignment dropdown with availability validation
+- Confirmation emails for admin-created appointments
+
+**Admin Management Interface**:
+```jsx
+<div className="bg-white rounded-lg shadow-sm border border-gray-200">
+  <div className="p-6">
+    <h2 className="text-2xl font-bold text-gray-900 mb-4">Booking Management</h2>
+    
+    {/* Booking Details Display */}
+    <div className="grid grid-cols-2 gap-6 mb-6">
+      <div>
+        <h3 className="font-medium text-gray-900">{booking.customer_name}</h3>
+        <p className="text-sm text-gray-600">{booking.service_name}</p>
+        <p className="text-sm text-gray-600">{formatDateTime(booking.appointment_time)}</p>
+      </div>
+      <div>
+        <p className="text-sm text-gray-600">Staff: {booking.staff_name}</p>
+        <p className="text-sm text-gray-600">Room: {booking.room_number}</p>
+        <StatusBadge status={booking.status} />
+      </div>
+    </div>
+    
+    {/* Management Actions */}
+    <div className="flex space-x-4">
+      <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark">
+        Reschedule Appointment
+      </button>
+      <button className="px-4 py-2 border border-primary text-primary rounded-lg hover:bg-primary-light">
+        Reassign Staff
+      </button>
+      <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+        Send Confirmation Email
+      </button>
+    </div>
+  </div>
+</div>
+```
+
+### 9. Admin Payment Links Dashboard ✅ IMPLEMENTED (August 4, 2025)
 
 **Purpose**: Provide staff with easy access to all payment links and service coverage overview
 

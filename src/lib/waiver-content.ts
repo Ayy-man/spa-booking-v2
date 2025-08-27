@@ -44,10 +44,24 @@ export function requiresWaiver(serviceName: string): WaiverType | null {
   if (name.includes('radio frequency')) return 'radio_frequency'
   if (name.includes('chemical peel')) return 'chemical_peel'
   if (name.includes('microderm')) return 'microdermabrasion'
-  if (name.includes('wax') || name.includes('brazilian') || name.includes('bikini') || 
-      name.includes('eyebrow') || name.includes('lip') || name.includes('chin') || 
-      name.includes('leg') || name.includes('underarm') || name.includes('chest')) {
-    return 'waxing'
+  
+  // Comprehensive waxing service detection
+  const waxingKeywords = [
+    'wax', 'waxing', 'brazilian', 'bikini', 'french bikini',
+    'eyebrow', 'lip', 'chin', 'leg', 'underarm', 'chest',
+    'sideburns', 'upper leg', 'lower leg', 'inner thigh',
+    'nostril', 'back', 'buttocks', 'ears', 'feet', 'toes',
+    'hands', 'fingers', 'stomach', 'shoulders', 'neck',
+    'half arm', 'full arm', 'full face'
+  ]
+  
+  // Check if service name contains any waxing keywords
+  if (waxingKeywords.some(keyword => name.includes(keyword))) {
+    // Exclude non-waxing services that might have these words
+    if (!name.includes('massage') && !name.includes('treatment') && 
+        !name.includes('facial') && !name.includes('scrub')) {
+      return 'waxing'
+    }
   }
   
   return null

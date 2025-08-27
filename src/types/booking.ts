@@ -9,6 +9,8 @@ export type Customer = Database['public']['Tables']['customers']['Row']
 export type StaffSchedule = Database['public']['Tables']['staff_schedules']['Row']
 export type ScheduleBlock = Database['public']['Tables']['schedule_blocks']['Row']
 export type WalkIn = Database['public']['Tables']['walk_ins']['Row']
+export type ServiceAddon = Database['public']['Tables']['service_addons']['Row']
+export type BookingAddon = Database['public']['Tables']['booking_addons']['Row']
 
 // Insert types for creating new records
 export type ServiceInsert = Database['public']['Tables']['services']['Insert']
@@ -18,6 +20,8 @@ export type BookingInsert = Database['public']['Tables']['bookings']['Insert']
 export type CustomerInsert = Database['public']['Tables']['customers']['Insert']
 export type StaffScheduleInsert = Database['public']['Tables']['staff_schedules']['Insert']
 export type ScheduleBlockInsert = Database['public']['Tables']['schedule_blocks']['Insert']
+export type ServiceAddonInsert = Database['public']['Tables']['service_addons']['Insert']
+export type BookingAddonInsert = Database['public']['Tables']['booking_addons']['Insert']
 
 // Update types for modifying records
 export type ServiceUpdate = Database['public']['Tables']['services']['Update']
@@ -32,6 +36,7 @@ export interface BookingWithRelations extends Booking {
   room: Room
   customer: Customer
   walk_in_origin?: Pick<WalkIn, 'id' | 'customer_name' | 'checked_in_at'> | null
+  addons?: BookingAddonWithDetails[]
   // Reschedule tracking fields (optional as they may not be in the base Booking type)
   rescheduled_count?: number
   rescheduled_from?: string | null
@@ -39,6 +44,10 @@ export interface BookingWithRelations extends Booking {
   original_start_time?: string | null
   last_rescheduled_at?: string | null
   reschedule_reason?: string | null
+}
+
+export interface BookingAddonWithDetails extends BookingAddon {
+  addon: ServiceAddon
 }
 
 export interface StaffWithRoom extends Staff {
@@ -183,6 +192,14 @@ export interface BookingFormData {
   notes?: string
   payment_option?: PaymentOption
   payment_status?: PaymentStatus
+  selected_addons?: SelectedAddon[]
+}
+
+export interface SelectedAddon {
+  addon_id: string
+  quantity: number
+  price: number
+  duration: number
 }
 
 // Validation types

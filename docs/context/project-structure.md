@@ -1,12 +1,17 @@
 # Dermal Skin Clinic Booking System - Project Structure
 
+**Last Updated**: August 27, 2025  
+**Current Version**: v2.1.0 (Staff Reassignment & Modal Management)
+
 ## Root Directory Structure
 ```
 dermal-booking-app/
 ├── docs/                          # Documentation
 │   ├── PRD.md                     # Project Requirements Document
-│   ├── payment-links.md           # Master payment links documentation (NEW)
-│   ├── payment-system-implementation.md # Payment system implementation summary (NEW)
+│   ├── payment-links.md           # Master payment links documentation 
+│   ├── payment-system-implementation.md # Payment system implementation summary
+│   ├── RESCHEDULE_FEATURE.md      # Reschedule functionality documentation
+│   ├── FEATURES.md                # Complete feature documentation
 │   ├── context/                   # Context files for AI
 │   │   ├── business-logic.md      # Business rules and algorithms
 │   │   ├── staff-room-matrix.md   # Staff capabilities and room assignments
@@ -41,6 +46,11 @@ dermal-booking-app/
 │   │   │   ├── confirmation/      # Booking confirmation
 │   │   │   └── confirmation-couples/ # Couples booking confirmation
 │   │   └── api/                   # API routes
+│   │       ├── admin/             # Admin API endpoints
+│   │       │   └── bookings/      # Admin booking management
+│   │       │       └── [id]/      # Individual booking operations
+│   │       │           ├── reschedule/ # Reschedule functionality
+│   │       │           └── reassign-staff/ # Staff reassignment
 │   │       ├── bookings/          # Booking API endpoints
 │   │       ├── services/          # Services API
 │   │       ├── staff/             # Staff API
@@ -61,9 +71,11 @@ dermal-booking-app/
 │   │   │   ├── tooltip.tsx        # Hover tooltips
 │   │   │   └── ...
 │   │   ├── admin/                 # Admin panel components
+│   │   │   ├── BookingDetailsModal.tsx # Comprehensive booking management modal
+│   │   │   ├── RescheduleModal.tsx # Appointment rescheduling interface
+│   │   │   ├── StaffReassignmentDropdown.tsx # Staff reassignment dropdown
 │   │   │   ├── booking-card.tsx   # Booking display cards
 │   │   │   ├── filter-bar.tsx     # Filtering controls
-│   │   │   ├── quick-actions.tsx  # Quick action buttons
 │   │   │   ├── room-timeline.tsx  # Room utilization timeline
 │   │   │   ├── service-tracking.tsx # Service analytics
 │   │   │   ├── staff-schedule.tsx # Staff schedule view
@@ -85,7 +97,8 @@ dermal-booking-app/
 │   │   ├── supabase.ts            # Supabase client configuration
 │   │   ├── booking-logic.ts       # Business logic functions
 │   │   ├── admin-booking-logic.ts # Admin-specific booking logic
-│   │   ├── payment-config.ts      # Payment configuration system (NEW)
+│   │   ├── reschedule-logic.ts    # Reschedule validation and processing
+│   │   ├── payment-config.ts      # Payment configuration system
 │   │   ├── analytics.ts           # Analytics and reporting
 │   │   ├── auth.ts                # Authentication utilities
 │   │   ├── staff-data.ts          # Staff data management
@@ -254,7 +267,17 @@ STRIPE_SECRET_KEY=your_stripe_key
 4. **Type Safety**: Define types in `src/types/`
 5. **Styling**: Use Tailwind classes and custom CSS in `src/styles/`
 
-## Recent File Updates (August 4, 2025) - Payment System Implementation Phase
+## Recent File Updates (August 27, 2025) - Staff Reassignment & Modal Management Phase
+
+### Current System Features ✅
+- Modal-based booking management through BookingDetailsModal
+- Staff reassignment functionality with availability validation
+- Reschedule system with 15-minute timing intervals
+- Confirmation emails for admin-created appointments
+- Green availability indicators removed from "Any Available Staff" column (now shows dots)
+- All management functions accessed through booking details modal interface
+
+## Previous File Updates (August 4, 2025) - Payment System Implementation Phase
 
 ### New Payment System Files Created ✅
 - `/docs/payment-links.md` - Master documentation of all 46 payment links with service coverage
