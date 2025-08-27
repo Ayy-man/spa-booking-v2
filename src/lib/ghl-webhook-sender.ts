@@ -24,6 +24,17 @@ interface BookingData {
   staffId?: string
   room?: string
   roomId?: string
+  addons?: Array<{
+    id: string
+    name: string
+    price: number
+    duration: number
+    quantity?: number
+  }>
+  addonsTotal?: {
+    price: number
+    duration: number
+  }
 }
 
 interface WebhookResponse {
@@ -67,7 +78,11 @@ class GHLWebhookSender {
           price: booking.price,
           currency: PAYMENT_CONFIG.currency,
           location: `${BUSINESS_CONFIG.name}, ${BUSINESS_CONFIG.location}`,
-          booking_notes: customer.isNewCustomer ? 'First-time customer' : 'Returning customer'
+          booking_notes: customer.isNewCustomer ? 'First-time customer' : 'Returning customer',
+          addons: booking.addons || [],
+          addons_total: booking.addonsTotal || { price: 0, duration: 0 },
+          total_price: booking.price + (booking.addonsTotal?.price || 0),
+          total_duration: booking.duration + (booking.addonsTotal?.duration || 0)
         },
         preferences: {
           communication_preference: 'email',
@@ -149,7 +164,11 @@ class GHLWebhookSender {
           price: booking.price,
           currency: PAYMENT_CONFIG.currency,
           status: 'confirmed',
-          confirmation_code: `CONF${Date.now()}`
+          confirmation_code: `CONF${Date.now()}`,
+          addons: booking.addons || [],
+          addons_total: booking.addonsTotal || { price: 0, duration: 0 },
+          total_price: booking.price + (booking.addonsTotal?.price || 0),
+          total_duration: booking.duration + (booking.addonsTotal?.duration || 0)
         },
         location: {
           name: BUSINESS_CONFIG.name,

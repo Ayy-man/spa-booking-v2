@@ -32,6 +32,8 @@ interface DailySummaryData {
     cancelled: number
     totalRevenue: number
     depositsCollected: number
+    addonsRevenue?: number
+    totalWithAddons?: number
   }
   staffPerformance: Array<{
     name: string
@@ -293,13 +295,21 @@ export function DailySummary({ className }: DailySummaryProps) {
               <CardHeader className="pb-2">
                 <CardDescription>Total Revenue</CardDescription>
                 <CardTitle className="text-3xl text-blue-600">
-                  {formatCurrency(summaryData.overview.totalRevenue)}
+                  {formatCurrency(summaryData.overview.totalWithAddons || summaryData.overview.totalRevenue)}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <DollarSign className="h-4 w-4 text-blue-600" />
-                  <span>{summaryData.overview.depositsCollected} deposits collected</span>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <DollarSign className="h-4 w-4 text-blue-600" />
+                    <span>{summaryData.overview.depositsCollected} deposits collected</span>
+                  </div>
+                  {summaryData.overview.addonsRevenue !== undefined && summaryData.overview.addonsRevenue > 0 && (
+                    <div className="flex items-center space-x-2 text-sm text-green-600">
+                      <TrendingUp className="h-4 w-4" />
+                      <span>+{formatCurrency(summaryData.overview.addonsRevenue)} from add-ons</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

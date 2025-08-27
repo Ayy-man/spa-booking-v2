@@ -12,6 +12,11 @@ A comprehensive medical spa booking system built for Dermal Skin Clinic and Spa 
 **New Features in v2.2.0**:
 - 🎯 **150+ Services Added** - Comprehensive service catalog expansion
 - ➕ **Add-on System** - Flexible service enhancements with 25+ add-on options
+  - Dynamic add-on selection during booking flow
+  - Add-ons saved to database with booking
+  - Add-ons included in webhooks and daily reports
+  - Admin panel displays add-on details with totals
+  - Revenue tracking includes add-on revenue separately
 - 💆 **Extended Service Categories** - Face treatments #1-4, signature treatments, body treatments
 - 💅 **Complete Waxing Menu** - Full range of waxing services with automatic waiver requirements
 - 📋 **Enhanced Waiver Detection** - Automatic waiver triggers for all applicable services

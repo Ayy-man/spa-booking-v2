@@ -299,7 +299,8 @@ export default function ConfirmationPage() {
           start_time: validateTimeForDatabase(bookingData.time, 'start_time'),
           notes: bookingData.customer.specialRequests || undefined,
           payment_option: paymentOption,
-          payment_status: paymentStatus
+          payment_status: paymentStatus,
+          addons: bookingData.addons || []
         })
         
         if (!bookingResult || !bookingResult.booking_id) {
@@ -352,7 +353,9 @@ export default function ConfirmationPage() {
               staff: (staffNameMap as any)[bookingData.staff] || bookingData.staff,
               staffId: bookingData.staff,
               room: '1', // Default room for webhook
-              roomId: '1' // Default room for webhook
+              roomId: '1', // Default room for webhook
+              addons: bookingData.addons || [],
+              addonsTotal: bookingData.addonsTotal || { price: 0, duration: 0 }
             }
           )
           

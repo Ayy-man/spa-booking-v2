@@ -17,6 +17,8 @@ interface DailySummaryData {
     cancelled: number
     totalRevenue: number
     depositsCollected: number
+    addonsRevenue: number
+    totalWithAddons: number
   }
   staffPerformance: Array<{
     name: string
@@ -46,7 +48,11 @@ export async function GET(request: NextRequest) {
         *,
         staff:staff(name),
         services:services(name, category, price),
-        customers:customers(first_name, last_name)
+        customers:customers(first_name, last_name),
+        booking_addons(
+          *,
+          service_addon:service_addons(name, price, duration)
+        )
       `)
       .eq('appointment_date', date)
       .order('start_time')
@@ -68,22 +74,35 @@ export async function GET(request: NextRequest) {
       console.error('Error fetching tomorrow bookings:', tomorrowError)
     }
 
-    // Calculate overview metrics
+    // Calculate overview metrics including add-ons
+    let addonsRevenue = 0
+    bookings?.forEach(booking => {
+      if ((booking.status === 'completed' || booking.status === 'confirmed') && booking.booking_addons) {
+        booking.booking_addons.forEach((addon: any) => {
+          addonsRevenue += (addon.price || 0) * (addon.quantity || 1)
+        })
+      }
+    })
+    
+    const baseRevenue = bookings?.reduce((sum, b) => {
+      if (b.status === 'completed' || b.status === 'confirmed') {
+        return sum + (parseFloat(b.final_price) || 0)
+      }
+      return sum
+    }, 0) || 0
+    
     const overview = {
       totalAppointments: bookings?.length || 0,
       completed: bookings?.filter(b => b.status === 'completed').length || 0,
       noShows: bookings?.filter(b => b.status === 'no_show').length || 0,
       cancelled: bookings?.filter(b => b.status === 'cancelled').length || 0,
-      totalRevenue: bookings?.reduce((sum, b) => {
-        if (b.status === 'completed' || b.status === 'confirmed') {
-          return sum + (parseFloat(b.final_price) || 0)
-        }
-        return sum
-      }, 0) || 0,
+      totalRevenue: baseRevenue,
       depositsCollected: bookings?.filter(b => 
         b.payment_option === 'deposit' && 
         (b.status === 'confirmed' || b.status === 'completed')
-      ).length || 0
+      ).length || 0,
+      addonsRevenue: addonsRevenue,
+      totalWithAddons: baseRevenue + addonsRevenue
     }
 
     // Calculate staff performance

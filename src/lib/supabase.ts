@@ -91,7 +91,11 @@ export const supabaseClient = {
         *,
         service:services(*),
         staff:staff(*),
-        room:rooms(*)
+        room:rooms(*),
+        booking_addons(
+          *,
+          service_addon:service_addons(*)
+        )
       `)
       .eq('appointment_date', date)
       .neq('status', 'cancelled')
@@ -113,6 +117,13 @@ export const supabaseClient = {
     notes?: string
     payment_option?: string
     payment_status?: string
+    addons?: Array<{
+      id: string
+      name: string
+      price: number
+      duration: number
+      quantity?: number
+    }>
   }) {
     // Get service details first
     const { data: service, error: serviceError } = await supabase
@@ -183,15 +194,28 @@ export const supabaseClient = {
       customerId = newCustomer.id
     }
 
-    // Validate and calculate end time
+    // Calculate add-ons totals
+    let addonsPrice = 0
+    let addonsDuration = 0
+    if (booking.addons && booking.addons.length > 0) {
+      booking.addons.forEach(addon => {
+        const quantity = addon.quantity || 1
+        addonsPrice += addon.price * quantity
+        addonsDuration += addon.duration * quantity
+      })
+    }
+    
+    // Validate and calculate end time (including add-ons duration)
     const validatedStartTime = validateTimeForDatabase(booking.start_time, 'start_time')
     const startTime = new Date(`2000-01-01T${validatedStartTime}`)
-    const endTime = new Date(startTime.getTime() + service.duration * 60000)
+    const totalDuration = service.duration + addonsDuration
+    const endTime = new Date(startTime.getTime() + totalDuration * 60000)
     const endTimeStr = endTime.toTimeString().slice(0, 5)
 
     // Create booking with proper schema
     const discount = 0
-    const finalPrice = service.price - discount
+    const totalPrice = service.price + addonsPrice
+    const finalPrice = totalPrice - discount
     
     const { data: newBooking, error: bookingError } = await supabase
       .from('bookings')
@@ -203,8 +227,8 @@ export const supabaseClient = {
         appointment_date: booking.appointment_date,
         start_time: validatedStartTime,
         end_time: endTimeStr,
-        duration: service.duration,
-        total_price: service.price,
+        duration: totalDuration,
+        total_price: totalPrice,
         discount: discount,
         final_price: finalPrice,
         status: 'pending',
@@ -217,6 +241,27 @@ export const supabaseClient = {
       .single()
 
     if (bookingError) throw bookingError
+
+    // Save add-ons if any
+    if (booking.addons && booking.addons.length > 0) {
+      const bookingAddons = booking.addons.map(addon => ({
+        booking_id: newBooking.id,
+        addon_id: addon.id,
+        quantity: addon.quantity || 1,
+        price: addon.price,
+        duration: addon.duration
+      }))
+      
+      const { error: addonsError } = await supabase
+        .from('booking_addons')
+        .insert(bookingAddons)
+      
+      if (addonsError) {
+        console.error('Failed to save add-ons:', addonsError)
+        // Don't throw error - booking was created successfully
+        // Add-ons can be added manually if needed
+      }
+    }
 
     return {
       booking_id: newBooking.id.toString(),
@@ -233,7 +278,11 @@ export const supabaseClient = {
         service:services(*),
         staff:staff(*),
         room:rooms(*),
-        customer:customers(*)
+        customer:customers(*),
+        booking_addons(
+          *,
+          service_addon:service_addons(*)
+        )
       `)
       .order('appointment_date', { ascending: true })
       .order('start_time', { ascending: true })

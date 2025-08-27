@@ -296,6 +296,39 @@ export function BookingDetailsModal({
                   </div>
                 </div>
 
+                {/* Add-ons Information */}
+                {booking.booking_addons && booking.booking_addons.length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="font-semibold text-lg">Add-ons</h3>
+                    <div className="space-y-2">
+                      {booking.booking_addons.map((addon: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                          <div>
+                            <p className="font-medium">{addon.service_addon?.name || addon.addon_name || 'Unknown Add-on'}</p>
+                            {addon.quantity > 1 && (
+                              <p className="text-sm text-gray-600">Quantity: {addon.quantity}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">${addon.price * (addon.quantity || 1)}</p>
+                            <p className="text-sm text-gray-600">+{addon.duration * (addon.quantity || 1)} min</p>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="border-t pt-2">
+                        <div className="flex justify-between items-center font-medium">
+                          <span>Add-ons Total:</span>
+                          <span>
+                            ${booking.booking_addons.reduce((total: number, addon: any) => 
+                              total + (addon.price * (addon.quantity || 1)), 0
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Payment Information */}
                 <div className="space-y-3">
                   <h3 className="font-semibold text-lg flex items-center gap-2">

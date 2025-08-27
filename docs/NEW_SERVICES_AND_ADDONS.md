@@ -4,13 +4,57 @@
 This document details the comprehensive service expansion and add-on system implementation for the Dermal Spa booking system. Approximately 110+ new services have been added along with a flexible add-on system that enhances existing services.
 
 ## Database Migration
-- **File**: `/supabase/migrations/053_add_services_and_addons.sql`
+- **Files**: 
+  - `/supabase/migrations/053_add_services_and_addons.sql` (initial setup)
+  - `/supabase/migrations/054_add_missing_services_and_addons.sql` (complete service catalog)
+  - `/supabase/migrations/055_fix_addons_safe.sql` (safe fixes for existing databases)
 - **Status**: ✅ Complete
 - **Features**:
   - Created `service_addons` table for storing add-on services
   - Created `booking_addons` junction table for linking bookings with add-ons
   - Added `allows_addons` flag to services table
   - Created helper functions for add-on management
+  - RLS policies for secure access to add-ons data
+
+## Implementation Details
+
+### Frontend Components
+1. **Add-ons Selection Page** (`/src/app/booking/addons/page.tsx`)
+   - Dynamic loading of available add-ons based on selected service
+   - Quantity selection for applicable add-ons
+   - Price and duration calculations
+   - Skip option for users who don't want add-ons
+
+2. **Booking Flow Integration**
+   - Services with `allows_addons=true` automatically route to add-ons page
+   - Add-ons saved to booking state and passed through flow
+   - Total price and duration updated to include add-ons
+
+3. **Admin Panel Updates** (`/src/components/admin/BookingDetailsModal.tsx`)
+   - Display add-ons with quantities in booking details
+   - Show add-ons total separately
+   - Include add-ons in booking information
+
+### Backend Integration
+1. **Database Operations** (`/src/lib/supabase.ts`)
+   - `createBooking()` updated to save add-ons to `booking_addons` table
+   - Total price and duration calculations include add-ons
+   - `getBookings()` queries include add-ons data
+
+2. **Webhook Integration** (`/src/lib/ghl-webhook-sender.ts`)
+   - Add-ons included in booking confirmation webhooks
+   - Total price and duration reflect add-ons
+   - Structured add-ons data sent to GoHighLevel
+
+3. **Daily Reports** (`/src/app/api/admin/daily-summary/route.ts`)
+   - Add-ons revenue tracked separately
+   - Total revenue includes add-ons
+   - Visual indicator in dashboard for add-ons revenue
+
+### API Endpoints
+- **GET `/api/addons/[serviceId]`**: Fetch available add-ons for a service
+  - Returns filtered add-ons based on service category
+  - Includes price, duration, and quantity limits
 
 ## New Services Added
 
