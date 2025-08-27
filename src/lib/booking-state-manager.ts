@@ -17,6 +17,13 @@ export interface BookingState {
   }
   selectedService?: ServiceData
   
+  // Add-ons
+  selectedAddons?: AddonData[]
+  addonsTotal?: {
+    price: number
+    duration: number
+  }
+  
   // Date and time
   selectedDate?: string
   selectedTime?: string
@@ -54,6 +61,16 @@ interface ServiceData {
   name: string
   price: number
   duration: number
+  category?: string
+  description?: string
+}
+
+export interface AddonData {
+  id: string
+  name: string
+  price: number
+  duration: number
+  quantity?: number
   category?: string
   description?: string
 }

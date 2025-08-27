@@ -21,39 +21,46 @@ const steps: ProgressStep[] = [
     order: 1
   },
   {
+    id: 'addons',
+    title: 'Add-ons',
+    subtitle: 'Enhance service',
+    path: '/booking/addons',
+    order: 2
+  },
+  {
     id: 'datetime',
     title: 'Date & Time',
     subtitle: 'Pick appointment',
     path: '/booking/date-time',
-    order: 2
+    order: 3
   },
   {
     id: 'staff',
     title: 'Staff',
     subtitle: 'Select therapist',
     path: '/booking/staff',
-    order: 3
+    order: 4
   },
   {
     id: 'customer',
     title: 'Your Info',
     subtitle: 'Contact details',
     path: '/booking/customer-info',
-    order: 4
+    order: 5
   },
   {
     id: 'waiver',
     title: 'Waiver',
     subtitle: 'Sign consent',
     path: '/booking/waiver',
-    order: 5
+    order: 6
   },
   {
     id: 'confirmation',
     title: 'Confirm',
     subtitle: 'Review booking',
     path: '/booking/confirmation',
-    order: 6
+    order: 7
   }
 ]
 
@@ -88,21 +95,26 @@ export function BookingProgressIndicator({
       const hasService = localStorage.getItem('bookingData') || localStorage.getItem('selectedService')
       if (hasService) completedIds.push(1)
       
+      // Check if add-ons step is completed (either add-ons selected or skipped)
+      const state = localStorage.getItem('spa_booking_state')
+      const hasAddonsDecision = state ? JSON.parse(state).selectedAddons !== undefined : false
+      if (hasAddonsDecision && hasService) completedIds.push(2)
+      
       // Check if date/time is selected
       const hasDateTime = localStorage.getItem('selectedDate') && localStorage.getItem('selectedTime')
-      if (hasDateTime && hasService) completedIds.push(2)
+      if (hasDateTime && hasService && hasAddonsDecision) completedIds.push(3)
       
       // Check if staff is selected
       const hasStaff = localStorage.getItem('selectedStaff')
-      if (hasStaff && hasDateTime && hasService) completedIds.push(3)
+      if (hasStaff && hasDateTime && hasService && hasAddonsDecision) completedIds.push(4)
       
       // Check if customer info is provided
       const hasCustomerInfo = localStorage.getItem('customerInfo')
-      if (hasCustomerInfo && hasStaff && hasDateTime && hasService) completedIds.push(4)
+      if (hasCustomerInfo && hasStaff && hasDateTime && hasService && hasAddonsDecision) completedIds.push(5)
       
       // Check if waiver is completed (only if required)
       const waiverCompleted = localStorage.getItem('waiverCompleted')
-      if (waiverCompleted === 'true' && hasCustomerInfo) completedIds.push(5)
+      if (waiverCompleted === 'true' && hasCustomerInfo) completedIds.push(6)
       
       // If on confirmation page without waiver being required, skip waiver step in completion
       if (matchingStep.id === 'confirmation' && waiverCompleted !== 'true') {
@@ -118,7 +130,7 @@ export function BookingProgressIndicator({
           
           if (!requiresWaiverCheck(service)) {
             // Service doesn't require waiver, so mark waiver step as completed
-            completedIds.push(5)
+            completedIds.push(6)
           }
         }
       }

@@ -112,8 +112,12 @@ export default function BookingPage() {
         selectedServiceData.price
       )
       
-      // Navigate to date selection
-      window.location.href = '/booking/date-time'
+      // Navigate to add-ons if service allows them, otherwise go to date selection
+      if (selectedServiceData.allows_addons) {
+        window.location.href = '/booking/addons'
+      } else {
+        window.location.href = '/booking/date-time'
+      }
     }
   }
 
@@ -214,8 +218,14 @@ export default function BookingPage() {
                       key={service.id}
                       className="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary dark:hover:border-primary-light transition-all cursor-pointer group"
                       onClick={() => {
-                        // Check if this is a package or couples-eligible service
-                        if (category.category === 'packages' || service.name.toLowerCase().includes('couple')) {
+                        // Show couples modal for packages, massages 60min+, and services with "couple" in name
+                        const isCouplesEligible = 
+                          category.category === 'packages' || 
+                          service.name.toLowerCase().includes('couple') ||
+                          (category.category === 'massages' && service.duration >= 60) ||
+                          (category.category === 'facials' && service.duration >= 60)
+                        
+                        if (isCouplesEligible) {
                           handlePackageSelect(service.id)
                         } else {
                           handleServiceSelect(service.id)
