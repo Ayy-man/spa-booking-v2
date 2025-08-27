@@ -56,14 +56,14 @@ ON CONFLICT (id) DO NOTHING;
 
 -- 3 FACE PACKAGES (90 minutes each)
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
-('3face_basic_micro', '3 Face Basic Facial + Microdermabrasion + Extreme Softness', 'Comprehensive facial package with microdermabrasion', 'packages', 'FACE & BODY PACKAGES', 90, 120, true, false),
-('3face_deep_cleansing', '3 Face + Deep Cleansing Facial', 'Triple facial treatment with deep cleansing', 'packages', 'FACE & BODY PACKAGES', 90, 140, true, false),
-('3face_placenta', '3 Face + Placenta Collagen/Whitening/Anti-Acne Facial', 'Advanced facial package with specialized treatments', 'packages', 'FACE & BODY PACKAGES', 90, 150, true, false),
-('3face_treatment1', '3 Face + Face Treatment #1', 'Triple facial with premium treatment level 1', 'packages', 'FACE & BODY PACKAGES', 90, 160, true, false),
-('3face_treatment2', '3 Face + Face Treatment #2', 'Triple facial with premium treatment level 2', 'packages', 'FACE & BODY PACKAGES', 90, 175, true, false),
-('3face_vitaminc', '3 Face + Vitamin C/Acne Vulgaris Facial', 'Triple facial with vitamin C treatment', 'packages', 'FACE & BODY PACKAGES', 90, 180, true, false),
-('3face_peel', '3 Face + Peel', 'Triple facial with chemical peel', 'packages', 'FACE & BODY PACKAGES', 90, 185, true, false),
-('3face_deep_tissue', '3 Face + Deep Tissue', 'Triple facial with deep tissue massage', 'packages', 'FACE & BODY PACKAGES', 90, 200, true, false)
+('3face_basic_micro', '3 Face Basic Facial + Microdermabrasion + Extreme Softness', 'Comprehensive facial package with microdermabrasion', 'package', 'FACE & BODY PACKAGES', 90, 120, true, false),
+('3face_deep_cleansing', '3 Face + Deep Cleansing Facial', 'Triple facial treatment with deep cleansing', 'package', 'FACE & BODY PACKAGES', 90, 140, true, false),
+('3face_placenta', '3 Face + Placenta Collagen/Whitening/Anti-Acne Facial', 'Advanced facial package with specialized treatments', 'package', 'FACE & BODY PACKAGES', 90, 150, true, false),
+('3face_treatment1', '3 Face + Face Treatment #1', 'Triple facial with premium treatment level 1', 'package', 'FACE & BODY PACKAGES', 90, 160, true, false),
+('3face_treatment2', '3 Face + Face Treatment #2', 'Triple facial with premium treatment level 2', 'package', 'FACE & BODY PACKAGES', 90, 175, true, false),
+('3face_vitaminc', '3 Face + Vitamin C/Acne Vulgaris Facial', 'Triple facial with vitamin C treatment', 'package', 'FACE & BODY PACKAGES', 90, 180, true, false),
+('3face_peel', '3 Face + Peel', 'Triple facial with chemical peel', 'package', 'FACE & BODY PACKAGES', 90, 185, true, false),
+('3face_deep_tissue', '3 Face + Deep Tissue', 'Triple facial with deep tissue massage', 'package', 'FACE & BODY PACKAGES', 90, 200, true, false)
 ON CONFLICT (id) DO NOTHING;
 
 -- ADDITIONAL WAXING SERVICES (beyond what exists)
@@ -147,7 +147,7 @@ INSERT INTO public.services (id, name, description, category, ghl_category, dura
 ('hydrafacial_sig', 'HydraFacial Signature', 'Signature HydraFacial treatment', 'facials', 'FACE TREATMENTS', 90, 199, true, false),
 ('nano_face_sig', 'Nano Face Treatment Signature', 'Signature nano infusion treatment', 'facials', 'FACE TREATMENTS', 90, 250, true, false),
 ('dermaplaning_sig', 'Derma Planning Signature', 'Signature dermaplaning treatment', 'facials', 'FACE TREATMENTS', 90, 230, true, false),
-('rf_package', 'Radio Frequency Package', 'Complete RF treatment package', 'packages', 'FACE & BODY PACKAGES', 90, 280, true, false),
+('rf_package', 'Radio Frequency Package', 'Complete RF treatment package', 'package', 'FACE & BODY PACKAGES', 90, 280, true, false),
 ('glassy_skin_sig', 'Glassy Skin Signature', 'Signature glassy skin treatment', 'facials', 'FACE TREATMENTS', 90, 190, true, false),
 ('underarm_white_products', 'Underarm Whitening (With Products)', 'Underarm whitening with take-home products', 'treatments', 'BODY TREATMENTS & BOOSTERS', 60, 150, true, false),
 ('underarm_white_no_products', 'Underarm Whitening (Without Products)', 'Underarm whitening treatment only', 'treatments', 'BODY TREATMENTS & BOOSTERS', 45, 99, true, false)
@@ -165,7 +165,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- MISCELLANEOUS SERVICES
 INSERT INTO public.services (id, name, description, category, ghl_category, duration, price, is_active, allows_addons) VALUES
-('vip_membership', 'VIP Card Membership (Annual)', 'Annual VIP membership with benefits', 'membership', 'FACE & BODY PACKAGES', 15, 50, true, false),
+('vip_membership', 'VIP Card Membership (Annual)', 'Annual VIP membership with benefits', 'package', 'FACE & BODY PACKAGES', 15, 50, true, false),
 ('soothing_facial', 'Soothing Facial', 'Calming and soothing facial treatment', 'facials', 'FACE TREATMENTS', 60, 120, true, false),
 ('deep_blackheads', 'Deep Blackheads Extraction', 'Professional blackhead extraction', 'facials', 'FACE TREATMENTS', 15, 10, true, false),
 ('whiteheads', 'Whiteheads Extraction', 'Professional whitehead extraction', 'facials', 'FACE TREATMENTS', 15, 10, true, false),
