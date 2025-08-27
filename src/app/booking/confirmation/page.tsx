@@ -134,6 +134,8 @@ export default function ConfirmationPage() {
           time: parsedTime,
           staff: state.selectedStaff,
           customer,
+          addons: state.selectedAddons || [],
+          addonsTotal: state.addonsTotal || { price: 0, duration: 0 },
           existingBookingId // Store the booking ID if we already have one
         })
         
@@ -619,9 +621,38 @@ export default function ConfirmationPage() {
               <div className="space-y-2 text-sm dark:text-gray-300">
                 <div><span className="font-medium">Service:</span> {bookingData.service.name}</div>
                 <div><span className="font-medium">Date:</span> {formatDate(bookingData.date)}</div>
-                <div><span className="font-medium">Time:</span> {formatTimeRange(bookingData.time, bookingData.service.duration)}</div>
+                <div><span className="font-medium">Time:</span> {formatTimeRange(bookingData.time, bookingData.service.duration + (bookingData.addonsTotal?.duration || 0))}</div>
                 <div><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap] || bookingData.staff || 'Any Available Staff'}</div>
-                <div><span className="font-medium">Price:</span> ${bookingData.service.price}</div>
+                <div><span className="font-medium">Base Price:</span> ${bookingData.service.price}</div>
+                
+                {bookingData.addons && bookingData.addons.length > 0 && (
+                  <>
+                    <div className="mt-3 pt-2 border-t border-gray-300 dark:border-gray-600">
+                      <div className="font-medium text-gray-700 dark:text-gray-300 mb-2">Add-ons:</div>
+                      {bookingData.addons.map((addon: any) => (
+                        <div key={addon.id} className="ml-4 flex justify-between items-center">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            • {addon.name} {addon.quantity && addon.quantity > 1 ? `(×${addon.quantity})` : ''}
+                          </span>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            +${addon.price * (addon.quantity || 1)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="pt-2 border-t border-gray-300 dark:border-gray-600">
+                      <div className="flex justify-between items-center font-medium">
+                        <span>Total Price:</span>
+                        <span>${bookingData.service.price + (bookingData.addonsTotal?.price || 0)}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
+                
+                {(!bookingData.addons || bookingData.addons.length === 0) && (
+                  <div><span className="font-medium">Price:</span> ${bookingData.service.price}</div>
+                )}
+                
                 <div><span className="font-medium">Customer:</span> {bookingData.customer.name}</div>
               </div>
             </div>
