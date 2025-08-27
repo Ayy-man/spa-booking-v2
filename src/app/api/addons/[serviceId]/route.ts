@@ -24,13 +24,32 @@ export async function GET(
       return NextResponse.json({ addons: [] })
     }
 
-    // Call the database function to get available add-ons
-    const { data: addons, error: addonsError } = await supabase
-      .rpc('get_available_addons', { p_service_id: serviceId })
+    // Try to call the database function first
+    let addons = null
+    let addonsError = null
+    
+    try {
+      const result = await supabase.rpc('get_available_addons', { service_id_param: serviceId })
+      addons = result.data
+      addonsError = result.error
+    } catch (e) {
+      // Function might not exist, fall back to direct query
+      console.log('RPC function not found, using direct query')
+    }
 
-    if (addonsError) {
-      console.error('Error fetching add-ons:', addonsError)
-      return NextResponse.json({ error: 'Failed to fetch add-ons' }, { status: 500 })
+    // If RPC failed or doesn't exist, query directly
+    if (addonsError || !addons) {
+      const { data: directAddons, error: directError } = await supabase
+        .from('service_addons')
+        .select('*')
+        .or(`applies_to_services.cs.{${serviceId}},applies_to_services.is.null`)
+
+      if (directError) {
+        console.error('Error fetching add-ons directly:', directError)
+        return NextResponse.json({ error: 'Failed to fetch add-ons' }, { status: 500 })
+      }
+
+      addons = directAddons
     }
 
     // Format the response
