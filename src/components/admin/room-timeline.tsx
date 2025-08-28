@@ -43,7 +43,7 @@ const SERVICE_COLORS: Record<ServiceCategory, { bg: string; border: string; text
 
 // Business hours configuration
 const BUSINESS_HOURS = {
-  start: 8, // 8 AM
+  start: 9, // 9 AM (business starts at 9)
   end: 20,  // 8 PM
   slotDuration: 15 // 15 minutes
 }
@@ -334,7 +334,7 @@ export function RoomTimeline({
                 <div>
                   <h3 className="font-semibold text-gray-900">Daily Timeline</h3>
                   <span className="text-sm text-gray-600">
-                    {BUSINESS_HOURS.start}:00 AM - {BUSINESS_HOURS.end > 12 ? BUSINESS_HOURS.end - 12 : BUSINESS_HOURS.end}:00 {BUSINESS_HOURS.end >= 12 ? 'PM' : 'AM'}
+                    {BUSINESS_HOURS.start}:00 AM - {BUSINESS_HOURS.end > 12 ? BUSINESS_HOURS.end - 12 : BUSINESS_HOURS.end}:00 PM
                   </span>
                 </div>
               </div>
@@ -358,12 +358,12 @@ export function RoomTimeline({
               {/* Current Time Indicator */}
               {currentTimePosition >= 0 && (
                 <div 
-                  className="absolute left-16 right-0 z-50 flex items-center"
+                  className="absolute left-20 right-0 z-50 flex items-center"
                   style={{ top: `${currentTimePosition}%` }}
                 >
                   <div className="w-full h-0.5 bg-red-500 opacity-80"></div>
                   <div className="absolute -left-2 w-4 h-4 bg-red-500 rounded-full opacity-80"></div>
-                  <div className="absolute -left-16 bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg">
+                  <div className="absolute -left-20 bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg">
                     {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
@@ -371,7 +371,7 @@ export function RoomTimeline({
               
               {/* Header Row */}
               <div className="flex border-b-2 border-primary/20 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10 shadow-sm">
-                <div className="w-16 flex items-center justify-center py-3 text-sm font-semibold text-primary border-r-2 border-primary/20 bg-primary/5">
+                <div className="w-20 flex items-center justify-center py-3 text-sm font-semibold text-primary border-r-2 border-primary/20 bg-primary/5">
                   Time
                 </div>
                 {rooms.map(room => (
@@ -388,58 +388,48 @@ export function RoomTimeline({
               {/* Time Slots */}
               {timeSlots.map((slot, index) => {
                 const isHourMark = slot.minute === 0
-                const isNextHour = index < timeSlots.length - 1 && timeSlots[index + 1]?.minute === 0
+                const isHalfHour = slot.minute === 30
+                
+                // Format time display
+                const displayHour = slot.hour > 12 ? slot.hour - 12 : slot.hour === 0 ? 12 : slot.hour
+                const ampm = slot.hour >= 12 ? 'PM' : 'AM'
+                const timeDisplay = `${displayHour}:${slot.minute.toString().padStart(2, '0')}`
                 
                 return (
-                  <React.Fragment key={`${slot.hour}-${slot.minute}`}>
-                    {/* Hour Header - only show at the beginning of each hour */}
-                    {isHourMark && (
-                      <div className="flex border-b-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10 shadow-sm">
-                        <div className="w-16 flex items-center justify-center py-3 text-sm font-bold text-primary border-r bg-gradient-to-r from-primary/10 to-primary/5">
-                          {slot.hour > 12 ? slot.hour - 12 : slot.hour === 0 ? 12 : slot.hour}
-                          {slot.hour >= 12 ? ' PM' : ' AM'}
-                        </div>
-                        {rooms.map(room => (
-                          <div key={`header-${room.id}-${slot.timeString}`} className="flex-1 min-w-[200px] border-r last:border-r-0 bg-gradient-to-r from-primary/5 to-primary/10" />
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Time Slot Row */}
+                  <div key={`${slot.hour}-${slot.minute}`} className={cn(
+                    "flex border-b transition-colors hover:bg-gray-25",
+                    isHourMark ? "border-gray-300" : "border-gray-100",
+                    isHalfHour ? "border-gray-200" : ""
+                  )}>
+                    {/* Time Label - Show all times */}
                     <div className={cn(
-                      "flex border-b transition-colors hover:bg-gray-25",
-                      isHourMark ? "border-gray-200" : "border-gray-100",
-                      isNextHour ? "border-b-primary/30 shadow-sm" : "",
-                      // Enhanced visual separation for hour boundaries
-                      isNextHour ? "mb-1" : ""
+                      "w-20 flex items-center justify-center py-2 text-xs border-r transition-colors",
+                      isHourMark ? "font-bold text-primary bg-primary/10" : 
+                      isHalfHour ? "font-semibold text-gray-700 bg-gray-100" :
+                      "text-gray-600 bg-gray-50 hover:bg-gray-100"
                     )}>
-                      {/* Time Label */}
-                      <div className={cn(
-                        "w-16 flex items-center justify-center py-2 text-xs border-r transition-colors",
-                        isHourMark ? "font-semibold text-primary bg-primary/5" : "text-gray-500 bg-gray-50 hover:bg-gray-100"
-                      )}>
-                        {!isHourMark && (
-                          <span className="font-medium">:{slot.minute.toString().padStart(2, '0')}</span>
-                        )}
-                      </div>
+                      <span className={isHourMark ? "text-sm" : ""}>
+                        {timeDisplay}
+                        {isHourMark && <span className="ml-1 text-xs">{ampm}</span>}
+                      </span>
+                    </div>
 
-                      {/* Room Columns */}
-                      {rooms.map(room => {
-                        const booking = getBookingForSlot(room.id, slot.timeString)
-                        const isStart = booking && isBookingStart(booking, slot.timeString)
-                        
-                        return (
-                          <div 
-                            key={`${room.id}-${slot.timeString}`} 
-                            className={cn(
-                              "flex-1 min-w-[200px] border-r last:border-r-0 relative transition-all duration-200",
-                              // Base styling with subtle room differentiation
-                              parseInt(room.name.replace('Room ', '')) % 2 === 0 ? "bg-white" : "bg-gray-50/50",
-                              // Hour boundary styling
-                              isHourMark && "border-t border-primary/10",
-                              isNextHour && "border-b-2 border-primary/20 shadow-sm"
-                            )}
-                          >
+                    {/* Room Columns */}
+                    {rooms.map(room => {
+                      const booking = getBookingForSlot(room.id, slot.timeString)
+                      const isStart = booking && isBookingStart(booking, slot.timeString)
+                      
+                      return (
+                        <div 
+                          key={`${room.id}-${slot.timeString}`} 
+                          className={cn(
+                            "flex-1 min-w-[200px] border-r last:border-r-0 relative transition-all duration-200",
+                            // Base styling with subtle room differentiation
+                            parseInt(room.name.replace('Room ', '')) % 2 === 0 ? "bg-white" : "bg-gray-50/50",
+                            // Hour boundary styling
+                            isHourMark && "border-t-2 border-primary/20"
+                          )}
+                        >
                             {booking ? (
                               isStart ? (
                                 <Tooltip>
@@ -581,8 +571,7 @@ export function RoomTimeline({
                           </div>
                         )
                       })}
-                    </div>
-                  </React.Fragment>
+                  </div>
                 )
               })}
             </div>

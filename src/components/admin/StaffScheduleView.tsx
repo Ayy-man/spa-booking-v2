@@ -767,16 +767,16 @@ export function StaffScheduleView({
                       !isHourStart && "border-t"
                     )}
                   >
-                    {/* Time Column */}
+                    {/* Time Column - Show all times clearly */}
                     <div className={cn(
-                      "p-2 text-sm border-r bg-gray-50",
-                      isHourStart ? "font-medium" : "text-gray-500"
+                      "p-2 text-sm border-r",
+                      isHourStart ? "font-bold bg-primary/10 text-primary" : 
+                      slot.minute === 30 ? "font-semibold bg-gray-100 text-gray-700" :
+                      "bg-gray-50 text-gray-600"
                     )}>
-                      {isHourStart ? slot.displayTime : (
-                        <span className="text-xs text-gray-400">
-                          {slot.timeString}
-                        </span>
-                      )}
+                      <span className={isHourStart ? "text-sm" : "text-xs"}>
+                        {slot.displayTime}
+                      </span>
                     </div>
                     
                     {/* Any Available Staff Column */}
@@ -799,12 +799,7 @@ export function StaffScheduleView({
                                   )}
                                   onClick={() => canAddAppointment && handleAnyStaffClick(slot)}
                                 >
-                                  {/* Add subtle timing indicator for 15-minute marks */}
-                                  {!isHourStart && availability.totalWorking > 0 && (
-                                    <div className="absolute right-1 top-1 text-[10px] text-gray-400 opacity-60">
-                                      :{slot.minute.toString().padStart(2, '0')}
-                                    </div>
-                                  )}
+                                  {/* Empty cell - times now shown in time column */}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent side="right">
@@ -925,12 +920,7 @@ export function StaffScheduleView({
                           )}
                           onClick={() => isWorking && handleQuickAdd(member.id, slot, false)}
                         >
-                          {/* Add subtle timing indicator for 15-minute marks */}
-                          {!isHourStart && isWorking && (
-                            <div className="absolute right-1 top-1 text-[10px] text-gray-400 opacity-60">
-                              :{slot.minute.toString().padStart(2, '0')}
-                            </div>
-                          )}
+                          {/* Times now shown in time column */}
                         </div>
                       )
                     })}
