@@ -287,6 +287,13 @@ export default function ConfirmationPage() {
           paymentStatus = 'pending'
         }
 
+        // Add consultation note if this is a consultation service
+        let bookingNotes = bookingData.customer.specialRequests || ''
+        if (bookingData.service.is_consultation) {
+          const consultationNote = 'CONSULTATION - Customer needs treatment recommendations'
+          bookingNotes = bookingNotes ? `${consultationNote}\n\n${bookingNotes}` : consultationNote
+        }
+
         // Create the booking in Supabase
         bookingResult = await supabaseClient.createBooking({
           service_id: bookingData.service.id,
@@ -297,7 +304,7 @@ export default function ConfirmationPage() {
           customer_phone: bookingData.customer.phone || undefined,
           appointment_date: bookingData.date,
           start_time: validateTimeForDatabase(bookingData.time, 'start_time'),
-          notes: bookingData.customer.specialRequests || undefined,
+          notes: bookingNotes || undefined,
           payment_option: paymentOption,
           payment_status: paymentStatus,
           addons: bookingData.addons || []
@@ -593,6 +600,14 @@ export default function ConfirmationPage() {
             <p className="text-gray-600 dark:text-gray-300 mb-4">
               Your appointment has been successfully booked. You will receive a confirmation email shortly.
             </p>
+            
+            {bookingData.service.is_consultation && (
+              <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                <p className="text-blue-800 dark:text-blue-300 text-sm">
+                  <strong>Consultation Appointment:</strong> Your aesthetician will analyze your skin and recommend personalized treatments during your visit.
+                </p>
+              </div>
+            )}
             
             {paymentCompleted && (
               <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">

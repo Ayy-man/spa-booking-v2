@@ -18,6 +18,7 @@ interface Service {
   category?: string
   description?: string
   allows_addons?: boolean
+  is_consultation?: boolean
 }
 
 interface ServiceCategory {
@@ -112,8 +113,17 @@ export default function BookingPage() {
         selectedServiceData.price
       )
       
-      // Navigate to add-ons if service allows them, otherwise go to date selection
-      if (selectedServiceData.allows_addons) {
+      // Track consultation booking if applicable
+      if (selectedServiceData.is_consultation) {
+        analytics.track('consultation_booked', {
+          service_name: selectedServiceData.name,
+          price: selectedServiceData.price,
+          duration: selectedServiceData.duration
+        })
+      }
+      
+      // Navigate to add-ons if service allows them (but skip for consultations), otherwise go to date selection
+      if (selectedServiceData.allows_addons && !selectedServiceData.is_consultation) {
         window.location.href = '/booking/addons'
       } else {
         window.location.href = '/booking/date-time'
@@ -213,7 +223,7 @@ export default function BookingPage() {
                 </h2>
                 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {category.services.map((service) => (
+                  {category.services.filter(service => !service.is_consultation).map((service) => (
                     <div
                       key={service.id}
                       className="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary dark:hover:border-primary-light transition-all cursor-pointer group"
@@ -262,6 +272,34 @@ export default function BookingPage() {
                     </div>
                   ))}
                 </div>
+
+                {/* Consultation Card - Only show for Facials category */}
+                {category.category === 'facials' && (() => {
+                  const consultationService = category.services.find(s => s.is_consultation);
+                  if (!consultationService) return null;
+                  
+                  return (
+                    <div 
+                      className="consultation-card"
+                      onClick={() => handleServiceSelect(consultationService.id)}
+                    >
+                      <div className="flex items-start">
+                        <div className="consultation-icon">?</div>
+                        <div className="flex-1">
+                          <div className="consultation-header">Not Sure Which Facial You Need?</div>
+                          <div className="consultation-subheader">Book a Consultation</div>
+                          <div className="consultation-price">$25 - 30 minutes</div>
+                          <div className="consultation-description">
+                            Our skincare experts will analyze your skin and recommend the perfect treatment for your needs
+                          </div>
+                          <button className="consultation-cta">
+                            Book Consultation
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ))}
 

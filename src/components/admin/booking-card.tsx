@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicator"
 import { cn } from "@/lib/utils"
 import { BookingWithRelations } from "@/types/booking"
@@ -118,8 +119,13 @@ export function BookingCard({
 
         {/* Service Name and Couples Indicator */}
         <div className="flex items-center justify-between">
-          <h3 className={cn(textSizes.service, "text-gray-900 truncate")}>
+          <h3 className={cn(textSizes.service, "text-gray-900 truncate flex items-center gap-2")}>
             {booking.service.name}
+            {booking.service?.is_consultation && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300 text-xs">
+                Consultation
+              </Badge>
+            )}
           </h3>
           <CouplesBookingIndicator 
             bookingType={booking.booking_type} 

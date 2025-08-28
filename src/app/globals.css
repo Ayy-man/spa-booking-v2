@@ -330,6 +330,69 @@ a {
     display: none;
   }
   
+  /* Consultation Card Styles */
+  .consultation-card {
+    background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 100%);
+    border: 2px dashed #6b8dd6;
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .dark .consultation-card {
+    background: linear-gradient(135deg, rgba(107, 141, 214, 0.1) 0%, rgba(42, 42, 42, 1) 100%);
+    border: 2px dashed #8ba3d9;
+  }
+
+  .consultation-card:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+  }
+
+  .consultation-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #6b8dd6;
+    color: white;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+    margin-right: 12px;
+  }
+
+  .dark .consultation-icon {
+    background: #8ba3d9;
+    color: #1a1a1a;
+  }
+
+  .consultation-header {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+  }
+
+  .dark .consultation-header {
+    color: #e8e8e8;
+  }
+
+  .consultation-subheader {
+    font-size: 1.125rem;
+    color: #6b8dd6;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .dark .consultation-subheader {
+    color: #8ba3d9;
+  }
+
   /* Modal specific utilities */
   .modal-overlay {
     @apply fixed inset-0 bg-black bg-opacity-60 dark:bg-opacity-80 z-50 flex items-center justify-center 

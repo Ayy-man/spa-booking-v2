@@ -175,6 +175,11 @@ export function BookingDetailsModal({
                   <h3 className="font-semibold text-lg flex items-center gap-2">
                     Service Information
                     <CouplesBookingIndicator bookingType={booking.booking_type} />
+                    {booking.service?.is_consultation && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                        Consultation
+                      </Badge>
+                    )}
                   </h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -364,7 +369,18 @@ export function BookingDetailsModal({
                 {booking.notes && (
                   <div>
                     <Label className="text-muted-foreground">Customer Notes</Label>
-                    <p className="text-sm mt-1">{booking.notes}</p>
+                    {booking.notes.includes('CONSULTATION') ? (
+                      <div className="mt-1">
+                        <p className="text-sm font-medium text-blue-600 mb-1">
+                          {booking.notes.split('\n')[0]}
+                        </p>
+                        {booking.notes.split('\n\n').slice(1).join('\n\n') && (
+                          <p className="text-sm">{booking.notes.split('\n\n').slice(1).join('\n\n')}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm mt-1">{booking.notes}</p>
+                    )}
                   </div>
                 )}
                 {booking.internal_notes && (

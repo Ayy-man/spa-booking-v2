@@ -330,6 +330,7 @@ export interface Database {
           requires_couples_room: boolean
           is_active: boolean
           allows_addons: boolean
+          is_consultation: boolean
           service_capabilities: string[]
           ghl_category: string
           popularity_score: number
@@ -350,6 +351,7 @@ export interface Database {
           requires_couples_room?: boolean
           is_active?: boolean
           allows_addons?: boolean
+          is_consultation?: boolean
           service_capabilities?: string[]
           ghl_category: string
           popularity_score?: number
