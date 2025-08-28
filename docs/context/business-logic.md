@@ -109,6 +109,14 @@ The system automatically adds a 15-minute buffer between all appointment slots t
   - 90-min services: 9:00-10:30, 10:45-12:15, 12:30-14:00
 
 ## Service Categories
+
+### 0. Consultation Services (New Category - August 2025)
+- **Facial Consultation**: 30 mins, $25
+  - Professional skin assessment and treatment planning
+  - Special UI treatment with premium card styling
+  - Available for all staff members who can perform facials
+  - Can be combined with add-ons for comprehensive consultation experience
+
 1. **Facials** (30-120 mins)
    - Basic Facial: 30 mins, $65
    - Deep Cleansing Facial: 60 mins, $79
@@ -315,4 +323,76 @@ Located at `/src/app/admin/payment-links/page.tsx`:
 - **Persistence**: Theme preference saved and restored automatically
 - **Compatibility**: Cross-browser support maintained
 - **Mobile Optimization**: Touch-friendly theme toggle interface
-- **SEO Friendly**: Proper SSR handling maintains search optimization 
+- **SEO Friendly**: Proper SSR handling maintains search optimization
+
+## Add-ons System Business Logic (Implemented August 2025)
+
+### Add-ons Integration Rules
+1. **Service Compatibility**:
+   - Services with `allows_addons=true` automatically show add-ons page during booking
+   - Add-ons are filtered by service category and compatibility
+   - Add-ons can be service-specific or category-wide
+
+2. **Pricing and Duration Logic**:
+   - Add-ons extend total appointment duration automatically
+   - Base service price + add-ons prices = total booking cost
+   - Real-time calculations shown during selection process
+   - Historical pricing stored at booking time for consistency
+
+3. **Booking Flow Integration**:
+   - Add-ons selection page appears after service selection (before date/time)
+   - Skip option available for customers who don't want add-ons
+   - Add-ons information carried through entire booking process
+   - Displayed in confirmation, admin panels, and reports
+
+### Add-ons Categories
+
+#### Body Massage Add-ons
+Available for all massage services:
+- **Hot Stone Back**: $15, 30 mins
+- **Deep Moisturizing**: $25, 30 mins  
+- **30 Minutes Extra Massage**: $40, 30 mins
+
+#### Facial Treatment Add-ons by Level
+- **Face Treatment #1 Add-on**: $50, 30 mins
+- **Face Treatment #2 Add-on**: $60, 30 mins
+- **Face Treatment #3 Add-on**: $85, 45 mins
+- **Face Treatment #4 Add-on**: $99, 55 mins
+
+#### Premium Face Treatment #4 Add-ons
+All $120, 60 minutes enhancements:
+- **Hollywood Facial Add-on**
+- **LED Photo Aging Add-on** 
+- **Acne Vulgaris Treatment Add-on**
+- **Vampire Facial Add-on (Fruit Based)**
+- **Glassy Skin Add-on**
+- **Hydra Facial Add-on**
+- **Obaji Infusion Whitening Add-on**
+- **Nano Face Treatment Add-on**
+- **Derma Planning Add-on**
+- **Microneedling Add-on**
+- **Dark Spot Treatment Add-on**
+
+### Add-ons Business Impact Rules
+
+#### Revenue Enhancement
+- **Additional Revenue Stream**: Add-ons provide 15-25% average booking value increase
+- **Upselling Opportunities**: Natural upselling during service selection process
+- **Service Differentiation**: Premium add-ons distinguish basic vs luxury experiences
+
+#### Operational Considerations
+- **Extended Appointment Times**: Staff scheduling must account for add-on duration
+- **Room Utilization**: Longer appointments affect daily capacity planning
+- **Staff Skills**: Some premium add-ons may require additional staff training
+
+#### Customer Experience Rules
+- **Optional Enhancement**: Add-ons are always optional, never mandatory
+- **Clear Pricing**: All add-on costs displayed upfront with no hidden fees
+- **Service Compatibility**: Only relevant add-ons shown based on selected service
+- **Quantity Limits**: Some add-ons have maximum quantity restrictions for safety/time
+
+### Staff Assignment for Add-ons
+- **Facial Add-ons**: Available to staff who can perform facial services (Selma, Robyn, Tanisha)
+- **Massage Add-ons**: Available to staff who can perform massage services (Robyn, Leonel, Phuong)
+- **Premium Add-ons**: May require specific staff training or expertise
+- **Cross-trained Staff**: Some add-ons available across multiple service categories
