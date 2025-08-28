@@ -36,7 +36,7 @@ const SERVICE_COLORS: Record<ServiceCategory, { bg: string; border: string; text
 
 // Business hours configuration
 const BUSINESS_HOURS = {
-  start: 8,  // 8 AM
+  start: 9,  // 9 AM (business starts at 9)
   end: 20,   // 8 PM  
   slotDuration: 15 // 15 minutes
 }
@@ -696,19 +696,31 @@ export function StaffScheduleView({
         
         <div className="overflow-x-auto">
           <div className="min-w-[800px] relative">
-            {/* Current Time Indicator */}
-            {isToday && getCurrentTimePosition() !== null && (
-              <div 
-                className="absolute left-0 right-0 border-t-2 border-red-500 z-20 pointer-events-none print:hidden"
-                style={{ 
-                  top: `calc(3.5rem + ${getCurrentTimePosition()}% * (100% - 3.5rem))` 
-                }}
-              >
-                <div className="absolute -left-1 -top-2 bg-red-500 text-white text-xs px-1 rounded">
-                  {format(currentTime, 'h:mm a')} GMT+10
+            {/* Current Time Indicator - properly positioned */}
+            {isToday && (() => {
+              const position = getCurrentTimePosition();
+              if (position === null) return null;
+              
+              // Calculate the actual pixel position within the time grid
+              const headerHeight = 56; // Header row height in pixels
+              const slotHeight = 32; // Each time slot height in pixels
+              const totalSlots = (BUSINESS_HOURS.end - BUSINESS_HOURS.start) * 4; // 15-min slots
+              const currentSlotIndex = Math.floor((position / 100) * totalSlots);
+              const pixelPosition = headerHeight + (currentSlotIndex * slotHeight);
+              
+              return (
+                <div 
+                  className="absolute left-0 right-0 border-t-2 border-red-500 z-10 pointer-events-none print:hidden"
+                  style={{ 
+                    top: `${pixelPosition}px`
+                  }}
+                >
+                  <div className="absolute -left-1 -top-2.5 bg-red-500 text-white text-xs px-2 py-0.5 rounded shadow-sm">
+                    {format(currentTime, 'h:mm a')}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
             
             {/* Header Row */}
             <div className="grid grid-cols-[100px_180px_repeat(auto-fit,minmax(150px,1fr))] border-b bg-gray-50 sticky top-0 z-10">
@@ -793,10 +805,6 @@ export function StaffScheduleView({
                                     <div className="absolute right-1 top-1 text-[10px] text-gray-400 opacity-60">
                                       :{slot.minute.toString().padStart(2, '0')}
                                     </div>
-                                  )}
-                                  {/* Only show a small dot indicator when staff is available */}
-                                  {canAddAppointment && (
-                                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
                                   )}
                                 </div>
                               </TooltipTrigger>
