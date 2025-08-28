@@ -26,7 +26,7 @@ export function ScheduleViewToggle() {
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               {viewMode === 'staff' 
-                ? 'View all staff schedules at a glance - just like your paper booking system'
+                ? 'View all staff schedules at a glance'
                 : 'View room availability and utilization across all treatment rooms'}
             </p>
           </div>
