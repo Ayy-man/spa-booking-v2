@@ -223,22 +223,37 @@ export default function BookingPage() {
                 </h2>
                 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {category.services.filter(service => !service.is_consultation).map((service) => (
+                  {category.services.map((service) => {
+                    // Check if this is a consultation service
+                    const isConsultation = service.is_consultation || service.name.toLowerCase().includes('consultation');
+                    
+                    return (
                     <div
                       key={service.id}
-                      className="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary dark:hover:border-primary-light transition-all cursor-pointer group"
+                      className={
+                        isConsultation
+                          ? "relative border-2 border-blue-400 dark:border-blue-600 rounded-lg p-4 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20 dark:to-gray-800 hover:shadow-lg transition-all cursor-pointer group overflow-hidden"
+                          : "border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary dark:hover:border-primary-light transition-all cursor-pointer group"
+                      }
                       onClick={() => {
-                        // Show couples modal for packages, ALL facials, massages 60min+, and services with "couple" in name
+                        // Consultations should never show couples modal
+                        if (isConsultation) {
+                          handleServiceSelect(service.id)
+                          return
+                        }
+                        
+                        // Show couples modal for packages, ALL facials (except consultations), massages 60min+, and services with "couple" in name
                         const isCouplesEligible = 
                           category.category === 'packages' || 
-                          category.category === 'facials' ||  // ALL facials can be booked as couples
+                          (category.category === 'facials' && !isConsultation) ||  // ALL facials except consultations
                           service.name.toLowerCase().includes('couple') ||
                           (category.category === 'massages' && service.duration >= 60)
                         
                         console.log('Service clicked:', service.name, {
                           category: category.category,
                           duration: service.duration,
-                          isCouplesEligible
+                          isCouplesEligible,
+                          isConsultation
                         })
                         
                         if (isCouplesEligible) {
@@ -248,16 +263,31 @@ export default function BookingPage() {
                         }
                       }}
                     >
+                      {/* Consultation ribbon/badge */}
+                      {isConsultation && (
+                        <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs px-3 py-1 rounded-bl-lg rounded-tr-lg font-medium">
+                          Consultation
+                        </div>
+                      )}
+                      
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary dark:group-hover:text-primary-light transition-colors flex-1 pr-2">
+                        <h3 className={`font-semibold transition-colors flex-1 pr-2 ${
+                          isConsultation 
+                            ? "text-blue-800 dark:text-blue-300 group-hover:text-blue-600 dark:group-hover:text-blue-200"
+                            : "text-gray-800 dark:text-gray-200 group-hover:text-primary dark:group-hover:text-primary-light"
+                        }`}>
                           {service.name}
-                          {service.allows_addons && (
+                          {service.allows_addons && !isConsultation && (
                             <span className="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
                               Add-ons Available
                             </span>
                           )}
                         </h3>
-                        <span className="font-bold text-primary dark:text-primary-light whitespace-nowrap">
+                        <span className={`font-bold whitespace-nowrap ${
+                          isConsultation
+                            ? "text-blue-600 dark:text-blue-400"
+                            : "text-primary dark:text-primary-light"
+                        }`}>
                           ${service.price}
                         </span>
                       </div>
@@ -266,40 +296,24 @@ export default function BookingPage() {
                           {service.description}
                         </p>
                       )}
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className={`text-sm ${
+                        isConsultation 
+                          ? "text-blue-600 dark:text-blue-400"
+                          : "text-gray-500 dark:text-gray-400"
+                      }`}>
                         Duration: {service.duration} minutes
                       </p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Consultation Card - Only show for Facials category */}
-                {category.category === 'facials' && (() => {
-                  const consultationService = category.services.find(s => s.is_consultation);
-                  if (!consultationService) return null;
-                  
-                  return (
-                    <div 
-                      className="consultation-card"
-                      onClick={() => handleServiceSelect(consultationService.id)}
-                    >
-                      <div className="flex items-start">
-                        <div className="consultation-icon">?</div>
-                        <div className="flex-1">
-                          <div className="consultation-header">Not Sure Which Facial You Need?</div>
-                          <div className="consultation-subheader">Book a Consultation</div>
-                          <div className="consultation-price">$25 - 30 minutes</div>
-                          <div className="consultation-description">
-                            Our skincare experts will analyze your skin and recommend the perfect treatment for your needs
-                          </div>
-                          <button className="consultation-cta">
-                            Book Consultation
-                          </button>
+                      
+                      {/* Icon indicator for consultation */}
+                      {isConsultation && (
+                        <div className="absolute bottom-2 right-2 w-6 h-6 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 dark:text-blue-400 text-sm font-bold">?</span>
                         </div>
-                      </div>
+                      )}
                     </div>
-                  );
-                })()}
+                    );
+                  })}
+                </div>
               </div>
             ))}
 
