@@ -728,12 +728,12 @@ export function StaffScheduleView({
                 Time
               </div>
               {/* Any Available Staff Column Header */}
-              <div className="p-3 font-medium text-center border-r bg-emerald-50 text-emerald-800">
+              <div className="p-3 font-medium text-center border-r bg-gray-50 text-gray-700">
                 <div className="flex items-center justify-center gap-2">
                   <UserCheck className="w-4 h-4" />
                   <span>Any Available Staff</span>
                 </div>
-                <div className="text-xs font-normal mt-1 text-emerald-600">
+                <div className="text-xs font-normal mt-1 text-gray-500">
                   Click to quick add
                 </div>
               </div>
@@ -793,19 +793,13 @@ export function StaffScheduleView({
                                 <div
                                   className={cn(
                                     "h-8 px-2 flex items-center justify-center transition-all relative",
-                                    "bg-emerald-50/30",
-                                    canAddAppointment && "cursor-pointer hover:bg-emerald-50",
-                                    !canAddAppointment && "cursor-not-allowed opacity-50",
+                                    canAddAppointment && "cursor-pointer hover:bg-gray-50",
+                                    !canAddAppointment && "cursor-not-allowed opacity-30",
                                     availability.totalWorking === 0 && "bg-gray-50"
                                   )}
                                   onClick={() => canAddAppointment && handleAnyStaffClick(slot)}
                                 >
-                                  {/* Add subtle timing indicator for 15-minute marks */}
-                                  {!isHourStart && (
-                                    <div className="absolute right-1 top-1 text-[10px] text-gray-400 opacity-60">
-                                      :{slot.minute.toString().padStart(2, '0')}
-                                    </div>
-                                  )}
+                                  {/* Empty cell - no visual indicators */}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent side="right">
