@@ -799,7 +799,12 @@ export function StaffScheduleView({
                                   )}
                                   onClick={() => canAddAppointment && handleAnyStaffClick(slot)}
                                 >
-                                  {/* Empty cell - no visual indicators */}
+                                  {/* Add subtle timing indicator for 15-minute marks */}
+                                  {!isHourStart && availability.totalWorking > 0 && (
+                                    <div className="absolute right-1 top-1 text-[10px] text-gray-400 opacity-60">
+                                      :{slot.minute.toString().padStart(2, '0')}
+                                    </div>
+                                  )}
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent side="right">
