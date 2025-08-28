@@ -232,7 +232,7 @@ export default function BookingPage() {
                       key={service.id}
                       className={
                         isConsultation
-                          ? "relative border-2 border-blue-400 dark:border-blue-600 rounded-lg p-4 bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/20 dark:to-gray-800 hover:shadow-lg transition-all cursor-pointer group overflow-hidden"
+                          ? "relative border-2 border-primary/30 dark:border-primary-light/40 rounded-xl p-6 bg-gradient-to-br from-accent/20 via-white to-accent/10 dark:from-primary/10 dark:via-gray-800 dark:to-primary-light/5 hover:shadow-2xl hover:shadow-primary/20 dark:hover:shadow-primary-light/20 transition-all duration-500 cursor-pointer group overflow-hidden transform hover:-translate-y-1 hover:scale-[1.02]"
                           : "border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary dark:hover:border-primary-light transition-all cursor-pointer group"
                       }
                       onClick={() => {
@@ -263,53 +263,113 @@ export default function BookingPage() {
                         }
                       }}
                     >
-                      {/* Consultation ribbon/badge */}
+                      {/* Consultation premium ribbon/badge */}
                       {isConsultation && (
-                        <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs px-3 py-1 rounded-bl-lg rounded-tr-lg font-medium">
-                          Consultation
+                        <div className="absolute top-0 right-0">
+                          {/* Ribbon effect */}
+                          <div className="relative">
+                            <div className="bg-gradient-to-r from-primary to-primary-dark text-white text-xs px-4 py-2 rounded-bl-xl rounded-tr-xl font-semibold shadow-lg flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                              </svg>
+                              Expert Consultation
+                            </div>
+                            {/* Small triangle shadow effect */}
+                            <div className="absolute -bottom-1 right-0 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-primary-dark/50"></div>
+                          </div>
                         </div>
                       )}
                       
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className={`font-semibold transition-colors flex-1 pr-2 ${
-                          isConsultation 
-                            ? "text-blue-800 dark:text-blue-300 group-hover:text-blue-600 dark:group-hover:text-blue-200"
-                            : "text-gray-800 dark:text-gray-200 group-hover:text-primary dark:group-hover:text-primary-light"
-                        }`}>
-                          {service.name}
-                          {service.allows_addons && !isConsultation && (
-                            <span className="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
-                              Add-ons Available
-                            </span>
+                      {/* Subtle background pattern for consultations */}
+                      {isConsultation && (
+                        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.08]">
+                          <div className="w-full h-full" style={{
+                            backgroundImage: `radial-gradient(circle at 20px 20px, var(--primary) 1px, transparent 1px)`,
+                            backgroundSize: '20px 20px'
+                          }}></div>
+                        </div>
+                      )}
+                      
+                      <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-3">
+                          <h3 className={`font-semibold transition-colors flex-1 pr-2 ${
+                            isConsultation 
+                              ? "text-primary-dark dark:text-primary-light group-hover:text-primary dark:group-hover:text-primary text-lg font-heading"
+                              : "text-gray-800 dark:text-gray-200 group-hover:text-primary dark:group-hover:text-primary-light"
+                          }`}>
+                            {service.name}
+                            {service.allows_addons && !isConsultation && (
+                              <span className="ml-2 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
+                                Add-ons Available
+                              </span>
+                            )}
+                          </h3>
+                          <span className={`font-bold whitespace-nowrap text-xl ${
+                            isConsultation
+                              ? "text-primary-dark dark:text-primary-light bg-white/80 dark:bg-gray-800/80 px-3 py-1 rounded-lg shadow-sm"
+                              : "text-primary dark:text-primary-light"
+                          }`}>
+                            ${service.price}
+                          </span>
+                        </div>
+                        
+                        {service.description && (
+                          <p className={`text-sm mb-4 leading-relaxed ${
+                            isConsultation
+                              ? "text-gray-700 dark:text-gray-300"
+                              : "text-gray-600 dark:text-gray-400"
+                          }`}>
+                            {service.description}
+                          </p>
+                        )}
+                        
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <svg className={`w-4 h-4 ${isConsultation ? "text-primary" : "text-gray-500 dark:text-gray-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p className={`text-sm font-medium ${
+                              isConsultation 
+                                ? "text-primary-dark dark:text-primary-light"
+                                : "text-gray-500 dark:text-gray-400"
+                            }`}>
+                              {service.duration} minutes
+                            </p>
+                          </div>
+                          
+                          {/* Enhanced icon indicator for consultation */}
+                          {isConsultation && (
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1 bg-accent/40 dark:bg-primary/20 px-3 py-1.5 rounded-full">
+                                <svg className="w-4 h-4 text-primary-dark dark:text-primary-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                                <span className="text-xs font-medium text-primary-dark dark:text-primary-light">Get Expert Advice</span>
+                              </div>
+                            </div>
                           )}
-                        </h3>
-                        <span className={`font-bold whitespace-nowrap ${
-                          isConsultation
-                            ? "text-blue-600 dark:text-blue-400"
-                            : "text-primary dark:text-primary-light"
-                        }`}>
-                          ${service.price}
-                        </span>
-                      </div>
-                      {service.description && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                          {service.description}
-                        </p>
-                      )}
-                      <p className={`text-sm ${
-                        isConsultation 
-                          ? "text-blue-600 dark:text-blue-400"
-                          : "text-gray-500 dark:text-gray-400"
-                      }`}>
-                        Duration: {service.duration} minutes
-                      </p>
-                      
-                      {/* Icon indicator for consultation */}
-                      {isConsultation && (
-                        <div className="absolute bottom-2 right-2 w-6 h-6 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 dark:text-blue-400 text-sm font-bold">?</span>
                         </div>
-                      )}
+                        
+                        {/* Consultation benefits */}
+                        {isConsultation && (
+                          <div className="mt-4 pt-4 border-t border-primary/20 dark:border-primary-light/20">
+                            <div className="flex flex-wrap gap-2">
+                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary-dark dark:bg-primary-light/10 dark:text-primary-light">
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                Personalized Plan
+                              </span>
+                              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary-dark dark:bg-primary-light/10 dark:text-primary-light">
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                Expert Guidance
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     );
                   })}
