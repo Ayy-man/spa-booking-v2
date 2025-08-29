@@ -42,8 +42,13 @@ export default function CustomerInfoPage() {
       setSelectedService(state.selectedService)
     }
     
-    // Set other booking data
-    if (state.selectedDate) setSelectedDate(state.selectedDate)
+    // Set other booking data - convert ISO date string to yyyy-MM-dd format
+    if (state.selectedDate) {
+      // If it's an ISO string, parse it and format to yyyy-MM-dd
+      const date = new Date(state.selectedDate)
+      const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+      setSelectedDate(formattedDate)
+    }
     if (state.selectedTime) setSelectedTime(state.selectedTime)
     if (state.selectedStaff) setSelectedStaff(state.selectedStaff)
     

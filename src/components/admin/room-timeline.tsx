@@ -172,6 +172,35 @@ export function RoomTimeline({
       return timeString >= bookingStart && timeString < bookingEnd
     }) || null
   }, [bookings])
+  
+  // Check if a time slot is within a buffer zone
+  const isBufferSlot = useCallback((roomId: number, timeString: string): boolean => {
+    return bookings.some(booking => {
+      if (booking.room_id !== roomId) return false
+      
+      const bookingStart = booking.start_time.slice(0, 5)
+      const bookingEnd = booking.end_time.slice(0, 5)
+      
+      // Use stored buffer times if available, otherwise calculate
+      const bufferStart = booking.buffer_start?.slice(0, 5) || 
+        (() => {
+          const time = new Date(`2000-01-01T${bookingStart}:00`)
+          time.setMinutes(time.getMinutes() - 15)
+          return time.toTimeString().slice(0, 5)
+        })()
+      
+      const bufferEnd = booking.buffer_end?.slice(0, 5) || 
+        (() => {
+          const time = new Date(`2000-01-01T${bookingEnd}:00`)
+          time.setMinutes(time.getMinutes() + 15)
+          return time.toTimeString().slice(0, 5)
+        })()
+      
+      // Check if this slot is in the buffer zone (not the actual booking)
+      return (timeString >= bufferStart && timeString < bookingStart) ||
+             (timeString >= bookingEnd && timeString < bufferEnd)
+    })
+  }, [bookings])
 
   // Calculate room utilization percentage
   const getRoomUtilization = useCallback((roomId: number): number => {
@@ -305,7 +334,7 @@ export function RoomTimeline({
 
         {/* Service Legend */}
         <Card className="p-4">
-          <h3 className="font-medium text-gray-900 mb-3">Service Types</h3>
+          <h3 className="font-medium text-gray-900 mb-3">Service Types & Legend</h3>
           <div className="flex flex-wrap gap-2">
             {Object.entries(SERVICE_COLORS).map(([category, colors]) => (
               <Badge
@@ -320,6 +349,11 @@ export function RoomTimeline({
                 {category.replace('_', ' ').toUpperCase()}
               </Badge>
             ))}
+            <Badge
+              className="px-2 py-1 text-xs font-medium border bg-amber-50 border-amber-300 text-amber-700"
+            >
+              BUFFER ZONE (15 MIN)
+            </Badge>
           </div>
         </Card>
 
@@ -356,18 +390,36 @@ export function RoomTimeline({
             {/* Timeline Container */}
             <div className="min-w-[800px] relative">
               {/* Current Time Indicator */}
-              {currentTimePosition >= 0 && (
-                <div 
-                  className="absolute left-20 right-0 z-50 flex items-center"
-                  style={{ top: `${currentTimePosition}%` }}
-                >
-                  <div className="w-full h-0.5 bg-red-500 opacity-80"></div>
-                  <div className="absolute -left-2 w-4 h-4 bg-red-500 rounded-full opacity-80"></div>
-                  <div className="absolute -left-20 bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg">
-                    {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {currentTimePosition >= 0 && (() => {
+                // Get the current time
+                const now = new Date();
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+                
+                // Calculate which 15-minute slot we're in
+                const minutesSinceStart = (currentHour - BUSINESS_HOURS.start) * 60 + currentMinute;
+                const slotIndex = Math.floor(minutesSinceStart / 15); // 15-minute slots
+                
+                // Calculate row height - each slot row plus borders
+                const rowHeight = 33; // 32px height + 1px border
+                const headerHeight = 80; // Approximate header height
+                
+                // Calculate the exact pixel position
+                const pixelPosition = headerHeight + (slotIndex * rowHeight);
+                
+                return (
+                  <div 
+                    className="absolute left-20 right-0 z-50 flex items-center"
+                    style={{ top: `${pixelPosition}px` }}
+                  >
+                    <div className="w-full h-0.5 bg-red-500 opacity-80"></div>
+                    <div className="absolute -left-2 w-4 h-4 bg-red-500 rounded-full opacity-80"></div>
+                    <div className="absolute -left-20 bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg">
+                      {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
               
               {/* Header Row */}
               <div className="flex border-b-2 border-primary/20 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10 shadow-sm">
@@ -418,6 +470,7 @@ export function RoomTimeline({
                     {rooms.map(room => {
                       const booking = getBookingForSlot(room.id, slot.timeString)
                       const isStart = booking && isBookingStart(booking, slot.timeString)
+                      const isBuffer = !booking && isBufferSlot(room.id, slot.timeString)
                       
                       return (
                         <div 
@@ -426,6 +479,8 @@ export function RoomTimeline({
                             "flex-1 min-w-[200px] border-r last:border-r-0 relative transition-all duration-200",
                             // Base styling with subtle room differentiation
                             parseInt(room.name.replace('Room ', '')) % 2 === 0 ? "bg-white" : "bg-gray-50/50",
+                            // Buffer zone styling - semi-transparent yellow background
+                            isBuffer && "bg-amber-50/60",
                             // Hour boundary styling
                             isHourMark && "border-t-2 border-primary/20"
                           )}
@@ -565,6 +620,13 @@ export function RoomTimeline({
                               ) : (
                                 <div className="h-8" /> // Spacer for continuation of booking
                               )
+                            ) : isBuffer ? (
+                              // Buffer zone indicator
+                              <div className="h-8 flex items-center justify-center">
+                                <div className="text-xs text-amber-600/60 font-medium">
+                                  Buffer
+                                </div>
+                              </div>
                             ) : (
                               <div className="h-8" /> // Available slot
                             )}

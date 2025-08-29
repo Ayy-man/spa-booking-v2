@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
-import { supabase } from "@/lib/supabase"
+import { supabase, supabaseClient } from "@/lib/supabase"
 import { getGuamTime as getGuamTimeUtil, formatGuamTime } from "@/lib/timezone-utils"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -236,6 +236,36 @@ export function StaffScheduleView({
     return staffMember.work_days.includes(dayOfWeek)
   }
 
+  // Check if a time slot is within a buffer zone
+  const isBufferSlot = (staffId: string, timeSlot: TimeSlot): boolean => {
+    return bookings.some(booking => {
+      if (booking.staff_id !== staffId) return false
+      
+      const slotTime = `${timeSlot.hour.toString().padStart(2, '0')}:${timeSlot.minute.toString().padStart(2, '0')}`
+      const bookingStart = booking.start_time.slice(0, 5)
+      const bookingEnd = booking.end_time.slice(0, 5)
+      
+      // Use stored buffer times if available, otherwise calculate
+      const bufferStart = booking.buffer_start?.slice(0, 5) || 
+        (() => {
+          const time = new Date(`2000-01-01T${bookingStart}:00`)
+          time.setMinutes(time.getMinutes() - 15)
+          return time.toTimeString().slice(0, 5)
+        })()
+      
+      const bufferEnd = booking.buffer_end?.slice(0, 5) || 
+        (() => {
+          const time = new Date(`2000-01-01T${bookingEnd}:00`)
+          time.setMinutes(time.getMinutes() + 15)
+          return time.toTimeString().slice(0, 5)
+        })()
+      
+      // Check if this slot is in the buffer zone (not the actual booking)
+      return (slotTime >= bufferStart && slotTime < bookingStart) ||
+             (slotTime >= bookingEnd && slotTime < bufferEnd)
+    })
+  }
+  
   // Get bookings for a specific staff and time slot
   const getBookingForSlot = (staffId: string, timeSlot: TimeSlot): BookingWithRelations | null => {
     return bookings.find(booking => {
@@ -365,6 +395,26 @@ export function StaffScheduleView({
         throw new Error('Please select a service')
       }
 
+      // Calculate end time based on service duration
+      const startTime = quickAddSlot.time
+      const [startHour, startMinute] = startTime.split(':').map(Number)
+      const endTimeDate = new Date(2000, 0, 1, startHour, startMinute)
+      endTimeDate.setMinutes(endTimeDate.getMinutes() + (selectedService.duration || 60))
+      const endTime = `${endTimeDate.getHours().toString().padStart(2, '0')}:${endTimeDate.getMinutes().toString().padStart(2, '0')}`
+
+      // Check for buffer conflicts before proceeding
+      const conflictCheck = await supabaseClient.checkBufferConflicts(
+        currentDate.toISOString().split('T')[0],
+        startTime,
+        endTime,
+        quickAddSlot.staffId,
+        selectedService.room_id || 1, // Default to room 1 if not specified
+      )
+
+      if (conflictCheck.hasConflict) {
+        throw new Error(conflictCheck.conflictMessage || 'This time slot conflicts with the 15-minute buffer zone of another appointment')
+      }
+
       // Validate service has required data
       if (!selectedService.duration || selectedService.duration <= 0) {
         throw new Error('Invalid service duration. Please select a different service.')
@@ -398,13 +448,7 @@ export function StaffScheduleView({
         throw new Error('Please select a customer')
       }
 
-      // Calculate end time
-      const [startHour, startMinute] = quickAddSlot.time.split(':').map(Number)
-      const startMinutes = startHour * 60 + startMinute
-      const endMinutes = startMinutes + selectedService.duration
-      const endHour = Math.floor(endMinutes / 60)
-      const endMinute = endMinutes % 60
-      const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`
+      // Calculate end time (already calculated above, just use it)
 
       // Determine optimal room
       let roomId = null
@@ -701,12 +745,21 @@ export function StaffScheduleView({
               const position = getCurrentTimePosition();
               if (position === null) return null;
               
-              // Calculate the actual pixel position within the time grid
-              const headerHeight = 56; // Header row height in pixels
-              const slotHeight = 32; // Each time slot height in pixels
-              const totalSlots = (BUSINESS_HOURS.end - BUSINESS_HOURS.start) * 4; // 15-min slots
-              const currentSlotIndex = Math.floor((position / 100) * totalSlots);
-              const pixelPosition = headerHeight + (currentSlotIndex * slotHeight);
+              // Get the current time
+              const now = currentTime;
+              const currentHour = now.getHours();
+              const currentMinute = now.getMinutes();
+              
+              // Calculate which 15-minute slot we're in
+              const minutesSinceStart = (currentHour - BUSINESS_HOURS.start) * 60 + currentMinute;
+              const slotIndex = Math.floor(minutesSinceStart / 15); // 15-minute slots
+              
+              // Each row is 32px high (h-8 in Tailwind)
+              const rowHeight = 32;
+              const headerHeight = 56; // Height of the header row
+              
+              // Calculate the exact pixel position
+              const pixelPosition = headerHeight + (slotIndex * rowHeight);
               
               return (
                 <div 
@@ -830,6 +883,7 @@ export function StaffScheduleView({
                       const booking = getBookingForSlot(member.id, slot)
                       const isStart = booking && isBookingStart(booking, slot)
                       const isWorking = isStaffWorking(member)
+                      const isBuffer = !booking && isBufferSlot(member.id, slot)
                       
                       // Skip rendering if this slot is covered by a previous booking
                       if (booking && !isStart) {
@@ -916,11 +970,16 @@ export function StaffScheduleView({
                           key={member.id}
                           className={cn(
                             "border-r h-8 hover:bg-gray-50 cursor-pointer transition-colors relative",
-                            !isWorking && "bg-gray-100 cursor-not-allowed hover:bg-gray-100"
+                            !isWorking && "bg-gray-100 cursor-not-allowed hover:bg-gray-100",
+                            isBuffer && isWorking && "bg-amber-50/60 hover:bg-amber-50"
                           )}
-                          onClick={() => isWorking && handleQuickAdd(member.id, slot, false)}
+                          onClick={() => isWorking && !isBuffer && handleQuickAdd(member.id, slot, false)}
                         >
-                          {/* Times now shown in time column */}
+                          {isBuffer && isWorking && (
+                            <div className="flex items-center justify-center h-full">
+                              <span className="text-xs text-amber-600/60 font-medium">Buffer</span>
+                            </div>
+                          )}
                         </div>
                       )
                     })}

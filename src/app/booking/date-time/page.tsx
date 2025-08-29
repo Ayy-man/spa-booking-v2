@@ -280,8 +280,17 @@ export default function DateTimePage() {
               bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
               bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
               
-              // Check for overlap
-              if (slotStart < bookingEnd && slotEnd > bookingStart) {
+              // Check for overlap including buffer zones
+              // If booking has buffer times, use those; otherwise fall back to calculated buffers
+              const bufferStart = booking.buffer_start 
+                ? new Date(`2000-01-01T${booking.buffer_start}`)
+                : bookingStart
+              const bufferEnd = booking.buffer_end
+                ? new Date(`2000-01-01T${booking.buffer_end}`)
+                : bookingEnd
+              
+              // Check if the new slot overlaps with the buffer zone
+              if (slotStart < bufferEnd && slotEnd > bufferStart) {
                 isStaffAvailable = false
                 break
               }
@@ -306,12 +315,17 @@ export default function DateTimePage() {
                   const slotEnd = new Date(`2000-01-01T${timeString}:00`)
                   slotEnd.setMinutes(slotEnd.getMinutes() + serviceDuration)
                   
-                  // Add buffer time to existing bookings
-                  bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
-                  bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+                  // Check for overlap including buffer zones
+                  // If booking has buffer times, use those; otherwise fall back to calculated buffers
+                  const bufferStart = booking.buffer_start 
+                    ? new Date(`2000-01-01T${booking.buffer_start}`)
+                    : new Date(bookingStart.getTime() - bufferMinutes * 60000)
+                  const bufferEnd = booking.buffer_end
+                    ? new Date(`2000-01-01T${booking.buffer_end}`)
+                    : new Date(bookingEnd.getTime() + bufferMinutes * 60000)
                   
-                  // Check for overlap
-                  if (slotStart < bookingEnd && slotEnd > bookingStart) {
+                  // Check if the new slot overlaps with the buffer zone
+                  if (slotStart < bufferEnd && slotEnd > bufferStart) {
                     isRoom3Available = false
                     break
                   }
@@ -332,12 +346,17 @@ export default function DateTimePage() {
                     const slotEnd = new Date(`2000-01-01T${timeString}:00`)
                     slotEnd.setMinutes(slotEnd.getMinutes() + serviceDuration)
                     
-                    // Add buffer time to existing bookings
-                    bookingStart.setMinutes(bookingStart.getMinutes() - bufferMinutes)
-                    bookingEnd.setMinutes(bookingEnd.getMinutes() + bufferMinutes)
+                    // Check for overlap including buffer zones
+                    // If booking has buffer times, use those; otherwise fall back to calculated buffers
+                    const bufferStart = booking.buffer_start 
+                      ? new Date(`2000-01-01T${booking.buffer_start}`)
+                      : new Date(bookingStart.getTime() - bufferMinutes * 60000)
+                    const bufferEnd = booking.buffer_end
+                      ? new Date(`2000-01-01T${booking.buffer_end}`)
+                      : new Date(bookingEnd.getTime() + bufferMinutes * 60000)
                     
-                    // Check for overlap
-                    if (slotStart < bookingEnd && slotEnd > bookingStart) {
+                    // Check if the new slot overlaps with the buffer zone
+                    if (slotStart < bufferEnd && slotEnd > bufferStart) {
                       isRoomAvailable = false
                       break
                     }
