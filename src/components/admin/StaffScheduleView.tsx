@@ -237,33 +237,8 @@ export function StaffScheduleView({
   }
 
   // Check if a time slot is within a buffer zone
-  const isBufferSlot = (staffId: string, timeSlot: TimeSlot): boolean => {
-    return bookings.some(booking => {
-      if (booking.staff_id !== staffId) return false
-      
-      const slotTime = `${timeSlot.hour.toString().padStart(2, '0')}:${timeSlot.minute.toString().padStart(2, '0')}`
-      const bookingStart = booking.start_time.slice(0, 5)
-      const bookingEnd = booking.end_time.slice(0, 5)
-      
-      // Use stored buffer times if available, otherwise calculate
-      const bufferStart = booking.buffer_start?.slice(0, 5) || 
-        (() => {
-          const time = new Date(`2000-01-01T${bookingStart}:00`)
-          time.setMinutes(time.getMinutes() - 15)
-          return time.toTimeString().slice(0, 5)
-        })()
-      
-      const bufferEnd = booking.buffer_end?.slice(0, 5) || 
-        (() => {
-          const time = new Date(`2000-01-01T${bookingEnd}:00`)
-          time.setMinutes(time.getMinutes() + 15)
-          return time.toTimeString().slice(0, 5)
-        })()
-      
-      // Check if this slot is in the buffer zone (not the actual booking)
-      return (slotTime >= bufferStart && slotTime < bookingStart) ||
-             (slotTime >= bookingEnd && slotTime < bufferEnd)
-    })
+  const isBufferBooking = (booking: BookingWithRelations): boolean => {
+    return booking.booking_type === 'buffer' || booking.service?.name === 'Buffer Time'
   }
   
   // Get bookings for a specific staff and time slot
@@ -401,19 +376,6 @@ export function StaffScheduleView({
       const endTimeDate = new Date(2000, 0, 1, startHour, startMinute)
       endTimeDate.setMinutes(endTimeDate.getMinutes() + (selectedService.duration || 60))
       const endTime = `${endTimeDate.getHours().toString().padStart(2, '0')}:${endTimeDate.getMinutes().toString().padStart(2, '0')}`
-
-      // Check for buffer conflicts before proceeding
-      const conflictCheck = await supabaseClient.checkBufferConflicts(
-        currentDate.toISOString().split('T')[0],
-        startTime,
-        endTime,
-        quickAddSlot.staffId,
-        selectedService.room_id || 1, // Default to room 1 if not specified
-      )
-
-      if (conflictCheck.hasConflict) {
-        throw new Error(conflictCheck.conflictMessage || 'This time slot conflicts with the 15-minute buffer zone of another appointment')
-      }
 
       // Validate service has required data
       if (!selectedService.duration || selectedService.duration <= 0) {
@@ -883,7 +845,7 @@ export function StaffScheduleView({
                       const booking = getBookingForSlot(member.id, slot)
                       const isStart = booking && isBookingStart(booking, slot)
                       const isWorking = isStaffWorking(member)
-                      const isBuffer = !booking && isBufferSlot(member.id, slot)
+                      const isBuffer = booking && isBufferBooking(booking)
                       
                       // Skip rendering if this slot is covered by a previous booking
                       if (booking && !isStart) {
@@ -892,6 +854,23 @@ export function StaffScheduleView({
                       
                       if (booking && isStart) {
                         const span = getBookingSpan(booking)
+                        
+                        // Check if this is a buffer appointment
+                        if (isBuffer) {
+                          // Render buffer appointment as simple off-white block
+                          return (
+                            <div 
+                              key={member.id}
+                              className="border-r relative"
+                              style={{ gridRow: `span ${span}` }}
+                            >
+                              <div className="absolute inset-x-1 inset-y-1 bg-gray-100 border border-gray-300 rounded flex items-center justify-center">
+                                <span className="text-xs text-gray-500">Buffer</span>
+                              </div>
+                            </div>
+                          )
+                        }
+                        
                         const serviceColors = SERVICE_COLORS[booking.service.category as ServiceCategory] || 
                                            { bg: "bg-gray-100", border: "border-gray-300", text: "text-gray-800" }
                         
@@ -970,16 +949,10 @@ export function StaffScheduleView({
                           key={member.id}
                           className={cn(
                             "border-r h-8 hover:bg-gray-50 cursor-pointer transition-colors relative",
-                            !isWorking && "bg-gray-100 cursor-not-allowed hover:bg-gray-100",
-                            isBuffer && isWorking && "bg-amber-50/60 hover:bg-amber-50"
+                            !isWorking && "bg-gray-100 cursor-not-allowed hover:bg-gray-100"
                           )}
-                          onClick={() => isWorking && !isBuffer && handleQuickAdd(member.id, slot, false)}
+                          onClick={() => isWorking && handleQuickAdd(member.id, slot, false)}
                         >
-                          {isBuffer && isWorking && (
-                            <div className="flex items-center justify-center h-full">
-                              <span className="text-xs text-amber-600/60 font-medium">Buffer</span>
-                            </div>
-                          )}
                         </div>
                       )
                     })}

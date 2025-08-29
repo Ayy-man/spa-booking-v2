@@ -211,22 +211,6 @@ export const supabaseClient = {
     const totalDuration = service.duration + addonsDuration
     const endTime = new Date(startTime.getTime() + totalDuration * 60000)
     const endTimeStr = endTime.toTimeString().slice(0, 5)
-    
-    // Calculate 15-minute buffers before and after appointment
-    const bufferStartTime = new Date(startTime.getTime() - 15 * 60000) // 15 minutes before
-    const bufferEndTime = new Date(endTime.getTime() + 15 * 60000) // 15 minutes after
-    
-    // Ensure buffers stay within business hours (9 AM - 8 PM)
-    let bufferStartStr = bufferStartTime.toTimeString().slice(0, 5)
-    let bufferEndStr = bufferEndTime.toTimeString().slice(0, 5)
-    
-    // Clamp buffer times to business hours
-    if (bufferStartStr < '09:00') {
-      bufferStartStr = '09:00'
-    }
-    if (bufferEndStr > '20:00') {
-      bufferEndStr = '20:00'
-    }
 
     // Create booking with proper schema
     const discount = 0
@@ -243,8 +227,6 @@ export const supabaseClient = {
         appointment_date: booking.appointment_date,
         start_time: validatedStartTime,
         end_time: endTimeStr,
-        buffer_start: bufferStartStr,
-        buffer_end: bufferEndStr,
         duration: totalDuration,
         total_price: totalPrice,
         discount: discount,
@@ -330,89 +312,6 @@ export const supabaseClient = {
 
     if (error) throw error
     return data
-  },
-
-  // Check for buffer conflicts before creating a booking
-  async checkBufferConflicts(
-    date: string,
-    startTime: string,
-    endTime: string,
-    staffId: string,
-    roomId: number,
-    excludeBookingId?: string
-  ): Promise<{ hasConflict: boolean; conflictMessage?: string }> {
-    try {
-      // Calculate buffer times
-      const startTimeObj = new Date(`2000-01-01T${startTime}`)
-      const endTimeObj = new Date(`2000-01-01T${endTime}`)
-      const bufferStart = new Date(startTimeObj.getTime() - 15 * 60000)
-      const bufferEnd = new Date(endTimeObj.getTime() + 15 * 60000)
-      
-      let bufferStartStr = bufferStart.toTimeString().slice(0, 5)
-      let bufferEndStr = bufferEnd.toTimeString().slice(0, 5)
-      
-      // Clamp to business hours
-      if (bufferStartStr < '09:00') bufferStartStr = '09:00'
-      if (bufferEndStr > '20:00') bufferEndStr = '20:00'
-      
-      // Query for conflicts
-      let query = supabase
-        .from('bookings')
-        .select('id, start_time, end_time, buffer_start, buffer_end, staff_id, room_id')
-        .eq('appointment_date', date)
-        .neq('status', 'cancelled')
-      
-      if (excludeBookingId) {
-        query = query.neq('id', excludeBookingId)
-      }
-      
-      const { data: bookings, error } = await query
-      
-      if (error) throw error
-      
-      // Check for conflicts
-      for (const booking of bookings || []) {
-        const existingBufferStart = booking.buffer_start || 
-          (() => {
-            const time = new Date(`2000-01-01T${booking.start_time}`)
-            time.setMinutes(time.getMinutes() - 15)
-            return time.toTimeString().slice(0, 5)
-          })()
-        
-        const existingBufferEnd = booking.buffer_end || 
-          (() => {
-            const time = new Date(`2000-01-01T${booking.end_time}`)
-            time.setMinutes(time.getMinutes() + 15)
-            return time.toTimeString().slice(0, 5)
-          })()
-        
-        // Check for time conflicts (including buffers)
-        const hasTimeConflict = 
-          (startTime < existingBufferEnd && endTime > existingBufferStart) ||
-          (bufferStartStr < existingBufferEnd && bufferEndStr > existingBufferStart)
-        
-        // Check if same staff or same room
-        const hasSameResource = booking.staff_id === staffId || booking.room_id === roomId
-        
-        if (hasTimeConflict && hasSameResource) {
-          const resourceType = booking.staff_id === staffId ? 'Staff member' : 'Room'
-          const resourceId = booking.staff_id === staffId ? staffId : `Room ${roomId}`
-          
-          return {
-            hasConflict: true,
-            conflictMessage: `${resourceType} is booked from ${booking.start_time} to ${booking.end_time} with a 15-minute buffer until ${existingBufferEnd}. Please select a time after ${existingBufferEnd}.`
-          }
-        }
-      }
-      
-      return { hasConflict: false }
-    } catch (error) {
-      console.error('Error checking buffer conflicts:', error)
-      return { 
-        hasConflict: false, 
-        conflictMessage: 'Could not verify availability. The booking may fail if there are conflicts.' 
-      }
-    }
   },
 
   // Availability

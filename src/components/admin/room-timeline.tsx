@@ -173,34 +173,10 @@ export function RoomTimeline({
     }) || null
   }, [bookings])
   
-  // Check if a time slot is within a buffer zone
-  const isBufferSlot = useCallback((roomId: number, timeString: string): boolean => {
-    return bookings.some(booking => {
-      if (booking.room_id !== roomId) return false
-      
-      const bookingStart = booking.start_time.slice(0, 5)
-      const bookingEnd = booking.end_time.slice(0, 5)
-      
-      // Use stored buffer times if available, otherwise calculate
-      const bufferStart = booking.buffer_start?.slice(0, 5) || 
-        (() => {
-          const time = new Date(`2000-01-01T${bookingStart}:00`)
-          time.setMinutes(time.getMinutes() - 15)
-          return time.toTimeString().slice(0, 5)
-        })()
-      
-      const bufferEnd = booking.buffer_end?.slice(0, 5) || 
-        (() => {
-          const time = new Date(`2000-01-01T${bookingEnd}:00`)
-          time.setMinutes(time.getMinutes() + 15)
-          return time.toTimeString().slice(0, 5)
-        })()
-      
-      // Check if this slot is in the buffer zone (not the actual booking)
-      return (timeString >= bufferStart && timeString < bookingStart) ||
-             (timeString >= bookingEnd && timeString < bufferEnd)
-    })
-  }, [bookings])
+  // Check if a booking is a buffer appointment
+  const isBufferBooking = useCallback((booking: BookingWithRelations): boolean => {
+    return booking.booking_type === 'buffer' || booking.service?.name === 'Buffer Time'
+  }, [])
 
   // Calculate room utilization percentage
   const getRoomUtilization = useCallback((roomId: number): number => {
@@ -350,9 +326,9 @@ export function RoomTimeline({
               </Badge>
             ))}
             <Badge
-              className="px-2 py-1 text-xs font-medium border bg-amber-50 border-amber-300 text-amber-700"
+              className="px-2 py-1 text-xs font-medium border bg-gray-100 border-gray-300 text-gray-600"
             >
-              BUFFER ZONE (15 MIN)
+              BUFFER TIME (15 MIN)
             </Badge>
           </div>
         </Card>
@@ -470,7 +446,7 @@ export function RoomTimeline({
                     {rooms.map(room => {
                       const booking = getBookingForSlot(room.id, slot.timeString)
                       const isStart = booking && isBookingStart(booking, slot.timeString)
-                      const isBuffer = !booking && isBufferSlot(room.id, slot.timeString)
+                      const isBuffer = booking && isBufferBooking(booking)
                       
                       return (
                         <div 
@@ -479,33 +455,42 @@ export function RoomTimeline({
                             "flex-1 min-w-[200px] border-r last:border-r-0 relative transition-all duration-200",
                             // Base styling with subtle room differentiation
                             parseInt(room.name.replace('Room ', '')) % 2 === 0 ? "bg-white" : "bg-gray-50/50",
-                            // Buffer zone styling - semi-transparent yellow background
-                            isBuffer && "bg-amber-50/60",
                             // Hour boundary styling
                             isHourMark && "border-t-2 border-primary/20"
                           )}
                         >
                             {booking ? (
                               isStart ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div 
-                                      className={cn(
-                                        "absolute inset-x-0 mx-1 rounded border p-2 transition-all hover:shadow-md z-10 group relative cursor-pointer",
-                                        getServiceColor(booking.service.category).bg,
-                                        getServiceColor(booking.service.category).border,
-                                        getServiceColor(booking.service.category).text,
-                                        // Special request styling
-                                        isSpecialStaffRequest(booking) && "ring-1 ring-amber-400 shadow-md"
-                                      )}
-                                      onClick={() => {
-                                        setSelectedBooking(booking)
-                                        setShowBookingModal(true)
-                                      }}
-                                      style={{
-                                        height: `${((booking.service.duration || 60) / BUSINESS_HOURS.slotDuration) * 32}px`,
-                                      }}
-                                    >
+                                isBuffer ? (
+                                  // Buffer appointment - simple off-white block
+                                  <div 
+                                    className="absolute inset-x-0 mx-1 rounded border p-1 bg-gray-100 border-gray-300"
+                                    style={{
+                                      height: `${(15 / BUSINESS_HOURS.slotDuration) * 32}px`,
+                                    }}
+                                  >
+                                    <div className="text-xs text-gray-500 text-center">Buffer</div>
+                                  </div>
+                                ) : (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div 
+                                        className={cn(
+                                          "absolute inset-x-0 mx-1 rounded border p-2 transition-all hover:shadow-md z-10 group relative cursor-pointer",
+                                          getServiceColor(booking.service.category).bg,
+                                          getServiceColor(booking.service.category).border,
+                                          getServiceColor(booking.service.category).text,
+                                          // Special request styling
+                                          isSpecialStaffRequest(booking) && "ring-1 ring-amber-400 shadow-md"
+                                        )}
+                                        onClick={() => {
+                                          setSelectedBooking(booking)
+                                          setShowBookingModal(true)
+                                        }}
+                                        style={{
+                                          height: `${((booking.service.duration || 60) / BUSINESS_HOURS.slotDuration) * 32}px`,
+                                        }}
+                                      >
                                       {/* Walk-In Origin Indicator */}
                                       {booking.walk_in_origin && (
                                         <div className="absolute -top-1 -left-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
@@ -617,16 +602,10 @@ export function RoomTimeline({
                                     </div>
                                   </TooltipContent>
                                 </Tooltip>
+                                )
                               ) : (
                                 <div className="h-8" /> // Spacer for continuation of booking
                               )
-                            ) : isBuffer ? (
-                              // Buffer zone indicator
-                              <div className="h-8 flex items-center justify-center">
-                                <div className="text-xs text-amber-600/60 font-medium">
-                                  Buffer
-                                </div>
-                              </div>
                             ) : (
                               <div className="h-8" /> // Available slot
                             )}

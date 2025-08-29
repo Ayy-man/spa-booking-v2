@@ -37,9 +37,6 @@ export interface BookingWithRelations extends Booking {
   customer: Customer
   walk_in_origin?: Pick<WalkIn, 'id' | 'customer_name' | 'checked_in_at'> | null
   booking_addons?: BookingAddonWithDetails[]  // Changed from 'addons' to 'booking_addons' to match database query
-  // Buffer times for 15-minute prep/cleanup periods
-  buffer_start?: string | null
-  buffer_end?: string | null
   // Reschedule tracking fields (optional as they may not be in the base Booking type)
   rescheduled_count?: number
   rescheduled_from?: string | null
