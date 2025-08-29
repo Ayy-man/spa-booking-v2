@@ -34,7 +34,8 @@ BEGIN
     -- 2. New booking overlaps with existing buffer zones
     -- 3. New buffer zones overlap with existing bookings
     
-    SELECT COUNT(*), MIN(b.*) INTO conflict_count, conflicting_booking
+    -- First get the count
+    SELECT COUNT(*) INTO conflict_count
     FROM bookings b
     WHERE b.appointment_date = NEW.appointment_date
       AND b.status != 'cancelled'
@@ -69,6 +70,42 @@ BEGIN
       );
 
     IF conflict_count > 0 THEN
+        -- Get details of the first conflicting booking
+        SELECT b.* INTO conflicting_booking
+        FROM bookings b
+        WHERE b.appointment_date = NEW.appointment_date
+          AND b.status != 'cancelled'
+          AND b.id != COALESCE(NEW.id, '00000000-0000-0000-0000-000000000000'::uuid)
+          AND (
+              -- Check if the new appointment (including its buffers) conflicts with existing appointments (including their buffers)
+              (
+                  -- For existing bookings WITH buffer data
+                  b.buffer_start IS NOT NULL AND b.buffer_end IS NOT NULL AND (
+                      -- New appointment time overlaps with existing buffer zone
+                      (NEW.start_time < b.buffer_end AND NEW.end_time > b.buffer_start) OR
+                      -- New buffer zone overlaps with existing buffer zone
+                      (NEW.buffer_start < b.buffer_end AND NEW.buffer_end > b.buffer_start)
+                  )
+              ) OR (
+                  -- For existing bookings WITHOUT buffer data (legacy), calculate on the fly
+                  b.buffer_start IS NULL AND b.buffer_end IS NULL AND (
+                      -- Calculate buffer times for existing booking
+                      (NEW.start_time < (b.end_time::time + INTERVAL '15 minutes')::time AND 
+                       NEW.end_time > (b.start_time::time - INTERVAL '15 minutes')::time) OR
+                      -- New buffer zone overlaps with existing booking plus calculated buffer
+                      (NEW.buffer_start < (b.end_time::time + INTERVAL '15 minutes')::time AND 
+                       NEW.buffer_end > (b.start_time::time - INTERVAL '15 minutes')::time)
+                  )
+              )
+          )
+          AND (
+              -- Same staff conflict
+              (NEW.staff_id = b.staff_id) OR
+              -- Same room conflict
+              (NEW.room_id = b.room_id)
+          )
+        LIMIT 1;
+        
         -- Provide detailed error message
         IF conflicting_booking.staff_id = NEW.staff_id THEN
             RAISE EXCEPTION 'Cannot book appointment: conflicts with 15-minute buffer zone. Staff % has an appointment from % to % (with buffers until %). Please select a time after %.',
