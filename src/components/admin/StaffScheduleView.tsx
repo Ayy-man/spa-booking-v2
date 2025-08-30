@@ -716,12 +716,18 @@ export function StaffScheduleView({
               const minutesSinceStart = (currentHour - BUSINESS_HOURS.start) * 60 + currentMinute;
               const slotIndex = Math.floor(minutesSinceStart / 15); // 15-minute slots
               
-              // Each row is 32px high (h-8 in Tailwind)
-              const rowHeight = 32;
-              const headerHeight = 56; // Height of the header row
+              // Calculate the position within the current slot (0-14 minutes)
+              const minuteInSlot = currentMinute % 15;
+              const slotProgress = minuteInSlot / 15; // 0 to 1
               
-              // Calculate the exact pixel position
-              const pixelPosition = headerHeight + (slotIndex * rowHeight);
+              // Each row is 33px high (h-8 in Tailwind + border)
+              const rowHeight = 33;
+              const headerHeight = 57; // Height of the header row (adjusted)
+              
+              // Calculate the exact pixel position including progress within the slot
+              const basePosition = headerHeight + (slotIndex * rowHeight);
+              const offsetInSlot = slotProgress * rowHeight;
+              const pixelPosition = basePosition + offsetInSlot;
               
               return (
                 <div 
@@ -730,7 +736,7 @@ export function StaffScheduleView({
                     top: `${pixelPosition}px`
                   }}
                 >
-                  <div className="absolute -left-1 -top-2.5 bg-red-500 text-white text-xs px-2 py-0.5 rounded shadow-sm">
+                  <div className="absolute -left-1 -top-2.5 bg-red-500 text-white text-xs px-2 py-0.5 rounded shadow-sm font-medium">
                     {format(currentTime, 'h:mm a')}
                   </div>
                 </div>

@@ -421,21 +421,27 @@ export function RoomTimeline({
                 const minutesSinceStart = (currentHour - BUSINESS_HOURS.start) * 60 + currentMinute;
                 const slotIndex = Math.floor(minutesSinceStart / 15); // 15-minute slots
                 
-                // Calculate row height - each slot row plus borders
-                const rowHeight = 33; // 32px height + 1px border
-                const headerHeight = 80; // Approximate header height
+                // Calculate the position within the current slot (0-14 minutes)
+                const minuteInSlot = currentMinute % 15;
+                const slotProgress = minuteInSlot / 15; // 0 to 1
                 
-                // Calculate the exact pixel position
-                const pixelPosition = headerHeight + (slotIndex * rowHeight);
+                // Calculate row height - h-8 is 32px (2rem) plus border
+                const rowHeight = 33; // 32px height + 1px border
+                const headerHeight = 73; // More accurate header height (measured)
+                
+                // Calculate the exact pixel position including progress within the slot
+                const basePosition = headerHeight + (slotIndex * rowHeight);
+                const offsetInSlot = slotProgress * rowHeight;
+                const pixelPosition = basePosition + offsetInSlot;
                 
                 return (
                   <div 
-                    className="absolute left-20 right-0 z-50 flex items-center"
+                    className="absolute left-20 right-0 z-50 flex items-center pointer-events-none"
                     style={{ top: `${pixelPosition}px` }}
                   >
-                    <div className="w-full h-0.5 bg-red-500 opacity-80"></div>
-                    <div className="absolute -left-2 w-4 h-4 bg-red-500 rounded-full opacity-80"></div>
-                    <div className="absolute -left-20 bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg">
+                    <div className="w-full h-0.5 bg-red-500 opacity-90"></div>
+                    <div className="absolute -left-2 w-4 h-4 bg-red-500 rounded-full opacity-90"></div>
+                    <div className="absolute -left-20 bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg font-medium">
                       {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
