@@ -712,22 +712,24 @@ export function StaffScheduleView({
               const currentHour = now.getHours();
               const currentMinute = now.getMinutes();
               
-              // Calculate which 15-minute slot we're in
-              const minutesSinceStart = (currentHour - BUSINESS_HOURS.start) * 60 + currentMinute;
-              const slotIndex = Math.floor(minutesSinceStart / 15); // 15-minute slots
+              // Calculate position based on hours and minutes
+              // Each hour has 4 rows (15-minute intervals)
+              const hoursSinceStart = currentHour - BUSINESS_HOURS.start;
+              const totalRowsToCurrentHour = hoursSinceStart * 4; // 4 rows per hour
               
-              // Calculate the position within the current slot (0-14 minutes)
-              const minuteInSlot = currentMinute % 15;
-              const slotProgress = minuteInSlot / 15; // 0 to 1
+              // Add fractional rows based on minutes (0-59 minutes maps to 0-4 rows)
+              const minuteFraction = currentMinute / 60; // 0 to 1
+              const additionalRows = minuteFraction * 4; // 0 to 4 rows
               
-              // Each row is 33px high (h-8 in Tailwind + border)
+              const totalRows = totalRowsToCurrentHour + additionalRows;
+              
+              // Each row is exactly 33px (h-8 + 1px border)
               const rowHeight = 33;
-              const headerHeight = 49; // Height of the header row (h-8 + padding + border)
+              // Header is p-3 (12px top + 12px bottom) + content + border
+              const headerHeight = 50; // Measured header height
               
-              // Calculate the exact pixel position including progress within the slot
-              const basePosition = headerHeight + (slotIndex * rowHeight);
-              const offsetInSlot = slotProgress * rowHeight;
-              const pixelPosition = basePosition + offsetInSlot;
+              // Calculate the exact pixel position
+              const pixelPosition = headerHeight + (totalRows * rowHeight);
               
               return (
                 <div 
@@ -790,7 +792,7 @@ export function StaffScheduleView({
                   >
                     {/* Time Column - Show all times clearly */}
                     <div className={cn(
-                      "p-2 text-sm border-r",
+                      "h-8 flex items-center justify-center text-sm border-r",
                       isHourStart ? "font-bold bg-primary/10 text-primary" : 
                       slot.minute === 30 ? "font-semibold bg-gray-100 text-gray-700" :
                       "bg-gray-50 text-gray-600"
