@@ -141,6 +141,8 @@ export interface Database {
           waiver_data: Json | null
           waiver_signed_at: string | null
           payment_option: string
+          buffer_start: string | null
+          buffer_end: string | null
           created_at: string
           updated_at: string
         }
@@ -168,6 +170,8 @@ export interface Database {
           waiver_data?: Json | null
           waiver_signed_at?: string | null
           payment_option?: string
+          buffer_start?: string | null
+          buffer_end?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -195,6 +199,8 @@ export interface Database {
           waiver_data?: Json | null
           waiver_signed_at?: string | null
           payment_option?: string
+          buffer_start?: string | null
+          buffer_end?: string | null
           created_at?: string
           updated_at?: string
         }

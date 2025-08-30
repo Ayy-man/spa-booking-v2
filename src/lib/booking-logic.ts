@@ -226,6 +226,8 @@ export function checkBookingConflicts(
     start_time: string
     end_time: string
     service_id?: string
+    buffer_start?: string
+    buffer_end?: string
   },
   existingBookings: Booking[],
   includeBufferTime: boolean = true
@@ -235,9 +237,21 @@ export function checkBookingConflicts(
   const newStart = parseISO(`${newBooking.appointment_date}T${newBooking.start_time}:00`)
   const newEnd = parseISO(`${newBooking.appointment_date}T${newBooking.end_time}:00`)
   
-  // Add buffer time if requested (15 minutes before and after)
-  const bufferStart = includeBufferTime ? addMinutes(newStart, -BUSINESS_HOURS.bufferTime) : newStart
-  const bufferEnd = includeBufferTime ? addMinutes(newEnd, BUSINESS_HOURS.bufferTime) : newEnd
+  // Use actual buffer times if provided, otherwise calculate them
+  let bufferStart: Date
+  let bufferEnd: Date
+  
+  if (includeBufferTime && newBooking.buffer_start && newBooking.buffer_end) {
+    bufferStart = parseISO(`${newBooking.appointment_date}T${newBooking.buffer_start}:00`)
+    bufferEnd = parseISO(`${newBooking.appointment_date}T${newBooking.buffer_end}:00`)
+  } else if (includeBufferTime) {
+    // Fallback to calculated buffer times
+    bufferStart = addMinutes(newStart, -BUSINESS_HOURS.bufferTime)
+    bufferEnd = addMinutes(newEnd, BUSINESS_HOURS.bufferTime)
+  } else {
+    bufferStart = newStart
+    bufferEnd = newEnd
+  }
   
   for (const booking of existingBookings) {
     // Skip cancelled bookings
@@ -246,13 +260,24 @@ export function checkBookingConflicts(
     const existingStart = parseISO(`${booking.appointment_date}T${booking.start_time}:00`)
     const existingEnd = parseISO(`${booking.appointment_date}T${booking.end_time}:00`)
     
-    // Check for time overlap with buffer consideration
-    // Add buffer to existing booking as well for proper conflict detection
-    const existingBufferStart = includeBufferTime ? addMinutes(existingStart, -BUSINESS_HOURS.bufferTime) : existingStart
-    const existingBufferEnd = includeBufferTime ? addMinutes(existingEnd, BUSINESS_HOURS.bufferTime) : existingEnd
+    // Use existing booking's buffer times if available, otherwise calculate them
+    let existingBufferStart: Date
+    let existingBufferEnd: Date
+    
+    if (includeBufferTime && booking.buffer_start && booking.buffer_end) {
+      existingBufferStart = parseISO(`${booking.appointment_date}T${booking.buffer_start}:00`)
+      existingBufferEnd = parseISO(`${booking.appointment_date}T${booking.buffer_end}:00`)
+    } else if (includeBufferTime) {
+      // Fallback to calculated buffer times
+      existingBufferStart = addMinutes(existingStart, -BUSINESS_HOURS.bufferTime)
+      existingBufferEnd = addMinutes(existingEnd, BUSINESS_HOURS.bufferTime)
+    } else {
+      existingBufferStart = existingStart
+      existingBufferEnd = existingEnd
+    }
     
     const hasOverlap = (
-      // New booking overlaps with existing booking (including buffers)
+      // New booking buffer overlaps with existing booking buffer
       (isBefore(bufferStart, existingBufferEnd) && isAfter(bufferEnd, existingBufferStart)) ||
       // Edge case: exact time matches
       (bufferStart.getTime() === existingBufferStart.getTime()) ||
@@ -263,7 +288,7 @@ export function checkBookingConflicts(
       // Staff conflict
       if (booking.staff_id === newBooking.staff_id) {
         const bufferMessage = includeBufferTime ? 
-          ` (including 15-minute buffer time)` : ''
+          ` (including buffer zones: ${booking.buffer_start || format(existingBufferStart, 'HH:mm')}-${booking.buffer_end || format(existingBufferEnd, 'HH:mm')})` : ''
         conflicts.push({
           type: 'staff',
           message: `Staff member is already booked from ${booking.start_time} to ${booking.end_time}${bufferMessage}`,
@@ -274,7 +299,7 @@ export function checkBookingConflicts(
       // Room conflict  
       if (booking.room_id === parseInt(newBooking.room_id)) {
         const bufferMessage = includeBufferTime ? 
-          ` (including 15-minute cleaning buffer)` : ''
+          ` (including buffer zones: ${booking.buffer_start || format(existingBufferStart, 'HH:mm')}-${booking.buffer_end || format(existingBufferEnd, 'HH:mm')})` : ''
         conflicts.push({
           type: 'room',
           message: `Room is already booked from ${booking.start_time} to ${booking.end_time}${bufferMessage}`,

@@ -217,6 +217,21 @@ export const supabaseClient = {
     const totalPrice = service.price + addonsPrice
     const finalPrice = totalPrice - discount
     
+    // Calculate buffer times (15 minutes before start and after end)
+    const bufferMinutes = 15
+    const bufferStartTime = new Date(startTime.getTime() - bufferMinutes * 60000)
+    const bufferEndTime = new Date(endTime.getTime() + bufferMinutes * 60000)
+    
+    // Ensure buffer times stay within business hours (9 AM - 8 PM)
+    const businessStart = new Date(`2000-01-01T09:00:00`)
+    const businessEnd = new Date(`2000-01-01T20:00:00`)
+    
+    const finalBufferStart = bufferStartTime < businessStart ? businessStart : bufferStartTime
+    const finalBufferEnd = bufferEndTime > businessEnd ? businessEnd : bufferEndTime
+    
+    const bufferStartStr = finalBufferStart.toTimeString().slice(0, 5)
+    const bufferEndStr = finalBufferEnd.toTimeString().slice(0, 5)
+    
     const { data: newBooking, error: bookingError } = await supabase
       .from('bookings')
       .insert({
@@ -228,6 +243,8 @@ export const supabaseClient = {
         start_time: validatedStartTime,
         end_time: endTimeStr,
         duration: totalDuration,
+        buffer_start: bufferStartStr,
+        buffer_end: bufferEndStr,
         total_price: totalPrice,
         discount: discount,
         final_price: finalPrice,

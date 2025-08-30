@@ -178,6 +178,41 @@ export function RoomTimeline({
     return booking.booking_type === 'buffer' || booking.service?.name === 'Buffer Time'
   }, [])
 
+  // Check if a time slot is within a booking's buffer zone
+  const isInBufferZone = useCallback((roomId: number, timeString: string): { 
+    isBuffer: boolean; 
+    bufferType: 'pre' | 'post' | null;
+    booking: BookingWithRelations | null;
+  } => {
+    for (const booking of bookings) {
+      if (booking.room_id !== roomId) continue
+      if (booking.status === 'cancelled') continue
+      if (isBufferBooking(booking)) continue // Skip actual buffer appointments
+      
+      // Check if this time slot falls in the buffer zones
+      const bufferStart = booking.buffer_start || null
+      const bufferEnd = booking.buffer_end || null
+      
+      if (bufferStart && bufferEnd) {
+        const currentTime = timeString
+        const serviceStart = booking.start_time.slice(0, 5)
+        const serviceEnd = booking.end_time.slice(0, 5)
+        
+        // Check if we're in the pre-service buffer (before start_time)
+        if (currentTime >= bufferStart && currentTime < serviceStart) {
+          return { isBuffer: true, bufferType: 'pre', booking }
+        }
+        
+        // Check if we're in the post-service buffer (after end_time)
+        if (currentTime >= serviceEnd && currentTime < bufferEnd) {
+          return { isBuffer: true, bufferType: 'post', booking }
+        }
+      }
+    }
+    
+    return { isBuffer: false, bufferType: null, booking: null }
+  }, [bookings, isBufferBooking])
+
   // Calculate room utilization percentage
   const getRoomUtilization = useCallback((roomId: number): number => {
     const roomBookings = bookings.filter(b => b.room_id === roomId)
@@ -330,6 +365,16 @@ export function RoomTimeline({
             >
               BUFFER TIME (15 MIN)
             </Badge>
+            <Badge
+              className="px-2 py-1 text-xs font-medium border bg-orange-50 border-orange-300 text-orange-700"
+            >
+              🔧 PRE-SERVICE BUFFER
+            </Badge>
+            <Badge
+              className="px-2 py-1 text-xs font-medium border bg-orange-100 border-orange-300 text-orange-800"
+            >
+              ✨ POST-SERVICE BUFFER
+            </Badge>
           </div>
         </Card>
 
@@ -447,6 +492,7 @@ export function RoomTimeline({
                       const booking = getBookingForSlot(room.id, slot.timeString)
                       const isStart = booking && isBookingStart(booking, slot.timeString)
                       const isBuffer = booking && isBufferBooking(booking)
+                      const bufferZone = isInBufferZone(room.id, slot.timeString)
                       
                       return (
                         <div 
@@ -456,8 +502,13 @@ export function RoomTimeline({
                             // Base styling with subtle room differentiation
                             parseInt(room.name.replace('Room ', '')) % 2 === 0 ? "bg-white" : "bg-gray-50/50",
                             // Hour boundary styling
-                            isHourMark && "border-t-2 border-primary/20"
+                            isHourMark && "border-t-2 border-primary/20",
+                            // Buffer zone styling - light striped background
+                            bufferZone.isBuffer && "bg-gradient-to-r from-orange-50/50 to-orange-100/50 bg-[length:8px_8px] bg-repeat"
                           )}
+                          style={bufferZone.isBuffer ? {
+                            backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(251, 146, 60, 0.1) 2px, rgba(251, 146, 60, 0.1) 4px)'
+                          } : undefined}
                         >
                             {booking ? (
                               isStart ? (
@@ -606,6 +657,39 @@ export function RoomTimeline({
                               ) : (
                                 <div className="h-8" /> // Spacer for continuation of booking
                               )
+                            ) : bufferZone.isBuffer ? (
+                              // Buffer zone indicator - show which appointment this buffer belongs to
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="h-8 flex items-center justify-center cursor-help">
+                                    <div className="text-xs text-orange-600 font-medium opacity-75">
+                                      {bufferZone.bufferType === 'pre' ? '🔧' : '✨'} Buffer
+                                    </div>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="right" className="max-w-xs">
+                                  <div className="space-y-2">
+                                    <div className="font-medium text-orange-700">
+                                      {bufferZone.bufferType === 'pre' ? 'Pre-Service Buffer' : 'Post-Service Buffer'}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                      15-minute {bufferZone.bufferType === 'pre' ? 'setup' : 'cleanup'} time for:
+                                    </div>
+                                    <div className="font-medium">
+                                      {bufferZone.booking?.service.name}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      {bufferZone.booking?.start_time} - {bufferZone.booking?.end_time}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      Staff: {bufferZone.booking?.staff.name}
+                                    </div>
+                                    <div className="text-xs text-orange-600 mt-2 italic">
+                                      This time is blocked for room preparation
+                                    </div>
+                                  </div>
+                                </TooltipContent>
+                              </Tooltip>
                             ) : (
                               <div className="h-8" /> // Available slot
                             )}

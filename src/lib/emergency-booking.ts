@@ -60,6 +60,29 @@ export async function emergencyCouplesBooking(params: {
     const primaryEndTime = calculateEndTime(startTime, primaryService.duration)
     const secondaryEndTime = calculateEndTime(startTime, secondaryService.duration)
     
+    // Calculate buffer times (15 minutes before start and after end)
+    const bufferMinutes = 15
+    const bufferStart = calculateEndTime(startTime, -bufferMinutes)
+    const primaryBufferEnd = calculateEndTime(primaryEndTime, bufferMinutes)
+    const secondaryBufferEnd = calculateEndTime(secondaryEndTime, bufferMinutes)
+    
+    // Ensure buffer times stay within business hours (9 AM - 8 PM)
+    const clampBufferTime = (time: string): string => {
+      const [hours, minutes] = time.split(':').map(Number)
+      const totalMinutes = hours * 60 + minutes
+      
+      // Clamp between 9:00 (540 minutes) and 20:00 (1200 minutes)
+      const clampedMinutes = Math.max(540, Math.min(1200, totalMinutes))
+      const clampedHours = Math.floor(clampedMinutes / 60)
+      const clampedMins = clampedMinutes % 60
+      
+      return `${clampedHours.toString().padStart(2, '0')}:${clampedMins.toString().padStart(2, '0')}`
+    }
+    
+    const finalBufferStart = clampBufferTime(bufferStart)
+    const finalPrimaryBufferEnd = clampBufferTime(primaryBufferEnd)
+    const finalSecondaryBufferEnd = clampBufferTime(secondaryBufferEnd)
+    
     // Find available room
     let roomId = await findAvailableRoom(selectedDate, startTime, Math.max(primaryService.duration, secondaryService.duration))
     
@@ -79,6 +102,8 @@ export async function emergencyCouplesBooking(params: {
         start_time: startTime,
         end_time: primaryEndTime,
         duration: primaryService.duration,
+        buffer_start: finalBufferStart,
+        buffer_end: finalPrimaryBufferEnd,
         total_price: primaryService.price,
         discount: 0,
         final_price: primaryService.price,
@@ -99,6 +124,8 @@ export async function emergencyCouplesBooking(params: {
         start_time: startTime,
         end_time: secondaryEndTime,
         duration: secondaryService.duration,
+        buffer_start: finalBufferStart,
+        buffer_end: finalSecondaryBufferEnd,
         total_price: secondaryService.price,
         discount: 0,
         final_price: secondaryService.price,

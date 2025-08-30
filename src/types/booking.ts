@@ -44,6 +44,9 @@ export interface BookingWithRelations extends Booking {
   original_start_time?: string | null
   last_rescheduled_at?: string | null
   reschedule_reason?: string | null
+  // Buffer time fields for 15-minute prep/cleanup (overriding base type)
+  buffer_start: string | null
+  buffer_end: string | null
 }
 
 export interface BookingAddonWithDetails extends BookingAddon {

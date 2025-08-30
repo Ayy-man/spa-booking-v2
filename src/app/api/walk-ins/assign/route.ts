@@ -179,6 +179,21 @@ export async function POST(request: NextRequest) {
     const endTime = new Date(startTime.getTime() + service.duration * 60000)
     const endTimeStr = endTime.toTimeString().slice(0, 5)
 
+    // Calculate buffer times (15 minutes before start and after end)
+    const bufferMinutes = 15
+    const bufferStartTime = new Date(startTime.getTime() - bufferMinutes * 60000)
+    const bufferEndTime = new Date(endTime.getTime() + bufferMinutes * 60000)
+    
+    // Ensure buffer times stay within business hours (9 AM - 8 PM)
+    const businessStart = new Date(`2000-01-01T09:00:00`)
+    const businessEnd = new Date(`2000-01-01T20:00:00`)
+    
+    const finalBufferStart = bufferStartTime < businessStart ? businessStart : bufferStartTime
+    const finalBufferEnd = bufferEndTime > businessEnd ? businessEnd : bufferEndTime
+    
+    const bufferStartStr = finalBufferStart.toTimeString().slice(0, 5)
+    const bufferEndStr = finalBufferEnd.toTimeString().slice(0, 5)
+
     // Create booking record
     const bookingData = {
       customer_id: customerId,
@@ -189,6 +204,8 @@ export async function POST(request: NextRequest) {
       start_time: body.startTime,
       end_time: endTimeStr,
       duration: service.duration,
+      buffer_start: bufferStartStr,
+      buffer_end: bufferEndStr,
       total_price: service.price,
       discount: 0,
       final_price: service.price,
