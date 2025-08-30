@@ -425,9 +425,11 @@ export function RoomTimeline({
                 const minuteInSlot = currentMinute % 15;
                 const slotProgress = minuteInSlot / 15; // 0 to 1
                 
-                // Calculate row height - h-8 is 32px (2rem) plus border
-                const rowHeight = 33; // 32px height + 1px border
-                const headerHeight = 73; // More accurate header height (measured)
+                // Accurate measurements based on actual CSS:
+                // Header: py-3 (24px padding) + content + border-b-2 (2px) ≈ 64px total
+                // Each row: h-8 (32px) + border-b (1px) = 33px (now standardized)
+                const headerHeight = 64; // Actual measured header height
+                const rowHeight = 33; // h-8 (32px) + border (1px)
                 
                 // Calculate the exact pixel position including progress within the slot
                 const basePosition = headerHeight + (slotIndex * rowHeight);
@@ -482,7 +484,7 @@ export function RoomTimeline({
                   )}>
                     {/* Time Label - Show all times */}
                     <div className={cn(
-                      "w-20 flex items-center justify-center py-2 text-xs border-r transition-colors",
+                      "w-20 flex items-center justify-center h-8 text-xs border-r transition-colors",
                       isHourMark ? "font-bold text-primary bg-primary/10" : 
                       isHalfHour ? "font-semibold text-gray-700 bg-gray-100" :
                       "text-gray-600 bg-gray-50 hover:bg-gray-100"

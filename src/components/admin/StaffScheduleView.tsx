@@ -722,7 +722,7 @@ export function StaffScheduleView({
               
               // Each row is 33px high (h-8 in Tailwind + border)
               const rowHeight = 33;
-              const headerHeight = 57; // Height of the header row (adjusted)
+              const headerHeight = 49; // Height of the header row (h-8 + padding + border)
               
               // Calculate the exact pixel position including progress within the slot
               const basePosition = headerHeight + (slotIndex * rowHeight);
