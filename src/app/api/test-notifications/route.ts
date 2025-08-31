@@ -78,19 +78,7 @@ export async function POST(request: NextRequest) {
     })
     */
 
-    if (error) {
-      console.error('Error creating test notification:', error)
-      return NextResponse.json(
-        { error: 'Failed to create notification', details: error.message },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      notificationId: data,
-      message: 'Test notification created successfully'
-    })
+    // Code removed - test notifications are disabled
   } catch (error: any) {
     console.error('Test notification error:', error)
     return NextResponse.json(
