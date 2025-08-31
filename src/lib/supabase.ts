@@ -214,7 +214,9 @@ export const supabaseClient = {
 
     // Create booking with proper schema
     const discount = 0
-    const totalPrice = service.price + addonsPrice
+    // Handle TBD pricing - use 0 for requires_on_site_pricing services
+    const servicePrice = service.requires_on_site_pricing ? 0 : service.price
+    const totalPrice = servicePrice + addonsPrice
     const finalPrice = totalPrice - discount
     
     // Calculate buffer times (15 minutes before start and after end)

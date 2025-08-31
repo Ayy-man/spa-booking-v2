@@ -126,6 +126,11 @@ export function BookingCard({
                 Consultation
               </Badge>
             )}
+            {booking.service?.requires_on_site_pricing && (
+              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300 text-xs">
+                TBD
+              </Badge>
+            )}
           </h3>
           <CouplesBookingIndicator 
             bookingType={booking.booking_type} 
@@ -193,7 +198,9 @@ export function BookingCard({
                   </>
                 )}
               </div>
-              <span className="text-xs text-gray-500">${booking.final_price || 0}</span>
+              <span className="text-xs text-gray-500">
+                {booking.service?.requires_on_site_pricing ? 'TBD' : `$${booking.final_price || 0}`}
+              </span>
             </div>
           </div>
         )}

@@ -145,6 +145,7 @@ export type ServiceCategory =
   | 'waxing'
   | 'package'
   | 'membership'
+  | 'consultation'
 
 // GHL categories enum for webhook integration
 export type GHLServiceCategory = 

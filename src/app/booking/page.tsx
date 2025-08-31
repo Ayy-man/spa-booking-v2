@@ -19,6 +19,7 @@ interface Service {
   description?: string
   allows_addons?: boolean
   is_consultation?: boolean
+  requires_on_site_pricing?: boolean
 }
 
 interface ServiceCategory {
@@ -309,7 +310,7 @@ export default function BookingPage() {
                               ? "text-primary-dark dark:text-primary-light bg-white/80 dark:bg-gray-800/80 px-3 py-1 rounded-lg shadow-sm"
                               : "text-primary dark:text-primary-light"
                           }`}>
-                            ${service.price}
+                            {service.requires_on_site_pricing ? 'TBD' : `$${service.price}`}
                           </span>
                         </div>
                         
@@ -347,6 +348,15 @@ export default function BookingPage() {
                                 Get Expert Advice
                               </span>
                             </div>
+                          </div>
+                        )}
+                        
+                        {/* TBD pricing indicator */}
+                        {service.requires_on_site_pricing && (
+                          <div className="mt-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <p className="text-xs text-blue-700 dark:text-blue-300 text-center">
+                              💰 Final price determined at spa based on selected treatment
+                            </p>
                           </div>
                         )}
                       </div>

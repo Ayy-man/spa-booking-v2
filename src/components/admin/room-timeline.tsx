@@ -38,7 +38,8 @@ const SERVICE_COLORS: Record<ServiceCategory, { bg: string; border: string; text
   body_scrub: { bg: "bg-purple-100", border: "border-purple-300", text: "text-purple-800" },
   waxing: { bg: "bg-orange-100", border: "border-orange-300", text: "text-orange-800" },
   package: { bg: "bg-yellow-100", border: "border-yellow-300", text: "text-yellow-800" },
-  membership: { bg: "bg-indigo-100", border: "border-indigo-300", text: "text-indigo-800" }
+  membership: { bg: "bg-indigo-100", border: "border-indigo-300", text: "text-indigo-800" },
+  consultation: { bg: "bg-teal-100", border: "border-teal-300", text: "text-teal-800" }
 }
 
 // Business hours configuration

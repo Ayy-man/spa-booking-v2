@@ -273,11 +273,16 @@ export default function ConfirmationPage() {
         }
 
         // Determine payment option and status
+        // TBD pricing = always pay on location
         // New customers = deposit paid, Existing customers = pay on location
         let paymentOption = 'pay_on_location'
         let paymentStatus = 'pending'
         
-        if (bookingData.customer.isNewCustomer) {
+        if (bookingData.service.requires_on_site_pricing) {
+          // TBD pricing - always pay on location
+          paymentOption = 'pay_on_location'
+          paymentStatus = 'pending'
+        } else if (bookingData.customer.isNewCustomer) {
           // New customer - deposit was paid
           paymentOption = 'deposit'
           paymentStatus = 'paid'
@@ -292,6 +297,12 @@ export default function ConfirmationPage() {
         if (bookingData.service.is_consultation) {
           const consultationNote = 'CONSULTATION - Customer needs treatment recommendations'
           bookingNotes = bookingNotes ? `${consultationNote}\n\n${bookingNotes}` : consultationNote
+        }
+        
+        // Add TBD pricing note
+        if (bookingData.service.requires_on_site_pricing) {
+          const tbdNote = 'PRICE TBD - Final price to be determined at spa based on treatment selected'
+          bookingNotes = bookingNotes ? `${tbdNote}\n\n${bookingNotes}` : tbdNote
         }
 
         // Create the booking in Supabase
@@ -357,6 +368,7 @@ export default function ConfirmationPage() {
               time: bookingData.time,
               duration: bookingData.service.duration,
               price: bookingData.service.price,
+              requiresOnSitePricing: bookingData.service.requires_on_site_pricing || false,
               staff: (staffNameMap as any)[bookingData.staff] || bookingData.staff,
               staffId: bookingData.staff,
               room: '1', // Default room for webhook
@@ -628,8 +640,17 @@ export default function ConfirmationPage() {
             {paymentType === 'location' && (
               <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
                 <p className="text-blue-800 dark:text-blue-300 text-sm">
-                  <strong>No payment required now:</strong> Your appointment is confirmed with $0 payment. 
-                  Please bring ${bookingData.service.price} to pay at the spa when you arrive for your appointment.
+                  {bookingData.service.requires_on_site_pricing ? (
+                    <>
+                      <strong>No payment required now:</strong> Your appointment is confirmed. 
+                      The final price will be determined at the spa based on your selected treatment.
+                    </>
+                  ) : (
+                    <>
+                      <strong>No payment required now:</strong> Your appointment is confirmed with $0 payment. 
+                      Please bring ${bookingData.service.price} to pay at the spa when you arrive for your appointment.
+                    </>
+                  )}
                 </p>
               </div>
             )}
@@ -641,7 +662,7 @@ export default function ConfirmationPage() {
                 <div><span className="font-medium">Date:</span> {formatDate(bookingData.date)}</div>
                 <div><span className="font-medium">Time:</span> {formatTimeRange(bookingData.time, bookingData.service.duration + (bookingData.addonsTotal?.duration || 0))}</div>
                 <div><span className="font-medium">Staff:</span> {staffNameMap[bookingData.staff as keyof typeof staffNameMap] || bookingData.staff || 'Any Available Staff'}</div>
-                <div><span className="font-medium">Base Price:</span> ${bookingData.service.price}</div>
+                <div><span className="font-medium">Base Price:</span> {bookingData.service.requires_on_site_pricing ? 'TBD' : `$${bookingData.service.price}`}</div>
                 
                 {bookingData.addons && bookingData.addons.length > 0 && (
                   <>
@@ -668,7 +689,7 @@ export default function ConfirmationPage() {
                 )}
                 
                 {(!bookingData.addons || bookingData.addons.length === 0) && (
-                  <div><span className="font-medium">Price:</span> ${bookingData.service.price}</div>
+                  <div><span className="font-medium">Price:</span> {bookingData.service.requires_on_site_pricing ? 'TBD' : `$${bookingData.service.price}`}</div>
                 )}
                 
                 <div><span className="font-medium">Customer:</span> {bookingData.customer.name}</div>

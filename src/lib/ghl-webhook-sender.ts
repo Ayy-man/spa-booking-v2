@@ -20,6 +20,7 @@ interface BookingData {
   time: string
   duration: number
   price: number
+  requiresOnSitePricing?: boolean
   staff?: string
   staffId?: string
   room?: string
@@ -90,13 +91,15 @@ class GHLWebhookSender {
           time: booking.time,
           normalized_time: normalizedTime,
           duration: booking.duration,
-          price: booking.price,
+          price: booking.requiresOnSitePricing ? 0 : booking.price,
           currency: PAYMENT_CONFIG.currency,
           status: 'confirmed',
           confirmation_code: `CONF-${bookingId.slice(0, 8).toUpperCase()}`,
           addons: booking.addons || [],
           addons_total: booking.addonsTotal || { price: 0, duration: 0 },
-          total_price: booking.price + (booking.addonsTotal?.price || 0),
+          total_price: booking.requiresOnSitePricing ? 0 : (booking.price + (booking.addonsTotal?.price || 0)),
+          requires_on_site_pricing: booking.requiresOnSitePricing || false,
+          price_note: booking.requiresOnSitePricing ? 'Price to be determined at spa' : undefined,
           total_duration: booking.duration + (booking.addonsTotal?.duration || 0)
         },
         location: {
@@ -105,10 +108,10 @@ class GHLWebhookSender {
           phone: BUSINESS_CONFIG.phone
         },
         payment: {
-          method: paymentDetails?.payment_method || 'online_payment',
-          amount: booking.price + (booking.addonsTotal?.price || 0),
+          method: booking.requiresOnSitePricing ? 'pay_on_location' : (paymentDetails?.payment_method || 'online_payment'),
+          amount: booking.requiresOnSitePricing ? 0 : (booking.price + (booking.addonsTotal?.price || 0)),
           currency: PAYMENT_CONFIG.currency,
-          status: paymentDetails?.verified ? 'verified_paid' : 'pending_verification',
+          status: booking.requiresOnSitePricing ? 'pending' : (paymentDetails?.verified ? 'verified_paid' : 'pending_verification'),
           transaction_id: paymentDetails?.transaction_id || `pending_${Date.now()}`,
           provider: paymentDetails?.payment_provider || 'unknown',
           verified: paymentDetails?.verified || false,
