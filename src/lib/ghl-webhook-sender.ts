@@ -44,80 +44,9 @@ interface WebhookResponse {
 
 class GHLWebhookSender {
   private readonly webhookUrls = {
-    newCustomer: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/57269a47-d804-4747-86d4-5a3f81013407',
     bookingConfirmation: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/ad60157f-9851-4392-b9ad-cf28c139f881',
-    bookingUpdate: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/0946bcf5-c598-4817-a103-2b207e4d6bfc',
     showNoShow: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/3d204c22-6f87-4b9d-84a5-3aa8dd2119c4',
     walkIn: 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/7768c4e4-e124-46ee-a439-52bb2d9da84e'
-  }
-
-  async sendNewCustomerWebhook(customer: CustomerData, booking: BookingData): Promise<WebhookResponse> {
-    try {
-      // Format normalized date and time
-      const normalizedTime = this.formatNormalizedDateTime(booking.date, booking.time)
-      
-      const payload = {
-        event: 'new_customer',
-        customer: {
-          name: customer.name,
-          email: customer.email,
-          phone: customer.phone || '',
-          is_new_customer: customer.isNewCustomer || true,
-          source: 'spa_booking_website',
-          created_at: new Date().toISOString()
-        },
-        booking: {
-          service: booking.service,
-          service_id: booking.serviceId || '',
-          service_category: booking.serviceCategory,
-          service_description: `${booking.service} treatment`,
-          date: booking.date,
-          time: booking.time,
-          normalized_time: normalizedTime,
-          duration: booking.duration,
-          price: booking.price,
-          currency: PAYMENT_CONFIG.currency,
-          location: `${BUSINESS_CONFIG.name}, ${BUSINESS_CONFIG.location}`,
-          booking_notes: customer.isNewCustomer ? 'First-time customer' : 'Returning customer',
-          addons: booking.addons || [],
-          addons_total: booking.addonsTotal || { price: 0, duration: 0 },
-          total_price: booking.price + (booking.addonsTotal?.price || 0),
-          total_duration: booking.duration + (booking.addonsTotal?.duration || 0)
-        },
-        preferences: {
-          communication_preference: 'email',
-          marketing_consent: customer.marketingConsent || false,
-          special_requests: ''
-        },
-        system_data: {
-          booking_id: `temp_booking_${Date.now()}`,
-          session_id: `session_${Date.now()}`,
-          user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
-          ip_address: 'unknown',
-          referrer: typeof window !== 'undefined' ? window.location.href : 'direct'
-        }
-      }
-
-      const response = await fetch(this.webhookUrls.newCustomer, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': `${BUSINESS_CONFIG.name.replace(/\s+/g, '-')}-Booking-App/1.0`,
-        },
-        body: JSON.stringify(payload),
-        mode: 'cors',
-        cache: 'no-cache'
-      })
-
-      if (response.ok) {
-        return { success: true }
-      } else {
-        const errorText = await response.text()
-        return { success: false, error: errorText }
-      }
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
-    }
   }
 
   async sendBookingConfirmationWebhook(
@@ -145,7 +74,7 @@ class GHLWebhookSender {
           phone: customer.phone || '',
           ghl_contact_id: ghlContactId || '',
           is_new_customer: customer.isNewCustomer || false,
-          total_bookings: customer.isNewCustomer ? 1 : 2 // This would be dynamic in real implementation
+          total_bookings: 0 // Will be populated dynamically in future
         },
         appointment: {
           service: booking.service,
@@ -164,7 +93,7 @@ class GHLWebhookSender {
           price: booking.price,
           currency: PAYMENT_CONFIG.currency,
           status: 'confirmed',
-          confirmation_code: `CONF${Date.now()}`,
+          confirmation_code: `CONF-${bookingId.slice(0, 8).toUpperCase()}`,
           addons: booking.addons || [],
           addons_total: booking.addonsTotal || { price: 0, duration: 0 },
           total_price: booking.price + (booking.addonsTotal?.price || 0),
@@ -177,7 +106,7 @@ class GHLWebhookSender {
         },
         payment: {
           method: paymentDetails?.payment_method || 'online_payment',
-          amount: booking.price,
+          amount: booking.price + (booking.addonsTotal?.price || 0),
           currency: PAYMENT_CONFIG.currency,
           status: paymentDetails?.verified ? 'verified_paid' : 'pending_verification',
           transaction_id: paymentDetails?.transaction_id || `pending_${Date.now()}`,
@@ -253,94 +182,6 @@ class GHLWebhookSender {
     }
   }
 
-  async sendBookingUpdateWebhook(
-    bookingId: string,
-    customer: CustomerData,
-    booking: BookingData,
-    changes: {
-      oldStatus: string
-      newStatus: string
-      oldDate?: string
-      newDate?: string
-      oldTime?: string
-      newTime?: string
-      reason?: string
-      requestedBy?: string
-    },
-    ghlContactId?: string
-  ): Promise<WebhookResponse> {
-    try {
-      // Format normalized date and time for new appointment time
-      const newDate = changes.newDate || booking.date
-      const newTime = changes.newTime || booking.time
-      const normalizedTime = this.formatNormalizedDateTime(newDate, newTime)
-      
-      const payload = {
-        event: 'booking_updated',
-        booking_id: bookingId,
-        customer: {
-          name: customer.name,
-          email: customer.email,
-          phone: customer.phone || '',
-          ghl_contact_id: ghlContactId || ''
-        },
-        changes: {
-          old_status: changes.oldStatus,
-          new_status: changes.newStatus,
-          old_date: changes.oldDate || booking.date,
-          new_date: newDate,
-          old_time: changes.oldTime || booking.time,
-          new_time: newTime,
-          reason: changes.reason || 'No reason provided',
-          requested_by: changes.requestedBy || 'system'
-        },
-        appointment: {
-          service: booking.service,
-          service_id: booking.serviceId || '',
-          service_category: booking.serviceCategory,
-          ghl_category: booking.ghlCategory || booking.serviceCategory,
-          staff: booking.staff || 'Any Available',
-          staff_id: booking.staffId || '',
-          room: booking.room || 'TBD',
-          room_id: booking.roomId || '',
-          date: newDate,
-          time: newTime,
-          normalized_time: normalizedTime,
-          duration: booking.duration,
-          price: booking.price,
-          currency: PAYMENT_CONFIG.currency,
-          status: changes.newStatus
-        },
-        system_data: {
-          updated_at: new Date().toISOString(),
-          updated_by: changes.requestedBy || 'system',
-          change_source: 'website',
-          session_id: `session_${Date.now()}`
-        }
-      }
-
-      const response = await fetch(this.webhookUrls.bookingUpdate, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': `${BUSINESS_CONFIG.name.replace(/\s+/g, '-')}-Booking-App/1.0`,
-        },
-        body: JSON.stringify(payload),
-        mode: 'cors',
-        cache: 'no-cache'
-      })
-
-      if (response.ok) {
-        return { success: true }
-      } else {
-        const errorText = await response.text()
-        return { success: false, error: errorText }
-      }
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
-    }
-  }
-
   async sendShowNoShowWebhook(
     bookingId: string,
     customer: CustomerData,
@@ -362,7 +203,7 @@ class GHLWebhookSender {
           phone: customer.phone || '',
           ghl_contact_id: ghlContactId || '',
           is_new_customer: customer.isNewCustomer || false,
-          total_bookings: customer.isNewCustomer ? 1 : 2 // This would be dynamic in real implementation
+          total_bookings: 0 // Will be populated dynamically in future
         },
         appointment: {
           service: booking.service,

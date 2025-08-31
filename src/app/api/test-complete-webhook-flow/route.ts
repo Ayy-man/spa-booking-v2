@@ -5,32 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     const results = []
     
-    // Test 1: Complete new customer flow
-    const newCustomerTest = await ghlWebhookSender.sendNewCustomerWebhook(
-      {
-        name: 'Sarah Johnson',
-        email: 'sarah.johnson@test.com',
-        phone: '+1-671-555-0123',
-        isNewCustomer: true
-      },
-      {
-        service: 'Deep Cleansing Facial',
-        serviceCategory: 'facial',
-        date: '2024-02-15',
-        time: '14:00',
-        duration: 60,
-        price: 85
-      }
-    )
-    
-    results.push({
-      test: 'Complete New Customer Flow',
-      webhook: 'newCustomer',
-      status: newCustomerTest.success ? 'PASS' : 'FAIL',
-      error: newCustomerTest.error || null
-    })
-
-    // Test 2: Couples booking confirmation flow
+    // Test 1: Couples booking confirmation flow
     const couplesBookingTest = await ghlWebhookSender.sendBookingConfirmationWebhook(
       'couples_booking_001',
       {
@@ -92,83 +67,7 @@ export async function GET(request: NextRequest) {
       error: singleBookingTest.error || null
     })
 
-    // Test 4: Booking cancellation
-    const cancellationTest = await ghlWebhookSender.sendBookingUpdateWebhook(
-      'single_booking_002',
-      {
-        name: 'Emma Davis',
-        email: 'emma.davis@test.com',
-        phone: '+1-671-555-0789'
-      },
-      {
-        service: 'Body Scrub',
-        serviceId: 'body_scrub_001',
-        serviceCategory: 'body_treatment',
-        date: '2024-02-18',
-        time: '10:00',
-        duration: 45,
-        price: 75,
-        staff: 'Maria',
-        staffId: 'staff_maria_001',
-        room: 'Room 3',
-        roomId: '33333333-3333-3333-3333-333333333333'
-      },
-      {
-        oldStatus: 'confirmed',
-        newStatus: 'cancelled',
-        reason: 'Customer requested cancellation due to emergency',
-        requestedBy: 'customer'
-      }
-    )
-    
-    results.push({
-      test: 'Booking Cancellation',
-      webhook: 'bookingUpdate',
-      status: cancellationTest.success ? 'PASS' : 'FAIL',
-      error: cancellationTest.error || null
-    })
-
-    // Test 5: Booking reschedule
-    const rescheduleTest = await ghlWebhookSender.sendBookingUpdateWebhook(
-      'couples_booking_001',
-      {
-        name: 'Mike & Lisa Thompson',
-        email: 'mike.thompson@test.com',
-        phone: '+1-671-555-0456'
-      },
-      {
-        service: 'Couples Massage',
-        serviceId: 'massage_couples_001',
-        serviceCategory: 'massage',
-        date: '2024-02-22',
-        time: '14:00',
-        duration: 90,
-        price: 220,
-        staff: 'Selma & Maria',
-        staffId: 'staff_selma_001,staff_maria_001',
-        room: 'Couples Room (Room 2)',
-        roomId: '22222222-2222-2222-2222-222222222222'
-      },
-      {
-        oldStatus: 'confirmed',
-        newStatus: 'rescheduled',
-        oldDate: '2024-02-20',
-        newDate: '2024-02-22',
-        oldTime: '16:00',
-        newTime: '14:00',
-        reason: 'Customer requested earlier time',
-        requestedBy: 'customer'
-      }
-    )
-    
-    results.push({
-      test: 'Booking Reschedule',
-      webhook: 'bookingUpdate',
-      status: rescheduleTest.success ? 'PASS' : 'FAIL',
-      error: rescheduleTest.error || null
-    })
-
-    // Test 6: High-value package booking
+    // Test 4: High-value package booking
     const packageBookingTest = await ghlWebhookSender.sendBookingConfirmationWebhook(
       'package_booking_001',
       {

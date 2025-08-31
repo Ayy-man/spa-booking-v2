@@ -8,8 +8,6 @@ import BookingProgressIndicator from '@/components/booking/BookingProgressIndica
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 
 import { analytics } from '@/lib/analytics'
-import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
-import { getGHLServiceCategory } from '@/lib/staff-data'
 import { loadBookingState, saveBookingState } from '@/lib/booking-state-manager'
 
 interface Service {
@@ -89,41 +87,6 @@ export default function CustomerInfoPage() {
         marketingConsent: data.marketingConsent
       }
     })
-    
-    // Send new customer webhook to GHL if it's a new customer
-    if (data.isNewCustomer && selectedService) {
-      try {
-        const serviceCategory = getServiceCategory(selectedService.name)
-        const ghlCategory = getGHLServiceCategory(selectedService.name)
-        const result = await ghlWebhookSender.sendNewCustomerWebhook(
-          {
-            name: data.name,
-            email: data.email,
-            phone: data.phone || '',
-            isNewCustomer: true,
-            marketingConsent: data.marketingConsent
-          },
-          {
-            service: selectedService.name,
-            serviceCategory,
-            ghlCategory,
-            date: selectedDate,
-            time: selectedTime,
-            duration: selectedService.duration,
-            price: selectedService.price,
-            staff: selectedStaff ? (staffNameMap as any)[selectedStaff] || selectedStaff : 'Any Available'
-          }
-        )
-        
-        if (result.success) {
-        } else {
-          // Failed to send new customer data to GHL
-        }
-      } catch (error) {
-        // Don't block the booking flow if GHL webhook fails
-        // Error is logged in the webhook sender
-      }
-    }
     
     // Check if it's a couples booking and determine redirect
     const currentState = loadBookingState()
@@ -362,19 +325,6 @@ export default function CustomerInfoPage() {
         window.location.href = '/booking/confirmation'
       }
     }
-  }
-
-  // Helper function to get service category from service name
-  const getServiceCategory = (serviceName: string): string => {
-    const name = serviceName.toLowerCase()
-    
-    if (name.includes('facial')) return 'facial'
-    if (name.includes('massage')) return 'massage'
-    if (name.includes('scrub') || name.includes('treatment') || name.includes('moisturizing')) return 'body_treatment'
-    if (name.includes('wax')) return 'waxing'
-    if (name.includes('package')) return 'package'
-    
-    return 'facial' // default
   }
 
   const formatDate = (dateString: string) => {
