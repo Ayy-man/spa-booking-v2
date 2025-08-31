@@ -255,7 +255,7 @@ export function useNotifications(): UseNotificationsReturn {
         priority: notification.priority,
         duration: undefined, // Use default based on priority
         onAction: notification.actionUrl ? () => {
-          window.location.href = notification.actionUrl
+          window.location.href = notification.actionUrl!
         } : undefined
       })
     }

@@ -539,7 +539,7 @@ export default function NotificationsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => window.location.href = notification.actionUrl}
+                                onClick={() => window.location.href = notification.actionUrl!}
                                 className="text-xs"
                               >
                                 View

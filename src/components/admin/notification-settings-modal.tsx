@@ -33,15 +33,20 @@ interface NotificationSettingsModalProps {
 export function NotificationSettingsModal({ isOpen, onClose }: NotificationSettingsModalProps) {
   const [loading, setLoading] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
-  const [settings, setSettings] = React.useState<AdminNotificationSettings>({
+  const [settings, setSettings] = React.useState<Partial<AdminNotificationSettings> & {
+    soundEnabled?: boolean;
+    browserEnabled?: boolean;
+    emailEnabled?: boolean;
+    emailAddress?: string;
+  }>({
     adminEmail: '',
-    dndEnabled: false,
-    dndStartTime: '22:00',
-    dndEndTime: '08:00',
-    soundEnabled: true,
+    doNotDisturbEnabled: false,
+    doNotDisturbStart: '22:00',
+    doNotDisturbEnd: '08:00',
     soundVolume: 50,
-    browserEnabled: true,
     browserPermissionGranted: false,
+    soundEnabled: true,
+    browserEnabled: true,
     emailEnabled: false,
     emailAddress: '',
     createdAt: new Date().toISOString(),
@@ -86,7 +91,7 @@ export function NotificationSettingsModal({ isOpen, onClose }: NotificationSetti
         const { data: settingsData } = await supabase
           .from('admin_notification_settings')
           .select('*')
-          .eq('admin_email', settings.adminEmail)
+          .eq('admin_email', settings.adminEmail!)
           .single()
         
         if (settingsData) {
@@ -97,7 +102,7 @@ export function NotificationSettingsModal({ isOpen, onClose }: NotificationSetti
         const { data: prefsData } = await supabase
           .from('admin_notification_preferences')
           .select('*')
-          .eq('admin_email', settings.adminEmail)
+          .eq('admin_email', settings.adminEmail!)
         
         if (prefsData && prefsData.length > 0) {
           const prefsMap: Record<string, AdminNotificationPreference> = {}
@@ -110,13 +115,15 @@ export function NotificationSettingsModal({ isOpen, onClose }: NotificationSetti
           const defaultPrefs: Record<string, AdminNotificationPreference> = {}
           Object.keys(NOTIFICATION_CONFIG).forEach((type) => {
             defaultPrefs[type] = {
-              adminEmail: settings.adminEmail,
+              adminEmail: settings.adminEmail!,
               notificationType: type as NotificationType,
               enabled: true,
               browserEnabled: true,
-              emailEnabled: false,
-              soundEnabled: true
-            }
+              soundEnabled: true,
+              id: '',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            } as AdminNotificationPreference
           })
           setPreferences(defaultPrefs as any)
         }
@@ -132,8 +139,8 @@ export function NotificationSettingsModal({ isOpen, onClose }: NotificationSetti
 
   // Request browser permission
   const requestPermission = async () => {
-    const granted = await browserNotificationManager.requestPermission()
-    setSettings(prev => ({ ...prev, browserPermissionGranted: granted }))
+    const permission = await browserNotificationManager.requestPermission()
+    setSettings(prev => ({ ...prev, browserPermissionGranted: permission === 'granted' }))
   }
 
   // Test sound
@@ -159,8 +166,9 @@ export function NotificationSettingsModal({ isOpen, onClose }: NotificationSetti
         metadata: {},
         requiresAction: false,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 3600000).toISOString()
-      }, settings)
+      }, settings as AdminNotificationSettings)
     }
   }
 
@@ -175,10 +183,10 @@ export function NotificationSettingsModal({ isOpen, onClose }: NotificationSetti
       const { error: settingsError } = await supabase
         .from('admin_notification_settings')
         .upsert({
-          admin_email: settings.adminEmail,
-          dnd_enabled: settings.dndEnabled,
-          dnd_start_time: settings.dndStartTime,
-          dnd_end_time: settings.dndEndTime,
+          admin_email: settings.adminEmail!,
+          dnd_enabled: settings.doNotDisturbEnabled,
+          dnd_start_time: settings.doNotDisturbStart,
+          dnd_end_time: settings.doNotDisturbEnd,
           sound_enabled: settings.soundEnabled,
           sound_volume: settings.soundVolume,
           browser_enabled: settings.browserEnabled,
@@ -197,11 +205,11 @@ export function NotificationSettingsModal({ isOpen, onClose }: NotificationSetti
         const { error: prefError } = await supabase
           .from('admin_notification_preferences')
           .upsert({
-            admin_email: settings.adminEmail,
+            admin_email: settings.adminEmail!,
             notification_type: type,
             enabled: pref.enabled,
             browser_enabled: pref.browserEnabled,
-            email_enabled: pref.emailEnabled,
+            email_enabled: false,
             sound_enabled: pref.soundEnabled
           }, {
             onConflict: 'admin_email,notification_type'
@@ -211,7 +219,7 @@ export function NotificationSettingsModal({ isOpen, onClose }: NotificationSetti
       }
       
       // Update browser notification manager
-      browserNotificationManager.setSoundVolume(settings.soundVolume)
+      browserNotificationManager.setSoundVolume(settings.soundVolume || 50)
       
       onClose()
     } catch (error) {
@@ -288,7 +296,7 @@ export function NotificationSettingsModal({ isOpen, onClose }: NotificationSetti
                   <div className="flex items-center space-x-2">
                     <VolumeX className="h-4 w-4 text-gray-400" />
                     <Slider
-                      value={[settings.soundVolume]}
+                      value={[settings.soundVolume || 50]}
                       onValueChange={([value]) => 
                         setSettings(prev => ({ ...prev, soundVolume: value }))
                       }
@@ -315,22 +323,22 @@ export function NotificationSettingsModal({ isOpen, onClose }: NotificationSetti
                   <p className="text-xs text-gray-500">Silence notifications during specified hours</p>
                 </div>
                 <Switch
-                  checked={settings.dndEnabled}
+                  checked={settings.doNotDisturbEnabled}
                   onCheckedChange={(checked) => 
-                    setSettings(prev => ({ ...prev, dndEnabled: checked }))
+                    setSettings(prev => ({ ...prev, doNotDisturbEnabled: checked }))
                   }
                 />
               </div>
 
-              {settings.dndEnabled && (
+              {settings.doNotDisturbEnabled && (
                 <div className="flex items-center space-x-4 pl-4">
                   <div className="flex items-center space-x-2">
                     <Label>From</Label>
                     <input
                       type="time"
-                      value={settings.dndStartTime}
+                      value={settings.doNotDisturbStart}
                       onChange={(e) => 
-                        setSettings(prev => ({ ...prev, dndStartTime: e.target.value }))
+                        setSettings(prev => ({ ...prev, doNotDisturbStart: e.target.value }))
                       }
                       className="px-2 py-1 border rounded text-sm"
                     />
@@ -339,9 +347,9 @@ export function NotificationSettingsModal({ isOpen, onClose }: NotificationSetti
                     <Label>To</Label>
                     <input
                       type="time"
-                      value={settings.dndEndTime}
+                      value={settings.doNotDisturbEnd}
                       onChange={(e) => 
-                        setSettings(prev => ({ ...prev, dndEndTime: e.target.value }))
+                        setSettings(prev => ({ ...prev, doNotDisturbEnd: e.target.value }))
                       }
                       className="px-2 py-1 border rounded text-sm"
                     />

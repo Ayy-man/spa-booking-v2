@@ -88,60 +88,80 @@ export const NOTIFICATION_CONFIG: Record<NotificationType, {
   color: string;
   defaultPriority: NotificationPriority;
   soundFile?: string;
+  label?: string;
+  description?: string;
 }> = {
   new_booking: {
     icon: '📅',
     color: 'blue',
     defaultPriority: 'normal',
-    soundFile: 'notification.mp3'
+    soundFile: 'notification.mp3',
+    label: 'New Bookings',
+    description: 'Notifications for new customer bookings'
   },
   walk_in: {
     icon: '🚶',
     color: 'green',
     defaultPriority: 'high',
-    soundFile: 'notification.mp3'
+    soundFile: 'notification.mp3',
+    label: 'Walk-ins',
+    description: 'Alerts when walk-in customers arrive'
   },
   payment_received: {
     icon: '💰',
     color: 'green',
     defaultPriority: 'normal',
-    soundFile: 'success.mp3'
+    soundFile: 'success.mp3',
+    label: 'Payments',
+    description: 'Payment confirmation notifications'
   },
   booking_cancelled: {
     icon: '❌',
     color: 'red',
     defaultPriority: 'normal',
-    soundFile: 'notification.mp3'
+    soundFile: 'notification.mp3',
+    label: 'Cancellations',
+    description: 'Booking cancellation alerts'
   },
   booking_rescheduled: {
     icon: '🔄',
     color: 'yellow',
     defaultPriority: 'normal',
-    soundFile: 'notification.mp3'
+    soundFile: 'notification.mp3',
+    label: 'Reschedules',
+    description: 'Booking rescheduling notifications'
   },
   double_booking_attempt: {
     icon: '⚠️',
     color: 'red',
     defaultPriority: 'urgent',
-    soundFile: 'urgent.mp3'
+    soundFile: 'urgent.mp3',
+    label: 'Double Bookings',
+    description: 'Alerts for double booking attempts'
   },
   staff_unavailable: {
     icon: '👤',
     color: 'orange',
     defaultPriority: 'high',
-    soundFile: 'notification.mp3'
+    soundFile: 'notification.mp3',
+    label: 'Staff Issues',
+    description: 'Staff availability problems'
   },
   room_conflict: {
     icon: '🏠',
     color: 'orange',
     defaultPriority: 'high',
-    soundFile: 'urgent.mp3'
+    soundFile: 'urgent.mp3',
+    label: 'Room Conflicts',
+    description: 'Room scheduling conflicts'
   },
   system_alert: {
     icon: '🔔',
     color: 'purple',
     defaultPriority: 'normal',
-    soundFile: 'notification.mp3'
+    soundFile: 'notification.mp3',
+    label: 'System Alerts',
+    description: 'General system notifications'
   }
 };
 

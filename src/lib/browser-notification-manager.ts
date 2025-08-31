@@ -240,8 +240,8 @@ export class BrowserNotificationManager {
         browserNotification.close();
       }, priorityConfig.toastDuration);
 
-      // Play sound if enabled
-      if (settings?.soundEnabled !== false) {
+      // Play sound if enabled (default to true if no settings)
+      if (!settings || settings.soundVolume > 0) {
         this.playSound(config.soundFile, settings?.soundVolume);
       }
     } catch (error) {
