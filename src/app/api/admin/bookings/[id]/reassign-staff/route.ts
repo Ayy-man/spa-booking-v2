@@ -145,8 +145,7 @@ export async function POST(
         'waxing': 'waxing',
         'package': 'package',
         'membership': 'membership',
-        'consultation': 'facials',  // Map consultation to facials capability
-        'consultations': 'facials'   // Handle plural form too
+        'consultation': 'facials'  // Map consultation to facials capability
       }
       
       const serviceCategory = booking.service?.category
@@ -163,7 +162,6 @@ export async function POST(
       // Admin override: Allow admin to assign any staff to consultation services
       // or services that originally had "any available staff"
       const isAdminOverride = serviceCategory === 'consultation' || 
-                              serviceCategory === 'consultations' ||
                               booking.staff_id === 'any'
       
       if (serviceCategory && !isAdminOverride) {
@@ -487,8 +485,7 @@ export async function GET(
       'waxing': 'waxing',
       'package': 'package',
       'membership': 'membership',
-      'consultation': 'facials',  // Map consultation to facials capability
-      'consultations': 'facials'   // Handle plural form too
+      'consultation': 'facials'  // Map consultation to facials capability
     }
 
     // Build available staff list with availability status
@@ -503,7 +500,6 @@ export async function GET(
         // Admin override: Show all staff as capable for consultation services
         // or services that originally had "any available staff"
         const isAdminOverride = serviceCategory === 'consultation' || 
-                                serviceCategory === 'consultations' ||
                                 booking.staff_id === 'any'
         
         if (isAdminOverride) {

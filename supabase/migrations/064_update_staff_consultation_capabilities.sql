@@ -6,12 +6,12 @@
 -- PART 1: ADD CONSULTATION CAPABILITY TO EXISTING STAFF
 -- ============================================
 
--- Update Phuong to include consultations capability (already has facials)
+-- Update Phuong to include consultation capability (already has facials)
 -- Phuong specializes in Asian skincare and acne management - perfect for consultations
 UPDATE staff 
-SET capabilities = ARRAY['facials', 'treatments', 'consultations']::service_category[]
+SET capabilities = ARRAY['facials', 'treatments', 'consultation']::service_category[]
 WHERE id = 'phuong' 
-  AND NOT ('consultations' = ANY(capabilities));
+  AND NOT ('consultation' = ANY(capabilities));
 
 -- ============================================
 -- PART 2: ADD CONSULTATION CAPABILITY TO ALL FACIAL-CAPABLE STAFF
@@ -20,9 +20,9 @@ WHERE id = 'phuong'
 -- Any staff member who can perform facials should also be able to perform consultations
 -- This is a business rule: consultations are skin assessments that precede facial treatments
 UPDATE staff 
-SET capabilities = array_append(capabilities, 'consultations'::service_category)
+SET capabilities = array_append(capabilities, 'consultation'::service_category)
 WHERE 'facials' = ANY(capabilities) 
-  AND NOT ('consultations' = ANY(capabilities))
+  AND NOT ('consultation' = ANY(capabilities))
   AND is_active = true;
 
 -- ============================================
@@ -118,7 +118,7 @@ BEGIN
     '📋 COUNT: ' || COUNT(*)::TEXT as status,
     STRING_AGG(name || ' (' || id || ')', ', ' ORDER BY name) as details
   FROM staff 
-  WHERE 'consultations' = ANY(capabilities) AND is_active = true;
+  WHERE 'consultation' = ANY(capabilities) AND is_active = true;
 
   -- Check staff with facials but no consultations
   RETURN QUERY
@@ -131,7 +131,7 @@ BEGIN
     END as details
   FROM staff 
   WHERE 'facials' = ANY(capabilities) 
-    AND NOT ('consultations' = ANY(capabilities))
+    AND NOT ('consultation' = ANY(capabilities))
     AND is_active = true;
 
   -- Check service category enum
