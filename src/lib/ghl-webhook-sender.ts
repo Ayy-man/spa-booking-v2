@@ -193,6 +193,7 @@ class GHLWebhookSender {
         }
       }
 
+      // Send to GoHighLevel webhook first
       const response = await fetch(this.webhookUrls.bookingConfirmation, {
         method: 'POST',
         headers: {
@@ -204,6 +205,43 @@ class GHLWebhookSender {
         cache: 'no-cache'
       })
 
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('GoHighLevel webhook failed:', errorText)
+        // Continue to send to Railway even if GHL fails
+      }
+
+      // Also send to Railway webhook for n8n processing
+      try {
+        const railwayPayload = {
+          ...payload,
+          spa_name: BUSINESS_CONFIG.name,
+          recipient_email: 'happyskinhappyyou@gmail.com',
+          timestamp: new Date().toISOString(),
+          source: 'booking_confirmation'
+        }
+
+        const railwayResponse = await fetch('https://primary-production-66f3.up.railway.app/webhook/bacbd069-d26d-4e74-a318-4a0442689bbf', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': `${BUSINESS_CONFIG.name.replace(/\s+/g, '-')}-Booking-App/1.0`,
+          },
+          body: JSON.stringify(railwayPayload),
+          mode: 'cors',
+          cache: 'no-cache'
+        })
+
+        if (!railwayResponse.ok) {
+          const railwayError = await railwayResponse.text()
+          console.error('Railway webhook failed:', railwayError)
+        }
+      } catch (railwayError) {
+        console.error('Error sending to Railway webhook:', railwayError)
+        // Don't fail the whole operation if Railway webhook fails
+      }
+
+      // Return success if at least GoHighLevel succeeded
       if (response.ok) {
         return { success: true }
       } else {
