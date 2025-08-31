@@ -20,12 +20,26 @@ BEGIN
     END LOOP;
 END $$;
 
--- Step 2: Delete all existing consultation services
--- We'll recreate them properly to ensure no duplicates
-DELETE FROM services 
-WHERE LOWER(name) LIKE '%consultation%';
+-- Step 2: Update any existing bookings that reference consultation services
+-- to use the standardized 'facial_consultation' ID (we'll create this service next)
+UPDATE bookings 
+SET service_id = 'facial_consultation'
+WHERE service_id IN (
+    SELECT id FROM services 
+    WHERE LOWER(name) LIKE '%consultation%'
+    AND id NOT IN ('facial_consultation', 'consultation_treatment_tbd')
+);
 
--- Step 3: Insert the correct Facial Consultation service
+-- Step 3: Now delete duplicate consultation services (keeping only our standard ones)
+DELETE FROM services 
+WHERE LOWER(name) LIKE '%consultation%'
+AND id NOT IN ('facial_consultation', 'consultation_treatment_tbd');
+
+-- Step 4: Delete the standard ones if they exist (to recreate them fresh)
+DELETE FROM services 
+WHERE id IN ('facial_consultation', 'consultation_treatment_tbd');
+
+-- Step 5: Insert the correct Facial Consultation service
 INSERT INTO services (
     id,
     name,
@@ -58,7 +72,7 @@ INSERT INTO services (
     NOW()
 );
 
--- Step 4: Insert the Consultation & Treatment service (TBD pricing)
+-- Step 6: Insert the Consultation & Treatment service (TBD pricing)
 INSERT INTO services (
     id,
     name,
@@ -91,7 +105,7 @@ INSERT INTO services (
     NOW()
 );
 
--- Step 5: Verify the cleanup worked
+-- Step 7: Verify the cleanup worked
 DO $$
 DECLARE
     consultation_count INTEGER;
@@ -122,10 +136,10 @@ BEGIN
     END IF;
 END $$;
 
--- Step 6: Ensure indexes exist for performance
+-- Step 8: Ensure indexes exist for performance
 CREATE INDEX IF NOT EXISTS idx_services_consultation ON services(is_consultation) WHERE is_consultation = true;
 CREATE INDEX IF NOT EXISTS idx_services_on_site_pricing ON services(requires_on_site_pricing) WHERE requires_on_site_pricing = true;
 
--- Step 7: Add documentation comments
+-- Step 9: Add documentation comments
 COMMENT ON COLUMN services.is_consultation IS 'Flag to identify consultation services that require special handling';
 COMMENT ON COLUMN services.requires_on_site_pricing IS 'Flag for services with TBD pricing that require on-site pricing determination';
