@@ -233,7 +233,7 @@ export default function BookingPage() {
                       key={service.id}
                       className={
                         isConsultation
-                          ? "relative border-2 border-primary/30 dark:border-primary-light/40 rounded-xl p-6 bg-gradient-to-br from-accent/20 via-white to-accent/10 dark:from-primary/10 dark:via-gray-800 dark:to-primary-light/5 hover:shadow-2xl hover:shadow-primary/20 dark:hover:shadow-primary-light/20 transition-all duration-500 cursor-pointer group overflow-hidden transform hover:-translate-y-1 hover:scale-[1.02]"
+                          ? "relative border border-primary/20 dark:border-primary-light/30 rounded-2xl p-6 bg-gradient-to-br from-accent/10 via-white to-primary/5 dark:from-primary/5 dark:via-gray-800 dark:to-accent/10 hover:shadow-xl hover:shadow-primary/15 dark:hover:shadow-primary-light/15 hover:border-primary/40 dark:hover:border-primary-light/50 transition-all duration-300 cursor-pointer group overflow-hidden transform hover:-translate-y-0.5"
                           : "border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary dark:hover:border-primary-light transition-all cursor-pointer group"
                       }
                       onClick={() => {
@@ -266,27 +266,22 @@ export default function BookingPage() {
                     >
                       {/* Consultation premium ribbon/badge */}
                       {isConsultation && (
-                        <div className="absolute top-0 right-0">
-                          {/* Ribbon effect */}
-                          <div className="relative">
-                            <div className="bg-gradient-to-r from-primary to-primary-dark text-white text-xs px-4 py-2 rounded-bl-xl rounded-tr-xl font-semibold shadow-lg flex items-center gap-1">
-                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                              </svg>
-                              Expert Consultation
-                            </div>
-                            {/* Small triangle shadow effect */}
-                            <div className="absolute -bottom-1 right-0 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-primary-dark/50"></div>
+                        <div className="absolute -top-1 -right-1 z-20">
+                          <div className="bg-gradient-to-r from-primary via-primary-dark to-primary text-white text-xs px-3 py-1.5 rounded-full font-medium shadow-md flex items-center gap-1.5 border-2 border-white dark:border-gray-800">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className="font-semibold">Expert</span>
                           </div>
                         </div>
                       )}
                       
                       {/* Subtle background pattern for consultations */}
                       {isConsultation && (
-                        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.08]">
+                        <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.06]">
                           <div className="w-full h-full" style={{
-                            backgroundImage: `radial-gradient(circle at 20px 20px, var(--primary) 1px, transparent 1px)`,
-                            backgroundSize: '20px 20px'
+                            backgroundImage: `radial-gradient(circle at 24px 24px, var(--primary) 0.5px, transparent 0.5px)`,
+                            backgroundSize: '24px 24px'
                           }}></div>
                         </div>
                       )}
@@ -307,7 +302,7 @@ export default function BookingPage() {
                           </h3>
                           <span className={`font-bold whitespace-nowrap text-xl ${
                             isConsultation
-                              ? "text-primary-dark dark:text-primary-light bg-white/80 dark:bg-gray-800/80 px-3 py-1 rounded-lg shadow-sm"
+                              ? "text-primary-dark dark:text-primary-light bg-white/90 dark:bg-gray-800/90 px-3 py-1.5 rounded-xl shadow-sm border border-primary/10 dark:border-primary-light/20"
                               : "text-primary dark:text-primary-light"
                           }`}>
                             {service.requires_on_site_pricing ? 'TBD' : `$${service.price}`}
@@ -339,11 +334,11 @@ export default function BookingPage() {
                         
                         {/* Simplified consultation indicator */}
                         {isConsultation && (
-                          <div className="mt-3 pt-3 border-t border-primary/20 dark:border-primary-light/20">
+                          <div className="mt-4 pt-3 border-t border-primary/15 dark:border-primary-light/15">
                             <div className="flex items-center justify-center">
-                              <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-accent/40 dark:bg-primary/20 text-primary-dark dark:text-primary-light">
-                                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                              <span className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-medium bg-primary/8 dark:bg-primary/12 text-primary-dark/80 dark:text-primary-light/80 border border-primary/10 dark:border-primary-light/15 hover:bg-primary/12 dark:hover:bg-primary/18 transition-colors">
+                                <svg className="w-3.5 h-3.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75-7.478a12.06 12.06 0 014.5 0m-7.5 0a12.06 12.06 0 014.5 0m3.75 7.478a12.06 12.06 0 01-4.5 0M12 8.25l6.75 7.5-6.75 7.5L5.25 15.75z" />
                                 </svg>
                                 Get Expert Advice
                               </span>
@@ -351,14 +346,6 @@ export default function BookingPage() {
                           </div>
                         )}
                         
-                        {/* TBD pricing indicator */}
-                        {service.requires_on_site_pricing && (
-                          <div className="mt-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                            <p className="text-xs text-blue-700 dark:text-blue-300 text-center">
-                              💰 Final price determined at spa based on selected treatment
-                            </p>
-                          </div>
-                        )}
                       </div>
                     </div>
                     );
