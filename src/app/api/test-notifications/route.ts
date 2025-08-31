@@ -55,6 +55,13 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // DISABLED: Test notifications should not be created in production
+    return NextResponse.json({
+      success: false,
+      message: 'Test notifications are disabled to prevent email spam. Use real bookings for testing.'
+    })
+    
+    /* COMMENTED OUT TO PREVENT EMAIL SPAM
     // Create test notification
     const { data, error } = await supabase.rpc('create_notification', {
       p_type: type as NotificationType,
@@ -69,6 +76,7 @@ export async function POST(request: NextRequest) {
       p_requires_action: body.requiresAction || false,
       p_action_url: body.actionUrl || null
     })
+    */
 
     if (error) {
       console.error('Error creating test notification:', error)
