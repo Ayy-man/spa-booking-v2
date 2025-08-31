@@ -785,9 +785,9 @@ export function StaffScheduleView({
                   <div 
                     key={slot.timeString}
                     className={cn(
-                      "grid grid-cols-[100px_180px_repeat(auto-fit,minmax(150px,1fr))]",
-                      isHourStart && "border-t-2",
-                      !isHourStart && "border-t"
+                      "grid grid-cols-[100px_180px_repeat(auto-fit,minmax(150px,1fr))] border-t",
+                      isHourStart && "border-gray-300",
+                      !isHourStart && "border-gray-200"
                     )}
                   >
                     {/* Time Column - Show all times clearly */}

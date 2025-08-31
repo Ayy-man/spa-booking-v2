@@ -509,8 +509,6 @@ export function RoomTimeline({
                             "flex-1 min-w-[200px] border-r last:border-r-0 relative transition-all duration-200",
                             // Base styling with subtle room differentiation
                             parseInt(room.name.replace('Room ', '')) % 2 === 0 ? "bg-white" : "bg-gray-50/50",
-                            // Hour boundary styling
-                            isHourMark && "border-t-2 border-primary/20",
                             // Buffer zone styling - light striped background
                             bufferZone.isBuffer && "bg-gradient-to-r from-orange-50/50 to-orange-100/50 bg-[length:8px_8px] bg-repeat"
                           )}
