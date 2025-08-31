@@ -1,140 +1,116 @@
--- Fix Staff Consultation Capabilities
--- This migration ensures staff can handle consultation services
--- Since consultation might not be in the service_category enum, we'll work around it
+-- Fix Staff Assignment for Consultation Services
+-- This migration ensures consultation services work with the admin override system
+-- NOTE: We don't modify enums here - the application handles the mapping
 
 -- ============================================
--- PART 1: ENSURE CONSULTATION ENUM VALUE EXISTS
+-- PART 1: ENSURE CONSULTATION SERVICE EXISTS
 -- ============================================
 
--- First try to add consultation to the enum if it doesn't exist
--- This uses a safe approach that won't fail if it already exists
-DO $$
-BEGIN
-  -- Only try to add if it doesn't exist
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_enum 
-    WHERE enumlabel = 'consultation' 
-    AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'service_category')
-  ) THEN
-    ALTER TYPE service_category ADD VALUE IF NOT EXISTS 'consultation';
-  END IF;
-EXCEPTION
-  WHEN OTHERS THEN
-    -- If we can't add it (maybe it exists or other reason), that's ok
-    -- We'll handle consultations through the facials capability
-    RAISE NOTICE 'Note: Could not add consultation to enum, will map through facials capability';
-END
-$$;
+-- Create or update a consultation service
+-- We'll use 'facials' as the category since that's what exists in the enum
+-- The is_consultation flag will identify it as a consultation service
+INSERT INTO services (
+  id,
+  name,
+  description,
+  category,
+  duration,
+  price,
+  is_consultation,
+  requires_on_site_pricing,
+  allows_addons,
+  ghl_category,
+  is_active
+) 
+SELECT
+  'consultation-service',
+  'Consultation',
+  'Professional consultation and personalized treatment recommendations',
+  'facials'::service_category,  -- Use facials since it exists in the enum
+  30,
+  0.00,
+  true,  -- This flag marks it as a consultation
+  false,
+  false,
+  'FACE TREATMENTS',
+  true
+WHERE NOT EXISTS (
+  SELECT 1 FROM services 
+  WHERE id = 'consultation-service' OR 
+        (is_consultation = true AND is_active = true)
+);
+
+-- Update existing consultation services to ensure they're active
+UPDATE services 
+SET 
+  is_active = true,
+  is_consultation = true,
+  updated_at = NOW()
+WHERE is_consultation = true;
 
 -- ============================================
--- PART 2: UPDATE STAFF CAPABILITIES SAFELY
+-- PART 2: ENSURE STAFF CAPABILITIES ARE CORRECT
 -- ============================================
 
--- For now, we'll ensure staff with facial capabilities can handle consultations
--- The admin override in the application will handle the rest
-
--- Make sure Phuong has facials capability (she should already have it)
+-- Ensure Phuong has facials capability (for handling consultations)
+-- Note: 'facials' is the plural form used in staff capabilities
 UPDATE staff 
 SET capabilities = 
   CASE 
-    WHEN NOT ('facials' = ANY(capabilities)) 
-    THEN array_append(capabilities, 'facials'::service_category)
-    ELSE capabilities
+    WHEN 'facials' = ANY(capabilities) THEN capabilities  -- Already has it
+    ELSE array_append(capabilities, 'facials'::service_category)  -- Add it
   END
 WHERE id = 'phuong' AND is_active = true;
 
--- Make sure other facial specialists have the facials capability
--- This ensures they can handle consultation services through the mapping
-UPDATE staff 
-SET capabilities = capabilities  -- No change needed, just ensure facials is there
-WHERE 'facials' = ANY(capabilities) AND is_active = true;
-
 -- ============================================
--- PART 3: ENSURE CONSULTATION SERVICE EXISTS
+-- PART 3: INFORMATION AND STATUS
 -- ============================================
 
--- Check if we can use consultation category, otherwise use facial
 DO $$
 DECLARE
-  v_category service_category;
+  v_consultation_count INTEGER;
+  v_staff_with_facials INTEGER;
+  v_active_staff INTEGER;
 BEGIN
-  -- Try to use consultation if it exists in the enum
-  BEGIN
-    v_category := 'consultation'::service_category;
-  EXCEPTION
-    WHEN OTHERS THEN
-      -- Fall back to facial if consultation doesn't exist
-      v_category := 'facial'::service_category;
-  END;
-  
-  -- Insert or update the consultation service
-  INSERT INTO services (
-    id,
-    name,
-    description,
-    category,
-    duration,
-    price,
-    is_consultation,
-    requires_on_site_pricing,
-    allows_addons,
-    ghl_category,
-    is_active
-  ) VALUES (
-    'consultation-service',  -- Different ID to avoid conflicts
-    'Consultation',
-    'Professional consultation and personalized treatment recommendations',
-    v_category,  -- Use the determined category
-    30,
-    0.00,
-    true,  -- Mark as consultation
-    false,
-    false,
-    'FACE TREATMENTS',
-    true
-  ) ON CONFLICT (id) DO UPDATE SET
-    is_consultation = true,
-    is_active = true,
-    updated_at = NOW();
-END
-$$;
-
--- ============================================
--- PART 4: REPORTING
--- ============================================
-
--- Show current setup
-DO $$
-DECLARE
-  v_enum_has_consultation BOOLEAN;
-  v_staff_count INTEGER;
-  v_consultation_services INTEGER;
-BEGIN
-  -- Check if consultation is in enum
-  SELECT EXISTS(
-    SELECT 1 FROM pg_enum 
-    WHERE enumlabel = 'consultation' 
-    AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'service_category')
-  ) INTO v_enum_has_consultation;
-  
-  -- Count staff with facials capability (who can handle consultations)
-  SELECT COUNT(*) INTO v_staff_count
-  FROM staff 
-  WHERE 'facials' = ANY(capabilities) AND is_active = true;
-  
   -- Count consultation services
-  SELECT COUNT(*) INTO v_consultation_services
+  SELECT COUNT(*) INTO v_consultation_count
   FROM services 
   WHERE is_consultation = true AND is_active = true;
   
+  -- Count staff with facials capability
+  SELECT COUNT(*) INTO v_staff_with_facials
+  FROM staff 
+  WHERE 'facials' = ANY(capabilities) AND is_active = true;
+  
+  -- Count all active staff
+  SELECT COUNT(*) INTO v_active_staff
+  FROM staff 
+  WHERE is_active = true;
+  
   RAISE NOTICE '===========================================';
-  RAISE NOTICE 'Consultation Setup Status:';
+  RAISE NOTICE 'Staff Assignment Fix Applied';
   RAISE NOTICE '===========================================';
-  RAISE NOTICE 'Enum has consultation: %', CASE WHEN v_enum_has_consultation THEN 'YES' ELSE 'NO (using facials mapping)' END;
-  RAISE NOTICE 'Staff with facial capability: %', v_staff_count;
-  RAISE NOTICE 'Active consultation services: %', v_consultation_services;
-  RAISE NOTICE '===========================================';
-  RAISE NOTICE 'The admin panel will allow overriding staff assignments for consultations';
+  RAISE NOTICE 'Active consultation services: %', v_consultation_count;
+  RAISE NOTICE 'Staff with facials capability: %', v_staff_with_facials;
+  RAISE NOTICE 'Total active staff: %', v_active_staff;
+  RAISE NOTICE '';
+  RAISE NOTICE 'IMPORTANT: The admin panel now allows overriding';
+  RAISE NOTICE 'staff assignments for consultation services.';
+  RAISE NOTICE 'Admins can assign ANY staff to consultations.';
   RAISE NOTICE '===========================================';
 END
 $$;
+
+-- ============================================
+-- PART 4: SHOW CURRENT STAFF CAPABILITIES
+-- ============================================
+
+-- Display current staff and their capabilities for reference
+SELECT 
+  name,
+  id,
+  capabilities,
+  is_active
+FROM staff 
+WHERE is_active = true
+ORDER BY name;
