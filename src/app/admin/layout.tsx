@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { simpleAuth } from '@/lib/simple-auth'
+import { NotificationBell } from '@/components/admin/notification-bell'
+import { Toaster } from '@/components/ui/toaster'
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -51,6 +53,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 📅 Booking System
               </a>
               <div className="flex items-center space-x-3 border-l border-gray-300 pl-4">
+                <NotificationBell />
                 {sessionInfo && (
                   <span className="text-xs text-gray-500">
                     Logged in as {sessionInfo.email}
@@ -71,6 +74,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {children}
       </main>
+      
+      {/* Toast Notifications */}
+      <Toaster position="top-right" />
     </div>
   )
 }
