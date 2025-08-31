@@ -3,6 +3,14 @@ import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 
 // Test endpoint to verify all webhooks are working
 export async function GET() {
+  // DISABLED: Prevent test webhooks during build
+  return NextResponse.json({
+    success: false,
+    error: 'Test webhooks are disabled to prevent automatic execution during build',
+    message: 'This endpoint has been disabled'
+  }, { status: 403 })
+  
+  /* DISABLED TO PREVENT BUILD-TIME EXECUTION
   const results = {
     bookingConfirmation: { tested: false, success: false, error: null as string | null },
     showNoShow: { tested: false, success: false, error: null as string | null }
@@ -108,4 +116,5 @@ export async function GET() {
       results
     }, { status: 500 })
   }
+  */
 }

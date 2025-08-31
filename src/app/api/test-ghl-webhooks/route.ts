@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 
 export async function GET(request: NextRequest) {
+  // DISABLED: Prevent test webhooks during build
+  return NextResponse.json({
+    success: false,
+    error: 'Test GHL webhooks are disabled to prevent automatic execution during build',
+    message: 'This endpoint has been disabled'
+  }, { status: 403 })
+  
+  /* DISABLED TO PREVENT BUILD-TIME EXECUTION
   try {
     const tests = []
     
@@ -68,4 +76,5 @@ export async function GET(request: NextRequest) {
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
+  */
 } 

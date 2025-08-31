@@ -2,39 +2,12 @@ import { NextResponse } from 'next/server'
 import { supabaseClient } from '@/lib/supabase'
 
 export async function POST() {
-  try {
-    // Test booking data
-    const testBooking = {
-      service_id: 'basic_facial',
-      staff_id: 'robyn_camacho',
-      room_id: 1,
-      customer_name: 'Test Customer',
-      customer_email: 'test@example.com',
-      customer_phone: '555-1234',
-      appointment_date: new Date().toISOString().split('T')[0],
-      start_time: '14:00',
-      notes: 'This is a test booking'
-    }
-
-
-    const result = await supabaseClient.createBooking(testBooking)
-    
-
-    return NextResponse.json({
-      success: true,
-      booking: result,
-      message: 'Test booking created successfully'
-    })
-  } catch (error: any) {
-    console.error('Test booking failed:', error)
-    
-    return NextResponse.json({
-      success: false,
-      error: error.message,
-      details: error.details || 'No additional details',
-      stack: error.stack
-    }, { status: 500 })
-  }
+  // DISABLED: Test bookings should not be created automatically
+  return NextResponse.json({
+    success: false,
+    error: 'Test booking creation is disabled to prevent automatic bookings during build',
+    message: 'This endpoint has been disabled to prevent creating test bookings'
+  }, { status: 403 })
 }
 
 export async function GET() {
