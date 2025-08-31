@@ -325,7 +325,7 @@ export default function PaymentLinksPage() {
                 <h4 className="font-medium text-yellow-800">Important Notes</h4>
                 <ul className="text-sm text-yellow-700 mt-1 space-y-1">
                   <li>• Always verify payment completion before confirming appointments</li>
-                  <li>• Services without full payment links will automatically use the $30 deposit</li>
+                  <li>• Services without full payment links will automatically use the $25 deposit</li>
                   <li>• Customers can return to complete booking after successful payment</li>
                   <li>• Keep payment confirmation receipts for record keeping</li>
                 </ul>

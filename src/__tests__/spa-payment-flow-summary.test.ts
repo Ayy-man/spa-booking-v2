@@ -20,12 +20,12 @@ import { addMinutes, format, parseISO } from 'date-fns'
 
 describe('Spa Payment Flow - Comprehensive Test Summary', () => {
   describe('1. New Customer Payment Flow', () => {
-    test('NEW CUSTOMERS: Should only receive deposit payment option ($30)', () => {
+    test('NEW CUSTOMERS: Should only receive deposit payment option ($25)', () => {
       const flow = determinePaymentFlow(false, 'Basic Facial') // isNewCustomer = false
       expect(flow).toBe('deposit')
       
       // New customers always get deposit configuration
-      expect(DEPOSIT_PAYMENT_CONFIG.price).toBe(30.00)
+      expect(DEPOSIT_PAYMENT_CONFIG.price).toBe(25.00)
       expect(DEPOSIT_PAYMENT_CONFIG.type).toBe('deposit')
     })
 
@@ -240,7 +240,7 @@ describe('Spa Payment Flow - Comprehensive Test Summary', () => {
 
     test('SYSTEM VALIDATION: Critical business rules are enforced', () => {
       const businessRules = [
-        'New customers must pay $30 deposit only',
+        'New customers must pay $25 deposit only',
         'Existing customers can choose full payment or pay on location',
         '15-minute buffer enforced between all appointments',
         'Service-specific payment links used for full payments',

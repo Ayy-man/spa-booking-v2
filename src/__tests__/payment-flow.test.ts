@@ -42,7 +42,7 @@ describe('Payment Flow Tests', () => {
   describe('Payment Configuration', () => {
     test('should have valid deposit payment configuration', () => {
       expect(DEPOSIT_PAYMENT_CONFIG).toBeDefined()
-      expect(DEPOSIT_PAYMENT_CONFIG.price).toBe(30.00)
+      expect(DEPOSIT_PAYMENT_CONFIG.price).toBe(25.00)
       expect(DEPOSIT_PAYMENT_CONFIG.type).toBe('deposit')
       expect(DEPOSIT_PAYMENT_CONFIG.status).toBe('active')
       expect(isValidPaymentUrl(DEPOSIT_PAYMENT_CONFIG.paymentUrl)).toBe(true)

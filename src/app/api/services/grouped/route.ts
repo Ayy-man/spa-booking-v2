@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 
 // Map database categories to display names
 const categoryDisplayNames: Record<string, string> = {
+  'consultations': 'Consultations',
   'facials': 'Facials',
   'massages': 'Body Massages',
   'treatments': 'Body Treatments',
@@ -11,8 +12,8 @@ const categoryDisplayNames: Record<string, string> = {
   'special': 'Special Services'
 }
 
-// Category order for display
-const categoryOrder = ['facials', 'massages', 'treatments', 'waxing', 'packages', 'special']
+// Category order for display - consultations first
+const categoryOrder = ['consultations', 'facials', 'massages', 'treatments', 'waxing', 'packages', 'special']
 
 export async function GET() {
   try {
@@ -28,9 +29,15 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch services' }, { status: 500 })
     }
 
-    // Group services by category
+    // Group services by category, separating consultations
     const groupedServices = services?.reduce((acc: any, service) => {
-      const category = service.category
+      // Check if this is a consultation service
+      const isConsultation = service.is_consultation || 
+                            service.name.toLowerCase().includes('consultation')
+      
+      // Determine the category - consultations get their own category
+      const category = isConsultation ? 'consultations' : service.category
+      
       if (!acc[category]) {
         acc[category] = []
       }
@@ -42,7 +49,9 @@ export async function GET() {
         description: service.description,
         requires_room_3: service.requires_room_3,
         is_couples_service: service.is_couples_service,
-        allows_addons: service.allows_addons
+        allows_addons: service.allows_addons,
+        is_consultation: service.is_consultation,
+        requires_on_site_pricing: service.requires_on_site_pricing
       })
       return acc
     }, {})

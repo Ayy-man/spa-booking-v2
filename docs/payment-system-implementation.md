@@ -11,12 +11,12 @@ Successfully implemented a comprehensive payment system that allows customers to
 ### 1. **Customer Booking Flow Enhancement**
 - **New Payment Selection Page**: `/booking/payment-selection`
 - **Existing Customer Options**: Can choose between "Pay in Full" or "Pay Deposit"
-- **New Customer Flow**: Automatically uses deposit system ($30)
+- **New Customer Flow**: Automatically uses deposit system ($25)
 - **Smart Routing**: Existing customers see payment choice, new customers go directly to deposit payment
 
 ### 2. **Service-Specific Payment Links Integration**
 - **16 Services with Full Payment Links**: Including popular services like Deep Cleansing Facial ($79), Hot Stone Massage ($120), Vitamin C Facial ($120)
-- **30 Services with Deposit Fallback**: Services without specific links automatically use $30 deposit system
+- **30 Services with Deposit Fallback**: Services without specific links automatically use $25 deposit system
 - **Seamless Integration**: Payment verification works identically to existing system
 
 ### 3. **Admin Payment Links Dashboard**
@@ -85,7 +85,7 @@ Successfully implemented a comprehensive payment system that allows customers to
 - Whitening Kojic Facial ($90.00)
 
 ### **Services Using Deposit System (30 services - 65%)**:
-- All remaining services automatically use $30 deposit
+- All remaining services automatically use $25 deposit
 - Balance due at appointment
 - Same user experience as before
 
@@ -98,7 +98,7 @@ Successfully implemented a comprehensive payment system that allows customers to
 ✅ **Clear Messaging**: Always know payment type and remaining balance  
 
 ### **For New Customers**:
-✅ **Consistent Experience**: Still use familiar $30 deposit system  
+✅ **Consistent Experience**: Still use familiar $25 deposit system  
 ✅ **No Complexity**: Straightforward booking flow maintained  
 ✅ **Upgrade Path**: Can become existing customer for future full payment options  
 

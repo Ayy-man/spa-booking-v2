@@ -494,7 +494,10 @@ export default function ConfirmationPage() {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return ''
-    const date = new Date(dateString)
+    // Handle YYYY-MM-DD format by adding time component to avoid timezone issues
+    const date = dateString.includes('T') 
+      ? new Date(dateString)
+      : new Date(dateString + 'T00:00:00')
     return date.toLocaleDateString('en-US', { 
       weekday: 'long', 
       year: 'numeric', 
@@ -630,7 +633,7 @@ export default function ConfirmationPage() {
                   </p>
                 ) : (
                   <p className="text-green-800 dark:text-green-300 text-sm">
-                    <strong>Deposit processed:</strong> Your $30 deposit has been applied to this booking. 
+                    <strong>Deposit processed:</strong> Your $25 deposit has been applied to this booking. 
                     The remaining balance of ${bookingData.service.price - 30} will be due at your appointment.
                   </p>
                 )}
@@ -743,7 +746,7 @@ export default function ConfirmationPage() {
                 {paymentType === 'full' ? (
                   <p className="text-sm text-green-700 dark:text-green-300">Your full payment of ${bookingData.service.price} has been processed.</p>
                 ) : (
-                  <p className="text-sm text-green-700 dark:text-green-300">Your $30 deposit has been processed.</p>
+                  <p className="text-sm text-green-700 dark:text-green-300">Your $25 deposit has been processed.</p>
                 )}
               </div>
             </div>
@@ -794,7 +797,7 @@ export default function ConfirmationPage() {
                     paymentType === 'full' ? (
                       <span className="text-green-600 font-medium">Paid in Full (${bookingData.service.price})</span>
                     ) : (
-                      <span className="text-green-600 font-medium">Deposit Paid ($30)</span>
+                      <span className="text-green-600 font-medium">Deposit Paid ($25)</span>
                     )
                   ) : paymentType === 'location' ? (
                     <span className="text-blue-600 font-medium">Pay on Location (${bookingData.service.price})</span>

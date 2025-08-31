@@ -179,7 +179,7 @@ export function BookingCard({
                 {booking.payment_option === 'deposit' && booking.payment_status === 'paid' ? (
                   <>
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-xs font-medium text-green-700">$30 Deposit Paid</span>
+                    <span className="text-xs font-medium text-green-700">$25 Deposit Paid</span>
                   </>
                 ) : booking.payment_option === 'full_payment' && booking.payment_status === 'paid' ? (
                   <>

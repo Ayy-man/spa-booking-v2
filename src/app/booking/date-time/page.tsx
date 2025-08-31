@@ -462,9 +462,9 @@ export default function DateTimePage() {
 
   const handleContinue = () => {
     if (selectedDate && selectedTime) {
-      // Store date and time using state manager
+      // Store date and time using state manager - using YYYY-MM-DD format to avoid timezone issues
       saveBookingState({
-        selectedDate: selectedDate.toISOString(),
+        selectedDate: format(selectedDate, 'yyyy-MM-dd'),
         selectedTime: selectedTime
       })
       

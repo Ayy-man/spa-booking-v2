@@ -5,7 +5,7 @@ This document contains all service-specific payment links for the Dermal Skin Cl
 
 **Last Updated**: August 4, 2025  
 **Payment Provider**: FastPayDirect  
-**Fallback Deposit Link**: https://link.fastpaydirect.com/payment-link/688fd64ad6ab80e9dae7162b ($30.00)
+**Fallback Deposit Link**: https://link.fastpaydirect.com/payment-link/688fd64ad6ab80e9dae7162b ($25.00)
 
 ## Service-Specific Payment Links
 
@@ -32,42 +32,42 @@ This document contains all service-specific payment links for the Dermal Skin Cl
 
 ### SERVICES USING DEPOSIT SYSTEM ⚠️
 
-**Note**: Services listed below do not have specific full payment links and will use the $30 deposit system with balance due at appointment.
+**Note**: Services listed below do not have specific full payment links and will use the $25 deposit system with balance due at appointment.
 
 | Service Name | Price | Payment Type | Notes |
 |--------------|-------|--------------|-------|
-| **Basic Facial** | $65.00 | Deposit Only | Uses fallback $30 deposit |
-| **Placenta/Collagen Facial** | $90.00 | Deposit Only | Uses fallback $30 deposit |
-| **Anti-Acne Facial** | $90.00 | Deposit Only | Uses fallback $30 deposit |
-| **Microderm Facial** | $99.00 | Deposit Only | Uses fallback $30 deposit |
-| **Balinese Body Massage** | $80.00 | Deposit Only | Uses fallback $30 deposit |
-| **Deep Tissue Body Massage** | $90.00 | Deposit Only | Uses fallback $30 deposit |
-| **Hot Stone Massage 90 Minutes** | $120.00 | Deposit Only | Uses fallback $30 deposit |
-| **Back Treatment** | $99.00 | Deposit Only | Uses fallback $30 deposit |
-| **Chemical Peel (Body)** | $85.00 | Deposit Only | Uses fallback $30 deposit |
-| **Microdermabrasion (Body)** | $85.00 | Deposit Only | Uses fallback $30 deposit |
-| **Deep Moisturizing Body Treatment** | $65.00 | Deposit Only | Uses fallback $30 deposit |
-| **Dead Sea Salt Body Scrub** | $65.00 | Deposit Only | Uses fallback $30 deposit |
-| **Mud Mask Body Wrap** | $65.00 | Deposit Only | Uses fallback $30 deposit |
-| **Eyebrow Waxing** | $20.00 | Deposit Only | Uses fallback $30 deposit |
-| **Lip Waxing** | $10.00 | Deposit Only | Uses fallback $30 deposit |
-| **Half Arm Waxing** | $40.00 | Deposit Only | Uses fallback $30 deposit |
-| **Full Arm Waxing** | $60.00 | Deposit Only | Uses fallback $30 deposit |
-| **Chin Waxing** | $12.00 | Deposit Only | Uses fallback $30 deposit |
-| **Neck Waxing** | $30.00 | Deposit Only | Uses fallback $30 deposit |
-| **Lower Leg Waxing** | $40.00 | Deposit Only | Uses fallback $30 deposit |
-| **Full Face Waxing** | $60.00 | Deposit Only | Uses fallback $30 deposit |
-| **Bikini Waxing** | $35.00 | Deposit Only | Uses fallback $30 deposit |
-| **Underarm Waxing** | $20.00 | Deposit Only | Uses fallback $30 deposit |
-| **Chest Wax** | $40.00 | Deposit Only | Uses fallback $30 deposit |
-| **Stomach Wax** | $40.00 | Deposit Only | Uses fallback $30 deposit |
-| **Shoulders** | $30.00 | Deposit Only | Uses fallback $30 deposit |
-| **Feet** | $30.00 | Deposit Only | Uses fallback $30 deposit |
-| **Balinese Body Massage + Basic Facial** | $130.00 | Deposit Only | Package service - uses fallback $30 deposit |
-| **Deep Tissue Body Massage + 3Face** | $180.00 | Deposit Only | Package service - uses fallback $30 deposit |
-| **Hot Stone Body Massage + Microderm Facial** | $200.00 | Deposit Only | Package service - uses fallback $30 deposit |
-| **Basic Vajacial Cleaning + Brazilian Wax** | $90.00 | Deposit Only | Uses fallback $30 deposit |
-| **Dead Sea Salt Body Scrub + Deep Moisturizing** | $65.00 | Deposit Only | Uses fallback $30 deposit |
+| **Basic Facial** | $65.00 | Deposit Only | Uses fallback $25 deposit |
+| **Placenta/Collagen Facial** | $90.00 | Deposit Only | Uses fallback $25 deposit |
+| **Anti-Acne Facial** | $90.00 | Deposit Only | Uses fallback $25 deposit |
+| **Microderm Facial** | $99.00 | Deposit Only | Uses fallback $25 deposit |
+| **Balinese Body Massage** | $80.00 | Deposit Only | Uses fallback $25 deposit |
+| **Deep Tissue Body Massage** | $90.00 | Deposit Only | Uses fallback $25 deposit |
+| **Hot Stone Massage 90 Minutes** | $120.00 | Deposit Only | Uses fallback $25 deposit |
+| **Back Treatment** | $99.00 | Deposit Only | Uses fallback $25 deposit |
+| **Chemical Peel (Body)** | $85.00 | Deposit Only | Uses fallback $25 deposit |
+| **Microdermabrasion (Body)** | $85.00 | Deposit Only | Uses fallback $25 deposit |
+| **Deep Moisturizing Body Treatment** | $65.00 | Deposit Only | Uses fallback $25 deposit |
+| **Dead Sea Salt Body Scrub** | $65.00 | Deposit Only | Uses fallback $25 deposit |
+| **Mud Mask Body Wrap** | $65.00 | Deposit Only | Uses fallback $25 deposit |
+| **Eyebrow Waxing** | $20.00 | Deposit Only | Uses fallback $25 deposit |
+| **Lip Waxing** | $10.00 | Deposit Only | Uses fallback $25 deposit |
+| **Half Arm Waxing** | $40.00 | Deposit Only | Uses fallback $25 deposit |
+| **Full Arm Waxing** | $60.00 | Deposit Only | Uses fallback $25 deposit |
+| **Chin Waxing** | $12.00 | Deposit Only | Uses fallback $25 deposit |
+| **Neck Waxing** | $30.00 | Deposit Only | Uses fallback $25 deposit |
+| **Lower Leg Waxing** | $40.00 | Deposit Only | Uses fallback $25 deposit |
+| **Full Face Waxing** | $60.00 | Deposit Only | Uses fallback $25 deposit |
+| **Bikini Waxing** | $35.00 | Deposit Only | Uses fallback $25 deposit |
+| **Underarm Waxing** | $20.00 | Deposit Only | Uses fallback $25 deposit |
+| **Chest Wax** | $40.00 | Deposit Only | Uses fallback $25 deposit |
+| **Stomach Wax** | $40.00 | Deposit Only | Uses fallback $25 deposit |
+| **Shoulders** | $30.00 | Deposit Only | Uses fallback $25 deposit |
+| **Feet** | $30.00 | Deposit Only | Uses fallback $25 deposit |
+| **Balinese Body Massage + Basic Facial** | $130.00 | Deposit Only | Package service - uses fallback $25 deposit |
+| **Deep Tissue Body Massage + 3Face** | $180.00 | Deposit Only | Package service - uses fallback $25 deposit |
+| **Hot Stone Body Massage + Microderm Facial** | $200.00 | Deposit Only | Package service - uses fallback $25 deposit |
+| **Basic Vajacial Cleaning + Brazilian Wax** | $90.00 | Deposit Only | Uses fallback $25 deposit |
+| **Dead Sea Salt Body Scrub + Deep Moisturizing** | $65.00 | Deposit Only | Uses fallback $25 deposit |
 
 ### SERVICE MAPPING ANALYSIS
 
@@ -99,12 +99,12 @@ The following services have payment links but need name matching verification:
 
 1. **Full Payment Flow** (Existing Customers)
    - Customer selects "EXISTING CLIENT" 
-   - Option appears: "Pay in Full Now" or "Pay Deposit ($30)"
+   - Option appears: "Pay in Full Now" or "Pay Deposit ($25)"
    - If "Pay in Full Now" selected, redirects to service-specific payment link
    - After payment verification, booking completes with full payment status
 
 2. **Deposit Payment Flow** (New Customers or Fallback)
-   - Standard $30 deposit payment
+   - Standard $25 deposit payment
    - Balance due at appointment
    - Current system behavior maintained
 
@@ -126,7 +126,7 @@ Staff can access all payment links through:
 ## Usage Guidelines
 
 ### For Customers
-- **New Customers**: Must use deposit system ($30)
+- **New Customers**: Must use deposit system ($25)
 - **Existing Customers**: Can choose full payment or deposit
 - **Full Payment Benefits**: No balance due at appointment, guaranteed booking
 

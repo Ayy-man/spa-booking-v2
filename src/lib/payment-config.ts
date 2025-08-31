@@ -129,7 +129,7 @@ export const FULL_PAYMENT_LINKS: Record<string, PaymentLink> = {
 // Fallback deposit payment configuration
 export const DEPOSIT_PAYMENT_CONFIG: PaymentLink = {
   serviceName: 'Service Deposit',
-  price: 30.00,
+  price: 25.00,
   paymentUrl: 'https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034',
   type: 'deposit',
   status: 'active'

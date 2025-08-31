@@ -145,7 +145,7 @@ GHL_LOCATION_ID=your_location_id
 
 ### Payment Link Configuration
 - **Live Payment URL**: `https://link.fastpaydirect.com/payment-link/6888ac57ddc6a6108ec5a034`
-- **Amount**: $30.00 (deposit for new customers)
+- **Amount**: $25.00 (deposit for new customers)
 - **Return URL Format**: `{origin}/booking/confirmation?payment=success`
 
 ## Security Measures
@@ -215,7 +215,7 @@ curl GET https://your-domain/api/webhooks/payment
 curl -X POST https://your-domain/api/webhooks/payment \
   -H "Content-Type: application/json" \
   -H "x-webhook-signature: test-signature" \
-  -d '{"event_type": "payment.completed", "amount": 30.00}'
+  -d '{"event_type": "payment.completed", "amount": 25.00}'
 ```
 
 ## Troubleshooting Guide
