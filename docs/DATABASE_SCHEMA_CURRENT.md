@@ -424,7 +424,7 @@ CREATE TABLE public.waivers (
 - Previous treatment history
 
 ### 12. Walk-ins Table
-**Purpose**: Walk-in customer management and immediate booking
+**Purpose**: Walk-in customer management and immediate booking with archiving support
 
 ```sql
 CREATE TABLE public.walk_ins (
@@ -444,6 +444,7 @@ CREATE TABLE public.walk_ins (
   status text DEFAULT 'pending'::text,
   checked_in_at timestamp with time zone,
   completed_at timestamp with time zone,
+  archived_at timestamp with time zone,  -- When record was archived
   ghl_webhook_sent boolean DEFAULT false,
   ghl_webhook_sent_at timestamp with time zone,
   created_by uuid,
@@ -453,6 +454,11 @@ CREATE TABLE public.walk_ins (
   CONSTRAINT walk_ins_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customers(id),
   CONSTRAINT walk_ins_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id)
 );
+
+-- Indexes for performance
+CREATE INDEX idx_walk_ins_archived_at ON public.walk_ins(archived_at);
+CREATE INDEX idx_walk_ins_created_archived ON public.walk_ins(created_at, archived_at);
+CREATE INDEX idx_walk_ins_status_archived ON public.walk_ins(status, archived_at);
 ```
 
 **Key Features**:
@@ -460,9 +466,12 @@ CREATE TABLE public.walk_ins (
 - Customer information capture
 - Service selection and categorization
 - Status tracking from arrival to completion
+- **Automatic daily archiving system**
+- **Historical walk-in tracking with archived_at timestamp**
 - GoHighLevel webhook integration
 - Conversion to regular booking capability
 - Staff member tracking for creation
+- **Optimized indexes for archive queries**
 
 ## Custom Data Types (Enums)
 
@@ -643,6 +652,42 @@ CREATE OR REPLACE FUNCTION process_couples_booking_single_slot(
 
 **Migration**: Added in `038_couples_single_slot_fix.sql`
 
+### Archive Functions
+
+#### archive_old_walk_ins()
+**Purpose**: Automatically archive old walk-in records
+
+```sql
+CREATE OR REPLACE FUNCTION archive_old_walk_ins()
+RETURNS integer
+```
+
+**Features**:
+- Archives served/cancelled/no_show walk-ins from previous days
+- Auto-cancels waiting walk-ins from previous days with "No show" reason
+- Sets archived_at timestamp for tracking
+- Returns count of archived records
+- Uses Guam timezone (UTC+10) for date calculations
+
+#### get_walk_ins_filtered()
+**Purpose**: Retrieve walk-ins with flexible filtering including archive status
+
+```sql
+CREATE OR REPLACE FUNCTION get_walk_ins_filtered(
+  include_archived boolean DEFAULT false,
+  filter_status text DEFAULT NULL,
+  filter_date date DEFAULT NULL,
+  date_from date DEFAULT NULL,
+  date_to date DEFAULT NULL
+) RETURNS TABLE
+```
+
+**Features**:
+- Optional inclusion of archived records
+- Status filtering
+- Single date or date range filtering
+- Optimized for performance with indexes
+
 ## Production Readiness
 
 This schema represents the current production database structure and includes:
@@ -653,6 +698,7 @@ This schema represents the current production database structure and includes:
 - ✅ Integration with external systems
 - ✅ Audit and compliance features
 - ✅ Couples booking single-slot implementation (v1.1.0)
+- ✅ Walk-in archiving system with historical tracking (v1.3.1)
 
 **Last Schema Verification**: August 19, 2025
 **Production Status**: Active and Deployed

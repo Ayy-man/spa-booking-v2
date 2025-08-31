@@ -611,11 +611,17 @@ export const supabaseClient = {
   async getWalkIns(filters?: {
     status?: string
     date?: string
+    includeArchived?: boolean
   }) {
     let query = supabase
       .from('walk_ins')
       .select('*')
       .order('created_at', { ascending: false })
+
+    // By default, exclude archived records unless explicitly requested
+    if (!filters?.includeArchived) {
+      query = query.is('archived_at', null)
+    }
 
     if (filters?.status && filters.status !== 'all') {
       query = query.eq('status', filters.status)
@@ -628,6 +634,71 @@ export const supabaseClient = {
     }
 
     const { data, error } = await query
+    if (error) throw error
+    return data
+  },
+
+  async getArchivedWalkIns(filters?: {
+    status?: string
+    dateFrom?: string
+    dateTo?: string
+    searchTerm?: string
+    limit?: number
+    offset?: number
+  }) {
+    let query = supabase
+      .from('walk_ins')
+      .select('*', { count: 'exact' })
+      .not('archived_at', 'is', null)
+      .order('created_at', { ascending: false })
+
+    if (filters?.status && filters.status !== 'all') {
+      query = query.eq('status', filters.status)
+    }
+
+    if (filters?.dateFrom) {
+      const startOfDay = getGuamStartOfDay(filters.dateFrom)
+      query = query.gte('created_at', startOfDay)
+    }
+
+    if (filters?.dateTo) {
+      const endOfDay = getGuamEndOfDay(filters.dateTo)
+      query = query.lte('created_at', endOfDay)
+    }
+
+    if (filters?.searchTerm) {
+      const search = filters.searchTerm.toLowerCase()
+      query = query.or(`customer_name.ilike.%${search}%,customer_phone.ilike.%${search}%,service_name.ilike.%${search}%`)
+    }
+
+    // Pagination
+    const limit = filters?.limit || 20
+    const offset = filters?.offset || 0
+    query = query.range(offset, offset + limit - 1)
+
+    const { data, error, count } = await query
+    if (error) throw error
+    
+    return { data, count }
+  },
+
+  async archiveWalkIn(id: string) {
+    const { data, error } = await supabase
+      .from('walk_ins')
+      .update({ 
+        archived_at: getGuamTime().toISOString(),
+        updated_at: getGuamTime().toISOString()
+      })
+      .eq('id', id)
+      .select('*')
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async archiveOldWalkIns() {
+    const { data, error } = await supabase.rpc('archive_old_walk_ins')
     if (error) throw error
     return data
   },

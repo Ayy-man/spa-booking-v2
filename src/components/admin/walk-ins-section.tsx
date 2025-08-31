@@ -18,7 +18,8 @@ import {
   RefreshCwIcon,
   FilterIcon,
   EyeOffIcon,
-  CalendarPlusIcon
+  CalendarPlusIcon,
+  HistoryIcon
 } from 'lucide-react'
 import { 
   walkInLogic, 
@@ -30,6 +31,7 @@ import {
 } from '@/lib/walk-in-logic'
 import { cn } from '@/lib/utils'
 import { WalkInAssignmentForm } from './walk-in-assignment-form'
+import { WalkInHistoryModal } from './WalkInHistoryModal'
 import { formatPhoneNumber } from '@/lib/phone-utils'
 
 interface WalkInsSectionProps {
@@ -45,6 +47,7 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
   const [showUpdateForm, setShowUpdateForm] = useState<string | null>(null)
   const [updateNotes, setUpdateNotes] = useState('')
   const [showAssignmentForm, setShowAssignmentForm] = useState<string | null>(null)
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
 
   const fetchWalkIns = useCallback(async () => {
     setLoading(true)
@@ -287,15 +290,26 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
           </p>
         </div>
         
-        <Button
-          onClick={fetchWalkIns}
-          disabled={loading}
-          variant="outline"
-          className="flex items-center space-x-2"
-        >
-          <RefreshCwIcon className={cn('w-4 h-4', loading && 'animate-spin')} />
-          <span>Refresh</span>
-        </Button>
+        <div className="flex space-x-2">
+          <Button
+            onClick={() => setShowHistoryModal(true)}
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            <HistoryIcon className="w-4 h-4" />
+            <span>Previous Walk-ins</span>
+          </Button>
+          
+          <Button
+            onClick={fetchWalkIns}
+            disabled={loading}
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            <RefreshCwIcon className={cn('w-4 h-4', loading && 'animate-spin')} />
+            <span>Refresh</span>
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -396,6 +410,12 @@ export function WalkInsSection({ className }: WalkInsSectionProps) {
           )}
         </>
       )}
+
+      {/* History Modal */}
+      <WalkInHistoryModal 
+        isOpen={showHistoryModal} 
+        onClose={() => setShowHistoryModal(false)} 
+      />
     </div>
   )
 }

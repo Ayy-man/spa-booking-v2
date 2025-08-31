@@ -22,11 +22,22 @@ export interface WalkIn {
   created_by: string | null
   created_at: string
   updated_at: string
+  archived_at?: string | null
 }
 
 export interface WalkInFilters {
   status?: string
   date?: string
+  includeArchived?: boolean
+}
+
+export interface HistoricalWalkInFilters {
+  status?: string
+  dateFrom?: string
+  dateTo?: string
+  searchTerm?: string
+  limit?: number
+  offset?: number
 }
 
 export interface WalkInCreateData {
@@ -233,6 +244,48 @@ export const walkInLogic = {
     } catch (error: any) {
       console.error('Get walk-in stats error:', error)
       return { success: false, error: error.message || 'Failed to get walk-in statistics' }
+    }
+  },
+
+  // Get historical/archived walk-ins
+  async getHistoricalWalkIns(filters?: HistoricalWalkInFilters): Promise<{
+    success: boolean
+    walkIns?: WalkIn[]
+    totalCount?: number
+    error?: string
+  }> {
+    try {
+      const result = await supabaseClient.getArchivedWalkIns(filters)
+      return { 
+        success: true, 
+        walkIns: result.data || [], 
+        totalCount: result.count || 0 
+      }
+    } catch (error: any) {
+      console.error('Get historical walk-ins error:', error)
+      return { success: false, error: error.message || 'Failed to fetch historical walk-ins' }
+    }
+  },
+
+  // Archive a specific walk-in
+  async archiveWalkIn(id: string): Promise<{ success: boolean; walkIn?: WalkIn; error?: string }> {
+    try {
+      const walkIn = await supabaseClient.archiveWalkIn(id)
+      return { success: true, walkIn }
+    } catch (error: any) {
+      console.error('Archive walk-in error:', error)
+      return { success: false, error: error.message || 'Failed to archive walk-in' }
+    }
+  },
+
+  // Archive all old walk-ins (manual trigger)
+  async archiveOldWalkIns(): Promise<{ success: boolean; archivedCount?: number; error?: string }> {
+    try {
+      const count = await supabaseClient.archiveOldWalkIns()
+      return { success: true, archivedCount: count }
+    } catch (error: any) {
+      console.error('Archive old walk-ins error:', error)
+      return { success: false, error: error.message || 'Failed to archive old walk-ins' }
     }
   }
 }
