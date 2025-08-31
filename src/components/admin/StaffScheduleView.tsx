@@ -725,8 +725,8 @@ export function StaffScheduleView({
               
               // Each row is exactly 33px (h-8 + 1px border)
               const rowHeight = 33;
-              // Header is p-3 (12px top + 12px bottom) + content + border
-              const headerHeight = 50; // Measured header height
+              // Header: p-3 (12px * 2 = 24px) + line-height + border-b (1px) ≈ 48px
+              const headerHeight = 48; // Actual header height with p-3 padding
               
               // Calculate the exact pixel position
               const pixelPosition = headerHeight + (totalRows * rowHeight);

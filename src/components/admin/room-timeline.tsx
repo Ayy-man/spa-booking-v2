@@ -430,8 +430,8 @@ export function RoomTimeline({
                 
                 // Each row is exactly 33px (h-8 + 1px border)
                 const rowHeight = 33;
-                // Header: py-3 (24px) + content + border-b-2 (2px) ≈ 64px
-                const headerHeight = 64;
+                // Header: py-3 (24px) + content height + border-b-2 (2px) ≈ 62px
+                const headerHeight = 62;
                 
                 // Calculate the exact pixel position
                 const pixelPosition = headerHeight + (totalRows * rowHeight);
