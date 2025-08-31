@@ -144,7 +144,9 @@ export async function POST(
         'body_scrub': 'treatments',
         'waxing': 'waxing',
         'package': 'package',
-        'membership': 'membership'
+        'membership': 'membership',
+        'consultation': 'facials',  // Map consultation to facials capability
+        'consultations': 'facials'   // Handle plural form too
       }
       
       const serviceCategory = booking.service?.category
@@ -158,7 +160,13 @@ export async function POST(
         newStaffId: new_staff_id
       })
       
-      if (serviceCategory) {
+      // Admin override: Allow admin to assign any staff to consultation services
+      // or services that originally had "any available staff"
+      const isAdminOverride = serviceCategory === 'consultation' || 
+                              serviceCategory === 'consultations' ||
+                              booking.staff_id === 'any'
+      
+      if (serviceCategory && !isAdminOverride) {
         const requiredCapability = categoryToCapabilityMap[serviceCategory] || serviceCategory
         
         // Check if staff has the capability
@@ -222,6 +230,14 @@ export async function POST(
         } else {
           console.log('[REASSIGN-STAFF] Staff capability check PASSED')
         }
+      } else if (isAdminOverride) {
+        console.log('[REASSIGN-STAFF] Admin override active - bypassing capability check for:', {
+          serviceCategory,
+          serviceName: booking.service?.name,
+          originalStaffId: booking.staff_id,
+          newStaffId: new_staff_id,
+          reason: booking.staff_id === 'any' ? 'Originally "any available staff"' : 'Consultation service'
+        })
       }
 
       // Check service exclusions
@@ -470,7 +486,9 @@ export async function GET(
       'body_scrub': 'treatments',
       'waxing': 'waxing',
       'package': 'package',
-      'membership': 'membership'
+      'membership': 'membership',
+      'consultation': 'facials',  // Map consultation to facials capability
+      'consultations': 'facials'   // Handle plural form too
     }
 
     // Build available staff list with availability status
@@ -481,23 +499,39 @@ export async function GET(
         canPerform = true
       } else if (booking.service?.category) {
         const serviceCategory = booking.service.category
-        const requiredCapability = categoryToCapabilityMap[serviceCategory] || serviceCategory
         
-        // Check direct match
-        if (staff.capabilities?.includes(requiredCapability)) {
+        // Admin override: Show all staff as capable for consultation services
+        // or services that originally had "any available staff"
+        const isAdminOverride = serviceCategory === 'consultation' || 
+                                serviceCategory === 'consultations' ||
+                                booking.staff_id === 'any'
+        
+        if (isAdminOverride) {
           canPerform = true
-        }
-        // Also check singular form (backward compatibility)
-        else if (staff.capabilities?.includes(serviceCategory)) {
-          canPerform = true
-        }
-        // For packages, check if staff can do facials and/or massages
-        else if (serviceCategory === 'package') {
-          const serviceName = booking.service?.name?.toLowerCase() || ''
-          if (serviceName.includes('facial') && staff.capabilities?.includes('facials')) {
+          console.log('[REASSIGN-STAFF GET] Admin override - showing staff as capable:', {
+            staffName: staff.name,
+            serviceCategory,
+            originalStaffId: booking.staff_id
+          })
+        } else {
+          const requiredCapability = categoryToCapabilityMap[serviceCategory] || serviceCategory
+          
+          // Check direct match
+          if (staff.capabilities?.includes(requiredCapability)) {
             canPerform = true
-          } else if (serviceName.includes('massage') && staff.capabilities?.includes('massages')) {
+          }
+          // Also check singular form (backward compatibility)
+          else if (staff.capabilities?.includes(serviceCategory)) {
             canPerform = true
+          }
+          // For packages, check if staff can do facials and/or massages
+          else if (serviceCategory === 'package') {
+            const serviceName = booking.service?.name?.toLowerCase() || ''
+            if (serviceName.includes('facial') && staff.capabilities?.includes('facials')) {
+              canPerform = true
+            } else if (serviceName.includes('massage') && staff.capabilities?.includes('massages')) {
+              canPerform = true
+            }
           }
         }
         
