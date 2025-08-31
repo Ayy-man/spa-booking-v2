@@ -797,6 +797,52 @@ A comprehensive payment enhancement system providing customers with flexible pay
 
 ##### Booking Summary Component ✅
 - **BookingSummary Component**: Persistent booking details sidebar
+
+#### 7. Staff Assignment System Fix ✅ COMPLETED (August 31, 2025)
+
+##### Issue Description
+- **Problem**: Consultation services showing "nobody can do the service" in admin panel
+- **Impact**: Blocked staff reassignment for newer services
+- **Root Cause**: Missing consultation category mapping in reassign-staff route
+
+##### Solution Implemented
+- **Category Mapping**: Added consultation to staff capability mapping
+- **Admin Override**: Implemented override logic for consultation services
+- **Any Staff Fix**: Services with "any available staff" can be reassigned to anyone
+- **Database Migration**: Created safe migration using existing enum values
+
+##### Technical Details
+- **Files Modified**: `/src/app/api/admin/bookings/[id]/reassign-staff/route.ts`
+- **Migration**: `064_fix_staff_consultation_capabilities.sql`
+- **Mapping**: Consultation services → facials capability
+- **Override Logic**: Admins can bypass capability restrictions
+
+#### 8. Schedule Timeline Visualization Fix ✅ COMPLETED (August 31, 2025)
+
+##### Issues Fixed
+1. **Partial Day Blocks Not Showing**
+   - Problem: Timeline didn't gray out time-range blocks
+   - Solution: Integrated schedule blocks checking in timeline
+
+2. **Save Button Viewport Issue**
+   - Problem: Save button hidden on smaller screens
+   - Solution: Fixed modal with sticky header/footer
+
+3. **State Refresh**
+   - Problem: Timeline didn't update after saving blocks
+   - Solution: Real-time schedule block fetching
+
+##### Implementation Details
+- **Files Modified**: 
+  - `/src/components/admin/StaffScheduleView.tsx`
+  - `/src/components/admin/ScheduleManagement.tsx`
+- **Functions Added**:
+  - `isTimeSlotBlocked()` - Check specific time slots
+  - Schedule block state management
+- **Visual Updates**:
+  - Gray background for blocked times
+  - "Blocked" text indicator
+  - Different styling for full vs partial blocks
 - **Edit Capabilities**: Quick edit buttons for each completed step
 - **Real-time Updates**: Dynamic updates as user progresses
 - **Mobile Optimization**: Sticky sidebar with touch-friendly interface

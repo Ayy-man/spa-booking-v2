@@ -348,6 +348,69 @@ The booking system is now production-ready with comprehensive admin panel, authe
 - Design system guidelines
 - Accessibility standards
 
+## Recent Updates (August 31, 2025)
+
+### Staff Assignment System Fix ✅ COMPLETED
+**Issue**: Consultation services showing "nobody can do the service" even when staff are scheduled
+
+#### Root Cause
+- Missing 'consultation' category mapping in reassign-staff route
+- No mapping between consultation services and staff capabilities
+
+#### Solution Implemented
+- ✅ Added consultation category mapping to `/src/app/api/admin/bookings/[id]/reassign-staff/route.ts`
+- ✅ Map consultation services to 'facials' capability
+- ✅ Implemented admin override logic for consultation services
+- ✅ Allow admins to assign ANY staff to services originally set to "any available staff"
+- ✅ Created migration `064_fix_staff_consultation_capabilities.sql`
+
+#### Technical Changes
+- Updated `categoryToCapabilityMap` in both GET and POST endpoints
+- Added `isAdminOverride` logic for consultation services
+- Services with `staff_id = 'any'` can now be reassigned to anyone by admins
+- Simplified migration to use existing 'facials' enum value
+
+### Schedule Timeline Visualization Fix ✅ COMPLETED  
+**Issue**: Timeline not graying out blocked times when schedule blocks are added
+
+#### Problems Fixed
+1. **Partial day blocks not showing** - Timeline now reflects time-range blocks
+2. **Save button viewport issue** - Modal footer stays visible on small screens
+3. **State refresh** - Schedule changes update immediately on timeline
+
+#### Solution Implemented
+- ✅ Integrated schedule blocks into `/src/components/admin/StaffScheduleView.tsx`
+- ✅ Import and use `getScheduleBlocks` and `checkScheduleBlockConflict` from booking-logic
+- ✅ Added `scheduleBlocks` state management
+- ✅ Created `isTimeSlotBlocked()` function to check specific time slots
+- ✅ Updated timeline cells to show blocked status with gray background
+- ✅ Fixed modal in `/src/components/admin/ScheduleManagement.tsx` with sticky header/footer
+
+#### Visual Indicators
+- **Full day off**: Light gray background with "Off today" text
+- **Time-range blocks**: Medium gray background with "Blocked" text
+- **Available slots**: White background, hoverable
+- Blocked slots are not clickable
+
+#### Technical Implementation
+```typescript
+// Check if time slot is blocked
+const isTimeSlotBlocked = (staffId: string, timeSlot: TimeSlot): boolean => {
+  const blocks = scheduleBlocks[staffId] || []
+  const conflict = checkScheduleBlockConflict(blocks, timeString, slotEndTime, currentDate)
+  return conflict.hasConflict
+}
+```
+
+### Current Staff Capabilities
+Based on database query results:
+- **Any Available Staff**: facials, waxing, treatments, massages
+- **Leonel Sidon**: massages, treatments
+- **Phuong**: massages, facials (Note: Combined as "Phuong Bosque")
+- **Robyn Camacho**: facials, waxing, treatments, massages
+- **Selma Villaver**: facials
+- **Tanisha Harris**: facials, waxing
+
 ## Stage 5: Testing & Deployment (Day 5) 📅 PLANNED
 ### Objectives
 - Test complete booking flow from start to finish

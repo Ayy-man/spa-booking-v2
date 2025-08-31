@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2025-08-31
+
+### Added
+- **Staff Assignment Admin Override System**
+  - Admins can now assign ANY staff member to consultation services
+  - Services originally set to "any available staff" can be reassigned to anyone
+  - Added consultation category mapping to facials capability
+  - Created migration `064_fix_staff_consultation_capabilities.sql`
+
+- **Schedule Timeline Visualization**
+  - Timeline now properly reflects schedule blocks in real-time
+  - Visual indicators for blocked time slots with gray background
+  - "Blocked" text display in unavailable time slots
+  - Different styling for full-day vs partial-day blocks
+
+### Fixed
+- **Staff Assignment Issue**: Fixed "nobody can do the service" error for consultation services
+  - Root cause: Missing consultation category mapping in reassign-staff route
+  - Solution: Added mapping and admin override logic
+  
+- **Schedule Timeline Not Updating**
+  - Partial day blocks (like 10am-12pm) now display correctly
+  - Full day blocks show entire column as unavailable
+  - Schedule changes update immediately on timeline
+  
+- **Save Button Viewport Issue**
+  - Fixed save button disappearing on smaller screens in ScheduleManagement
+  - Added sticky header/footer to modals for better mobile experience
+  - Improved responsive design with max-height and scroll handling
+
+### Changed
+- Updated `StaffScheduleView.tsx` to fetch and display schedule blocks from database
+- Enhanced `isStaffWorking()` function to check both work_days and schedule blocks
+- Added `isTimeSlotBlocked()` function for granular time slot checking
+- Modified timeline cell rendering to show visual blocked status
+
+### Technical Details
+- **Files Modified**:
+  - `/src/app/api/admin/bookings/[id]/reassign-staff/route.ts`
+  - `/src/components/admin/StaffScheduleView.tsx`
+  - `/src/components/admin/ScheduleManagement.tsx`
+- **Database Migration**: 
+  - `064_fix_staff_consultation_capabilities.sql` - Safe migration using existing enum values
+- **Functions Added**:
+  - `isTimeSlotBlocked()` - Checks if specific time slot is blocked
+  - Schedule block state management with real-time updates
+
 ## [1.2.0] - 2025-08-19
 
 ### Added
