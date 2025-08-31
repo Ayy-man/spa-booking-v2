@@ -5,11 +5,6 @@ import { createClient } from '@supabase/supabase-js'
 // This endpoint runs daily at midnight Guam time to archive old walk-ins
 // Configured in vercel.json to run at 14:00 UTC (midnight in Guam, UTC+10)
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-)
-
 export async function GET(request: NextRequest) {
   try {
     // Verify the request is from Vercel Cron (in production)
@@ -17,6 +12,24 @@ export async function GET(request: NextRequest) {
     if (process.env.NODE_ENV === 'production' && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Create Supabase client inside the function
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('[Walk-in Archiver] Missing Supabase configuration')
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Missing Supabase configuration',
+          timestamp: new Date().toISOString()
+        }, 
+        { status: 500 }
+      )
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     console.log('[Walk-in Archiver] Starting daily archive process...')
 
@@ -57,7 +70,6 @@ export async function GET(request: NextRequest) {
 
     // Log the archive operation
     const logEntry = {
-      type: 'walk_in_archive',
       archived_count: archivedCount,
       status_breakdown: summary,
       timestamp: new Date().toISOString(),
