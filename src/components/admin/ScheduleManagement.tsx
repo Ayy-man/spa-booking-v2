@@ -912,13 +912,14 @@ export function ScheduleManagement() {
         }
         setShowBlockModal(open)
       }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sticky top-0 bg-white z-10 pb-4">
             <DialogTitle className="text-[#AA3B50]">
               {editingBlock ? 'Edit Time Block' : 'Add Time Block'}
             </DialogTitle>
           </DialogHeader>
           
+          <div className="overflow-y-auto max-h-[calc(90vh-200px)]">
           {/* Validation Errors */}
           {validationErrors.length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -1177,8 +1178,9 @@ export function ScheduleManagement() {
               </div>
             )}
           </div>
+          </div>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter className="sticky bottom-0 bg-white border-t pt-4 mt-4 flex-col sm:flex-row gap-2">
             <Button 
               variant="outline" 
               onClick={() => {

@@ -15,13 +15,14 @@ import { PhoneInput } from "@/components/ui/phone-input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { normalizePhoneForDB, formatPhoneNumber } from "@/lib/phone-utils"
-import { BookingWithRelations, ServiceCategory } from "@/types/booking"
+import { BookingWithRelations, ServiceCategory, ScheduleBlock } from "@/types/booking"
 import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2, Users, UserCheck, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicator"
 import { BookingDetailsModal } from "@/components/admin/BookingDetailsModal"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ghlWebhookSender } from "@/lib/ghl-webhook-sender"
+import { getScheduleBlocks, checkScheduleBlockConflict } from "@/lib/booking-logic"
 
 // Service category colors (matching existing color scheme)
 const SERVICE_COLORS: Record<ServiceCategory, { bg: string; border: string; text: string }> = {
@@ -86,6 +87,7 @@ export function StaffScheduleView({
   const [services, setServices] = useState<any[]>([])
   const [customers, setCustomers] = useState<any[]>([])
   const [rooms, setRooms] = useState<any[]>([])
+  const [scheduleBlocks, setScheduleBlocks] = useState<Record<string, ScheduleBlock[]>>({})
   const [quickAddForm, setQuickAddForm] = useState({
     serviceId: '',
     customerId: '',
@@ -187,6 +189,18 @@ export function StaffScheduleView({
       if (bookingsError) throw bookingsError
       setBookings(bookingsData || [])
       
+      // Fetch schedule blocks for all staff
+      const scheduleBlocksMap: Record<string, ScheduleBlock[]> = {}
+      if (staffData && staffData.length > 0) {
+        await Promise.all(
+          staffData.map(async (staffMember) => {
+            const blocks = await getScheduleBlocks(staffMember.id, currentDate)
+            scheduleBlocksMap[staffMember.id] = blocks
+          })
+        )
+      }
+      setScheduleBlocks(scheduleBlocksMap)
+      
       setError('')
     } catch (err: any) {
       setError(`Failed to load schedule: ${err.message}`)
@@ -218,6 +232,13 @@ export function StaffScheduleView({
   const isStaffWorking = (staffMember: StaffMember): boolean => {
     const dayOfWeek = currentDate.getDay()
     
+    // Check if there's a full-day schedule block
+    const blocks = scheduleBlocks[staffMember.id] || []
+    const hasFullDayBlock = blocks.some(block => block.block_type === 'full_day')
+    if (hasFullDayBlock) {
+      return false // Staff is not working if there's a full-day block
+    }
+    
     // Fallback schedules if work_days is empty or undefined
     if (!staffMember.work_days || staffMember.work_days.length === 0) {
       // Use known schedules as fallback
@@ -235,6 +256,21 @@ export function StaffScheduleView({
     }
     
     return staffMember.work_days.includes(dayOfWeek)
+  }
+  
+  // Check if a specific time slot is blocked for a staff member
+  const isTimeSlotBlocked = (staffId: string, timeSlot: TimeSlot): boolean => {
+    const blocks = scheduleBlocks[staffId] || []
+    
+    // Check for time-range blocks
+    const timeString = timeSlot.timeString
+    const slotEndTime = format(
+      new Date(2000, 0, 1, timeSlot.hour, timeSlot.minute + BUSINESS_HOURS.slotDuration),
+      'HH:mm'
+    )
+    
+    const conflict = checkScheduleBlockConflict(blocks, timeString, slotEndTime, currentDate)
+    return conflict.hasConflict
   }
 
   // Check if a time slot is within a buffer zone
@@ -957,11 +993,18 @@ export function StaffScheduleView({
                         <div 
                           key={member.id}
                           className={cn(
-                            "border-r h-8 hover:bg-gray-50 cursor-pointer transition-colors relative",
-                            !isWorking && "bg-gray-100 cursor-not-allowed hover:bg-gray-100"
+                            "border-r h-8 transition-colors relative",
+                            !isWorking && "bg-gray-100 cursor-not-allowed",
+                            isWorking && isTimeSlotBlocked(member.id, slot) && "bg-gray-200 cursor-not-allowed",
+                            isWorking && !isTimeSlotBlocked(member.id, slot) && "hover:bg-gray-50 cursor-pointer"
                           )}
-                          onClick={() => isWorking && handleQuickAdd(member.id, slot, false)}
+                          onClick={() => isWorking && !isTimeSlotBlocked(member.id, slot) && handleQuickAdd(member.id, slot, false)}
                         >
+                          {isWorking && isTimeSlotBlocked(member.id, slot) && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-xs text-gray-500">Blocked</span>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
