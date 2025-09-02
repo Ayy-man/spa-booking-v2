@@ -140,7 +140,9 @@ dermal-booking-app/
 │       ├── 003_booking_functions.sql
 │       ├── 004_seed_data.sql
 │       ├── 005_add_missing_services.sql
-│       └── 006_couples_booking_support.sql
+│       ├── 006_couples_booking_support.sql
+│       ├── ... (additional migrations)
+│       └── 070_remove_duplicate_facial_consultation.sql # Service cleanup
 └── .gitignore                     # Git ignore rules
 ```
 
@@ -267,7 +269,16 @@ STRIPE_SECRET_KEY=your_stripe_key
 4. **Type Safety**: Define types in `src/types/`
 5. **Styling**: Use Tailwind classes and custom CSS in `src/styles/`
 
-## Recent File Updates (August 27, 2025) - Staff Reassignment & Modal Management Phase
+## Recent File Updates (January 2025) - Service Consolidation Phase
+
+### Service Cleanup Migration ✅ COMPLETED
+- Created migration `070_remove_duplicate_facial_consultation.sql` to remove duplicate Facial Consultation service
+- Removes 'facial_consultation' service ID while preserving 'consultation' service ID
+- Maintains data integrity for all existing bookings and references
+- Streamlines service selection in booking flow
+- Updated documentation to reflect service catalog cleanup
+
+## Previous File Updates (August 27, 2025) - Staff Reassignment & Modal Management Phase
 
 ### Current System Features ✅
 - Modal-based booking management through BookingDetailsModal

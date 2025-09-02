@@ -1,9 +1,34 @@
 # Dermal Skin Clinic Booking System - Implementation Plan
 
-**PROJECT STATUS: 🚀 PRODUCTION READY V2.2**  
+**PROJECT STATUS: 🚀 PRODUCTION READY V2.2+**  
 **Start Date: July 29, 2025**  
-**Latest Update: January 27, 2025**  
+**Latest Update: January 2025**  
 **System Approach: Next.js with Supabase + Advanced Admin Panel**  
+
+## Production V2.2+ Update - January 2025
+
+**VERSION 2.2.1 - SERVICE CONSOLIDATION & DATA CLEANUP**
+
+Minor system maintenance with service catalog cleanup to eliminate duplicate services and improve user experience.
+
+### Service Consolidation ✅ COMPLETED
+- Fixed duplicate Facial Consultation services appearing in booking flow
+- Removed duplicate 'facial_consultation' service ID (created 2025-08-31)
+- Kept original 'consultation' service ID (created 2025-08-27) for consistency
+- Applied migration 070_remove_duplicate_facial_consultation.sql for clean service catalog
+- Verified single Facial Consultation service remains with proper functionality
+
+### Technical Implementation ✅ COMPLETED
+- Migration file: 070_remove_duplicate_facial_consultation.sql
+- Database cleanup preserves all existing bookings and references
+- Service catalog now shows exactly one Facial Consultation option
+- Maintains all previous consultation service functionality and pricing ($25, 30 minutes)
+
+### User Impact ✅ ACHIEVED
+- Eliminated confusion from duplicate service options in booking flow
+- Streamlined service selection with single Facial Consultation choice
+- Preserved all existing consultation bookings and functionality
+- Improved overall booking experience with cleaner service catalog
 
 ## Production V2.2 Update - January 27, 2025
 

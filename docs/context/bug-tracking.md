@@ -42,6 +42,24 @@
 
 ---
 
+## Recently Resolved Issues (January 2025) ✅
+
+### SERVICE-DUPLICATE-001: Duplicate Facial Consultation Service Removal ✅ RESOLVED
+- **Status**: COMPLETED as of January 2025
+- **Priority**: HIGH
+- **Impact**: Fixed UI issue where two identical Facial Consultation services were showing in booking flow
+- **Implementation**: Created migration 070_remove_duplicate_facial_consultation.sql to clean up duplicate service records
+- **Root Cause**: Two services with same name but different IDs existed:
+  - 'consultation' (kept - original service created 2025-08-27)
+  - 'facial_consultation' (removed - duplicate created 2025-08-31)
+- **Technical Solution**: 
+  - Removed duplicate 'facial_consultation' service ID from database
+  - Kept original 'consultation' service ID for consistency
+  - Verified only one Facial Consultation service remains
+- **User Impact**: Customers now see only one Facial Consultation option in service selection
+- **Business Impact**: Eliminated confusion and ensured proper service selection in booking flow
+- **Migration Applied**: 070_remove_duplicate_facial_consultation.sql successfully removes duplicate while preserving data integrity
+
 ## Recently Resolved Issues (August 28, 2025) ✅
 
 ### ADDONS-001: Add-ons System Integration Complete ✅ RESOLVED

@@ -20,7 +20,7 @@ export const supabaseClient = {
   async getServices() {
     const { data, error } = await supabase
       .from('services')
-      .select('*')
+      .select('id, name, description, category, duration, price, requires_room_3, is_active, ghl_category, is_couples_service, allows_addons, requires_on_site_pricing, is_consultation')
       .eq('is_active', true)
       .order('category', { ascending: true })
       .order('name', { ascending: true })
@@ -32,7 +32,7 @@ export const supabaseClient = {
   async getServicesByCategory(category: string) {
     const { data, error } = await supabase
       .from('services')
-      .select('*')
+      .select('id, name, description, category, duration, price, requires_room_3, is_active, ghl_category, is_couples_service, allows_addons, requires_on_site_pricing, is_consultation')
       .eq('category', category)
       .eq('is_active', true)
       .order('name', { ascending: true })
@@ -75,7 +75,7 @@ export const supabaseClient = {
   async getRooms() {
     const { data, error } = await supabase
       .from('rooms')
-      .select('*')
+      .select('id, name, capacity, capabilities, equipment, features, is_active')
       .eq('is_active', true)
       .order('id', { ascending: true })
     
@@ -128,7 +128,7 @@ export const supabaseClient = {
     // Get service details first
     const { data: service, error: serviceError } = await supabase
       .from('services')
-      .select('*')
+      .select('id, name, duration, price, requires_on_site_pricing')
       .eq('id', booking.service_id)
       .single()
 
@@ -618,10 +618,11 @@ export const supabaseClient = {
       .select('*')
       .order('created_at', { ascending: false })
 
+    // HOTFIX: Temporarily disabled archived_at filtering until column is added to database
     // By default, exclude archived records unless explicitly requested
-    if (!filters?.includeArchived) {
-      query = query.is('archived_at', null)
-    }
+    // if (!filters?.includeArchived) {
+    //   query = query.is('archived_at', null)
+    // }
 
     if (filters?.status && filters.status !== 'all') {
       query = query.eq('status', filters.status)
@@ -646,10 +647,11 @@ export const supabaseClient = {
     limit?: number
     offset?: number
   }) {
+    // HOTFIX: Temporarily disabled archived_at filtering until column is added to database
     let query = supabase
       .from('walk_ins')
       .select('*', { count: 'exact' })
-      .not('archived_at', 'is', null)
+      // .not('archived_at', 'is', null)
       .order('created_at', { ascending: false })
 
     if (filters?.status && filters.status !== 'all') {
@@ -683,10 +685,13 @@ export const supabaseClient = {
   },
 
   async archiveWalkIn(id: string) {
+    // HOTFIX: Temporarily disabled archived_at update until column is added to database
+    // For now, we'll just update the status to 'archived' as a workaround
     const { data, error } = await supabase
       .from('walk_ins')
       .update({ 
-        archived_at: getGuamTime().toISOString(),
+        // archived_at: getGuamTime().toISOString(),
+        status: 'archived', // Use status field as workaround
         updated_at: getGuamTime().toISOString()
       })
       .eq('id', id)
@@ -698,9 +703,12 @@ export const supabaseClient = {
   },
 
   async archiveOldWalkIns() {
-    const { data, error } = await supabase.rpc('archive_old_walk_ins')
-    if (error) throw error
-    return data
+    // HOTFIX: Temporarily disabled RPC call until archived_at column is added
+    // const { data, error } = await supabase.rpc('archive_old_walk_ins')
+    // if (error) throw error
+    // return data
+    console.warn('archiveOldWalkIns: Temporarily disabled until archived_at column is added')
+    return 0
   },
 
   async updateWalkInStatus(id: string, status: string, notes?: string) {

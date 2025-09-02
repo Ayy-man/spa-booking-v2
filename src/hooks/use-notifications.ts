@@ -63,10 +63,10 @@ export function useNotifications(): UseNotificationsReturn {
     setError(null)
     
     try {
-      // Fetch notifications with history
+      // Fetch notifications with specific fields for better performance
       const { data: notificationsData, error: notifError } = await supabaseRef.current
         .from('notifications')
-        .select('*')
+        .select('id, type, title, message, priority, action_url, requires_action, metadata, created_at, expires_at')
         .gte('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })
         .limit(50)
@@ -91,8 +91,13 @@ export function useNotifications(): UseNotificationsReturn {
           ...notification,
           history: history || undefined,
           isRead: !!history?.read_at,
-          isDismissed: !!history?.dismissed_at
-        } as NotificationWithHistory
+          isDismissed: !!history?.dismissed_at,
+          // Map database fields to expected interface fields
+          requiresAction: notification.requires_action,
+          expiresAt: notification.expires_at,
+          createdAt: notification.created_at,
+          updatedAt: notification.created_at // Using created_at as fallback
+        } as unknown as NotificationWithHistory
       })
       
       setNotifications(processedNotifications)
@@ -294,13 +299,59 @@ export function useNotifications(): UseNotificationsReturn {
     fetchNotifications()
   }, [fetchNotifications])
 
-  // Polling fallback (every 30 seconds)
+  // Smarter polling with activity detection and tab visibility
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      fetchNotifications()
-    }, 30000)
+    let interval: NodeJS.Timeout | null = null
+    let lastActivity = Date.now()
     
-    return () => clearInterval(interval)
+    // Track user activity
+    const updateActivity = () => {
+      lastActivity = Date.now()
+    }
+    
+    // Add activity listeners
+    const events = ['mousedown', 'keypress', 'scroll', 'touchstart']
+    events.forEach(event => {
+      document.addEventListener(event, updateActivity)
+    })
+    
+    // Check if user is active (within last 2 minutes)
+    const isUserActive = () => {
+      return Date.now() - lastActivity < 120000 // 2 minutes
+    }
+    
+    // Check if tab is visible
+    const isTabVisible = () => {
+      return !document.hidden
+    }
+    
+    // Smart polling function
+    const smartPoll = () => {
+      // Only poll if tab is visible AND user has been active recently
+      if (isTabVisible() && isUserActive()) {
+        fetchNotifications()
+      }
+    }
+    
+    // Set up interval with longer delay (3 minutes instead of 30 seconds)
+    interval = setInterval(smartPoll, 180000) // 3 minutes
+    
+    // Also poll when tab becomes visible after being hidden
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Fetch immediately when tab becomes visible
+        fetchNotifications()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      if (interval) clearInterval(interval)
+      events.forEach(event => {
+        document.removeEventListener(event, updateActivity)
+      })
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [fetchNotifications])
 
   return {

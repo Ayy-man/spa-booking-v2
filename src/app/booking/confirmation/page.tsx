@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import ConfettiExplosion from 'react-confetti-explosion'
+import { OptimizedConfetti } from '@/components/booking/OptimizedConfetti'
 import { staffNameMap } from '@/lib/staff-data'
 import { supabaseClient } from '@/lib/supabase'
 import { analytics } from '@/lib/analytics'
@@ -571,21 +571,7 @@ export default function ConfirmationPage() {
             {/* Confetti Animation */}
             {showConfetti && (
               <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
-                <ConfettiExplosion
-                  force={0.8}
-                  duration={2800}
-                  particleCount={paymentType === 'full' ? 120 : 80}
-                  width={1200}
-                  colors={[
-                    '#10B981', // Emerald (success green)
-                    '#3B82F6', // Blue  
-                    '#8B5CF6', // Purple (spa luxury)
-                    '#F59E0B', // Amber (gold accent)
-                    '#EF4444', // Rose (warm accent)
-                    '#06B6D4', // Cyan (spa blue)
-                    '#84CC16'  // Lime (fresh green)
-                  ]}
-                />
+                <OptimizedConfetti show={showConfetti} />
               </div>
             )}
             

@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { supabase, supabaseClient } from "@/lib/supabase"
+import { useSmartInterval } from "@/hooks/use-smart-interval"
 import { getGuamTime as getGuamTimeUtil, formatGuamTime } from "@/lib/timezone-utils"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -209,24 +210,27 @@ export function StaffScheduleView({
     }
   }, [currentDate])
 
-  // Auto-refresh
+  // Initial data fetch
   useEffect(() => {
     fetchData()
     fetchQuickAddData()
-    
-    if (autoRefresh) {
-      const interval = setInterval(fetchData, refreshInterval)
-      return () => clearInterval(interval)
-    }
-  }, [fetchData, fetchQuickAddData, autoRefresh, refreshInterval])
+  }, [fetchData, fetchQuickAddData])
 
-  // Update current time every minute (in Guam timezone)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(getGuamTime())
-    }, 60000)
-    return () => clearInterval(timer)
-  }, [])
+  // Smart auto-refresh that pauses when tab is hidden
+  useSmartInterval(fetchData, {
+    interval: autoRefresh ? refreshInterval : Number.MAX_SAFE_INTEGER,
+    onlyWhenVisible: true,
+    onlyWhenActive: false // Always refresh when visible, regardless of activity
+  })
+
+  // Smart timer for current time updates
+  useSmartInterval(() => {
+    setCurrentTime(getGuamTime())
+  }, {
+    interval: 60000, // Update every minute
+    onlyWhenVisible: true,
+    onlyWhenActive: false
+  })
 
   // Check if staff is working on current day
   const isStaffWorking = (staffMember: StaffMember): boolean => {

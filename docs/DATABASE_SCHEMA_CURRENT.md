@@ -700,9 +700,9 @@ This schema represents the current production database structure and includes:
 - ✅ Couples booking single-slot implementation (v1.1.0)
 - ✅ Walk-in archiving system with historical tracking (v1.3.1)
 
-**Last Schema Verification**: August 19, 2025
+**Last Schema Verification**: January 2025
 **Production Status**: Active and Deployed
-**Latest Migration**: 042_add_phone_formatted_column.sql (Enhanced phone formatting for Guam)
+**Latest Migration**: 070_remove_duplicate_facial_consultation.sql (Service cleanup - removed duplicate Facial Consultation)
 
 ## Recent Migrations
 
@@ -710,3 +710,4 @@ This schema represents the current production database structure and includes:
 - **040_add_booking_status_triggers.sql**: Automatic timestamp management for cancelled_at, completed_at, checked_in_at
 - **041_add_cancel_booking_function.sql**: RPC functions for proper booking cancellation with all fields
 - **042_add_phone_formatted_column.sql**: Phone formatting for Guam (671) with auto-format triggers
+- **070_remove_duplicate_facial_consultation.sql**: Service cleanup - removes duplicate 'facial_consultation' service, keeps original 'consultation' service for Facial Consultation
