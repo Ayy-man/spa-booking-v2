@@ -262,7 +262,21 @@ export function RoomTimeline({
     const currentMinutes = currentHour * 60 + currentMinute
     const slotEndMinutes = slotStartMinutes + BUSINESS_HOURS.slotDuration
     
-    return currentMinutes >= slotStartMinutes && currentMinutes < slotEndMinutes
+    const isInSlot = currentMinutes >= slotStartMinutes && currentMinutes < slotEndMinutes
+    
+    // Debug logging
+    if (slot.hour === 13 && slot.minute === 45) {
+      console.log('Debug 1:45 PM slot:', {
+        currentTime: `${currentHour}:${currentMinute}`,
+        slotTime: `${slot.hour}:${slot.minute}`,
+        currentMinutes,
+        slotStartMinutes,
+        slotEndMinutes,
+        isInSlot
+      })
+    }
+    
+    return isInSlot
   }, [])
 
   // Get service color
@@ -463,7 +477,7 @@ export function RoomTimeline({
                 return (
                   <div key={`${slot.hour}-${slot.minute}`} className={cn(
                     "flex border-b transition-colors",
-                    isCurrentSlot ? "bg-red-50 border-red-300 shadow-sm" : "hover:bg-gray-25",
+                    isCurrentSlot ? "bg-red-100 border-red-400 shadow-md" : "hover:bg-gray-25",
                     !isCurrentSlot && isHourMark ? "border-gray-300" : "",
                     !isCurrentSlot && isHalfHour ? "border-gray-200" : "",
                     !isCurrentSlot && !isHourMark && !isHalfHour ? "border-gray-100" : ""

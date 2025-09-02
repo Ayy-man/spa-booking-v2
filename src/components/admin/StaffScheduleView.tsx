@@ -613,21 +613,24 @@ export function StaffScheduleView({
     return 'Customer'
   }
 
-  // Get current time position for the red line
-  const getCurrentTimePosition = (): number | null => {
+  // Check if a time slot is the current time slot
+  const isCurrentTimeSlot = (slot: TimeSlot): boolean => {
     const now = currentTime
     const currentHour = now.getHours()
     const currentMinute = now.getMinutes()
     
-    // Check if current time is within business hours
+    // Check if we're in business hours
     if (currentHour < BUSINESS_HOURS.start || currentHour >= BUSINESS_HOURS.end) {
-      return null
+      return false
     }
     
-    // Calculate position as percentage
-    const totalMinutes = (BUSINESS_HOURS.end - BUSINESS_HOURS.start) * 60
-    const currentMinutes = (currentHour - BUSINESS_HOURS.start) * 60 + currentMinute
-    return (currentMinutes / totalMinutes) * 100
+    // Check if this slot matches the current time
+    // We're in the slot if current time is >= slot time and < slot time + 15 minutes
+    const slotStartMinutes = slot.hour * 60 + slot.minute
+    const currentMinutes = currentHour * 60 + currentMinute
+    const slotEndMinutes = slotStartMinutes + BUSINESS_HOURS.slotDuration
+    
+    return currentMinutes >= slotStartMinutes && currentMinutes < slotEndMinutes
   }
 
   // Check if we're viewing today
@@ -743,49 +746,6 @@ export function StaffScheduleView({
         
         <div className="overflow-x-auto">
           <div className="min-w-[800px] relative">
-            {/* Current Time Indicator - properly positioned */}
-            {isToday && (() => {
-              const position = getCurrentTimePosition();
-              if (position === null) return null;
-              
-              // Get the current time
-              const now = currentTime;
-              const currentHour = now.getHours();
-              const currentMinute = now.getMinutes();
-              
-              // Calculate position based on hours and minutes
-              // Each hour has 4 rows (15-minute intervals)
-              const hoursSinceStart = currentHour - BUSINESS_HOURS.start;
-              const totalRowsToCurrentHour = hoursSinceStart * 4; // 4 rows per hour
-              
-              // Add fractional rows based on minutes (0-59 minutes maps to 0-4 rows)
-              const minuteFraction = currentMinute / 60; // 0 to 1
-              const additionalRows = minuteFraction * 4; // 0 to 4 rows
-              
-              const totalRows = totalRowsToCurrentHour + additionalRows;
-              
-              // Each row is exactly 33px (h-8 + 1px border)
-              const rowHeight = 33;
-              // Header: p-3 (12px * 2 = 24px) + line-height + border-b (1px) ≈ 48px
-              const headerHeight = 48; // Actual header height with p-3 padding
-              
-              // Calculate the exact pixel position
-              const pixelPosition = headerHeight + (totalRows * rowHeight);
-              
-              return (
-                <div 
-                  className="absolute left-0 right-0 border-t-2 border-red-500 z-10 pointer-events-none print:hidden"
-                  style={{ 
-                    top: `${pixelPosition}px`
-                  }}
-                >
-                  <div className="absolute -left-1 -top-2.5 bg-red-500 text-white text-xs px-2 py-0.5 rounded shadow-sm font-medium">
-                    {format(currentTime, 'h:mm a')}
-                  </div>
-                </div>
-              );
-            })()}
-            
             {/* Header Row */}
             <div className="grid grid-cols-[100px_180px_repeat(auto-fit,minmax(150px,1fr))] border-b bg-gray-50 sticky top-0 z-10">
               <div className="p-3 font-medium text-gray-700 border-r bg-white">
@@ -821,24 +781,27 @@ export function StaffScheduleView({
             <div>
               {timeSlots.map((slot, slotIndex) => {
                 const isHourStart = slot.minute === 0
+                const isCurrentSlot = isToday && isCurrentTimeSlot(slot)
                 
                 return (
                   <div 
                     key={slot.timeString}
                     className={cn(
                       "grid grid-cols-[100px_180px_repeat(auto-fit,minmax(150px,1fr))] border-t",
-                      isHourStart && "border-gray-300",
-                      !isHourStart && "border-gray-200"
+                      isCurrentSlot ? "bg-red-100 border-red-400 shadow-md" : "",
+                      !isCurrentSlot && isHourStart && "border-gray-300",
+                      !isCurrentSlot && !isHourStart && "border-gray-200"
                     )}
                   >
                     {/* Time Column - Show all times clearly */}
                     <div className={cn(
                       "h-8 flex items-center justify-center text-sm border-r",
+                      isCurrentSlot ? "font-bold bg-red-500 text-white" :
                       isHourStart ? "font-bold bg-primary/10 text-primary" : 
                       slot.minute === 30 ? "font-semibold bg-gray-100 text-gray-700" :
                       "bg-gray-50 text-gray-600"
                     )}>
-                      <span className={isHourStart ? "text-sm" : "text-xs"}>
+                      <span className={isHourStart || isCurrentSlot ? "text-sm" : "text-xs"}>
                         {slot.displayTime}
                       </span>
                     </div>
