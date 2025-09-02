@@ -16,6 +16,7 @@ import { isSpecialStaffRequest } from "@/lib/booking-utils"
 import { FilterBar } from "@/components/admin/filter-bar"
 import { BookingDetailsModal } from "@/components/admin/BookingDetailsModal"
 import { Clock, RefreshCw, Calendar, Users, TrendingUp, AlertCircle, Star, RotateCw } from "lucide-react"
+import { getGuamTime } from "@/lib/timezone-utils"
 
 interface TimeSlot {
   hour: number
@@ -59,8 +60,8 @@ export function RoomTimeline({
   const [staff, setStaff] = useState<Array<{ id: string; name: string }>>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
-  const [currentTime, setCurrentTime] = useState<Date>(new Date())
+  const [lastUpdated, setLastUpdated] = useState<Date>(getGuamTime())
+  const [currentTime, setCurrentTime] = useState<Date>(getGuamTime())
   const [selectedStaff, setSelectedStaff] = useState<string | null>(null)
   const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null)
   const [showBookingModal, setShowBookingModal] = useState(false)
@@ -126,7 +127,7 @@ export function RoomTimeline({
       setBookings(bookingsData || [])
       setRooms(roomsData || [])
       setStaff(staffData || [])
-      setLastUpdated(new Date())
+      setLastUpdated(getGuamTime())
       setError('')
     } catch (err: any) {
       setError(err.message)
@@ -135,10 +136,10 @@ export function RoomTimeline({
     }
   }, [selectedStaff])
 
-  // Update current time every minute
+  // Update current time every minute (in Guam timezone)
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(new Date())
+      setCurrentTime(getGuamTime())
     }, 60000)
     return () => clearInterval(timer)
   }, [])
@@ -222,9 +223,9 @@ export function RoomTimeline({
     return Math.round((totalBookedMinutes / totalBusinessMinutes) * 100)
   }, [bookings])
 
-  // Get current time position for indicator
+  // Get current time position for indicator (using Guam time)
   const getCurrentTimePosition = useCallback((): number => {
-    const now = new Date()
+    const now = getGuamTime()
     const currentHour = now.getHours()
     const currentMinute = now.getMinutes()
     
@@ -271,11 +272,12 @@ export function RoomTimeline({
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Room Timeline</h2>
             <p className="text-gray-600">
-              {new Date().toLocaleDateString('en-US', {
+              {getGuamTime().toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
-                day: 'numeric'
+                day: 'numeric',
+                timeZone: 'Pacific/Guam'
               })}
             </p>
             <p className="text-sm text-gray-500">
@@ -413,8 +415,8 @@ export function RoomTimeline({
             <div className="min-w-[800px] relative">
               {/* Current Time Indicator */}
               {currentTimePosition >= 0 && (() => {
-                // Get the current time
-                const now = new Date();
+                // Get the current Guam time
+                const now = getGuamTime();
                 const currentHour = now.getHours();
                 const currentMinute = now.getMinutes();
                 
@@ -445,7 +447,7 @@ export function RoomTimeline({
                     <div className="w-full h-0.5 bg-red-500 opacity-90"></div>
                     <div className="absolute -left-2 w-4 h-4 bg-red-500 rounded-full opacity-90"></div>
                     <div className="absolute -left-20 bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg font-medium">
-                      {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                 );
