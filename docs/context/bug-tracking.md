@@ -42,6 +42,24 @@
 
 ---
 
+## Recently Resolved Issues (September 2025) ✅
+
+### BUG-016: Missing 150+ Services and Add-ons System ✅ RESOLVED
+- **Date Reported**: September 2, 2025
+- **Priority**: CRITICAL
+- **Status**: RESOLVED - Migration ready for deployment
+- **Description**: All extended services (150+) and add-ons (25+) were accidentally removed during migration consolidation
+- **Root Cause**: Commit c0e2a59 moved migrations 053-054 to backup folder that wasn't preserved
+- **Resolution**: 
+  - Retrieved migrations from git history
+  - Created restoration migration 075_restore_services_and_addons.sql
+  - Verified 100+ services and 29 add-ons will be restored
+- **Files Affected**: 
+  - Created: supabase/migrations/075_restore_services_and_addons.sql
+  - Documentation: docs/SERVICE_RESTORATION_LOG.md
+- **Next Steps**: Apply migration to Supabase database
+- **Verification**: Run `node scripts/apply-services-migration.js` after deployment
+
 ## Recently Resolved Issues (January 2025) ✅
 
 ### SERVICE-DUPLICATE-001: Duplicate Facial Consultation Service Removal ✅ RESOLVED
