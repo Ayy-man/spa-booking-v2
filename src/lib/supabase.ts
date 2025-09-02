@@ -618,11 +618,13 @@ export const supabaseClient = {
       .select('*')
       .order('created_at', { ascending: false })
 
-    // HOTFIX: Temporarily disabled archived_at filtering until column is added to database
     // By default, exclude archived records unless explicitly requested
-    // if (!filters?.includeArchived) {
-    //   query = query.is('archived_at', null)
-    // }
+    if (!filters?.includeArchived) {
+      query = query.is('archived_at', null)
+      console.log('Filtering for non-archived walk-ins only')
+    } else {
+      console.log('Including archived walk-ins')
+    }
 
     if (filters?.status && filters.status !== 'all') {
       query = query.eq('status', filters.status)
@@ -635,7 +637,11 @@ export const supabaseClient = {
     }
 
     const { data, error } = await query
-    if (error) throw error
+    if (error) {
+      console.error('Walk-ins query error:', error)
+      throw error
+    }
+    console.log(`Retrieved ${data?.length || 0} walk-ins`)
     return data
   },
 
@@ -647,11 +653,10 @@ export const supabaseClient = {
     limit?: number
     offset?: number
   }) {
-    // HOTFIX: Temporarily disabled archived_at filtering until column is added to database
     let query = supabase
       .from('walk_ins')
       .select('*', { count: 'exact' })
-      // .not('archived_at', 'is', null)
+      .not('archived_at', 'is', null)
       .order('created_at', { ascending: false })
 
     if (filters?.status && filters.status !== 'all') {
@@ -685,13 +690,10 @@ export const supabaseClient = {
   },
 
   async archiveWalkIn(id: string) {
-    // HOTFIX: Temporarily disabled archived_at update until column is added to database
-    // For now, we'll just update the status to 'archived' as a workaround
     const { data, error } = await supabase
       .from('walk_ins')
       .update({ 
-        // archived_at: getGuamTime().toISOString(),
-        status: 'archived', // Use status field as workaround
+        archived_at: getGuamTime().toISOString(),
         updated_at: getGuamTime().toISOString()
       })
       .eq('id', id)
@@ -703,12 +705,9 @@ export const supabaseClient = {
   },
 
   async archiveOldWalkIns() {
-    // HOTFIX: Temporarily disabled RPC call until archived_at column is added
-    // const { data, error } = await supabase.rpc('archive_old_walk_ins')
-    // if (error) throw error
-    // return data
-    console.warn('archiveOldWalkIns: Temporarily disabled until archived_at column is added')
-    return 0
+    const { data, error } = await supabase.rpc('archive_old_walk_ins')
+    if (error) throw error
+    return data
   },
 
   async updateWalkInStatus(id: string, status: string, notes?: string) {
