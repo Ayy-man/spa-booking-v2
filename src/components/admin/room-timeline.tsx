@@ -245,6 +245,26 @@ export function RoomTimeline({
     return booking.start_time.slice(0, 5) === timeString
   }, [])
 
+  // Check if a time slot is the current time slot
+  const isCurrentTimeSlot = useCallback((slot: TimeSlot): boolean => {
+    const now = getGuamTime()
+    const currentHour = now.getHours()
+    const currentMinute = now.getMinutes()
+    
+    // Check if we're in business hours
+    if (currentHour < BUSINESS_HOURS.start || currentHour >= BUSINESS_HOURS.end) {
+      return false
+    }
+    
+    // Check if this slot matches the current time
+    // We're in the slot if current time is >= slot time and < slot time + 15 minutes
+    const slotStartMinutes = slot.hour * 60 + slot.minute
+    const currentMinutes = currentHour * 60 + currentMinute
+    const slotEndMinutes = slotStartMinutes + BUSINESS_HOURS.slotDuration
+    
+    return currentMinutes >= slotStartMinutes && currentMinutes < slotEndMinutes
+  }, [])
+
   // Get service color
   const getServiceColor = useCallback((category: string) => {
     return SERVICE_COLORS[category as ServiceCategory] || SERVICE_COLORS.package
@@ -413,46 +433,6 @@ export function RoomTimeline({
           <div className="relative overflow-x-auto">
             {/* Timeline Container */}
             <div className="min-w-[800px] relative">
-              {/* Current Time Indicator */}
-              {currentTimePosition >= 0 && (() => {
-                // Get the current Guam time
-                const now = getGuamTime();
-                const currentHour = now.getHours();
-                const currentMinute = now.getMinutes();
-                
-                // Calculate position based on hours and minutes
-                // Each hour has 4 rows (15-minute intervals)
-                const hoursSinceStart = currentHour - BUSINESS_HOURS.start;
-                const totalRowsToCurrentHour = hoursSinceStart * 4; // 4 rows per hour
-                
-                // Add fractional rows based on minutes (0-59 minutes maps to 0-4 rows)
-                const minuteFraction = currentMinute / 60; // 0 to 1
-                const additionalRows = minuteFraction * 4; // 0 to 4 rows
-                
-                const totalRows = totalRowsToCurrentHour + additionalRows;
-                
-                // Each row is exactly 33px (h-8 + 1px border)
-                const rowHeight = 33;
-                // Header: py-3 (24px) + content height + border-b-2 (2px) ≈ 62px
-                const headerHeight = 62;
-                
-                // Calculate the exact pixel position
-                const pixelPosition = headerHeight + (totalRows * rowHeight);
-                
-                return (
-                  <div 
-                    className="absolute left-20 right-0 z-50 flex items-center pointer-events-none"
-                    style={{ top: `${pixelPosition}px` }}
-                  >
-                    <div className="w-full h-0.5 bg-red-500 opacity-90"></div>
-                    <div className="absolute -left-2 w-4 h-4 bg-red-500 rounded-full opacity-90"></div>
-                    <div className="absolute -left-20 bg-red-500 text-white text-xs px-2 py-1 rounded shadow-lg font-medium">
-                      {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </div>
-                );
-              })()}
-              
               {/* Header Row */}
               <div className="flex border-b-2 border-primary/20 bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0 z-10 shadow-sm">
                 <div className="w-20 flex items-center justify-center py-3 text-sm font-semibold text-primary border-r-2 border-primary/20 bg-primary/5">
@@ -473,6 +453,7 @@ export function RoomTimeline({
               {timeSlots.map((slot, index) => {
                 const isHourMark = slot.minute === 0
                 const isHalfHour = slot.minute === 30
+                const isCurrentSlot = isCurrentTimeSlot(slot)
                 
                 // Format time display
                 const displayHour = slot.hour > 12 ? slot.hour - 12 : slot.hour === 0 ? 12 : slot.hour
@@ -481,18 +462,21 @@ export function RoomTimeline({
                 
                 return (
                   <div key={`${slot.hour}-${slot.minute}`} className={cn(
-                    "flex border-b transition-colors hover:bg-gray-25",
-                    isHourMark ? "border-gray-300" : "border-gray-100",
-                    isHalfHour ? "border-gray-200" : ""
+                    "flex border-b transition-colors",
+                    isCurrentSlot ? "bg-red-50 border-red-300 shadow-sm" : "hover:bg-gray-25",
+                    !isCurrentSlot && isHourMark ? "border-gray-300" : "",
+                    !isCurrentSlot && isHalfHour ? "border-gray-200" : "",
+                    !isCurrentSlot && !isHourMark && !isHalfHour ? "border-gray-100" : ""
                   )}>
                     {/* Time Label - Show all times */}
                     <div className={cn(
                       "w-20 flex items-center justify-center h-8 text-xs border-r transition-colors",
+                      isCurrentSlot ? "font-bold text-white bg-red-500" :
                       isHourMark ? "font-bold text-primary bg-primary/10" : 
                       isHalfHour ? "font-semibold text-gray-700 bg-gray-100" :
                       "text-gray-600 bg-gray-50 hover:bg-gray-100"
                     )}>
-                      <span className={isHourMark ? "text-sm" : ""}>
+                      <span className={isHourMark || isCurrentSlot ? "text-sm" : ""}>
                         {timeDisplay}
                         {isHourMark && <span className="ml-1 text-xs">{ampm}</span>}
                       </span>
