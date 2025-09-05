@@ -17,7 +17,7 @@ import {
 export const BUSINESS_HOURS = {
   start: '09:00',
   end: '19:00', 
-  lastBookingOffset: 60, // 1 hour before closing
+  lastBookingOffset: 30, // 30 minutes before closing - last slot at 6:30 PM
   slotDuration: 15, // 15-minute time slots
   bufferTime: 15, // 15 minutes between appointments for cleaning
   maxAdvanceDays: 30, // Maximum days in advance for booking

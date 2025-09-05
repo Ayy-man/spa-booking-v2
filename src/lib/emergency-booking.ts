@@ -66,13 +66,13 @@ export async function emergencyCouplesBooking(params: {
     const primaryBufferEnd = calculateEndTime(primaryEndTime, bufferMinutes)
     const secondaryBufferEnd = calculateEndTime(secondaryEndTime, bufferMinutes)
     
-    // Ensure buffer times stay within business hours (9 AM - 8 PM)
+    // Ensure buffer times stay within business hours (9 AM - 7 PM)
     const clampBufferTime = (time: string): string => {
       const [hours, minutes] = time.split(':').map(Number)
       const totalMinutes = hours * 60 + minutes
       
-      // Clamp between 9:00 (540 minutes) and 20:00 (1200 minutes)
-      const clampedMinutes = Math.max(540, Math.min(1200, totalMinutes))
+      // Clamp between 9:00 (540 minutes) and 19:00 (1140 minutes)
+      const clampedMinutes = Math.max(540, Math.min(1140, totalMinutes))
       const clampedHours = Math.floor(clampedMinutes / 60)
       const clampedMins = clampedMinutes % 60
       

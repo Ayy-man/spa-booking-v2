@@ -46,7 +46,7 @@ const SERVICE_COLORS: Record<ServiceCategory, { bg: string; border: string; text
 // Business hours configuration
 const BUSINESS_HOURS = {
   start: 9, // 9 AM (business starts at 9)
-  end: 20,  // 8 PM
+  end: 19,  // 7 PM
   slotDuration: 15 // 15 minutes
 }
 

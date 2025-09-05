@@ -184,9 +184,9 @@ export async function POST(request: NextRequest) {
     const bufferStartTime = new Date(startTime.getTime() - bufferMinutes * 60000)
     const bufferEndTime = new Date(endTime.getTime() + bufferMinutes * 60000)
     
-    // Ensure buffer times stay within business hours (9 AM - 8 PM)
+    // Ensure buffer times stay within business hours (9 AM - 7 PM)
     const businessStart = new Date(`2000-01-01T09:00:00`)
-    const businessEnd = new Date(`2000-01-01T20:00:00`)
+    const businessEnd = new Date(`2000-01-01T19:00:00`)
     
     const finalBufferStart = bufferStartTime < businessStart ? businessStart : bufferStartTime
     const finalBufferEnd = bufferEndTime > businessEnd ? businessEnd : bufferEndTime

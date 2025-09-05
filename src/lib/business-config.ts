@@ -11,13 +11,13 @@ export const BUSINESS_CONFIG = {
   
   // Business hours
   businessHours: {
-    monday: { open: '08:00', close: '20:00' },
+    monday: { open: '09:00', close: '19:00' },
     tuesday: { open: 'closed', close: 'closed' },
-    wednesday: { open: '08:00', close: '20:00' },
+    wednesday: { open: '09:00', close: '19:00' },
     thursday: { open: 'closed', close: 'closed' },
-    friday: { open: '08:00', close: '20:00' },
-    saturday: { open: '08:00', close: '20:00' },
-    sunday: { open: '08:00', close: '20:00' }
+    friday: { open: '09:00', close: '19:00' },
+    saturday: { open: '09:00', close: '19:00' },
+    sunday: { open: '09:00', close: '19:00' }
   },
   
   // Staff off days (matching current system)
