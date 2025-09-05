@@ -656,8 +656,12 @@ export const supabaseClient = {
     let query = supabase
       .from('walk_ins')
       .select('*', { count: 'exact' })
-      .not('archived_at', 'is', null)
       .order('created_at', { ascending: false })
+
+    // Instead of filtering by archived_at, exclude today's walk-ins
+    // This ensures we see ALL past walk-ins in the "Previous Walk-ins" modal
+    const todayStart = getGuamStartOfDay(new Date().toISOString().split('T')[0])
+    query = query.lt('created_at', todayStart)
 
     if (filters?.status && filters.status !== 'all') {
       query = query.eq('status', filters.status)
