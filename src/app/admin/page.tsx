@@ -99,11 +99,13 @@ export default function AdminDashboardPage() {
         </div>
         
         <div className="flex space-x-3">
+          {/* Payment Links button - hidden as requested
           <Link href="/admin/payment-links">
             <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
               Payment Links
             </Button>
           </Link>
+          */}
           <Link href="/admin/bookings">
             <Button variant="outline" className="border-gray-300">
               All Bookings
