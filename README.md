@@ -187,6 +187,7 @@ The system includes a comprehensive admin panel with authentication:
 - `/admin/bookings` - Booking management interface
 - `/admin/monitor` - Real-time monitoring dashboard
 - `/admin` - Main dashboard with Daily Report tab
+- `/admin/payment-links` - Payment links management (currently hidden)
 
 ### Security
 - **Middleware Protection**: All admin routes protected

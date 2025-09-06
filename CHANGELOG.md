@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-01-06
+
+### Changed
+- **Business Hours Update**
+  - Spa now closes at 7:00 PM (19:00) instead of 8:00 PM
+  - Last bookable slot changed to 6:30 PM (was 6:00 PM)
+  - Updated buffer time calculations to respect new closing time
+  - Applied changes across booking app and admin panel
+
+- **Admin Dashboard UI**
+  - Hidden Payment Links button from admin dashboard navigation
+  - Button code commented out for easy restoration if needed
+  - All other dashboard functionality remains intact
+
+### Fixed
+- **Previous Walk-ins Display**
+  - Fixed issue where past walk-ins weren't showing in "Previous Walk-ins" modal
+  - Changed query to show all past walk-ins, not just archived ones
+  - Historical walk-ins now properly displayed regardless of archive status
+
 ## [1.3.0] - 2025-08-31
 
 ### Added

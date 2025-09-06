@@ -70,7 +70,7 @@ After deployment, test these critical paths:
 
 - **Main Site**: `https://your-domain.com`
 - **Admin Panel**: `https://your-domain.com/admin`
-- **Payment Links**: `https://your-domain.com/admin/payment-links`
+- **Payment Links**: `https://your-domain.com/admin/payment-links` (currently hidden from UI)
 
 ## Need Help?
 
