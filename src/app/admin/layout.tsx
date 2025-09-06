@@ -53,7 +53,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 📅 Booking System
               </a>
               <div className="flex items-center space-x-3 border-l border-gray-300 pl-4">
-                <NotificationBell />
+                {/* Only show NotificationBell when user is authenticated */}
+                {sessionInfo && <NotificationBell />}
                 {sessionInfo && (
                   <span className="text-xs text-gray-500">
                     Logged in as {sessionInfo.email}
