@@ -226,7 +226,7 @@ export function StaffAvailabilityStatusCard({ staff, onStatusChange }: StaffStat
                   onChange={(e) => setTempAdvanceHours(parseInt(e.target.value) || 2)}
                 />
                 <p className="text-sm text-gray-500">
-                  Customers must book at least {tempAdvanceHours} hours in advance when you're on-call
+                  Customers must book at least {tempAdvanceHours} hours in advance when you&apos;re on-call
                 </p>
               </div>
             )}
@@ -237,7 +237,7 @@ export function StaffAvailabilityStatusCard({ staff, onStatusChange }: StaffStat
                 <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
                 <div className="text-sm text-red-800">
                   <p className="font-medium">Staff will be completely unavailable</p>
-                  <p>No bookings can be made when status is set to "Off"</p>
+                  <p>No bookings can be made when status is set to &quot;Off&quot;</p>
                 </div>
               </div>
             )}
