@@ -764,62 +764,64 @@ export function StaffScheduleView({
                   Click to quick add
                 </div>
               </div>
-              {staff.map(member => {
-                const status = member.current_status || 'working'
-                const statusConfig = AVAILABILITY_STATUS_CONFIG[status]
-                const isWorking = isStaffWorking(member)
-                
-                return (
-                  <div 
-                    key={member.id} 
-                    className={cn(
-                      "p-3 font-medium text-center border-r relative",
-                      !isWorking && "bg-gray-100 text-gray-400",
-                      status === 'off' && "bg-gray-100"
-                    )}
-                  >
-                    <div className="flex items-center justify-center gap-1">
-                      <span>{member.name}</span>
-                      {status === 'on_call' && (
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Phone className="h-3 w-3 text-yellow-600" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            On Call - {member.default_advance_notice_hours || 2}h notice required
-                          </TooltipContent>
-                        </Tooltip>
+              <TooltipProvider>
+                {staff.map(member => {
+                  const status = member.current_status || 'working'
+                  const statusConfig = AVAILABILITY_STATUS_CONFIG[status]
+                  const isWorking = isStaffWorking(member)
+                  
+                  return (
+                    <div 
+                      key={member.id} 
+                      className={cn(
+                        "p-3 font-medium text-center border-r relative",
+                        !isWorking && "bg-gray-100 text-gray-400",
+                        status === 'off' && "bg-gray-100"
                       )}
-                      {status === 'off' && (
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <XCircle className="h-3 w-3 text-gray-500" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            Off - Not available for bookings
-                          </TooltipContent>
-                        </Tooltip>
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        <span>{member.name}</span>
+                        {status === 'on_call' && (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Phone className="h-3 w-3 text-yellow-600" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              On Call - {member.default_advance_notice_hours || 2}h notice required
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                        {status === 'off' && (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <XCircle className="h-3 w-3 text-gray-500" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              Off - Not available for bookings
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                      {!isWorking && (
+                        <div className="text-xs font-normal mt-1">Off today</div>
+                      )}
+                      {status !== 'working' && (
+                        <Badge 
+                          className={cn(
+                            "text-xs mt-1",
+                            statusConfig.bgColor,
+                            statusConfig.color,
+                            statusConfig.borderColor,
+                            "border"
+                          )}
+                        >
+                          {getStatusDisplay(status, member.default_advance_notice_hours)}
+                        </Badge>
                       )}
                     </div>
-                    {!isWorking && (
-                      <div className="text-xs font-normal mt-1">Off today</div>
-                    )}
-                    {status !== 'working' && (
-                      <Badge 
-                        className={cn(
-                          "text-xs mt-1",
-                          statusConfig.bgColor,
-                          statusConfig.color,
-                          statusConfig.borderColor,
-                          "border"
-                        )}
-                      >
-                        {getStatusDisplay(status, member.default_advance_notice_hours)}
-                      </Badge>
-                    )}
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </TooltipProvider>
             </div>
             
             {/* Time Slots */}
