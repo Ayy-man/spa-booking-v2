@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
+import { getStaffAvailabilityStatus } from '@/lib/booking-logic'
 
 interface AssignWalkInRequest {
   walkInId: string
@@ -42,6 +43,42 @@ export async function POST(request: NextRequest) {
         { error: 'Walk-in has already been assigned or completed' },
         { status: 400 }
       )
+    }
+
+    // Check staff availability status
+    const appointmentDate = new Date(body.appointmentDate)
+    const availabilityInfo = await getStaffAvailabilityStatus(
+      body.staffId, 
+      appointmentDate, 
+      body.startTime
+    )
+
+    if (availabilityInfo) {
+      // Check if staff is off
+      if (availabilityInfo.status === 'off') {
+        return NextResponse.json(
+          { error: 'Staff member is marked as off and not available for bookings' },
+          { status: 400 }
+        )
+      }
+
+      // Check advance notice for on-call staff
+      if (availabilityInfo.status === 'on_call') {
+        const slotDateTime = new Date(`${body.appointmentDate}T${body.startTime}:00`)
+        const currentTime = new Date()
+        const hoursDifference = (slotDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60)
+        
+        if (hoursDifference < availabilityInfo.advance_notice_hours) {
+          return NextResponse.json(
+            { 
+              error: `Staff member is on-call and requires ${availabilityInfo.advance_notice_hours} hours advance notice. Current notice is only ${hoursDifference.toFixed(1)} hours.`,
+              availabilityStatus: availabilityInfo.status,
+              advanceNoticeRequired: availabilityInfo.advance_notice_hours
+            },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     // Get service details by name - handle potential mismatches

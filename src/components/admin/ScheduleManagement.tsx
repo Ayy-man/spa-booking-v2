@@ -15,6 +15,7 @@ import { CalendarIcon, ClockIcon, PlusIcon, TrashIcon, EditIcon, SaveIcon, XIcon
 import { format, parseISO, addDays, startOfWeek, isValid, isBefore, isAfter } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { Staff, StaffSchedule, ScheduleBlock } from '@/types/booking'
+import { StaffAvailabilityManager } from './StaffAvailabilityStatus'
 
 // Simple notification function
 const showNotification = (title: string, description: string, type: 'success' | 'error' = 'success') => {
@@ -62,7 +63,7 @@ export function ScheduleManagement() {
   const [selectedStaffId, setSelectedStaffId] = useState<string>('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'schedules' | 'blocks'>('schedules')
+  const [activeTab, setActiveTab] = useState<'availability' | 'schedules' | 'blocks'>('availability')
   const [weekStartDate, setWeekStartDate] = useState<Date>(startOfWeek(new Date()))
   
   // Form state for adding schedule blocks (time off)
@@ -616,9 +617,18 @@ export function ScheduleManagement() {
         </CardContent>
       </Card>
 
-      {/* Tabs for Schedules vs Time Off */}
+      {/* Tabs for Availability, Schedules, and Time Off */}
       <Tabs className="w-full">
         <TabsList className="bg-white border border-[#F6C7CF]">
+          <TabsTrigger 
+            value="availability"
+            active={activeTab === 'availability'}
+            onClick={() => setActiveTab('availability')}
+            className={activeTab === 'availability' ? 'bg-[#C36678] text-white' : ''}
+          >
+            <AlertCircleIcon className="w-4 h-4 mr-2" />
+            Availability Status
+          </TabsTrigger>
           <TabsTrigger 
             value="schedules"
             active={activeTab === 'schedules'}
@@ -638,6 +648,11 @@ export function ScheduleManagement() {
             Time Blocks
           </TabsTrigger>
         </TabsList>
+
+        {/* Availability Status Tab */}
+        <TabsContent value="availability" activeValue={activeTab} className="space-y-4">
+          <StaffAvailabilityManager />
+        </TabsContent>
 
         {/* Working Schedules Tab */}
         <TabsContent value="schedules" activeValue={activeTab} className="space-y-4">

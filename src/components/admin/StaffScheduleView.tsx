@@ -17,13 +17,14 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { normalizePhoneForDB, formatPhoneNumber } from "@/lib/phone-utils"
 import { BookingWithRelations, ServiceCategory, ScheduleBlock } from "@/types/booking"
-import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2, Users, UserCheck, AlertCircle } from "lucide-react"
+import { Calendar, Clock, Printer, RefreshCw, ChevronLeft, ChevronRight, Loader2, Users, UserCheck, AlertCircle, Phone, XCircle } from "lucide-react"
 import { format } from "date-fns"
 import { CouplesBookingIndicator } from "@/components/ui/couples-booking-indicator"
 import { BookingDetailsModal } from "@/components/admin/BookingDetailsModal"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ghlWebhookSender } from "@/lib/ghl-webhook-sender"
 import { getScheduleBlocks, checkScheduleBlockConflict } from "@/lib/booking-logic"
+import { StaffAvailabilityStatus, AVAILABILITY_STATUS_CONFIG, getStatusDisplay } from "@/types/staff-availability"
 
 // Service category colors (matching existing color scheme)
 const SERVICE_COLORS: Record<ServiceCategory, { bg: string; border: string; text: string }> = {
@@ -56,6 +57,8 @@ interface StaffMember {
   name: string
   work_days: number[]
   is_active: boolean
+  current_status?: StaffAvailabilityStatus
+  default_advance_notice_hours?: number
 }
 
 interface StaffScheduleViewProps {
@@ -158,10 +161,10 @@ export function StaffScheduleView({
       setLoading(true)
       const dateStr = currentDate.toISOString().split('T')[0]
       
-      // Fetch active staff
+      // Fetch active staff with availability status
       const { data: staffData, error: staffError } = await supabase
         .from('staff')
-        .select('id, name, work_days, is_active')
+        .select('id, name, work_days, is_active, current_status, default_advance_notice_hours')
         .eq('is_active', true)
         .neq('id', 'any') // Exclude "Any Available Staff"
         .order('name')
@@ -761,20 +764,62 @@ export function StaffScheduleView({
                   Click to quick add
                 </div>
               </div>
-              {staff.map(member => (
-                <div 
-                  key={member.id} 
-                  className={cn(
-                    "p-3 font-medium text-center border-r",
-                    !isStaffWorking(member) && "bg-gray-100 text-gray-400"
-                  )}
-                >
-                  <div>{member.name}</div>
-                  {!isStaffWorking(member) && (
-                    <div className="text-xs font-normal mt-1">Off today</div>
-                  )}
-                </div>
-              ))}
+              {staff.map(member => {
+                const status = member.current_status || 'working'
+                const statusConfig = AVAILABILITY_STATUS_CONFIG[status]
+                const isWorking = isStaffWorking(member)
+                
+                return (
+                  <div 
+                    key={member.id} 
+                    className={cn(
+                      "p-3 font-medium text-center border-r relative",
+                      !isWorking && "bg-gray-100 text-gray-400",
+                      status === 'off' && "bg-gray-100"
+                    )}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>{member.name}</span>
+                      {status === 'on_call' && (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Phone className="h-3 w-3 text-yellow-600" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            On Call - {member.default_advance_notice_hours || 2}h notice required
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {status === 'off' && (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <XCircle className="h-3 w-3 text-gray-500" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Off - Not available for bookings
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
+                    {!isWorking && (
+                      <div className="text-xs font-normal mt-1">Off today</div>
+                    )}
+                    {status !== 'working' && (
+                      <Badge 
+                        className={cn(
+                          "text-xs mt-1",
+                          statusConfig.bgColor,
+                          statusConfig.color,
+                          statusConfig.borderColor,
+                          "border"
+                        )}
+                      >
+                        {getStatusDisplay(status, member.default_advance_notice_hours)}
+                      </Badge>
+                    )}
+                  </div>
+                )
+              })}
             </div>
             
             {/* Time Slots */}

@@ -12,6 +12,7 @@ import {
   getMinBookingTime,
   BUSINESS_HOURS as GUAM_BUSINESS_HOURS
 } from '@/lib/timezone-utils'
+import { StaffAvailabilityStatus, canBookSlot } from '@/types/staff-availability'
 
 // Business constants with enhanced configuration
 export const BUSINESS_HOURS = {
@@ -776,6 +777,70 @@ export function getStaffDayAvailability(
 /**
  * Get schedule blocks for a staff member on a specific date
  */
+/**
+ * Get staff availability status for a specific date and time
+ */
+export async function getStaffAvailabilityStatus(
+  staffId: string,
+  date: Date,
+  time: string
+): Promise<{
+  status: StaffAvailabilityStatus;
+  advance_notice_hours: number;
+  is_available: boolean;
+  status_note?: string | null;
+} | null> {
+  try {
+    const dateStr = format(date, 'yyyy-MM-dd')
+    
+    // First check if there's a specific schedule for this date/time
+    const { data: scheduleData, error: scheduleError } = await supabase
+      .from('staff_schedules')
+      .select('availability_status, advance_notice_hours, is_available, status_note')
+      .eq('staff_id', staffId)
+      .eq('date', dateStr)
+      .gte('end_time', time)
+      .lte('start_time', time)
+      .single()
+    
+    if (scheduleData) {
+      return {
+        status: scheduleData.availability_status || 'working',
+        advance_notice_hours: scheduleData.advance_notice_hours || 2,
+        is_available: scheduleData.is_available ?? true,
+        status_note: scheduleData.status_note
+      }
+    }
+    
+    // If no specific schedule, get staff's default status
+    const { data: staffData, error: staffError } = await supabase
+      .from('staff')
+      .select('current_status, default_advance_notice_hours')
+      .eq('id', staffId)
+      .single()
+    
+    if (staffData) {
+      return {
+        status: staffData.current_status || 'working',
+        advance_notice_hours: staffData.default_advance_notice_hours || 2,
+        is_available: staffData.current_status !== 'off',
+        status_note: null
+      }
+    }
+    
+    // Default to working status if no data found
+    return {
+      status: 'working',
+      advance_notice_hours: 2,
+      is_available: true,
+      status_note: null
+    }
+  } catch (error) {
+    console.error('Error fetching staff availability status:', error)
+    return null
+  }
+}
+
 export async function getScheduleBlocks(
   staffId: string,
   date: Date
@@ -877,6 +942,32 @@ export async function isStaffAvailableAtTime(
   const dayAvailability = getStaffDayAvailability(staff, date)
   if (!dayAvailability.isAvailable) {
     return { available: false, reasons: dayAvailability.reasons }
+  }
+  
+  // Check staff availability status (working, on_call, off)
+  const availabilityInfo = await getStaffAvailabilityStatus(staff.id, date, startTime)
+  if (availabilityInfo) {
+    if (availabilityInfo.status === 'off') {
+      reasons.push(`${staff.name} is marked as off and not available for bookings`)
+      return { available: false, reasons }
+    }
+    
+    // Check advance notice requirements for on-call staff
+    if (availabilityInfo.status === 'on_call') {
+      const slotDateTime = parseISO(`${format(date, 'yyyy-MM-dd')}T${startTime}:00`)
+      const currentTime = new Date()
+      const canBook = canBookSlot(
+        availabilityInfo.status,
+        slotDateTime,
+        currentTime,
+        availabilityInfo.advance_notice_hours
+      )
+      
+      if (!canBook) {
+        reasons.push(`${staff.name} is on-call and requires ${availabilityInfo.advance_notice_hours} hours advance notice`)
+        return { available: false, reasons }
+      }
+    }
   }
   
   // Check if requested time is within staff work hours

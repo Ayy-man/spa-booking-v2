@@ -480,6 +480,9 @@ export interface Database {
           is_active: boolean
           auth_user_id: string | null
           service_exclusions: string[]
+          default_advance_notice_hours: number
+          current_status: 'working' | 'on_call' | 'off'
+          status_updated_at: string
           created_at: string
           updated_at: string
         }
@@ -498,6 +501,9 @@ export interface Database {
           is_active?: boolean
           auth_user_id?: string | null
           service_exclusions?: string[]
+          default_advance_notice_hours?: number
+          current_status?: 'working' | 'on_call' | 'off'
+          status_updated_at?: string
           created_at?: string
           updated_at?: string
         }
@@ -516,6 +522,9 @@ export interface Database {
           is_active?: boolean
           auth_user_id?: string | null
           service_exclusions?: string[]
+          default_advance_notice_hours?: number
+          current_status?: 'working' | 'on_call' | 'off'
+          status_updated_at?: string
           created_at?: string
           updated_at?: string
         }
@@ -531,6 +540,9 @@ export interface Database {
           break_start: string | null
           break_end: string | null
           notes: string | null
+          availability_status: 'working' | 'on_call' | 'off'
+          advance_notice_hours: number
+          status_note: string | null
           created_at: string
           updated_at: string
         }
@@ -544,6 +556,9 @@ export interface Database {
           break_start?: string | null
           break_end?: string | null
           notes?: string | null
+          availability_status?: 'working' | 'on_call' | 'off'
+          advance_notice_hours?: number
+          status_note?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -557,6 +572,9 @@ export interface Database {
           break_start?: string | null
           break_end?: string | null
           notes?: string | null
+          availability_status?: 'working' | 'on_call' | 'off'
+          advance_notice_hours?: number
+          status_note?: string | null
           created_at?: string
           updated_at?: string
         }
