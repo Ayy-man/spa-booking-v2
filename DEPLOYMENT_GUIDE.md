@@ -66,10 +66,17 @@ After deployment, test these critical paths:
 - [ ] Test payment integration
 - [ ] Verify database connections
 
+## Database Migrations
+
+After deployment, run the following migration for the Staff Availability Status System:
+- Migration file: `076_add_staff_availability_status.sql`
+- This adds the staff availability status feature (Working/On-Call/Off modes)
+
 ## Important URLs After Deployment
 
 - **Main Site**: `https://your-domain.com`
 - **Admin Panel**: `https://your-domain.com/admin`
+- **Staff Schedule Management**: `https://your-domain.com/admin` (Schedule Management tab)
 - **Payment Links**: `https://your-domain.com/admin/payment-links` (currently hidden from UI)
 
 ## Need Help?

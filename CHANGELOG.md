@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2025-01-07
+
+### Added
+- **Staff Availability Status System**
+  - Three staff status modes: Working, On-Call, and Off
+  - Working status: Staff available for immediate booking (standard 2-hour advance notice)
+  - On-Call status: Configurable advance notice hours per staff member
+  - Off status: Staff completely unavailable for bookings
+  - New "Availability Status" tab in Schedule Management admin interface
+  - Visual indicators with icons (✅ Working, 📞 On-Call, 🚫 Off)
+  - Quick toggle buttons for instant status changes
+  - Advanced settings dialog for configuring advance notice requirements
+  - Status badges and tooltips throughout admin panel
+  - Filter options to view staff by availability status
+  - Integration with booking validation and walk-in assignments
+  - Database migration: `076_add_staff_availability_status.sql`
+
+### Fixed
+- **Build Error**: Added missing radio-group UI component
+- **Runtime Error**: Fixed Tooltip components missing TooltipProvider wrapper
+- **Admin Login**: Hidden notification bell from login page (only shows after authentication)
+
+### Technical Improvements
+- Added `staff_availability_status` enum type to database
+- New fields: `availability_status`, `advance_notice_hours` in staff_schedules
+- New fields: `current_status`, `default_advance_notice_hours` in staff table
+- Helper functions for availability status validation
+- TypeScript types for staff availability management
+- Enhanced booking logic to respect staff availability status
+
 ## [1.4.0] - 2025-01-06
 
 ### Changed

@@ -2,14 +2,24 @@
 
 A comprehensive medical spa booking system built for Dermal Skin Clinic and Spa Guam. This production-ready application provides online booking, staff management, room assignment, and administrative tools.
 
-## 🎉 **PRODUCTION v2.2.0 - READY FOR DEPLOYMENT**
+## 🎉 **PRODUCTION v2.3.0 - READY FOR DEPLOYMENT**
 
-**Status**: ✅ **Production Ready with 150+ Services & Add-on System**  
-**Version**: v2.2.0 (Extended Service Catalog & Add-ons)  
-**Last Updated**: January 27, 2025  
-**Deployment Status**: Database migration ready, UI implementation pending  
+**Status**: ✅ **Production Ready with Staff Availability Status System**  
+**Version**: v2.3.0 (Staff Availability Management & Status System)  
+**Last Updated**: January 7, 2025  
+**Deployment Status**: Fully implemented and production ready  
 
-**New Features in v2.2.0**:
+**New Features in v2.3.0**:
+- 👥 **Staff Availability Status System** - Comprehensive staff status management
+  - Three modes: Working (immediate booking), On-Call (advance notice), Off (unavailable)
+  - Configurable advance notice hours for on-call staff
+  - Visual status indicators throughout admin panel
+  - Quick toggle buttons for instant status changes
+  - Integration with booking validation and walk-in assignments
+- 🔔 **Notification System Improvements** - Hidden from login page, admin-only access
+- 🛠️ **UI Component Fixes** - Added radio-group component, fixed tooltip providers
+
+**Previous v2.2.0 Features**:
 - 🎯 **150+ Services Added** - Comprehensive service catalog expansion
 - ➕ **Add-on System** - Flexible service enhancements with 25+ add-on options
   - Dynamic add-on selection during booking flow
@@ -58,15 +68,16 @@ A comprehensive medical spa booking system built for Dermal Skin Clinic and Spa 
 This booking system handles complex spa scheduling with:
 - **150+ Services**: Comprehensive menu including facials, massages, treatments, waxing, packages, and signature services
 - **Add-on System**: Flexible service enhancements with 25+ add-on options
+- **Staff Availability Status**: Three modes - Working, On-Call (with advance notice), and Off
 - **3 Rooms**: Different capabilities for single/couples services
-- **5 Staff Members**: Each with specific capabilities and schedules (including Phuong)
+- **5 Staff Members**: Each with specific capabilities, schedules, and availability status
 - **Smart Room Assignment**: Automatic room allocation based on service type
 - **Mobile-First Design**: Optimized for mobile booking experience with dark mode
 - **📱 Smart Phone Input**: Auto-formatting for Guam (671) with real-time validation
 - **🌙 Dark Mode Support**: Complete light/dark theme toggle with accessibility compliance
 - **Theme Persistence**: User preferences saved across sessions
 - **💑 Couples Booking**: Single-slot implementation for simultaneous bookings (prevents room conflicts)
-- **Enhanced Admin Panel**: Professional light-mode interface for staff
+- **Enhanced Admin Panel**: Professional light-mode interface with availability management
 - **❌ Complete Cancellation System**: Proper tracking with timestamps and reasons
 - **Real-time Monitoring**: Live booking tracking and management
 - **WCAG AA Accessibility**: Compliant in both light and dark themes
