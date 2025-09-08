@@ -76,8 +76,6 @@ export async function rescheduleBooking(
   reason?: string,
   notifyCustomer: boolean = true
 ): Promise<{ success: boolean; error?: string; message?: string }> {
-  console.log('[rescheduleBooking] Starting reschedule for booking:', bookingId)
-  console.log('[rescheduleBooking] New date/time:', newDate, newStartTime)
   
   try {
     // Get the admin session token from localStorage
@@ -118,7 +116,6 @@ export async function rescheduleBooking(
       }
     }
 
-    console.log('[rescheduleBooking] Reschedule successful!', result)
     return { 
       success: true,
       message: result.message 

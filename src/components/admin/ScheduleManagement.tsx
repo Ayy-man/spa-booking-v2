@@ -143,7 +143,6 @@ export function ScheduleManagement() {
       }
 
       // Debug: Log staff member data
-      console.log('Fetching schedule for staff:', staffMember.name, 'work_days:', staffMember.work_days)
 
       // Get existing schedule records for this week
       const weekStart = format(weekStartDate, 'yyyy-MM-dd')
@@ -161,7 +160,6 @@ export function ScheduleManagement() {
       }
 
       // Debug: Log schedule data found
-      console.log('Schedule data for', staffMember.name, ':', scheduleData?.length || 0, 'records')
 
       // Create weekly schedule based on staff work_days and existing schedule records
       const weeklySchedule: WeeklySchedule = {}
@@ -174,7 +172,6 @@ export function ScheduleManagement() {
 
         if (scheduleRecord) {
           // Use existing schedule record
-          console.log(`Using schedule record for ${staffMember.name} on ${day.label}:`, scheduleRecord.is_available)
           weeklySchedule[day.value] = {
             isWorking: scheduleRecord.is_available,
             start_time: scheduleRecord.start_time,
@@ -187,7 +184,6 @@ export function ScheduleManagement() {
           // Use default based on staff work_days - ensure work_days exists and is an array
           const workDays = staffMember.work_days || []
           const isWorkingDay = workDays.includes(day.value)
-          console.log(`Using work_days for ${staffMember.name} on ${day.label}: ${isWorkingDay} (work_days: [${workDays.join(', ')}])`)
           
           weeklySchedule[day.value] = {
             isWorking: isWorkingDay,

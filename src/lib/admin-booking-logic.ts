@@ -104,8 +104,6 @@ export async function reassignStaff(
   newStaffId: string,
   reason?: string
 ): Promise<{ success: boolean; error?: string; data?: any }> {
-  console.log('[reassignStaff] Starting reassignment for booking:', bookingId)
-  console.log('[reassignStaff] New staff ID:', newStaffId)
   
   try {
     // Get the admin session token from localStorage
@@ -145,7 +143,6 @@ export async function reassignStaff(
       }
     }
 
-    console.log('[reassignStaff] Reassignment successful!', result)
     return { success: true, data: result }
   } catch (error: any) {
     console.error('[reassignStaff] Unexpected error:', error)
@@ -160,7 +157,6 @@ export async function reassignStaff(
 export async function getAvailableStaffForSlot(
   bookingId: string
 ): Promise<{ success: boolean; error?: string; data?: any }> {
-  console.log('[getAvailableStaffForSlot] Getting available staff for booking:', bookingId)
   
   try {
     // Get the admin session token from localStorage
@@ -195,7 +191,6 @@ export async function getAvailableStaffForSlot(
       }
     }
 
-    console.log('[getAvailableStaffForSlot] Successfully retrieved available staff', result)
     return { success: true, data: result }
   } catch (error: any) {
     console.error('[getAvailableStaffForSlot] Unexpected error:', error)
@@ -210,7 +205,6 @@ export async function getAvailableStaffForSlot(
 export async function deleteBooking(
   bookingId: string
 ): Promise<{ success: boolean; error?: string }> {
-  console.log('[deleteBooking] Starting delete for booking:', bookingId)
   
   try {
     // Get the admin session token from localStorage
@@ -246,7 +240,6 @@ export async function deleteBooking(
       }
     }
 
-    console.log('[deleteBooking] Delete successful!', result)
     return { success: true }
   } catch (error: any) {
     console.error('[deleteBooking] Unexpected error:', error)

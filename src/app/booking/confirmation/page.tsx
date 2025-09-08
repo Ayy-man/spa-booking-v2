@@ -250,7 +250,6 @@ export default function ConfirmationPage() {
               if (isRoomAvailable) {
                 roomId = checkRoomId
                 foundAvailableRoom = true
-                console.log(`Assigned Room ${checkRoomId} for ${bookingData.service.name} at ${bookingData.time}`)
                 break
               }
             }

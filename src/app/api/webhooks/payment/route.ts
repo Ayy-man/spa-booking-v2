@@ -476,7 +476,6 @@ async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
     }
   }
   
-  console.log(`Processing ${provider} payment completion for booking:`, bookingId)
   
   // Get booking details
   const { data: booking, error: bookingError } = await supabase
@@ -536,7 +535,6 @@ async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
     .single()
   
   if (existingTransaction) {
-    console.log('Transaction already processed:', paymentDetails.transactionId)
     return // Idempotent - don't process twice
   }
   
@@ -624,7 +622,6 @@ async function handlePaymentCompleted(payload: PaymentWebhookPayload) {
     }
   }
   
-  console.log('Payment successfully processed for booking:', bookingId)
 }
 
 // Handle failed payment (supports both formats)
@@ -657,7 +654,6 @@ async function handlePaymentFailed(payload: PaymentWebhookPayload) {
     }
   }
   
-  console.log(`Processing ${provider} payment failure for booking:`, bookingId)
   
   // Create failed transaction record
   await supabase
@@ -689,7 +685,6 @@ async function handlePaymentFailed(payload: PaymentWebhookPayload) {
     .eq('id', bookingId)
     .eq('payment_status', 'pending')
   
-  console.log('Payment failure recorded for booking:', bookingId)
 }
 
 // Handle refunded payment (supports both formats)
@@ -722,7 +717,6 @@ async function handlePaymentRefunded(payload: PaymentWebhookPayload) {
     }
   }
   
-  console.log(`Processing ${provider} payment refund for booking:`, bookingId)
   
   // Create refund transaction record
   await supabase
@@ -753,7 +747,6 @@ async function handlePaymentRefunded(payload: PaymentWebhookPayload) {
     })
     .eq('id', bookingId)
   
-  console.log('Payment refund recorded for booking:', bookingId)
 }
 
 // Main webhook handler
@@ -801,7 +794,6 @@ export async function POST(request: NextRequest) {
         // Log warning but continue processing
       }
     } else {
-      console.log('Webhook signature verification skipped - no secret configured')
     }
     
     // Log the webhook event (payload is guaranteed to be non-null here)
@@ -811,7 +803,6 @@ export async function POST(request: NextRequest) {
     const paymentDetails = extractPaymentDetails(payload!)
     const provider = determineWebhookProvider(payload!, headers)
     
-    console.log(`Processing ${provider} webhook event: ${paymentDetails.eventType}`)
     
     // Handle both FastPayDirect and GoHighLevel event types
     const eventType = paymentDetails.eventType
@@ -823,9 +814,7 @@ export async function POST(request: NextRequest) {
       await handlePaymentRefunded(payload!)
     } else if (eventType === 'payment.cancelled') {
       // Log but don't process cancelled payments
-      console.log('Payment cancelled:', paymentDetails.transactionId)
     } else {
-      console.log('Unhandled webhook event type:', eventType)
     }
     
     // Mark webhook as processed
@@ -841,7 +830,6 @@ export async function POST(request: NextRequest) {
     }
     
     const processingTime = Date.now() - startTime
-    console.log(`Webhook processed successfully in ${processingTime}ms`)
     
     return NextResponse.json(
       { 

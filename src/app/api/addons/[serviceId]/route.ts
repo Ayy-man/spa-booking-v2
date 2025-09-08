@@ -34,7 +34,6 @@ export async function GET(
       addonsError = result.error
     } catch (e) {
       // Function might not exist, fall back to direct query
-      console.log('RPC function not found, using direct query')
     }
 
     // If RPC failed or doesn't exist, query directly

@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    console.log('[Walk-in Archiver] Starting daily archive process...')
 
     // Call the database function to archive old walk-ins
     const { data, error } = await supabase.rpc('archive_old_walk_ins')
@@ -49,7 +48,6 @@ export async function GET(request: NextRequest) {
     }
 
     const archivedCount = data || 0
-    console.log(`[Walk-in Archiver] Successfully archived ${archivedCount} walk-in(s)`)
 
     // Get summary of archived records for logging
     const guamToday = new Date()
@@ -76,7 +74,6 @@ export async function GET(request: NextRequest) {
       guam_date: todayStr
     }
 
-    console.log('[Walk-in Archiver] Archive summary:', logEntry)
 
     // Optionally send to webhook for monitoring/alerting
     if (process.env.WEBHOOK_URL && archivedCount > 0) {

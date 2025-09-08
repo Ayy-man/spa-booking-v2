@@ -81,7 +81,6 @@ export async function POST(
         webhook_received_at: new Date().toISOString()
       })
     
-    console.log('Payment marked as complete for booking:', bookingId)
     
     return NextResponse.json({
       success: true,

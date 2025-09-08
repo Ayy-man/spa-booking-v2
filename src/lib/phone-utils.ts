@@ -131,11 +131,17 @@ export function formatPhoneFromDB(value: string | null | undefined): string {
   // But handle various formats for backward compatibility
   const cleaned = unformatPhone(value)
   
+  // Guard against empty strings after cleaning
+  if (!cleaned) return ''
+  
   if (cleaned.length === 10) {
     return formatPhoneNumber(cleaned)
   } else if (cleaned.length === 7) {
     // Old format without area code - can't format properly
     return cleaned
+  } else if (cleaned.length === 0) {
+    // Handle case where value only contained non-numeric characters
+    return ''
   } else {
     // Fallback - try to format whatever we have
     return formatPhoneNumber(cleaned)

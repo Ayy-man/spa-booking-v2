@@ -277,12 +277,4 @@ export function debugTimezone(label: string = 'Timezone Debug'): void {
   const guamTime = getGuamTime()
   const offset = getGuamOffset()
   
-  console.log(`=== ${label} ===`)
-  console.log('Local Time:', localTime.toISOString())
-  console.log('Guam Time:', guamTime.toISOString())
-  console.log('Guam Formatted:', formatGuamTime(guamTime, 'PPpp'))
-  console.log('Guam Offset from UTC:', `+${offset} hours`)
-  console.log('Is Business Open:', isBusinessOpen())
-  console.log('Min Booking Time:', formatGuamTime(getMinBookingTime(), 'PPp'))
-  console.log('================')
 }

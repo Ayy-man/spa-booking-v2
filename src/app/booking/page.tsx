@@ -250,7 +250,6 @@ export default function BookingPage() {
                           service.name.toLowerCase().includes('couple') ||
                           (category.category === 'massages' && service.duration >= 60)
                         
-                        console.log('Service clicked:', service.name, {
                           category: category.category,
                           duration: service.duration,
                           isCouplesEligible,

@@ -61,7 +61,6 @@ export async function POST(request: Request) {
     }
 
     // Send test request to the webhook
-    console.log('Sending test 24hr reminder webhook to GoHighLevel...')
     const webhookUrl = 'https://services.leadconnectorhq.com/hooks/95mKGfnKeJoUlG853dqQ/webhook-trigger/41ef86e6-ff01-4182-80c0-0552994fe56c'
     
     const webhookResponse = await fetch(webhookUrl, {

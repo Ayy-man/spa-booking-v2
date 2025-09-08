@@ -3,10 +3,10 @@
  * Uses hardcoded credentials and localStorage for session management
  */
 
-// Hardcoded admin credentials
+// Admin credentials from environment variables (secure)
 const ADMIN_CREDENTIALS = {
-  email: 'admin@spa.com',
-  password: 'dermal123'
+  email: process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@dermalskin.com',
+  password: process.env.ADMIN_PASSWORD || 'ChangeThisPassword123!'
 }
 
 // Session configuration

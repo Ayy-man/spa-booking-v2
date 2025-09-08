@@ -61,8 +61,6 @@ export async function POST(
       )
     }
 
-    console.log('[RESCHEDULE] Starting reschedule for booking:', bookingId)
-    console.log('[RESCHEDULE] New date/time:', new_date, new_start_time)
 
     // First, check if booking can be rescheduled
     const { data: canReschedule, error: checkError } = await supabaseAdmin
@@ -167,7 +165,6 @@ export async function POST(
     let linkedBooking = null
 
     if (booking.booking_group_id && booking.booking_type === 'couple') {
-      console.log('[RESCHEDULE] This is a couples booking, finding linked booking...')
       
       const { data: linkedBookings, error: linkedError } = await supabaseAdmin
         .from('bookings')
@@ -185,7 +182,6 @@ export async function POST(
       if (!linkedError && linkedBookings && linkedBookings.length > 0) {
         linkedBooking = linkedBookings[0]
         bookingsToReschedule.push(linkedBooking)
-        console.log('[RESCHEDULE] Found linked booking:', linkedBooking.id)
 
         // Check availability for linked booking
         const { data: linkedConflicts } = await supabaseAdmin
@@ -265,13 +261,11 @@ export async function POST(
       }
 
       rescheduleResults.push(updatedBooking)
-      console.log('[RESCHEDULE] Successfully rescheduled booking:', bookingToUpdate.id)
     }
 
     // Send notification to customer if requested
     if (notify_customer && booking.customer?.email) {
       // TODO: Implement email notification
-      console.log('[RESCHEDULE] Would send notification to:', booking.customer.email)
       // You can integrate with your email service here
     }
 

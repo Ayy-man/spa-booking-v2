@@ -127,7 +127,6 @@ export function BookingSummary({
         if (serviceValidation.isValid) {
           window.location.href = '/booking/date-time'
         } else {
-          console.log('[BookingSummary] Cannot edit date/time: no service selected')
           window.location.href = '/booking'
         }
         break
@@ -143,7 +142,6 @@ export function BookingSummary({
             window.location.href = '/booking/staff'
           }
         } else if (dateTimeValidation.redirectTo) {
-          console.log('[BookingSummary] Cannot edit staff: prerequisites not met')
           window.location.href = dateTimeValidation.redirectTo
         }
         break
@@ -153,7 +151,6 @@ export function BookingSummary({
         if (staffValidation.isValid) {
           window.location.href = '/booking/customer-info'
         } else if (staffValidation.redirectTo) {
-          console.log('[BookingSummary] Cannot edit customer info: prerequisites not met')
           window.location.href = staffValidation.redirectTo
         }
         break

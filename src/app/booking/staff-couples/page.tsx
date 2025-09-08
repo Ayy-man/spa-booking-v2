@@ -335,7 +335,6 @@ export default function CouplesStaffPage() {
                 const validation = validateServiceSelection()
                 if (!validation.isValid) {
                   e.preventDefault()
-                  console.log('[StaffCouplesPage] Cannot go back: no service selected')
                   window.location.href = '/booking'
                 }
               }}

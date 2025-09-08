@@ -24,7 +24,6 @@ export default function TestAuthPage() {
 
   const testLogin = () => {
     const result = simpleAuth.login('admin@spa.com', 'dermal123')
-    console.log('Login result:', result)
     
     if (result.success) {
       // Update state

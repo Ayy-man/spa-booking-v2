@@ -13,7 +13,6 @@ interface WaiverSubmission {
 export async function POST(request: NextRequest) {
   try {
     const body: WaiverSubmission = await request.json()
-    console.log('Waiver submission received:', {
       waiverType: body.waiverType,
       serviceName: body.serviceName,
       hasSignature: !!body.signature
@@ -65,7 +64,6 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString()
     }
 
-    console.log('Saving waiver to database:', {
       service_category: waiverData.service_category,
       service_name: waiverData.service_name,
       signed_at: waiverData.signed_at
@@ -86,7 +84,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('Waiver saved successfully:', waiver.id)
 
     return NextResponse.json({
       success: true,

@@ -98,7 +98,6 @@ export default function DateTimePage() {
   // Additional validation - ensure we have service data after loading
   useEffect(() => {
     if (!loadingService && !selectedService) {
-      console.log('[DateTimePage] Service data missing after load, redirecting to service selection')
       window.location.href = '/booking'
     }
   }, [selectedService, loadingService])

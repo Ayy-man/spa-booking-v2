@@ -621,9 +621,7 @@ export const supabaseClient = {
     // By default, exclude archived records unless explicitly requested
     if (!filters?.includeArchived) {
       query = query.is('archived_at', null)
-      console.log('Filtering for non-archived walk-ins only')
     } else {
-      console.log('Including archived walk-ins')
     }
 
     if (filters?.status && filters.status !== 'all') {
@@ -641,7 +639,6 @@ export const supabaseClient = {
       console.error('Walk-ins query error:', error)
       throw error
     }
-    console.log(`Retrieved ${data?.length || 0} walk-ins`)
     return data
   },
 

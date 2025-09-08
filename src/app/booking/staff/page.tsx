@@ -46,7 +46,6 @@ export default function StaffPage() {
   // Function to check if staff has a schedule block
   const checkStaffScheduleBlock = async (staffId: string, date: string, time: string, duration: number) => {
     try {
-      console.log(`Checking schedule blocks for staff ${staffId} on ${date} at ${time}`)
       
       // Simplified query - get ALL blocks for this staff member
       const { data: blocks, error } = await supabase
@@ -59,7 +58,6 @@ export default function StaffPage() {
         return false // Don't block if there's an error
       }
 
-      console.log(`Found ${blocks?.length || 0} schedule blocks for ${staffId}:`, blocks)
       
       if (!blocks || blocks.length === 0) {
         return false // No blocks found
@@ -72,20 +70,15 @@ export default function StaffPage() {
         const blockStartDateStr = block.start_date
         const blockEndDateStr = block.end_date || block.start_date
         
-        console.log(`  Block ${block.id}: start=${block.start_date}, end=${block.end_date || 'null'}, type=${block.block_type}`)
-        console.log(`  Checking if ${dateOnly} is between ${blockStartDateStr} and ${blockEndDateStr}`)
         
         // Compare dates as strings (YYYY-MM-DD format)
         if (dateOnly < blockStartDateStr || dateOnly > blockEndDateStr) {
-          console.log(`  Date is outside block range - skipping`)
           continue // Date is outside this block's range
         }
         
-        console.log(`  Date IS within block range - checking times...`)
 
         // If it's a full day block, staff is not available
         if (block.block_type === 'full_day') {
-          console.log(`Staff ${staffId} has full day block on ${date}`)
           return true
         }
 
@@ -98,16 +91,11 @@ export default function StaffPage() {
           const blockStart = new Date(`2000-01-01T${block.start_time}`)
           const blockEnd = new Date(`2000-01-01T${block.end_time}`)
           
-          console.log(`Checking time overlap for ${staffId}:`)
-          console.log(`  Appointment slot: ${time} - ${slotEnd.toTimeString().slice(0,5)}`)
-          console.log(`  Schedule block: ${block.start_time} - ${block.end_time}`)
           
           // Check for overlap
           if (slotStart < blockEnd && slotEnd > blockStart) {
-            console.log(`  ✓ OVERLAP DETECTED - Staff ${staffId} is BLOCKED`)
             return true
           } else {
-            console.log(`  ✗ No overlap - Staff is available`)
           }
         }
       }
@@ -133,7 +121,6 @@ export default function StaffPage() {
     const state = loadBookingState()
     
     if (!state) {
-      console.log('[StaffPage] No booking state found, redirecting to service selection')
       window.location.href = '/booking'
       return
     }
@@ -163,7 +150,6 @@ export default function StaffPage() {
     if ((state.bookingData || state.selectedService) && state.selectedDate && state.selectedTime) {
       fetchAvailableStaff()
     } else {
-      console.log('[StaffPage] Missing required data for staff lookup')
       // Redirect back to appropriate step
       if (!state.selectedDate || !state.selectedTime) {
         window.location.href = '/booking/date-time'
@@ -230,7 +216,6 @@ export default function StaffPage() {
       const serviceDuration = matchingService.duration || 60
       const bufferMinutes = 15
       
-      console.log(`Date: ${dateData}, Day of week: ${dayOfWeek} (0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat)`)
       
       // Filter staff by capability, work day availability, schedule blocks, and actual booking conflicts
       const availableStaffPromises = allStaff.map(async (staff) => {
@@ -240,10 +225,8 @@ export default function StaffPage() {
         const worksOnDay = isDatabaseStaffAvailableOnDate(staff, dateData)
         
         if (!hasCapability) {
-          console.log(`${staff.name} cannot perform ${matchingService.category} services`)
         }
         if (!worksOnDay) {
-          console.log(`${staff.name} does not work on day ${dayOfWeek}, their work days are: ${staff.work_days}`)
         }
         
         if (!hasCapability || !worksOnDay) return null
@@ -251,7 +234,6 @@ export default function StaffPage() {
         // Check for schedule blocks FIRST
         const hasScheduleBlock = await checkStaffScheduleBlock(staff.id, dateData, timeData, serviceDuration)
         if (hasScheduleBlock) {
-          console.log(`Staff ${staff.name} has schedule block on ${dateData} at ${timeData}`)
           return null // Staff is blocked during this time
         }
         
@@ -452,7 +434,6 @@ export default function StaffPage() {
                       const validation = validateServiceSelection()
                       if (!validation.isValid) {
                         e.preventDefault()
-                        console.log('[StaffPage] Cannot go back: no service selected')
                         window.location.href = '/booking'
                       }
                     }}

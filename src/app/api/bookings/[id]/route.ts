@@ -19,7 +19,7 @@ export async function GET(
       )
     }
 
-    // Fetch booking details from database with service and customer info
+    // Fetch booking details from database with service info
     const { data: booking, error } = await supabase
       .from('bookings')
       .select(`
@@ -30,13 +30,6 @@ export async function GET(
           price,
           duration,
           category
-        ),
-        customers (
-          id,
-          first_name,
-          last_name,
-          email,
-          phone
         ),
         staff (
           id,
@@ -58,7 +51,7 @@ export async function GET(
       )
     }
 
-    // Format the response - the booking already includes joined details
+    // Format the response - customer data is embedded in bookings table
     const formattedBooking = {
       booking_id: booking.id,
       service_id: booking.service_id,
@@ -69,14 +62,12 @@ export async function GET(
       staff_name: booking.staff?.name,
       room_id: booking.room_id,
       room_name: booking.rooms?.name,
-      customer_id: booking.customer_id,
-      customer_name: booking.customers 
-        ? (booking.customers.last_name 
-          ? `${booking.customers.first_name} ${booking.customers.last_name}` 
-          : booking.customers.first_name) 
-        : null,
-      customer_email: booking.customers?.email,
-      customer_phone: booking.customers?.phone,
+      customer_id: booking.id, // Using booking ID as customer reference
+      customer_name: booking.customer_last_name 
+        ? `${booking.customer_first_name} ${booking.customer_last_name}` 
+        : booking.customer_first_name,
+      customer_email: booking.customer_email,
+      customer_phone: booking.customer_phone,
       appointment_date: booking.appointment_date,
       start_time: booking.start_time,
       end_time: booking.end_time,

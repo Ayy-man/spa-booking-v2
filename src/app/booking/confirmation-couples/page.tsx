@@ -133,7 +133,6 @@ export default function CouplesConfirmationPage() {
         while (attempts < maxAttempts && !couplesResult) {
           attempts++
           try {
-            console.log(`Attempting couples booking (attempt ${attempts}/${maxAttempts})...`)
             
             couplesResult = await supabaseClient.processCouplesBooking({
               primary_service_id: primaryServiceData.id,
@@ -157,7 +156,6 @@ export default function CouplesConfirmationPage() {
             if (failedBooking) {
               // If it's a staff availability issue and we have more attempts, wait and retry
               if (failedBooking.error_message?.includes('staff') && attempts < maxAttempts) {
-                console.log(`Staff conflict detected, waiting before retry...`)
                 await new Promise(resolve => setTimeout(resolve, 1000 * attempts)) // Exponential backoff
                 couplesResult = null // Reset to trigger retry
                 continue
@@ -165,7 +163,6 @@ export default function CouplesConfirmationPage() {
               throw new Error(failedBooking.error_message || 'Booking failed')
             }
             
-            console.log('Couples booking succeeded!')
             break // Success!
             
           } catch (error: any) {

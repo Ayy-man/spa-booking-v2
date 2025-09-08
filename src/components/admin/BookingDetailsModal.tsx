@@ -69,7 +69,6 @@ export function BookingDetailsModal({
   // Debug logging for reassignment button visibility
   const canReassignStaff = booking?.status !== 'cancelled' && booking?.status !== 'completed' && booking?.status !== 'no_show'
   
-  console.log('[BookingDetailsModal] Debug:', {
     bookingId: booking?.id,
     bookingStatus: booking?.status,
     isAdmin,
@@ -106,14 +105,11 @@ export function BookingDetailsModal({
     setLoading(true)
     setError(null)
     
-    console.log('[BookingDetailsModal] Starting delete for booking:', booking.id)
     
     try {
       const result = await deleteBooking(booking.id)
-      console.log('[BookingDetailsModal] Delete result:', result)
       
       if (result.success) {
-        console.log('[BookingDetailsModal] Delete successful, closing dialogs')
         setShowDeleteDialog(false)
         onOpenChange(false)
         onActionComplete?.()

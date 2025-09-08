@@ -18,7 +18,6 @@ interface CheckInRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: CheckInRequest = await request.json()
-    console.log('Check-in request received:', { 
       searchTerm: body.searchTerm,
       confirmationCode: body.confirmationCode,
       hasSearchTerm: !!body.searchTerm, 
@@ -34,13 +33,10 @@ export async function POST(request: NextRequest) {
     }
 
     const today = new Date().toISOString().split('T')[0]
-    console.log('Processing check-in for date:', today)
 
     // If appointmentId is provided, check in that specific appointment
     if (body.appointmentId) {
       try {
-      console.log('Attempting to check in appointment ID:', body.appointmentId)
-      console.log('Today\'s date:', today)
 
       // First, verify the appointment exists and get its details
       const { data: appointments, error: appointmentError } = await supabase
@@ -55,7 +51,6 @@ export async function POST(request: NextRequest) {
         .eq('id', body.appointmentId)
         .eq('appointment_date', today)
 
-      console.log('Appointment search result:', { 
         appointmentsCount: appointments?.length || 0,
         appointmentError,
         searchCriteria: { id: body.appointmentId, date: today }
@@ -71,13 +66,11 @@ export async function POST(request: NextRequest) {
 
       if (!appointments || appointments.length === 0) {
         // Try without date constraint to see if appointment exists at all
-        console.log('No appointments found for today, trying without date constraint...')
         const { data: anyDateAppointments, error: anyDateError } = await supabase
           .from('bookings')
           .select('id, appointment_date, status')
           .eq('id', body.appointmentId)
 
-        console.log('Appointment check without date:', { 
           found: anyDateAppointments?.length || 0,
           appointments: anyDateAppointments,
           error: anyDateError 
@@ -116,8 +109,6 @@ export async function POST(request: NextRequest) {
       }
 
       // Update appointment status to show customer has arrived
-      console.log('Current appointment status:', appointment.status)
-      console.log('Updating appointment with ID:', body.appointmentId)
       
       // Use admin client to bypass RLS policies for the update operation
       const { data: updatedAppointments, error: updateError } = await supabaseAdmin
@@ -130,7 +121,6 @@ export async function POST(request: NextRequest) {
         .eq('id', body.appointmentId)
         .select()
 
-      console.log('Update result:', { updatedAppointments, updateError })
 
       if (updateError) {
         console.error('Update error:', updateError)
@@ -249,8 +239,6 @@ export async function POST(request: NextRequest) {
 
     // Filter appointments based on search term
     const searchTerm = body.searchTerm.toLowerCase().trim()
-    console.log('Search term:', searchTerm)
-    console.log('Total appointments found for today:', appointments.length)
     
     let filteredAppointments = appointments
 
@@ -258,11 +246,9 @@ export async function POST(request: NextRequest) {
       filteredAppointments = appointments.filter(apt => {
         const customer = apt.customer
         if (!customer) {
-          console.log('No customer data for appointment:', apt.id)
           return false
         }
 
-        console.log('Checking appointment:', {
           id: apt.id,
           customerName: customer.last_name 
             ? `${customer.first_name} ${customer.last_name}`
@@ -280,7 +266,6 @@ export async function POST(request: NextRequest) {
         if (fullName && fullName.includes(searchTerm)) {
           matchFound = true
           matchReason = 'name'
-          console.log('Match found by name:', fullName, 'contains', searchTerm)
         }
 
         // Search by email (must contain the search term)
@@ -289,7 +274,6 @@ export async function POST(request: NextRequest) {
           if (email.includes(searchTerm)) {
             matchFound = true
             matchReason = 'email'
-            console.log('Match found by email:', email, 'contains', searchTerm)
           }
         }
 
@@ -300,7 +284,6 @@ export async function POST(request: NextRequest) {
           if (cleanSearchPhone && cleanCustomerPhone.includes(cleanSearchPhone)) {
             matchFound = true
             matchReason = 'phone'
-            console.log('Match found by phone:', customer.phone, 'contains', cleanSearchPhone)
           }
         }
 
@@ -310,22 +293,17 @@ export async function POST(request: NextRequest) {
           if (confirmationCode && apt.id === confirmationCode) {
             matchFound = true
             matchReason = 'confirmation_code'
-            console.log('Match found by confirmation code:', apt.id)
           }
         }
 
         if (!matchFound) {
-          console.log('No match found for appointment:', apt.id)
         } else {
-          console.log(`Match found for appointment ${apt.id} by ${matchReason}`)
         }
 
         return matchFound
       })
       
-      console.log('Filtered appointments count:', filteredAppointments.length)
       if (filteredAppointments.length > 0) {
-        console.log('Filtered appointments details:', filteredAppointments.map(apt => ({
           id: apt.id,
           customerName: apt.customer.last_name 
             ? `${apt.customer.first_name} ${apt.customer.last_name}`
@@ -335,11 +313,9 @@ export async function POST(request: NextRequest) {
         })))
       }
     } else {
-      console.log('No search term provided, returning all appointments')
     }
 
     if (!filteredAppointments || filteredAppointments.length === 0) {
-      console.log(`No matches found for search term: "${searchTerm}"`)
       return NextResponse.json({
         success: false,
         message: `No appointments found for today matching "${body.searchTerm}"`,
@@ -362,7 +338,6 @@ export async function POST(request: NextRequest) {
       checked_in_at: apt.checked_in_at
     }))
 
-    console.log('Returning formatted appointments:', formattedAppointments)
 
     return NextResponse.json({
       success: true,

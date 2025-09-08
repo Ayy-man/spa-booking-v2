@@ -115,13 +115,6 @@ export function logAPI(
       [LogLevel.SECURITY]: '\x1b[35m'
     }
     
-    console.log(
-      `${logColor[level]}[${level}]\x1b[0m ${entry.timestamp} ${entry.method} ${entry.path}`,
-      statusCode ? `Status: ${statusCode}` : '',
-      duration ? `Duration: ${duration}ms` : '',
-      error ? `Error: ${error}` : '',
-      securityEvent ? `Security: ${securityEvent}` : ''
-    )
   }
   
   // Send critical logs to external service (if configured)

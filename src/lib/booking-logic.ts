@@ -491,9 +491,9 @@ export function validateBookingTime(
   const businessValidation = canAccommodateService(startTime, duration, date)
   if (!businessValidation) {
     const startDateTime = parseISO(`${format(date, 'yyyy-MM-dd')}T${startTime}:00`)
-    const endDateTime = addMinutes(startDateTime, duration)
+    const endDateTime = addMinutes(startDateTime, duration + BUSINESS_HOURS.bufferTime)
     const businessEnd = parseISO(`${format(date, 'yyyy-MM-dd')}T${BUSINESS_HOURS.end}:00`)
-    const lastBookingTime = addMinutes(businessEnd, -BUSINESS_HOURS.lastBookingOffset)
+    const lastBookingTime = addMinutes(businessEnd, -Math.max(duration + BUSINESS_HOURS.bufferTime, BUSINESS_HOURS.lastBookingOffset))
     
     if (isBefore(startDateTime, parseISO(`${format(date, 'yyyy-MM-dd')}T${BUSINESS_HOURS.start}:00`))) {
       errors.push(`Appointment cannot start before business hours (${BUSINESS_HOURS.start})`)

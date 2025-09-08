@@ -195,13 +195,11 @@ export class BrowserNotificationManager {
   ): Promise<void> {
     // Check if in Do Not Disturb mode
     if (settings && isInDoNotDisturb(settings)) {
-      console.log('Notification suppressed: Do Not Disturb mode active');
       return;
     }
 
     // Check browser permission
     if (!this.isPermitted()) {
-      console.log('Browser notifications not permitted');
       return;
     }
 
@@ -258,7 +256,6 @@ export class BrowserNotificationManager {
     // Check throttling
     const now = Date.now();
     if (now - this.lastSoundTime < this.soundThrottleMs) {
-      console.log('Sound throttled');
       return;
     }
 
@@ -415,7 +412,6 @@ export class BrowserNotificationManager {
   ): void {
     // This will be implemented with the toast component
     // For now, just log
-    console.log('Toast notification:', notification);
     
     if (typeof window !== 'undefined' && (window as any).showToast) {
       (window as any).showToast({
@@ -439,7 +435,6 @@ export class BrowserNotificationManager {
     if ('Notification' in window) {
       // Note: We can't clear all notifications programmatically in modern browsers
       // This is a security feature
-      console.log('Clearing notifications');
     }
   }
 }

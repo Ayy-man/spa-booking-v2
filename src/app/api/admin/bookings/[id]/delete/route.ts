@@ -44,7 +44,6 @@ export async function DELETE(
     // In production, you'd want to validate this token properly
     const token = authHeader.substring(7)
 
-    console.log('[DELETE /api/admin/bookings] Starting delete for booking:', bookingId)
 
     // First, check if this is a couples booking
     const { data: booking, error: fetchError } = await supabaseAdmin
@@ -65,7 +64,6 @@ export async function DELETE(
     let bookingIdsToDelete = [bookingId]
     
     if (booking?.booking_group_id && booking?.booking_type === 'couple') {
-      console.log('[DELETE] This is a couples booking, finding linked booking...')
       
       // Find all bookings with the same booking_group_id
       const { data: linkedBookings, error: linkedError } = await supabaseAdmin
@@ -75,13 +73,11 @@ export async function DELETE(
       
       if (!linkedError && linkedBookings) {
         bookingIdsToDelete = linkedBookings.map(b => b.id)
-        console.log('[DELETE] Found linked bookings:', bookingIdsToDelete)
       }
     }
 
     // Delete related records for all booking IDs
     for (const id of bookingIdsToDelete) {
-      console.log(`[DELETE] Processing booking ${id}...`)
       
       // Delete related payments
       const { error: paymentError } = await supabaseAdmin
@@ -115,7 +111,6 @@ export async function DELETE(
     }
 
     // Finally, delete all the bookings
-    console.log('[DELETE] Deleting booking records:', bookingIdsToDelete)
     const { error: deleteError } = await supabaseAdmin
       .from('bookings')
       .delete()
@@ -129,7 +124,6 @@ export async function DELETE(
       )
     }
 
-    console.log('[DELETE] Successfully deleted bookings:', bookingIdsToDelete)
     
     return NextResponse.json({
       success: true,

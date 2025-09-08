@@ -254,7 +254,6 @@ export async function POST(request: NextRequest) {
       created_by: 'walk_in_assignment'
     }
 
-    console.log('Creating booking with data:', bookingData)
 
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')

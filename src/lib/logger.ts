@@ -31,7 +31,6 @@ class Logger {
       switch (level) {
         case 'debug':
         case 'info':
-          console.log(`[${context || 'APP'}]`, message, data || '')
           break
         case 'warn':
           console.warn(`[${context || 'APP'}]`, message, data || '')
@@ -81,7 +80,6 @@ class Logger {
       data,
       timestamp: new Date().toISOString()
     }
-    console.log(JSON.stringify(auditEntry))
   }
 }
 

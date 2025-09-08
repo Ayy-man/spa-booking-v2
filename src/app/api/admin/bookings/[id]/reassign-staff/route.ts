@@ -65,8 +65,6 @@ export async function POST(
       )
     }
 
-    console.log('[REASSIGN-STAFF] Starting reassignment for booking:', bookingId)
-    console.log('[REASSIGN-STAFF] New staff ID:', new_staff_id)
 
     // Get the current booking details
     const { data: booking, error: fetchError } = await supabaseAdmin
@@ -149,7 +147,6 @@ export async function POST(
       }
       
       const serviceCategory = booking.service?.category
-      console.log('[REASSIGN-STAFF] Service validation details:', {
         bookingId: booking.id,
         serviceName: booking.service?.name,
         serviceCategory: serviceCategory,
@@ -172,40 +169,33 @@ export async function POST(
         
         // Check direct match with mapped capability
         if (newStaff.capabilities?.includes(requiredCapability)) {
-          console.log('[REASSIGN-STAFF] Staff has mapped capability:', requiredCapability)
           canPerform = true
         }
         // Also check singular form (backward compatibility)
         else if (newStaff.capabilities?.includes(serviceCategory)) {
-          console.log('[REASSIGN-STAFF] Staff has singular capability:', serviceCategory)
           canPerform = true
         }
         // Special case: if staff has 'massages', allow any massage-related services
         else if (newStaff.capabilities?.includes('massages') && 
                 (serviceCategory === 'massage' || booking.service?.name?.toLowerCase().includes('massage'))) {
-          console.log('[REASSIGN-STAFF] Staff can do massages, allowing massage service')
           canPerform = true
         }
         // Special case: if staff has 'facials', allow any facial-related services
         else if (newStaff.capabilities?.includes('facials') && 
                 (serviceCategory === 'facial' || booking.service?.name?.toLowerCase().includes('facial'))) {
-          console.log('[REASSIGN-STAFF] Staff can do facials, allowing facial service')
           canPerform = true
         }
         // For packages, check if staff can do facials and/or massages
         else if (serviceCategory === 'package') {
           const serviceName = booking.service?.name?.toLowerCase() || ''
           if (serviceName.includes('facial') && newStaff.capabilities?.includes('facials')) {
-            console.log('[REASSIGN-STAFF] Package includes facial, staff can do facials')
             canPerform = true
           } else if (serviceName.includes('massage') && newStaff.capabilities?.includes('massages')) {
-            console.log('[REASSIGN-STAFF] Package includes massage, staff can do massages')
             canPerform = true
           }
         }
         
         if (!canPerform) {
-          console.log('[REASSIGN-STAFF] Staff capability check FAILED - detailed info:', {
             serviceCategory,
             requiredCapability: categoryToCapabilityMap[serviceCategory],
             staffCapabilities: newStaff.capabilities,
@@ -226,10 +216,8 @@ export async function POST(
             { status: 400 }
           )
         } else {
-          console.log('[REASSIGN-STAFF] Staff capability check PASSED')
         }
       } else if (isAdminOverride) {
-        console.log('[REASSIGN-STAFF] Admin override active - bypassing capability check for:', {
           serviceCategory,
           serviceName: booking.service?.name,
           originalStaffId: booking.staff_id,
@@ -290,7 +278,6 @@ export async function POST(
     // Handle couples booking - check if we need to consider the partner booking
     let partnerBooking = null
     if (booking.booking_group_id && booking.booking_type === 'couple') {
-      console.log('[REASSIGN-STAFF] This is a couples booking, checking partner booking...')
       
       const { data: partnerBookings, error: partnerError } = await supabaseAdmin
         .from('bookings')
@@ -302,7 +289,6 @@ export async function POST(
       
       if (!partnerError && partnerBookings) {
         partnerBooking = partnerBookings
-        console.log('[REASSIGN-STAFF] Found partner booking:', partnerBooking.id)
         
         // Check if the new staff would conflict with the partner's booking
         if (partnerBooking.staff_id === new_staff_id && new_staff_id !== 'any') {
@@ -342,7 +328,6 @@ export async function POST(
       )
     }
 
-    console.log('[REASSIGN-STAFF] Successfully reassigned staff for booking:', bookingId)
 
     // Try to insert into staff assignment history (if table exists)
     try {
@@ -359,7 +344,6 @@ export async function POST(
           appointment_time: booking.start_time
         })
     } catch (historyError) {
-      console.log('[REASSIGN-STAFF] Could not insert history (table may not exist):', historyError)
     }
 
     // Get the updated staff assignment history if it exists
@@ -374,7 +358,6 @@ export async function POST(
         .single()
       history = historyData
     } catch (err) {
-      console.log('[REASSIGN-STAFF] Could not fetch history (table may not exist)')
     }
 
     const oldStaffName = booking.staff?.name || 'Unknown'
@@ -424,7 +407,6 @@ export async function GET(
       )
     }
 
-    console.log('[REASSIGN-STAFF GET] Getting available staff for booking:', bookingId)
 
     // Get the current booking to include context
     const { data: booking, error: bookingError } = await supabaseAdmin
@@ -504,7 +486,6 @@ export async function GET(
         
         if (isAdminOverride) {
           canPerform = true
-          console.log('[REASSIGN-STAFF GET] Admin override - showing staff as capable:', {
             staffName: staff.name,
             serviceCategory,
             originalStaffId: booking.staff_id

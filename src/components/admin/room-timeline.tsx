@@ -266,7 +266,6 @@ export function RoomTimeline({
     
     // Debug logging
     if (slot.hour === 13 && slot.minute === 45) {
-      console.log('Debug 1:45 PM slot:', {
         currentTime: `${currentHour}:${currentMinute}`,
         slotTime: `${slot.hour}:${slot.minute}`,
         currentMinutes,

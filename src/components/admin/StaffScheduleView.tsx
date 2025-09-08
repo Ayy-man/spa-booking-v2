@@ -172,7 +172,6 @@ export function StaffScheduleView({
       if (staffError) throw staffError
       
       // Debug: Log staff data to check work_days
-      console.log('Staff data from database:', staffData)
       
       setStaff(staffData || [])
 
@@ -506,7 +505,6 @@ export function StaffScheduleView({
       // Send confirmation webhook for new booking created by admin
       if (newBooking) {
         try {
-          console.log('[ADMIN QUICK ADD] Sending confirmation webhook for booking:', newBooking.id)
           
           // Get customer details for webhook
           const customerData = quickAddForm.isNewCustomer ? {
@@ -558,7 +556,6 @@ export function StaffScheduleView({
           )
 
           if (result.success) {
-            console.log('[ADMIN QUICK ADD] Confirmation webhook sent successfully')
           } else {
             console.error('[ADMIN QUICK ADD] Failed to send webhook:', result.error)
             // Don't throw error - webhook failure shouldn't stop the booking
@@ -578,7 +575,6 @@ export function StaffScheduleView({
       
       // Show success message
       setError('') // Clear any previous errors
-      console.log('Appointment created successfully')
       setSuccessMessage('Appointment created and confirmation sent to customer')
       setTimeout(() => setSuccessMessage(''), 5000)
     } catch (error: any) {
