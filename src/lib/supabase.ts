@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
-import { validateTimeForDatabase } from '@/lib/time-utils'
+import { validateTimeForDatabase, safeTimeSlice } from '@/lib/time-utils'
 import { logger } from '@/lib/logger'
 import { getGuamStartOfDay, getGuamEndOfDay, getGuamTime } from '@/lib/timezone-utils'
 
@@ -210,7 +210,7 @@ export const supabaseClient = {
     const startTime = new Date(`2000-01-01T${validatedStartTime}`)
     const totalDuration = service.duration + addonsDuration
     const endTime = new Date(startTime.getTime() + totalDuration * 60000)
-    const endTimeStr = endTime.toTimeString().slice(0, 5)
+    const endTimeStr = safeTimeSlice(endTime.toTimeString())
 
     // Create booking with proper schema
     const discount = 0
@@ -231,8 +231,8 @@ export const supabaseClient = {
     const finalBufferStart = bufferStartTime < businessStart ? businessStart : bufferStartTime
     const finalBufferEnd = bufferEndTime > businessEnd ? businessEnd : bufferEndTime
     
-    const bufferStartStr = finalBufferStart.toTimeString().slice(0, 5)
-    const bufferEndStr = finalBufferEnd.toTimeString().slice(0, 5)
+    const bufferStartStr = safeTimeSlice(finalBufferStart.toTimeString())
+    const bufferEndStr = safeTimeSlice(finalBufferEnd.toTimeString())
     
     const { data: newBooking, error: bookingError } = await supabase
       .from('bookings')

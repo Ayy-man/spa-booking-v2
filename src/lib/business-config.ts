@@ -1,11 +1,11 @@
 // Business Configuration for Webhook Data
 export const BUSINESS_CONFIG = {
-  name: 'Dermal Skin Clinic & Spa',
-  location: 'Guam',
-  address: 'Tamuning, Guam 96913',
-  phone: '+1-671-646-DERM',
-  email: 'info@dermalskinclinicspa.com',
-  website: 'https://dermalskinclinicspa.com',
+  name: 'Demo Spa & Wellness',
+  location: 'Demo City',
+  address: '123 Demo Street, Demo City 12345',
+  phone: '555-0100',
+  email: 'info@demo-spa.com',
+  website: 'https://demo-spa.com',
   timezone: 'Pacific/Guam',
   currency: 'USD',
   
@@ -25,9 +25,9 @@ export const BUSINESS_CONFIG = {
   
   // Social media and marketing
   social: {
-    facebook: 'https://facebook.com/dermalskinclinicspa',
-    instagram: 'https://instagram.com/dermalskinclinicspa',
-    google: 'https://g.page/dermalskinclinicspa'
+    facebook: 'https://facebook.com/demospa',
+    instagram: 'https://instagram.com/demospa',
+    google: 'https://g.page/demospa'
   }
 } as const
 

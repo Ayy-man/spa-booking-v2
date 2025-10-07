@@ -1,6 +1,15 @@
-# Dermal Medical Spa Booking System
+# 🎭 DEMO VERSION - Medical Spa Booking System
 
-A comprehensive medical spa booking system built for Dermal Skin Clinic and Spa Guam. This production-ready application provides online booking, staff management, room assignment, and administrative tools.
+> **This is a DEMO version with sanitized data. For demo documentation, see [README-DEMO.md](./README-DEMO.md)**
+
+A comprehensive medical spa booking system originally built for a medical spa in Guam, now available as a fully-functional demo. This production-ready application provides online booking, staff management, room assignment, and administrative tools.
+
+## 📌 Demo Information
+
+- **Demo Documentation**: [README-DEMO.md](./README-DEMO.md) - Complete demo guide
+- **Demo Setup**: [SETUP-DEMO.md](./SETUP-DEMO.md) - Installation instructions
+- **Demo Credentials**: `admin@demo-spa.com` / `DEMO123`
+- **Demo Data**: Pre-populated with staff, customers, and bookings
 
 ## 🎉 **PRODUCTION v2.3.0 - READY FOR DEPLOYMENT**
 

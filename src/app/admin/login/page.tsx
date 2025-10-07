@@ -71,7 +71,7 @@ export default function AdminLoginPage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <a 
-            href="https://dermalskinclinicspa.com" 
+            href="https://demo-spa.com" 
             className="text-sm text-primary hover:text-primary-dark transition-colors"
             target="_blank"
             rel="noopener noreferrer"

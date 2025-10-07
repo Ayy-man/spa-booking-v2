@@ -10,12 +10,12 @@ export async function middleware(request: NextRequest) {
   const subdomain = hostname.split('.')[0]
   
   // Handle subdomain routing
-  if (subdomain === 'admin' && hostname.includes('dermalskinclinicspa.com')) {
+  if (subdomain === 'admin' && hostname.includes('demo-spa.com')) {
     // Admin subdomain - redirect to admin routes if not already there
     if (!pathname.startsWith('/admin')) {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
-  } else if (subdomain === 'booking' && hostname.includes('dermalskinclinicspa.com')) {
+  } else if (subdomain === 'booking' && hostname.includes('demo-spa.com')) {
     // Booking subdomain - redirect to booking routes if on admin pages
     if (pathname.startsWith('/admin')) {
       return NextResponse.redirect(new URL('/booking', request.url))

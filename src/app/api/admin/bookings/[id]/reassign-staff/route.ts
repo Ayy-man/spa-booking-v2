@@ -147,14 +147,18 @@ export async function POST(
       }
       
       const serviceCategory = booking.service?.category
-        bookingId: booking.id,
-        serviceName: booking.service?.name,
-        serviceCategory: serviceCategory,
-        newStaffName: newStaff.name,
-        newStaffCapabilities: newStaff.capabilities,
-        oldStaffId: booking.staff_id,
-        newStaffId: new_staff_id
-      })
+
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('[ReassignStaff] Capability check', {
+          bookingId: booking.id,
+          serviceName: booking.service?.name,
+          serviceCategory,
+          newStaffName: newStaff.name,
+          newStaffCapabilities: newStaff.capabilities,
+          oldStaffId: booking.staff_id,
+          newStaffId: new_staff_id
+        })
+      }
       
       // Admin override: Allow admin to assign any staff to consultation services
       // or services that originally had "any available staff"
@@ -196,13 +200,16 @@ export async function POST(
         }
         
         if (!canPerform) {
-            serviceCategory,
-            requiredCapability: categoryToCapabilityMap[serviceCategory],
-            staffCapabilities: newStaff.capabilities,
-            serviceName: booking.service?.name,
-            staffName: newStaff.name,
-            mappingUsed: categoryToCapabilityMap
-          })
+          if (process.env.NODE_ENV === 'development') {
+            console.debug('[ReassignStaff] Capability check failed', {
+              serviceCategory,
+              requiredCapability: categoryToCapabilityMap[serviceCategory],
+              staffCapabilities: newStaff.capabilities,
+              serviceName: booking.service?.name,
+              staffName: newStaff.name,
+              mappingUsed: categoryToCapabilityMap
+            })
+          }
           return NextResponse.json(
             { 
               error: 'Staff cannot perform this service',
@@ -218,12 +225,15 @@ export async function POST(
         } else {
         }
       } else if (isAdminOverride) {
-          serviceCategory,
-          serviceName: booking.service?.name,
-          originalStaffId: booking.staff_id,
-          newStaffId: new_staff_id,
-          reason: booking.staff_id === 'any' ? 'Originally "any available staff"' : 'Consultation service'
-        })
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('[ReassignStaff] Admin override applied', {
+            serviceCategory,
+            serviceName: booking.service?.name,
+            originalStaffId: booking.staff_id,
+            newStaffId: new_staff_id,
+            reason: booking.staff_id === 'any' ? 'Originally "any available staff"' : 'Consultation service'
+          })
+        }
       }
 
       // Check service exclusions
@@ -486,10 +496,13 @@ export async function GET(
         
         if (isAdminOverride) {
           canPerform = true
-            staffName: staff.name,
-            serviceCategory,
-            originalStaffId: booking.staff_id
-          })
+          if (process.env.NODE_ENV === 'development') {
+            console.debug('[ReassignStaff][GET] Admin override capability', {
+              staffName: staff.name,
+              serviceCategory,
+              originalStaffId: booking.staff_id
+            })
+          }
         } else {
           const requiredCapability = categoryToCapabilityMap[serviceCategory] || serviceCategory
           

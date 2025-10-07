@@ -4,6 +4,7 @@
  */
 
 import { BookingWithRelations } from '@/types/booking'
+import { safeTimeSlice } from '@/lib/time-utils'
 
 // Extract logic functions from room timeline component for testing
 // These are the key business logic functions that should be unit tested
@@ -20,8 +21,8 @@ function getBookingForSlot(
   return bookings.find(booking => {
     if (booking.room_id !== roomId) return false
     
-    const bookingStart = booking.start_time.slice(0, 5) // HH:MM format
-    const bookingEnd = booking.end_time.slice(0, 5)
+    const bookingStart = safeTimeSlice(booking.start_time) // HH:MM format
+    const bookingEnd = safeTimeSlice(booking.end_time)
     
     return timeString >= bookingStart && timeString < bookingEnd
   }) || null
@@ -91,7 +92,7 @@ function hasBookingConflict(
   
   for (let i = 0; i < duration; i += SLOT_DURATION) {
     const checkTime = new Date(startDateTime.getTime() + i * 60000)
-    const checkTimeString = checkTime.toTimeString().slice(0, 5)
+    const checkTimeString = safeTimeSlice(checkTime.toTimeString())
     checkSlots.push(checkTimeString)
     
     const conflictBooking = getBookingForSlot(bookings, roomId, checkTimeString)
@@ -140,7 +141,7 @@ const mockBookings: BookingWithRelations[] = [
     appointment_date: '2022-01-01',
     status: 'confirmed',
     customer_name: 'John Doe',
-    customer_email: 'john@test.com',
+    customer_email: 'john@demo-spa.com',
     customer_phone: '555-0123',
     final_price: 85,
     service: {
@@ -151,7 +152,7 @@ const mockBookings: BookingWithRelations[] = [
     },
     staff: {
       id: 'staff-1',
-      name: 'Selma Villaver'
+      name: 'Demo Staff 1'
     },
     room: {
       id: 'room-1',
@@ -169,7 +170,7 @@ const mockBookings: BookingWithRelations[] = [
     appointment_date: '2022-01-01',
     status: 'confirmed',
     customer_name: 'Jane Smith',
-    customer_email: 'jane@test.com',
+    customer_email: 'jane@demo-spa.com',
     customer_phone: '555-0456',
     final_price: 65,
     service: {
@@ -180,7 +181,7 @@ const mockBookings: BookingWithRelations[] = [
     },
     staff: {
       id: 'staff-2',
-      name: 'Robyn Camacho'
+      name: 'Demo Staff 2'
     },
     room: {
       id: 'room-3',
@@ -198,7 +199,7 @@ const mockBookings: BookingWithRelations[] = [
     appointment_date: '2022-01-01',
     status: 'confirmed',
     customer_name: 'Bob Johnson',
-    customer_email: 'bob@test.com',
+    customer_email: 'bob@demo-spa.com',
     customer_phone: '555-0789',
     final_price: 130,
     service: {
@@ -209,7 +210,7 @@ const mockBookings: BookingWithRelations[] = [
     },
     staff: {
       id: 'staff-2',
-      name: 'Robyn Camacho'
+      name: 'Demo Staff 2'
     },
     room: {
       id: 'room-3',

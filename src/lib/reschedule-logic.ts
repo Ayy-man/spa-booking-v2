@@ -3,6 +3,7 @@
 import { supabase } from './supabase'
 import { BookingWithRelations } from '@/types/booking'
 import { getGuamTime, createGuamDateTime, isTimeSlotBookable } from '@/lib/timezone-utils'
+import { safeTimeSlice } from '@/lib/time-utils'
 
 export interface RescheduleCheckResult {
   can_reschedule: boolean
@@ -166,7 +167,7 @@ export async function getAvailableRescheduleSlots(
         // Calculate end time for this slot
         const slotStart = new Date(`2000-01-01T${timeStr}`)
         const slotEnd = new Date(slotStart.getTime() + serviceDuration * 60000)
-        const endTimeStr = slotEnd.toTimeString().slice(0, 5)
+        const endTimeStr = safeTimeSlice(slotEnd.toTimeString())
 
         // Don't allow slots that would go past closing time
         if (slotEnd.getHours() > endHour || (slotEnd.getHours() === endHour && slotEnd.getMinutes() > 0)) {

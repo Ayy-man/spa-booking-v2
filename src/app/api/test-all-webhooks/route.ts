@@ -36,7 +36,7 @@ export async function GET() {
           time: '15:00',
           duration: 90,
           price: 200,
-          staff: 'Sarah Thompson',
+          staff: 'Demo Staff 1',
           room: 'Room 2'
         }
       )
@@ -70,7 +70,7 @@ export async function GET() {
           time: '11:00',
           duration: 90,
           price: 250,
-          staff: 'Lisa Chen',
+          staff: 'Demo Staff 2',
           room: 'Room 1'
         },
         'show',

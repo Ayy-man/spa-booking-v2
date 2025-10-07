@@ -64,8 +64,8 @@ const mockRooms: Room[] = [
 const mockStaff: Staff[] = [
   {
     id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-    name: 'Selma Villaver',
-    email: 'happyskinhappyyou@gmail.com',
+    name: 'Demo Staff 1',
+    email: 'staff1@demo-spa.com',
     phone: '(671) 647-7546',
     can_perform_services: ['facial'],
     default_room_id: '11111111-1111-1111-1111-111111111111',
@@ -84,8 +84,8 @@ const mockStaff: Staff[] = [
   },
   {
     id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-    name: 'Robyn Camacho',
-    email: 'robyncmcho@gmail.com',
+    name: 'Demo Staff 2',
+    email: 'staff2@demo-spa.com',
     phone: '(671) 647-7546',
     can_perform_services: ['facial', 'massage', 'waxing', 'body_treatment', 'body_scrub', 'package'],
     default_room_id: '33333333-3333-3333-3333-333333333333',
@@ -104,8 +104,8 @@ const mockStaff: Staff[] = [
   },
   {
     id: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
-    name: 'Tanisha Harris',
-    email: 'misstanishababyy@gmail.com',
+    name: 'Demo Staff 3',
+    email: 'staff3@demo-spa.com',
     phone: '(671) 647-7546',
     can_perform_services: ['facial', 'waxing'],
     default_room_id: '22222222-2222-2222-2222-222222222222',
@@ -124,8 +124,8 @@ const mockStaff: Staff[] = [
   },
   {
     id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
-    name: 'Leonel Sidon',
-    email: 'sidonleonel@gmail.com',
+    name: 'Demo Staff 4',
+    email: 'staff4@demo-spa.com',
     phone: '(671) 647-7546',
     can_perform_services: ['massage', 'body_treatment'],
     default_room_id: null,
@@ -212,8 +212,8 @@ describe('Room Assignment Logic', () => {
 
     test('should only allow qualified staff for body scrub services', () => {
       const bodyScrubService = mockServices.find(s => s.category === 'body_scrub')!
-      const robyn = mockStaff.find(s => s.name === 'Robyn Camacho')!
-      const selma = mockStaff.find(s => s.name === 'Selma Villaver')!
+      const robyn = mockStaff.find(s => s.name === 'Demo Staff 2')!
+      const selma = mockStaff.find(s => s.name === 'Demo Staff 1')!
       
       expect(canStaffPerformService(robyn, bodyScrubService)).toBe(true)
       expect(canStaffPerformService(selma, bodyScrubService)).toBe(false)
@@ -254,17 +254,17 @@ describe('Room Assignment Logic', () => {
   describe('Single Services', () => {
     test('should assign single service to staff default room', () => {
       const facialService = mockServices.find(s => s.category === 'facial')!
-      const selma = mockStaff.find(s => s.name === 'Selma Villaver')!
+      const selma = mockStaff.find(s => s.name === 'Demo Staff 1')!
       
       const result = getOptimalRoom(facialService, selma, mockRooms)
       
       expect(result.room?.id).toBe('11111111-1111-1111-1111-111111111111') // Room 1 (Selma's default)
-      expect(result.reason).toContain("Selma Villaver's default room")
+      expect(result.reason).toContain("Demo Staff 1's default room")
     })
 
     test('should use any available room if default unavailable', () => {
       const facialService = mockServices.find(s => s.category === 'facial')!
-      const selma = mockStaff.find(s => s.name === 'Selma Villaver')!
+      const selma = mockStaff.find(s => s.name === 'Demo Staff 1')!
       const roomsWithoutRoom1 = mockRooms.filter(r => r.id !== selma.default_room_id)
       
       const result = getOptimalRoom(facialService, selma, roomsWithoutRoom1)
@@ -278,7 +278,7 @@ describe('Room Assignment Logic', () => {
 describe('Staff Availability Logic', () => {
   describe('Day of Week Constraints', () => {
     test('should respect Leonel Sunday-only schedule', () => {
-      const leonel = mockStaff.find(s => s.name === 'Leonel Sidon')!
+      const leonel = mockStaff.find(s => s.name === 'Demo Staff 4')!
       
       // Test Sunday (available)
       const sunday = new Date('2024-07-28') // Sunday
@@ -294,8 +294,8 @@ describe('Staff Availability Logic', () => {
     })
 
     test('should respect Selma/Tanisha Tuesday/Thursday off', () => {
-      const selma = mockStaff.find(s => s.name === 'Selma Villaver')!
-      const tanisha = mockStaff.find(s => s.name === 'Tanisha Harris')!
+      const selma = mockStaff.find(s => s.name === 'Demo Staff 1')!
+      const tanisha = mockStaff.find(s => s.name === 'Demo Staff 3')!
       
       // Test Tuesday (unavailable)
       const tuesday = new Date('2024-07-30') // Tuesday
@@ -304,12 +304,12 @@ describe('Staff Availability Logic', () => {
       
       expect(selmaAvailability.isAvailable).toBe(false)
       expect(tanishaAvailability.isAvailable).toBe(false)
-      expect(selmaAvailability.reasons).toContain('Selma Villaver is off on Tuesdays and Thursdays')
-      expect(tanishaAvailability.reasons).toContain('Tanisha Harris is off on Tuesdays and Thursdays')
+      expect(selmaAvailability.reasons).toContain('Demo Staff 1 is off on Tuesdays and Thursdays')
+      expect(tanishaAvailability.reasons).toContain('Demo Staff 3 is off on Tuesdays and Thursdays')
     })
 
     test('should allow Robyn full schedule access', () => {
-      const robyn = mockStaff.find(s => s.name === 'Robyn Camacho')!
+      const robyn = mockStaff.find(s => s.name === 'Demo Staff 2')!
       
       // Test all days of week
       const dates = [
@@ -334,8 +334,8 @@ describe('Staff Availability Logic', () => {
       const facialService = mockServices.find(s => s.category === 'facial')!
       const bodyScrubService = mockServices.find(s => s.category === 'body_scrub')!
       
-      const selma = mockStaff.find(s => s.name === 'Selma Villaver')!
-      const robyn = mockStaff.find(s => s.name === 'Robyn Camacho')!
+      const selma = mockStaff.find(s => s.name === 'Demo Staff 1')!
+      const robyn = mockStaff.find(s => s.name === 'Demo Staff 2')!
       
       // Selma can do facials but not body scrubs
       expect(canStaffPerformService(selma, facialService)).toBe(true)
@@ -348,18 +348,18 @@ describe('Staff Availability Logic', () => {
 
     test('should provide detailed capability validation reasons', () => {
       const bodyScrubService = mockServices.find(s => s.category === 'body_scrub')!
-      const selma = mockStaff.find(s => s.name === 'Selma Villaver')!
+      const selma = mockStaff.find(s => s.name === 'Demo Staff 1')!
       
       const validation = validateStaffCapability(selma, bodyScrubService)
       
       expect(validation.canPerform).toBe(false)
-      expect(validation.reasons).toContain('Selma Villaver is not qualified to perform body_scrub services')
+      expect(validation.reasons).toContain('Demo Staff 1 is not qualified to perform body_scrub services')
     })
   })
 
   describe('Time Slot Availability', () => {
     test('should check staff availability for specific time slots', () => {
-      const robyn = mockStaff.find(s => s.name === 'Robyn Camacho')!
+      const robyn = mockStaff.find(s => s.name === 'Demo Staff 2')!
       const monday = new Date('2024-07-29') // Monday
       
       // Within work hours
@@ -525,7 +525,7 @@ describe('Business Hours Validation', () => {
 describe('Comprehensive Booking Validation', () => {
   test('should validate complete booking request successfully', () => {
     const facialService = mockServices.find(s => s.category === 'facial')!
-    const selma = mockStaff.find(s => s.name === 'Selma Villaver')!
+    const selma = mockStaff.find(s => s.name === 'Demo Staff 1')!
     const room1 = mockRooms.find(r => r.name === 'Room 1')!
     // Pick a Monday when Selma is available
     const validDate = new Date('2025-08-04') // Future Monday when Selma works
@@ -547,7 +547,7 @@ describe('Comprehensive Booking Validation', () => {
   test('should reject invalid booking combinations', () => {
     // Body scrub service in Room 1 (invalid)
     const bodyScrubService = mockServices.find(s => s.category === 'body_scrub')!
-    const selma = mockStaff.find(s => s.name === 'Selma Villaver')!
+    const selma = mockStaff.find(s => s.name === 'Demo Staff 1')!
     const room1 = mockRooms.find(r => r.name === 'Room 1')!
     const validDate = new Date()
     validDate.setDate(validDate.getDate() + 7) // 7 days from now
@@ -572,7 +572,7 @@ describe('Comprehensive Booking Validation', () => {
 
   test('should handle couples service validation', () => {
     const couplesService = mockServices.find(s => s.requires_couples_room)!
-    const robyn = mockStaff.find(s => s.name === 'Robyn Camacho')!
+    const robyn = mockStaff.find(s => s.name === 'Demo Staff 2')!
     const room1 = mockRooms.find(r => r.name === 'Room 1')! // Single room
     const validDate = new Date()
     validDate.setDate(validDate.getDate() + 7) // 7 days from now

@@ -5,8 +5,8 @@
 
 // Admin credentials from environment variables (secure)
 const ADMIN_CREDENTIALS = {
-  email: process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@dermalskin.com',
-  password: process.env.ADMIN_PASSWORD || 'ChangeThisPassword123!'
+  email: process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@demo-spa.com',
+  password: process.env.ADMIN_PASSWORD || 'DEMO123'
 }
 
 // Session configuration

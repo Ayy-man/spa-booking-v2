@@ -417,7 +417,7 @@ export async function blockTimeSlot(
     const { data: existingSystemCustomer } = await supabase
       .from('customers')
       .select('id')
-      .eq('email', 'system@dermalskinclinic.com')
+      .eq('email', 'system@demo-spa.com')
       .single()
 
     if (existingSystemCustomer) {
@@ -429,7 +429,7 @@ export async function blockTimeSlot(
         .insert({
           first_name: 'SYSTEM',
           last_name: 'BLOCK',
-          email: 'system@dermalskinclinic.com',
+          email: 'system@demo-spa.com',
           phone: null,
           marketing_consent: false,
           is_active: true

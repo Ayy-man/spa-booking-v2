@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { ghlWebhookSender } from '@/lib/ghl-webhook-sender'
 import { getStaffAvailabilityStatus } from '@/lib/booking-logic'
+import { safeTimeSlice } from '@/lib/time-utils'
 
 interface AssignWalkInRequest {
   walkInId: string
@@ -214,7 +215,7 @@ export async function POST(request: NextRequest) {
     // Calculate end time
     const startTime = new Date(`2000-01-01T${body.startTime}:00`)
     const endTime = new Date(startTime.getTime() + service.duration * 60000)
-    const endTimeStr = endTime.toTimeString().slice(0, 5)
+    const endTimeStr = safeTimeSlice(endTime.toTimeString())
 
     // Calculate buffer times (15 minutes before start and after end)
     const bufferMinutes = 15
@@ -228,8 +229,8 @@ export async function POST(request: NextRequest) {
     const finalBufferStart = bufferStartTime < businessStart ? businessStart : bufferStartTime
     const finalBufferEnd = bufferEndTime > businessEnd ? businessEnd : bufferEndTime
     
-    const bufferStartStr = finalBufferStart.toTimeString().slice(0, 5)
-    const bufferEndStr = finalBufferEnd.toTimeString().slice(0, 5)
+    const bufferStartStr = safeTimeSlice(finalBufferStart.toTimeString())
+    const bufferEndStr = safeTimeSlice(finalBufferEnd.toTimeString())
 
     // Create booking record
     const bookingData = {

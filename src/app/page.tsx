@@ -9,7 +9,7 @@ export default function Home() {
         <div className="text-center mb-12">
           <div className="mb-4 flex justify-between items-center">
             <a 
-              href="https://dermalskinclinicspa.com" 
+              href="https://demo-spa.com" 
               className="text-sm text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary transition-colors"
               target="_blank"
               rel="noopener noreferrer"

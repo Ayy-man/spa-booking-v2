@@ -68,14 +68,17 @@ export function BookingDetailsModal({
   
   // Debug logging for reassignment button visibility
   const canReassignStaff = booking?.status !== 'cancelled' && booking?.status !== 'completed' && booking?.status !== 'no_show'
-  
-    bookingId: booking?.id,
-    bookingStatus: booking?.status,
-    isAdmin,
-    canReassignStaff,
-    shouldShowButtons: booking?.status !== 'cancelled' && booking?.status !== 'completed',
-    booking
-  })
+
+  if (process.env.NODE_ENV === 'development') {
+    console.debug('[BookingDetailsModal] Reassign button state', {
+      bookingId: booking?.id,
+      bookingStatus: booking?.status,
+      isAdmin,
+      canReassignStaff,
+      shouldShowButtons: booking?.status !== 'cancelled' && booking?.status !== 'completed',
+      booking
+    })
+  }
 
   if (!booking) return null
 

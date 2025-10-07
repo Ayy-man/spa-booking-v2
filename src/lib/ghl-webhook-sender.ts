@@ -148,7 +148,7 @@ class GHLWebhookSender {
         const railwayPayload = {
           ...payload,
           spa_name: BUSINESS_CONFIG.name,
-          recipient_email: 'happyskinhappyyou@gmail.com',
+          recipient_email: 'notifications@demo-spa.com',
           timestamp: new Date().toISOString(),
           source: 'booking_confirmation'
         }

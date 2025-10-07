@@ -196,7 +196,7 @@ export default function BookingPage() {
               </Link>
               <ThemeToggle />
               <a 
-                href="https://dermalskinclinicspa.com/services" 
+                href="https://demo-spa.com/services" 
                 className="btn-tertiary !w-auto px-6 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -249,12 +249,16 @@ export default function BookingPage() {
                           (category.category === 'facials' && !isConsultation) ||  // ALL facials except consultations
                           service.name.toLowerCase().includes('couple') ||
                           (category.category === 'massages' && service.duration >= 60)
-                        
-                          category: category.category,
-                          duration: service.duration,
-                          isCouplesEligible,
-                          isConsultation
-                        })
+
+                        if (process.env.NODE_ENV === 'development') {
+                          console.debug('[BookingPage] Service click eligibility', {
+                            serviceId: service.id,
+                            category: category.category,
+                            duration: service.duration,
+                            isCouplesEligible,
+                            isConsultation
+                          })
+                        }
                         
                         if (isCouplesEligible) {
                           handlePackageSelect(service.id)

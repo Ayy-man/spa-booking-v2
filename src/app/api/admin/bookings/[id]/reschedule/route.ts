@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getGuamTime, createGuamDateTime, isTimeSlotBookable } from '@/lib/timezone-utils'
+import { safeTimeSlice } from '@/lib/time-utils'
 
 // Create Supabase client with service role key for admin operations
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -99,7 +100,7 @@ export async function POST(
     // Calculate new end time based on service duration
     const startDateTime = new Date(`${new_date}T${new_start_time}`)
     const endDateTime = new Date(startDateTime.getTime() + booking.duration * 60000)
-    const new_end_time = endDateTime.toTimeString().slice(0, 5)
+    const new_end_time = safeTimeSlice(endDateTime.toTimeString())
 
     // Check if new time slot is bookable (2-hour advance notice)
     const newSlotDateTime = createGuamDateTime(new_date, new_start_time)

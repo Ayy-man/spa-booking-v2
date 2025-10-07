@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { safeTimeSlice } from '@/lib/time-utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
     // Step 2: Calculate end time
     const startTimeObj = new Date(`2000-01-01T${start_time}:00`)
     const endTimeObj = new Date(startTimeObj.getTime() + service.duration * 60000)
-    const end_time = endTimeObj.toTimeString().slice(0, 5)
+    const end_time = safeTimeSlice(endTimeObj.toTimeString())
 
     // Step 3: Get optimal room assignment
     let assigned_room_id = 1 // Default fallback

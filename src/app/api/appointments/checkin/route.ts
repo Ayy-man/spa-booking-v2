@@ -18,12 +18,16 @@ interface CheckInRequest {
 export async function POST(request: NextRequest) {
   try {
     const body: CheckInRequest = await request.json()
-      searchTerm: body.searchTerm,
-      confirmationCode: body.confirmationCode,
-      hasSearchTerm: !!body.searchTerm, 
-      hasAppointmentId: !!body.appointmentId,
-      appointmentId: body.appointmentId 
-    })
+
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[CheckIn API] Incoming request', {
+        searchTerm: body.searchTerm,
+        confirmationCode: body.confirmationCode,
+        hasSearchTerm: !!body.searchTerm,
+        hasAppointmentId: !!body.appointmentId,
+        appointmentId: body.appointmentId
+      })
+    }
 
     if (!body.searchTerm && !body.appointmentId) {
       return NextResponse.json(
@@ -51,10 +55,13 @@ export async function POST(request: NextRequest) {
         .eq('id', body.appointmentId)
         .eq('appointment_date', today)
 
-        appointmentsCount: appointments?.length || 0,
-        appointmentError,
-        searchCriteria: { id: body.appointmentId, date: today }
-      })
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('[CheckIn API] Appointment lookup today', {
+          appointmentsCount: appointments?.length || 0,
+          appointmentError,
+          searchCriteria: { id: body.appointmentId, date: today }
+        })
+      }
 
       if (appointmentError) {
         console.error('Appointment search error:', appointmentError)
@@ -71,10 +78,13 @@ export async function POST(request: NextRequest) {
           .select('id, appointment_date, status')
           .eq('id', body.appointmentId)
 
-          found: anyDateAppointments?.length || 0,
-          appointments: anyDateAppointments,
-          error: anyDateError 
-        })
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('[CheckIn API] Appointment lookup any date', {
+            found: anyDateAppointments?.length || 0,
+            appointments: anyDateAppointments,
+            error: anyDateError
+          })
+        }
 
         if (anyDateAppointments && anyDateAppointments.length > 0) {
           const apt = anyDateAppointments[0]
@@ -249,14 +259,17 @@ export async function POST(request: NextRequest) {
           return false
         }
 
-          id: apt.id,
-          customerName: customer.last_name 
-            ? `${customer.first_name} ${customer.last_name}`
-            : customer.first_name,
-          customerEmail: customer.email,
-          customerPhone: customer.phone,
-          searchTerm: searchTerm
-        })
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('[CheckIn API] Evaluating appointment against search term', {
+            id: apt.id,
+            customerName: customer.last_name 
+              ? `${customer.first_name} ${customer.last_name}`
+              : customer.first_name,
+            customerEmail: customer.email,
+            customerPhone: customer.phone,
+            searchTerm
+          })
+        }
 
         let matchFound = false
         let matchReason = ''
@@ -296,14 +309,19 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        if (!matchFound) {
-        } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('[CheckIn API] Match evaluation result', {
+            appointmentId: apt.id,
+            matchFound,
+            matchReason
+          })
         }
 
         return matchFound
       })
       
-      if (filteredAppointments.length > 0) {
+      if (filteredAppointments.length > 0 && process.env.NODE_ENV === 'development') {
+        console.debug('[CheckIn API] Filtered appointments', filteredAppointments.map(apt => ({
           id: apt.id,
           customerName: apt.customer.last_name 
             ? `${apt.customer.first_name} ${apt.customer.last_name}`
@@ -312,7 +330,6 @@ export async function POST(request: NextRequest) {
           customerPhone: apt.customer.phone
         })))
       }
-    } else {
     }
 
     if (!filteredAppointments || filteredAppointments.length === 0) {

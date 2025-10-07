@@ -28,12 +28,12 @@ export const staffMembers: StaffMember[] = [
     defaultRoom: undefined
   },
   {
-    id: 'selma',
-    name: 'Selma Villaver',
-    email: 'happyskinhappyyou@gmail.com',
-    phone: '(671) 482-7765',
+    id: 'staff001',
+    name: 'Selma Thompson',
+    email: 'selma@spa.com',
+    phone: '555-0101',
     specialties: 'All Facials (except dermaplaning)',
-    initials: 'SV',
+    initials: 'ST',
     capabilities: ['facials'],
     work_days: [0, 1, 3, 5, 6], // Sun, Mon, Wed, Fri, Sat (off Tue/Thu)
     default_room_id: '11111111-1111-1111-1111-111111111111',
@@ -41,12 +41,12 @@ export const staffMembers: StaffMember[] = [
     service_exclusions: ['derma_planing']
   },
   {
-    id: 'robyn',
-    name: 'Robyn Camacho',
-    email: 'robyncmcho@gmail.com',
-    phone: '(671) 480-7862',
+    id: 'staff002',
+    name: 'Robyn Martinez',
+    email: 'robyn@spa.com',
+    phone: '555-0102',
     specialties: 'Facials, Waxing, Body Treatments, Massages (excl. RF, nano, derma)',
-    initials: 'RC',
+    initials: 'RM',
     capabilities: ['facials', 'waxing', 'treatments', 'massages'],
     work_days: [0, 3, 4, 5, 6], // Sun, Wed, Thu, Fri, Sat (off Mon/Tue)
     default_room_id: '33333333-3333-3333-3333-333333333333',
@@ -54,12 +54,12 @@ export const staffMembers: StaffMember[] = [
     service_exclusions: ['radio_frequency', 'nano_microneedling', 'derma_roller', 'derma_planing']
   },
   {
-    id: 'tanisha',
-    name: 'Tanisha Harris',
-    email: 'misstanishababyy@gmail.com',
-    phone: '(671) 747-5728',
+    id: 'staff003',
+    name: 'Tanisha Chen',
+    email: 'tanisha@spa.com',
+    phone: '555-0103',
     specialties: 'Facials and Waxing (excl. RF, nano, derma roller)',
-    initials: 'TH',
+    initials: 'TC',
     capabilities: ['facials', 'waxing'],
     work_days: [0, 1, 3, 5, 6], // Sun, Mon, Wed, Fri, Sat (off Tue/Thu)
     default_room_id: '22222222-2222-2222-2222-222222222222',
@@ -67,12 +67,12 @@ export const staffMembers: StaffMember[] = [
     service_exclusions: ['radio_frequency', 'nano_microneedling', 'derma_roller']
   },
   {
-    id: 'leonel',
-    name: 'Leonel Sidon',
-    email: 'sidonleonel@gmail.com',
-    phone: '(671) 747-1882',
+    id: 'staff004',
+    name: 'Leonel Rodriguez',
+    email: 'leonel@spa.com',
+    phone: '555-0104',
     specialties: 'Body Massages and Treatments, Can assist with facials (Sundays only)',
-    initials: 'LS',
+    initials: 'LR',
     capabilities: ['massages', 'treatments', 'facials'],  // Added facials capability
     work_days: [0], // Sunday only
     default_room_id: null,
@@ -80,12 +80,12 @@ export const staffMembers: StaffMember[] = [
     service_exclusions: []
   },
   {
-    id: 'phuong',
-    name: 'Phuong Bosque',
-    email: 'phuong.bosque@dermalskin.com',
-    phone: '(671) 555-0123',
+    id: 'staff005',
+    name: 'Phuong Nguyen',
+    email: 'phuong@spa.com',
+    phone: '555-0105',
     specialties: 'Body Massages (All Types)',
-    initials: 'PB',
+    initials: 'PN',
     capabilities: ['massages'],  // Massage services only
     work_days: [0, 1, 2, 3, 4, 5, 6], // Available all days (Sunday through Saturday)
     default_room_id: null,
@@ -97,11 +97,17 @@ export const staffMembers: StaffMember[] = [
 // Staff name mapping for display purposes
 export const staffNameMap = {
   'any': 'Any Available Staff',
-  'selma': 'Selma Villaver',
-  'robyn': 'Robyn Camacho',
-  'tanisha': 'Tanisha Harris',  
-  'leonel': 'Leonel Sidon (Sundays only)',
-  'phuong': 'Phuong Bosque'
+  'staff001': 'Selma Thompson',
+  'staff002': 'Robyn Martinez',
+  'staff003': 'Tanisha Chen',  
+  'staff004': 'Leonel Rodriguez (Sundays only)',
+  'staff005': 'Phuong Nguyen',
+  // Legacy mappings for backward compatibility
+  'selma': 'Selma Thompson',
+  'robyn': 'Robyn Martinez',
+  'tanisha': 'Tanisha Chen',
+  'leonel': 'Leonel Rodriguez (Sundays only)',
+  'phuong': 'Phuong Nguyen'
 } as const
 
 // Helper function to determine service category - updated to match staff capabilities

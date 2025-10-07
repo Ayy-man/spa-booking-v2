@@ -98,7 +98,7 @@ describe('GHLWebhookSender', () => {
           time: '15:00',
           duration: 90,
           price: 200,
-          staff: 'Sarah Thompson',
+          staff: 'Demo Staff 1',
           room: 'Room 2'
         }
       )
@@ -112,7 +112,7 @@ describe('GHLWebhookSender', () => {
       expect(payload.booking_id).toBe('booking-123')
       expect(payload.customer.name).toBe('Jane Doe')
       expect(payload.appointment.service).toBe('Relaxation Massage')
-      expect(payload.appointment.staff).toBe('Sarah Thompson')
+      expect(payload.appointment.staff).toBe('Demo Staff 1')
       expect(payload.appointment.room).toBe('Room 2')
     })
   })
@@ -132,7 +132,7 @@ describe('GHLWebhookSender', () => {
           time: '11:00',
           duration: 45,
           price: 120,
-          staff: 'Tanisha Johnson',
+          staff: 'Demo Staff 2',
           room: 'Room 3'
         },
         'show',

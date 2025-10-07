@@ -291,7 +291,7 @@ Wax every 4–6 weeks depending on area and growth rate.`
 I authorize the esthetician to perform the waxing procedure after being informed of its risks and benefits. I understand the contraindications and confirm I don't have any disqualifying condition. I agree to notify the esthetician of any discomfort during treatment and waive liability for injury due to misrepresentation of my health.
 
 **Esthetician Contact:**
-Dermal Skin Care and Spa | 489‑0327 / 647‑7546 | dermalskincareandspa@gmail.com`
+Demo Spa & Wellness | 555-0100 | legal@demo-spa.com`
       },
       {
         type: 'signature',

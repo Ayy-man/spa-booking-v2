@@ -110,3 +110,41 @@ export function parseTimeString(timeValue: any): string {
   console.warn(`[time-utils] Could not parse time value: ${timeValue}`)
   return '09:00' // Default fallback
 }
+
+/**
+ * Safely extracts time in HH:MM format from a potentially invalid time string
+ * This function prevents "Invalid" errors from being truncated to "Inval"
+ */
+export function safeTimeSlice(timeValue: any): string {
+  // First validate the time
+  if (!timeValue || typeof timeValue !== 'string') {
+    console.warn('[time-utils] safeTimeSlice: Invalid time value', timeValue)
+    return '09:00'
+  }
+  
+  // Check if it looks like a valid time before slicing
+  if (!isValidTimeString(timeValue) && !timeValue.includes(':')) {
+    console.warn('[time-utils] safeTimeSlice: Time does not contain colon', timeValue)
+    return '09:00'
+  }
+  
+  // If it's already in HH:MM format, return as is
+  if (timeValue.length === 5 && isValidTimeString(timeValue)) {
+    return timeValue
+  }
+  
+  // If it's longer (like HH:MM:SS), extract the HH:MM part
+  if (timeValue.length >= 5) {
+    const sliced = timeValue.slice(0, 5)
+    if (isValidTimeString(sliced)) {
+      return sliced
+    }
+  }
+  
+  // Last resort: try to parse it through formatTimeToHHMM
+  const formatted = formatTimeToHHMM(timeValue)
+  if (formatted) return formatted
+  
+  console.warn('[time-utils] safeTimeSlice: Could not safely extract time from', timeValue)
+  return '09:00'
+}

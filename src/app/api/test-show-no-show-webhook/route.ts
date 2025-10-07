@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       time: '14:00',
       duration: 60,
       price: 85,
-      staff: 'Sarah Johnson',
+      staff: 'Demo Staff 1',
       staffId: 'staff_001',
       room: 'Treatment Room 1',
       roomId: '11111111-1111-1111-1111-111111111111'

@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </a>
             <div className="flex items-center space-x-4">
               <a 
-                href="https://dermalskinclinicspa.com" 
+                href="https://demo-spa.com" 
                 className="text-sm text-gray-600 hover:text-primary transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"

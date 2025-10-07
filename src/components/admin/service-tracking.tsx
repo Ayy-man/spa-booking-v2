@@ -144,8 +144,8 @@ const getStaffMetrics = async (startDate: string, endDate: string): Promise<Staf
       {
         id: '1',
         staffId: 'staff_1',
-        name: 'Sarah Johnson',
-        staffName: 'Sarah Johnson',
+        name: 'Demo Staff 1',
+        staffName: 'Demo Staff 1',
         bookingsToday: Math.floor(Math.random() * 8) + 2,
         totalBookings: Math.floor(Math.random() * 15) + 5,
         specialRequests: Math.floor(Math.random() * 3),
@@ -156,8 +156,8 @@ const getStaffMetrics = async (startDate: string, endDate: string): Promise<Staf
       {
         id: '2',
         staffId: 'staff_2',
-        name: 'Leonel Sidon',
-        staffName: 'Leonel Sidon',
+        name: 'Demo Staff 2',
+        staffName: 'Demo Staff 2',
         bookingsToday: Math.floor(Math.random() * 6) + 1,
         totalBookings: Math.floor(Math.random() * 12) + 3,
         specialRequests: Math.floor(Math.random() * 2),

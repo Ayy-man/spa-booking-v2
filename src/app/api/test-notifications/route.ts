@@ -97,10 +97,10 @@ export async function PUT(request: NextRequest) {
     new_booking: {
       type: 'new_booking',
       title: 'New Booking',
-      message: 'Sarah Johnson booked Deep Cleansing Facial for Tomorrow at 2:00 PM',
+      message: 'Demo Customer booked Deep Cleansing Facial for Tomorrow at 2:00 PM',
       priority: 'normal',
       metadata: {
-        customerName: 'Sarah Johnson',
+        customerName: 'Demo Customer',
         serviceName: 'Deep Cleansing Facial',
         bookingDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         startTime: '14:00'

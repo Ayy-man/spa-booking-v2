@@ -13,10 +13,14 @@ interface WaiverSubmission {
 export async function POST(request: NextRequest) {
   try {
     const body: WaiverSubmission = await request.json()
-      waiverType: body.waiverType,
-      serviceName: body.serviceName,
-      hasSignature: !!body.signature
-    })
+
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[Waiver API] Incoming submission', {
+        waiverType: body.waiverType,
+        serviceName: body.serviceName,
+        hasSignature: !!body.signature
+      })
+    }
 
     // Validate required fields
     if (!body.waiverType || !body.serviceName || !body.signature) {
@@ -64,10 +68,13 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString()
     }
 
-      service_category: waiverData.service_category,
-      service_name: waiverData.service_name,
-      signed_at: waiverData.signed_at
-    })
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[Waiver API] Prepared waiver payload', {
+        service_category: waiverData.service_category,
+        service_name: waiverData.service_name,
+        signed_at: waiverData.signed_at
+      })
+    }
 
     // Save waiver to database
     const { data: waiver, error: waiverError } = await supabase

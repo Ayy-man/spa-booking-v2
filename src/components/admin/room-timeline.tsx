@@ -17,6 +17,7 @@ import { FilterBar } from "@/components/admin/filter-bar"
 import { BookingDetailsModal } from "@/components/admin/BookingDetailsModal"
 import { Clock, RefreshCw, Calendar, Users, TrendingUp, AlertCircle, Star, RotateCw } from "lucide-react"
 import { getGuamTime } from "@/lib/timezone-utils"
+import { safeTimeSlice } from "@/lib/time-utils"
 
 interface TimeSlot {
   hour: number
@@ -168,8 +169,8 @@ export function RoomTimeline({
     return bookings.find(booking => {
       if (booking.room_id !== roomId) return false
       
-      const bookingStart = booking.start_time.slice(0, 5) // HH:MM format
-      const bookingEnd = booking.end_time.slice(0, 5)
+      const bookingStart = safeTimeSlice(booking.start_time) // HH:MM format
+      const bookingEnd = safeTimeSlice(booking.end_time)
       
       return timeString >= bookingStart && timeString < bookingEnd
     }) || null
@@ -197,8 +198,8 @@ export function RoomTimeline({
       
       if (bufferStart && bufferEnd) {
         const currentTime = timeString
-        const serviceStart = booking.start_time.slice(0, 5)
-        const serviceEnd = booking.end_time.slice(0, 5)
+        const serviceStart = safeTimeSlice(booking.start_time)
+        const serviceEnd = safeTimeSlice(booking.end_time)
         
         // Check if we're in the pre-service buffer (before start_time)
         if (currentTime >= bufferStart && currentTime < serviceStart) {
@@ -242,7 +243,7 @@ export function RoomTimeline({
 
   // Check if a time slot should show the booking start
   const isBookingStart = useCallback((booking: BookingWithRelations, timeString: string): boolean => {
-    return booking.start_time.slice(0, 5) === timeString
+    return safeTimeSlice(booking.start_time) === timeString
   }, [])
 
   // Check if a time slot is the current time slot
@@ -265,7 +266,8 @@ export function RoomTimeline({
     const isInSlot = currentMinutes >= slotStartMinutes && currentMinutes < slotEndMinutes
     
     // Debug logging
-    if (slot.hour === 13 && slot.minute === 45) {
+    if (process.env.NODE_ENV === 'development' && slot.hour === 13 && slot.minute === 45) {
+      console.debug('[RoomTimeline] Current time slot evaluation', {
         currentTime: `${currentHour}:${currentMinute}`,
         slotTime: `${slot.hour}:${slot.minute}`,
         currentMinutes,
@@ -636,7 +638,7 @@ export function RoomTimeline({
                                             <span className="text-amber-600 ml-1 font-medium">(Specifically Requested)</span>
                                           )}
                                         </div>
-                                        <div>Time: {booking.start_time.slice(0, 5)} - {booking.end_time.slice(0, 5)}</div>
+                                        <div>Time: {safeTimeSlice(booking.start_time)} - {safeTimeSlice(booking.end_time)}</div>
                                         <div>Duration: {booking.service.duration} minutes</div>
                                         <div>Status: {booking.status}</div>
                                         <div>Price: ${booking.total_price}</div>
