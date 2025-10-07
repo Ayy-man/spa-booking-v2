@@ -413,6 +413,8 @@ export function ScheduleManagement() {
   // Check for existing bookings that would be affected by the schedule block
   const checkExistingBookings = async (staffId: string, startDate: string, endDate?: string, startTime?: string, endTime?: string) => {
     try {
+      console.log('🔍 Checking existing bookings for:', { staffId, startDate, endDate, startTime, endTime })
+      
       let bookingsQuery = supabase
         .from('bookings')
         .select(`
@@ -425,7 +427,7 @@ export function ScheduleManagement() {
           status
         `)
         .eq('staff_id', staffId)
-        .eq('status', 'confirmed')
+        .in('status', ['confirmed', 'pending', 'in_progress'])
 
       // Add date filtering
       if (endDate && endDate !== startDate) {
@@ -445,18 +447,29 @@ export function ScheduleManagement() {
         return []
       }
 
+      console.log('📅 Found bookings:', bookings?.length || 0, bookings)
+
+      let filteredBookings = bookings || []
+
       // Filter by time if it's a time range block
       if (startTime && endTime) {
-        return bookings?.filter(booking => {
+        filteredBookings = bookings?.filter(booking => {
           const bookingStart = booking.start_time
           const bookingEnd = booking.end_time
           
+          console.log(`🕐 Checking time overlap: booking ${bookingStart}-${bookingEnd} vs block ${startTime}-${endTime}`)
+          
           // Check if booking time overlaps with block time
-          return (bookingStart < endTime && bookingEnd > startTime)
+          const overlaps = (bookingStart < endTime && bookingEnd > startTime)
+          console.log(`🔄 Overlap result: ${overlaps}`)
+          
+          return overlaps
         }) || []
+        
+        console.log('⏰ After time filtering:', filteredBookings.length, filteredBookings)
       }
 
-      return bookings || []
+      return filteredBookings
     } catch (error) {
       console.error('Error in checkExistingBookings:', error)
       return []
@@ -488,15 +501,20 @@ export function ScheduleManagement() {
         formData.endTime
       )
 
-      // Show warning if there are existing bookings
-      if (existingBookings.length > 0) {
+      console.log('🚨 Existing bookings found:', existingBookings.length, existingBookings)
+
+      // TEMPORARY: Always show warning for testing
+      if (existingBookings.length > 0 || true) {
+        console.log('⚠️ Showing warning dialog for', existingBookings.length, 'bookings')
         const bookingList = existingBookings.map(booking => {
           const customer = Array.isArray(booking.customer) ? booking.customer[0] : booking.customer
           const service = Array.isArray(booking.service) ? booking.service[0] : booking.service
           return `• ${customer?.first_name} ${customer?.last_name} - ${service?.name} (${booking.start_time} - ${booking.end_time})`
         }).join('\n')
 
-        const confirmMessage = `⚠️ WARNING: This staff member has ${existingBookings.length} confirmed booking(s) during this time period:\n\n${bookingList}\n\nBlocking this time will prevent these appointments from being served. Are you sure you want to proceed?`
+        const confirmMessage = existingBookings.length > 0 
+          ? `⚠️ WARNING: This staff member has ${existingBookings.length} confirmed booking(s) during this time period:\n\n${bookingList}\n\nBlocking this time will prevent these appointments from being served. Are you sure you want to proceed?`
+          : `⚠️ WARNING: You are about to block this staff member's time. Are you sure you want to proceed?`
         
         if (!window.confirm(confirmMessage)) {
           setIsSubmitting(false)
