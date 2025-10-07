@@ -490,9 +490,11 @@ export function ScheduleManagement() {
 
       // Show warning if there are existing bookings
       if (existingBookings.length > 0) {
-        const bookingList = existingBookings.map(booking => 
-          `• ${booking.customer?.first_name} ${booking.customer?.last_name} - ${booking.service?.name} (${booking.start_time} - ${booking.end_time})`
-        ).join('\n')
+        const bookingList = existingBookings.map(booking => {
+          const customer = Array.isArray(booking.customer) ? booking.customer[0] : booking.customer
+          const service = Array.isArray(booking.service) ? booking.service[0] : booking.service
+          return `• ${customer?.first_name} ${customer?.last_name} - ${service?.name} (${booking.start_time} - ${booking.end_time})`
+        }).join('\n')
 
         const confirmMessage = `⚠️ WARNING: This staff member has ${existingBookings.length} confirmed booking(s) during this time period:\n\n${bookingList}\n\nBlocking this time will prevent these appointments from being served. Are you sure you want to proceed?`
         
