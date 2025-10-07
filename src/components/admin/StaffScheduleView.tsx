@@ -653,18 +653,19 @@ export function StaffScheduleView({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Date Navigation */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => navigateDate('prev')}
+                className="mr-2"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               
-              <div className="flex items-center space-x-2 px-3">
+              <div className="flex items-center space-x-2 px-3 min-w-[280px] justify-center">
                 <Calendar className="h-4 w-4 text-gray-500" />
-                <span className="font-medium text-lg">
+                <span className="font-medium text-lg text-center">
                   {format(currentDate, 'EEEE, MMMM d, yyyy')}
                 </span>
               </div>
@@ -673,6 +674,7 @@ export function StaffScheduleView({
                 size="sm"
                 variant="outline"
                 onClick={() => navigateDate('next')}
+                className="ml-2"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

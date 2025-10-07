@@ -161,19 +161,20 @@ export function DailySummary({ className }: DailySummaryProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <CardTitle className="text-2xl">Daily Report</CardTitle>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center">
                 <Button
                   size="icon"
                   variant="outline"
                   onClick={goToPreviousDay}
                   disabled={loading}
+                  className="mr-2"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 
-                <div className="flex items-center space-x-2 px-3 py-2 border rounded-lg bg-white">
+                <div className="flex items-center space-x-2 px-3 py-2 border rounded-lg bg-white min-w-[280px] justify-center">
                   <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="font-medium">
+                  <span className="font-medium text-center">
                     {format(selectedDate, 'EEEE, MMMM d, yyyy')}
                   </span>
                 </div>
@@ -183,6 +184,7 @@ export function DailySummary({ className }: DailySummaryProps) {
                   variant="outline"
                   onClick={goToNextDay}
                   disabled={loading}
+                  className="ml-2"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -192,6 +194,7 @@ export function DailySummary({ className }: DailySummaryProps) {
                     variant="outline"
                     onClick={goToToday}
                     disabled={loading}
+                    className="ml-2"
                   >
                     Today
                   </Button>

@@ -460,21 +460,25 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
           </div>
 
           {/* Navigation */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center">
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigateDate("prev")}
+              className="mr-2"
             >
               ←
             </Button>
-            <span className="text-sm font-medium text-gray-700 min-w-0">
-              {getDateTitle()}
-            </span>
+            <div className="min-w-[200px] text-center">
+              <span className="text-sm font-medium text-gray-700">
+                {getDateTitle()}
+              </span>
+            </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigateDate("next")}
+              className="ml-2"
             >
               →
             </Button>
@@ -485,6 +489,7 @@ export function StaffSchedule({ className }: StaffScheduleProps) {
             variant="outline"
             size="sm"
             onClick={() => setCurrentDate(new Date())}
+            className="ml-2"
           >
             Today
           </Button>
