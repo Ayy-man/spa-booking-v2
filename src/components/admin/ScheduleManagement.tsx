@@ -410,6 +410,59 @@ export function ScheduleManagement() {
     return errors
   }
 
+  // Check for existing bookings that would be affected by the schedule block
+  const checkExistingBookings = async (staffId: string, startDate: string, endDate?: string, startTime?: string, endTime?: string) => {
+    try {
+      let bookingsQuery = supabase
+        .from('bookings')
+        .select(`
+          id,
+          appointment_date,
+          start_time,
+          end_time,
+          customer:customers(first_name, last_name),
+          service:services(name),
+          status
+        `)
+        .eq('staff_id', staffId)
+        .eq('status', 'confirmed')
+
+      // Add date filtering
+      if (endDate && endDate !== startDate) {
+        // Date range
+        bookingsQuery = bookingsQuery
+          .gte('appointment_date', startDate)
+          .lte('appointment_date', endDate)
+      } else {
+        // Single date
+        bookingsQuery = bookingsQuery.eq('appointment_date', startDate)
+      }
+
+      const { data: bookings, error } = await bookingsQuery
+
+      if (error) {
+        console.error('Error checking existing bookings:', error)
+        return []
+      }
+
+      // Filter by time if it's a time range block
+      if (startTime && endTime) {
+        return bookings?.filter(booking => {
+          const bookingStart = booking.start_time
+          const bookingEnd = booking.end_time
+          
+          // Check if booking time overlaps with block time
+          return (bookingStart < endTime && bookingEnd > startTime)
+        }) || []
+      }
+
+      return bookings || []
+    } catch (error) {
+      console.error('Error in checkExistingBookings:', error)
+      return []
+    }
+  }
+
   // Schedule block (time off) functions
   const handleAddBlock = async () => {
     try {
@@ -424,6 +477,29 @@ export function ScheduleManagement() {
         setValidationErrors(errors)
         showNotification('Validation Error', errors[0], 'error')
         return
+      }
+
+      // Check for existing bookings that would be affected
+      const existingBookings = await checkExistingBookings(
+        formData.staffId,
+        formData.startDate,
+        formData.endDate,
+        formData.startTime,
+        formData.endTime
+      )
+
+      // Show warning if there are existing bookings
+      if (existingBookings.length > 0) {
+        const bookingList = existingBookings.map(booking => 
+          `• ${booking.customer?.first_name} ${booking.customer?.last_name} - ${booking.service?.name} (${booking.start_time} - ${booking.end_time})`
+        ).join('\n')
+
+        const confirmMessage = `⚠️ WARNING: This staff member has ${existingBookings.length} confirmed booking(s) during this time period:\n\n${bookingList}\n\nBlocking this time will prevent these appointments from being served. Are you sure you want to proceed?`
+        
+        if (!window.confirm(confirmMessage)) {
+          setIsSubmitting(false)
+          return
+        }
       }
       
       // Create the schedule block data
