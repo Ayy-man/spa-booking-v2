@@ -416,23 +416,20 @@ export function ScheduleManagement() {
     try {
       console.log('🔍 Checking existing bookings for:', { staffId, startDate, endDate, startTime, endTime })
       
-      // Convert dates to Guam timezone for proper database querying
-      // The form dates are in local time, but we need to search in Guam timezone
-      const guamStartDate = toGuamTime(new Date(startDate + 'T00:00:00'))
-      const guamStartDateStr = getGuamDateString(guamStartDate)
-      
-      let guamEndDateStr = guamStartDateStr
-      if (endDate && endDate !== startDate) {
-        const guamEndDate = toGuamTime(new Date(endDate + 'T00:00:00'))
-        guamEndDateStr = getGuamDateString(guamEndDate)
-      }
-      
-      console.log('🌏 Converted to Guam dates:', { 
+      // Use dates as-is since database stores them as timezone-agnostic DATE type
+      // The form provides dates in YYYY-MM-DD format which matches database storage
+      console.log('📅 Using dates directly:', { 
         originalStartDate: startDate, 
         originalEndDate: endDate,
-        guamStartDateStr, 
-        guamEndDateStr 
+        userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        currentGuamTime: new Date().toLocaleString('en-US', { timeZone: 'Pacific/Guam' })
       })
+      
+      const queryStartDate = startDate
+      let queryEndDate = startDate
+      if (endDate && endDate !== startDate) {
+        queryEndDate = endDate
+      }
       
       let bookingsQuery = supabase
         .from('bookings')
@@ -448,15 +445,15 @@ export function ScheduleManagement() {
         .eq('staff_id', staffId)
         .in('status', ['confirmed', 'pending', 'in_progress'])
 
-      // Add date filtering with Guam timezone dates
+      // Add date filtering
       if (endDate && endDate !== startDate) {
         // Date range
         bookingsQuery = bookingsQuery
-          .gte('appointment_date', guamStartDateStr)
-          .lte('appointment_date', guamEndDateStr)
+          .gte('appointment_date', queryStartDate)
+          .lte('appointment_date', queryEndDate)
       } else {
         // Single date
-        bookingsQuery = bookingsQuery.eq('appointment_date', guamStartDateStr)
+        bookingsQuery = bookingsQuery.eq('appointment_date', queryStartDate)
       }
 
       const { data: bookings, error } = await bookingsQuery
