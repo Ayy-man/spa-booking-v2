@@ -16,6 +16,7 @@ import { format, parseISO, addDays, startOfWeek, isValid, isBefore, isAfter } fr
 import { supabase } from '@/lib/supabase'
 import { Staff, StaffSchedule, ScheduleBlock } from '@/types/booking'
 import { StaffAvailabilityManager } from './StaffAvailabilityStatus'
+import { toGuamTime, getGuamDateString } from '@/lib/timezone-utils'
 
 // Simple notification function
 const showNotification = (title: string, description: string, type: 'success' | 'error' = 'success') => {
@@ -415,6 +416,24 @@ export function ScheduleManagement() {
     try {
       console.log('🔍 Checking existing bookings for:', { staffId, startDate, endDate, startTime, endTime })
       
+      // Convert dates to Guam timezone for proper database querying
+      // The form dates are in local time, but we need to search in Guam timezone
+      const guamStartDate = toGuamTime(new Date(startDate + 'T00:00:00'))
+      const guamStartDateStr = getGuamDateString(guamStartDate)
+      
+      let guamEndDateStr = guamStartDateStr
+      if (endDate && endDate !== startDate) {
+        const guamEndDate = toGuamTime(new Date(endDate + 'T00:00:00'))
+        guamEndDateStr = getGuamDateString(guamEndDate)
+      }
+      
+      console.log('🌏 Converted to Guam dates:', { 
+        originalStartDate: startDate, 
+        originalEndDate: endDate,
+        guamStartDateStr, 
+        guamEndDateStr 
+      })
+      
       let bookingsQuery = supabase
         .from('bookings')
         .select(`
@@ -429,15 +448,15 @@ export function ScheduleManagement() {
         .eq('staff_id', staffId)
         .in('status', ['confirmed', 'pending', 'in_progress'])
 
-      // Add date filtering
+      // Add date filtering with Guam timezone dates
       if (endDate && endDate !== startDate) {
         // Date range
         bookingsQuery = bookingsQuery
-          .gte('appointment_date', startDate)
-          .lte('appointment_date', endDate)
+          .gte('appointment_date', guamStartDateStr)
+          .lte('appointment_date', guamEndDateStr)
       } else {
         // Single date
-        bookingsQuery = bookingsQuery.eq('appointment_date', startDate)
+        bookingsQuery = bookingsQuery.eq('appointment_date', guamStartDateStr)
       }
 
       const { data: bookings, error } = await bookingsQuery
@@ -503,8 +522,8 @@ export function ScheduleManagement() {
 
       console.log('🚨 Existing bookings found:', existingBookings.length, existingBookings)
 
-      // TEMPORARY: Always show warning for testing
-      if (existingBookings.length > 0 || true) {
+      // Show warning if there are existing bookings
+      if (existingBookings.length > 0) {
         console.log('⚠️ Showing warning dialog for', existingBookings.length, 'bookings')
         const bookingList = existingBookings.map(booking => {
           const customer = Array.isArray(booking.customer) ? booking.customer[0] : booking.customer
@@ -512,9 +531,7 @@ export function ScheduleManagement() {
           return `• ${customer?.first_name} ${customer?.last_name} - ${service?.name} (${booking.start_time} - ${booking.end_time})`
         }).join('\n')
 
-        const confirmMessage = existingBookings.length > 0 
-          ? `⚠️ WARNING: This staff member has ${existingBookings.length} confirmed booking(s) during this time period:\n\n${bookingList}\n\nBlocking this time will prevent these appointments from being served. Are you sure you want to proceed?`
-          : `⚠️ WARNING: You are about to block this staff member's time. Are you sure you want to proceed?`
+        const confirmMessage = `⚠️ WARNING: This staff member has ${existingBookings.length} confirmed booking(s) during this time period:\n\n${bookingList}\n\nBlocking this time will prevent these appointments from being served. Are you sure you want to proceed?`
         
         if (!window.confirm(confirmMessage)) {
           setIsSubmitting(false)
